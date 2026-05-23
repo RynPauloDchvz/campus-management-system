@@ -110,6 +110,10 @@
                 <input type="text" id="c_name" required placeholder="e.g. Juan Dela Cruz" class="form-input">
             </div>
             <div class="form-group">
+                <label class="form-label">Email Address (For Password Reset)</label>
+                <input type="email" id="c_email" required placeholder="organizer@email.com" class="form-input">
+            </div>
+            <div class="form-group">
                 <label class="form-label">Assign Organization</label>
                 <select id="c_org" required class="form-input" style="cursor: pointer;">
                     <option value="" disabled selected>Select Organization</option>
@@ -157,6 +161,10 @@
             <div class="form-group">
                 <label class="form-label">Full Name</label>
                 <input type="text" id="e_name" required class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="e_email" required class="form-input">
             </div>
             <div class="form-group">
                 <label class="form-label">Organization</label>
@@ -304,6 +312,7 @@
         const user = usersData.find(u => u.id === id);
         document.getElementById('e_id').value = user.id;
         document.getElementById('e_name').value = user.name;
+        document.getElementById('e_email').value = user.email || '';
         document.getElementById('e_org').value = user.org;
         document.getElementById('e_username').value = user.username;
         document.getElementById('e_password').value = ''; 
@@ -323,18 +332,20 @@
 
         if (action === 'create') {
             payload.name = document.getElementById('c_name').value;
+            payload.email = document.getElementById('c_email').value;
             payload.org = document.getElementById('c_org').value;
             payload.username = document.getElementById('c_username').value;
             payload.password = document.getElementById('c_password').value;
-            if(!payload.name || !payload.org || !payload.username || !payload.password) return alert("Fill all fields.");
+            if(!payload.name || !payload.email || !payload.org || !payload.username || !payload.password) return alert("Fill all fields.");
         } 
         else if (action === 'edit') {
             payload.id = document.getElementById('e_id').value;
             payload.name = document.getElementById('e_name').value;
+            payload.email = document.getElementById('e_email').value;
             payload.org = document.getElementById('e_org').value;
             payload.username = document.getElementById('e_username').value;
             payload.password = document.getElementById('e_password').value; // optional
-            if(!payload.name || !payload.org || !payload.username) return alert("Name, Org, and Username are required.");
+            if(!payload.name || !payload.email || !payload.org || !payload.username) return alert("Name, Email, Org, and Username are required.");
         } 
         else if (action === 'delete') {
             payload.id = document.getElementById('d_id').value;

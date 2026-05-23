@@ -112,3 +112,12 @@ class Attendance(models.Model):
     
     def __str__(self):
         return f"{self.student.student_number} - {self.event.event_title}"
+
+# 5. LOGIN LOCKOUT TRACKER
+class LoginLockout(models.Model):
+    identifier = models.CharField(max_length=100, unique=True) # student_number or username
+    failed_attempts = models.IntegerField(default=0)
+    lockout_until = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.identifier} - {self.failed_attempts} attempts"

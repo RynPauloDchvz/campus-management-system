@@ -10,12 +10,14 @@ from django.conf import settings
 from django.core.serializers import serialize 
 from django.template.loader import render_to_string 
 from django.utils.html import strip_tags           
+from django.utils import timezone
+from datetime import timedelta, datetime
 import json 
 import string 
 import random 
 import os 
 from docxtpl import DocxTemplate 
-from .models import OrgProfile, Student, Attendance, Event
+from .models import OrgProfile, Student, Attendance, Event, LoginLockout
 
 # ==========================================
 # 🟢 4 STRICT RBAC GUARDS (PAM-BLOCK SA MALING URL ACCESS) 🟢
@@ -46,27 +48,75 @@ ORG_FULL_NAMES = {
     "PUSO": "PUSO - PUP UNISAN SPORTS ORGANIZATION",
 }
 
+def check_lockout(request, type='portal'):
+    session_key = f'lockout_until_{type}'
+    lockout_until = request.session.get(session_key)
+    if lockout_until:
+        lockout_time = datetime.fromisoformat(lockout_until)
+        if timezone.now() < lockout_time:
+            remaining = (lockout_time - timezone.now()).total_seconds()
+            return True, int(remaining)
+    return False, 0
+
+def check_account_lockout(identifier):
+    if not identifier:
+        return False, 0
+    lockout, created = LoginLockout.objects.get_or_create(identifier=identifier)
+    if lockout.lockout_until and timezone.now() < lockout.lockout_until:
+        remaining = (lockout.lockout_until - timezone.now()).total_seconds()
+        return True, int(remaining)
+    return False, 0
+
+def record_failed_attempt(identifier):
+    lockout, created = LoginLockout.objects.get_or_create(identifier=identifier)
+    lockout.failed_attempts += 1
+    
+    if lockout.failed_attempts % 5 == 0:
+        lockout_minutes = (lockout.failed_attempts // 5) * 2
+        lockout.lockout_until = timezone.now() + timedelta(minutes=lockout_minutes)
+        lockout.save()
+        return True, lockout_minutes * 60, lockout.failed_attempts
+    
+    lockout.save()
+    return False, 0, lockout.failed_attempts
+
+def reset_account_lockout(identifier):
+    LoginLockout.objects.filter(identifier=identifier).update(failed_attempts=0, lockout_until=None)
+
 def index(request):
-    return render(request, 'index.html')
+    is_locked, remaining = check_lockout(request, type='portal')
+    return render(request, 'index.html', {'is_locked': is_locked, 'remaining': remaining})
 
 # ==========================================
 # 🟢 PINAG-ISANG MAIN PORTAL LOGIN (STUDENT & ORGANIZER) 🟢
 # ==========================================
 def portal_login_view(request):
     if request.method == 'POST':
+        is_locked, remaining = check_lockout(request, type='portal')
+        if is_locked:
+            return JsonResponse({"status": "lockout", "message": "Too many attempts.", "remaining": remaining})
+
         student_number = request.POST.get('student_number')
         password = request.POST.get('password')
         
+        # Check Account Lockout
+        is_acc_locked, acc_remaining = check_account_lockout(student_number)
+        if is_acc_locked:
+            return JsonResponse({"status": "lockout", "message": "Account locked.", "remaining": acc_remaining})
+
         user = authenticate(request, username=student_number, password=password)
         
         if user is not None:
-            if user.is_superuser:
-                login(request, user)
-                return JsonResponse({"status": "success", "redirect_url": "/admin/"})
-            elif user.is_staff:
-                login(request, user)
-                return JsonResponse({"status": "success", "redirect_url": "/adviser/dashboard/"})
-            elif OrgProfile.objects.filter(user=user).exists():
+            # Check if this is a Staff/Admin trying to login here (RBAC strict separation)
+            if user.is_superuser or (user.is_staff and not OrgProfile.objects.filter(user=user).exists()):
+                return JsonResponse({"status": "error", "message": "Admin/Adviser accounts must login through the Staff Portal (/admin/login/)."})
+
+            # Success - reset attempts
+            request.session['failed_attempts_portal'] = 0
+            if 'lockout_until_portal' in request.session: del request.session['lockout_until_portal']
+            reset_account_lockout(student_number)
+            
+            if OrgProfile.objects.filter(user=user).exists():
                 login(request, user)
                 return JsonResponse({"status": "success", "redirect_url": "/organizer/homepage"})
             elif Student.objects.filter(user=user).exists():
@@ -79,9 +129,99 @@ def portal_login_view(request):
             else:
                 return JsonResponse({"status": "error", "message": "Account is neither a registered Student nor an Organizer."})
         else:
-            return JsonResponse({"status": "error", "message": "Incorrect Username/Student Number or Password."})
+            # Failed attempt logic
+            is_locked_now, lock_time, total_attempts = record_failed_attempt(student_number)
+            
+            if is_locked_now:
+                request.session['lockout_until_portal'] = (timezone.now() + timedelta(seconds=lock_time)).isoformat()
+                return JsonResponse({
+                    "status": "lockout", 
+                    "message": f"Too many failed attempts ({total_attempts}). Please wait.", 
+                    "remaining": lock_time
+                })
+                
+            return JsonResponse({"status": "error", "message": f"Incorrect credentials. Attempt {total_attempts % 5} of 5."})
 
     return redirect('index')
+
+# ==========================================
+# 🟢 FORGOT PASSWORD SYSTEM (ALL ACTORS) 🟢
+# ==========================================
+def forgot_password_view(request):
+    if request.method == 'POST':
+        identifier = request.POST.get('identifier') # Student Number or Username
+        
+        try:
+            user = User.objects.get(username=identifier)
+            email = user.email
+            
+            if not email:
+                # Try to get from Student profile if not in User
+                student = Student.objects.filter(user=user).first()
+                if student: email = student.email_address
+            
+            if not email:
+                return JsonResponse({"status": "error", "message": "No email associated with this account. Please contact Admin."})
+
+            # Generate temporary code
+            chars = string.ascii_letters + string.digits
+            temp_code = ''.join(random.choice(chars) for i in range(8))
+            request.session['reset_code'] = temp_code
+            request.session['reset_user_id'] = user.id
+            
+            html_content = render_to_string('email/change_password.html', {
+                'password': temp_code,
+                'email_address': email
+            })
+            
+            send_mail(
+                "Password Reset Request - PUPUni-CAMS",
+                strip_tags(html_content),
+                settings.EMAIL_HOST_USER,
+                [email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            return JsonResponse({"status": "success", "message": "Verification code sent to your registered email!"})
+            
+        except User.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Account not found in our records."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+
+    return render(request, 'forgot_password.html')
+
+def verify_reset_code(request):
+    if request.method == 'POST':
+        typed_code = request.POST.get('code')
+        saved_code = request.session.get('reset_code')
+        
+        if not saved_code or typed_code != saved_code:
+            return JsonResponse({"status": "error", "message": "Incorrect verification code."})
+            
+        return JsonResponse({"status": "success"})
+    return JsonResponse({"status": "error", "message": "Invalid request."})
+
+def complete_password_reset(request):
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password')
+        user_id = request.session.get('reset_user_id')
+        
+        if not user_id:
+            return JsonResponse({"status": "error", "message": "Session expired. Please try again."})
+            
+        user = User.objects.get(id=user_id)
+        user.set_password(new_password)
+        user.save()
+        
+        # Cleanup
+        if 'reset_code' in request.session: del request.session['reset_code']
+        if 'reset_user_id' in request.session: del request.session['reset_user_id']
+        if 'failed_attempts' in request.session: request.session['failed_attempts'] = 0
+        if 'lockout_until' in request.session: del request.session['lockout_until']
+        
+        return JsonResponse({"status": "success", "message": "Password successfully reset! You can now login."})
+    return JsonResponse({"status": "error", "message": "Invalid request."})
 
 # ==========================================
 # STUDENT VIEWS
@@ -97,7 +237,7 @@ def generate_student_password(request):
         request.session['generated_password'] = random_password 
         
         try:
-            html_content = render_to_string('email/password_email.html', {
+            html_content = render_to_string('email/create_account.html', {
                 'password': random_password,
                 'email_address': email
             })
@@ -839,6 +979,7 @@ def manage_organizers_view(request):
         name = profile.user.first_name if profile.user.first_name else "Organizer"
         org_data.append({
             'id': profile.user.id, 'name': name, 'username': profile.user.username,
+            'email': profile.user.email,
             'org': profile.organization, 'status': 'Active',
             'avatar': f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
         })
@@ -891,7 +1032,7 @@ def organizer_api_action(request):
             if action == 'create':
                 username = data.get('username')
                 if User.objects.filter(username=username).exists(): return JsonResponse({"status": "error", "message": "Username already exists!"})
-                user = User.objects.create_user(username=username, password=data.get('password'))
+                user = User.objects.create_user(username=username, password=data.get('password'), email=data.get('email', ''))
                 user.first_name = data.get('name') 
                 user.save()
                 OrgProfile.objects.create(user=user, organization=data.get('org'))
@@ -906,6 +1047,7 @@ def organizer_api_action(request):
                     return JsonResponse({"status": "error", "message": "Username is already taken by another account!"})
                 user.first_name = data.get('name')
                 user.username = new_username
+                user.email = data.get('email', user.email)
                 if data.get('password'): user.set_password(data.get('password'))
                 user.save()
                 org_profile.organization = data.get('org')
@@ -1038,22 +1180,48 @@ def debug_database_view(request):
 
 def staff_login_view(request):
     if request.method == 'POST':
+        is_locked, remaining = check_lockout(request, type='staff')
+        if is_locked:
+            return JsonResponse({"status": "lockout", "message": "Too many attempts.", "remaining": remaining})
+
         u = request.POST.get('username')
         p = request.POST.get('password')
+        
+        # Check Account Lockout
+        is_acc_locked, acc_remaining = check_account_lockout(u)
+        if is_acc_locked:
+            return JsonResponse({"status": "lockout", "message": "Account locked.", "remaining": acc_remaining})
+
         user = authenticate(request, username=u, password=p)
         
         if user is not None:
-            if user.is_superuser:
+            # Check if this is a Student/Organizer trying to login here (RBAC strict separation)
+            if not user.is_staff and not user.is_superuser:
+                return JsonResponse({"status": "error", "message": "Student/Organizer accounts must login through the Student Portal (/)."})
+
+            if user.is_staff or user.is_superuser:
+                request.session['failed_attempts_staff'] = 0
+                if 'lockout_until_staff' in request.session: del request.session['lockout_until_staff']
+                reset_account_lockout(u)
+                
                 login(request, user)
-                return redirect('/admin/')
-            elif user.is_staff and not user.is_superuser:
-                login(request, user)
-                return redirect('adviser_dashboard')
+                
+                redirect_url = '/admin/' if user.is_superuser else '/adviser/dashboard/'
+                return JsonResponse({"status": "success", "redirect_url": redirect_url})
             else:
-                messages.error(request, "Access Denied. You do not have staff privileges.")
-                return redirect('staff_login')
+                return JsonResponse({"status": "error", "message": "Access Denied. You do not have staff privileges."})
         else:
-            messages.error(request, "Invalid username or password.")
-            return redirect('staff_login')
+            is_locked_now, lock_time, total_attempts = record_failed_attempt(u)
             
-    return render(request, 'admin/login.html')
+            if is_locked_now:
+                request.session['lockout_until_staff'] = (timezone.now() + timedelta(seconds=lock_time)).isoformat()
+                return JsonResponse({
+                    "status": "lockout", 
+                    "message": f"Too many failed attempts ({total_attempts}). Please wait.", 
+                    "remaining": lock_time
+                })
+                
+            return JsonResponse({"status": "error", "message": f"Invalid credentials. Attempt {total_attempts % 5} of 5."})
+            
+    is_locked, remaining = check_lockout(request, type='staff')
+    return render(request, 'admin/login.html', {'is_locked': is_locked, 'remaining': remaining})

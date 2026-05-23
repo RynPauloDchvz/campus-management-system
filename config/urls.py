@@ -43,6 +43,9 @@ urlpatterns = [
     # ==========================================
     path('', views.index, name='index'),
     path('portal/login/', views.portal_login_view, name='portal_login'),
+    path('forgot-password/', views.forgot_password_view, name='forgot_password'),
+    path('api/verify-reset-code/', views.verify_reset_code, name='verify_reset_code'),
+    path('api/complete-password-reset/', views.complete_password_reset, name='complete_password_reset'),
 
     # ==========================================
     # STUDENT URLS

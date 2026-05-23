@@ -46,7 +46,7 @@
     <div id="app" v-cloak class="flex min-h-screen">
         
         <!-- 🟢 LEFT SIDE: Admin Branding (Compact Layout) 🟢 -->
-        <div class="hidden lg:flex lg:w-[45%] relative flex-col justify-center p-12 xl:p-16 overflow-hidden">
+        <div :class="{'blur-3xl opacity-30 scale-110 pointer-events-none': isModalActive}" class="hidden lg:flex lg:w-[45%] relative flex-col justify-center p-12 xl:p-16 overflow-hidden transition-all duration-1000 ease-in-out">
             <div class="absolute inset-0 bg-pup-maroon dark:bg-[#1a1a1a] z-0"></div>
             <div class="absolute inset-0 opacity-30 bg-pup-image mix-blend-overlay z-10"></div>
             
@@ -66,7 +66,7 @@
         </div>
 
         <!-- 🟢 RIGHT SIDE: Login Form (Username & Password Only) 🟢 -->
-        <div class="w-full lg:w-[55%] flex flex-col relative bg-white dark:bg-[#0f0f0f]">
+        <div :class="{'blur-3xl opacity-0 scale-95 pointer-events-none': isModalActive}" class="w-full lg:w-[55%] flex flex-col relative bg-white dark:bg-[#0f0f0f] transition-all duration-1000 ease-in-out">
             
             <!-- Theme Toggle -->
             <div class="absolute top-6 right-6 z-50">
@@ -94,9 +94,7 @@
                         </div>
                     {% endif %}
 
-                    <form action="{% url 'staff_login' %}" method="post" class="space-y-5">
-                        {% csrf_token %}
-
+                    <form @submit.prevent="submitLogin" class="space-y-5">
                         <!-- Username Field -->
                         <div class="space-y-1.5">
                             <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">Username</label>
@@ -104,7 +102,7 @@
                                 <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-600 text-xl group-focus-within:text-pup-maroon dark:group-focus-within:text-pup-gold transition-colors">
                                     <i class="ph-bold ph-user-circle"></i>
                                 </div>
-                                <input type="text" name="username" required placeholder="Enter your username"
+                                <input type="text" v-model="loginData.username" required placeholder="Enter your username"
                                     class="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-[#181818] border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-pup-maroon/10 dark:focus:ring-pup-gold/10 focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white font-semibold transition-all">
                             </div>
                         </div>
@@ -113,13 +111,13 @@
                         <div class="space-y-1.5">
                             <div class="flex justify-between items-center px-1">
                                 <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Password</label>
-                                <a href="#" class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold hover:underline uppercase tracking-wider">Forgot?</a>
+                                <a href="{% url 'forgot_password' %}" class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold hover:underline uppercase tracking-wider">Forgot?</a>
                             </div>
                             <div class="relative group">
                                 <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-600 text-xl group-focus-within:text-pup-maroon dark:group-focus-within:text-pup-gold transition-colors">
                                     <i class="ph-bold ph-lock-key"></i>
                                 </div>
-                                <input :type="showPassword ? 'text' : 'password'" name="password" required placeholder="••••••••"
+                                <input :type="showPassword ? 'text' : 'password'" v-model="loginData.password" required placeholder="••••••••"
                                     class="w-full pl-12 pr-12 py-4 rounded-xl bg-gray-50 dark:bg-[#181818] border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-pup-maroon/10 dark:focus:ring-pup-gold/10 focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white font-semibold transition-all">
                                 <button type="button" @click="showPassword = !showPassword" 
                                     class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-pup-gold text-xl transition-colors">
@@ -128,12 +126,67 @@
                             </div>
                         </div>
 
-                        <button type="submit" 
-                            class="w-full py-4 rounded-xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black text-sm uppercase tracking-[0.2em] shadow-lg hover:opacity-90 transition-all active:scale-[0.98] mt-4">
-                            Sign In
+                        <button type="submit" :disabled="isLoggingIn"
+                            class="w-full py-4 rounded-xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black text-sm uppercase tracking-[0.2em] shadow-lg hover:opacity-90 transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-2">
+                            <i v-if="isLoggingIn" class="ph-bold ph-spinner animate-spin"></i>
+                            <span>[[ isLoggingIn ? 'Verifying...' : 'Sign In' ]]</span>
                         </button>
                     </form>
 
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟢 LOCKOUT MODAL 🟢 -->
+        <div v-if="isLocked" class="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl">
+            <div class="w-full max-w-md bg-white dark:bg-[#1a1a1a] rounded-[3rem] p-10 text-center shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-gray-100 dark:border-gray-800 animate-in zoom-in duration-300 relative z-[1001]">
+                <div class="w-24 h-24 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-8 border-4 border-red-100 dark:border-red-900/30">
+                    <i class="ph-fill ph-shield-warning text-5xl text-red-600 dark:text-red-500"></i>
+                </div>
+                <h3 class="text-3xl font-black text-gray-900 dark:text-white mb-3 uppercase tracking-tight">Access Restricted</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-10 font-medium px-4">This terminal is temporarily locked due to multiple failed login attempts. Please wait for the cooldown to expire.</p>
+                
+                <div class="bg-gray-50 dark:bg-[#111] rounded-3xl p-8 mb-10 border border-gray-100 dark:border-gray-800 shadow-inner">
+                    <span class="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3">Cooling down</span>
+                    <span class="text-5xl font-black text-pup-maroon dark:text-pup-gold tabular-nums tracking-tight">[[ formatTime(lockoutTime) ]]</span>
+                </div>
+
+                <div class="space-y-4">
+                    <a href="{% url 'forgot_password' %}" class="block w-full py-5 rounded-2xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-bold text-sm shadow-xl hover:opacity-90 transition-all">Request Password Reset</a>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] pt-2">Security Enforcement Active</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟢 FAILED ATTEMPT MODAL (COMPACT) 🟢 -->
+        <div v-if="showAttemptModal" class="fixed inset-0 z-[1000] flex justify-center items-center p-4 bg-black/40 backdrop-blur-sm">
+            <div class="w-full max-w-[320px] bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] p-6 text-center shadow-[0_0_60px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-gray-800 animate-in slide-in-from-bottom-8 duration-500">
+                <div class="w-20 h-20 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-amber-100 dark:border-amber-900/30 relative">
+                    <i class="ph-fill ph-lock-key text-4xl text-amber-600 dark:text-amber-500"></i>
+                    <!-- Attempt Badge -->
+                    <div class="absolute -top-1 -right-1 w-9 h-9 bg-pup-maroon dark:bg-pup-gold rounded-full border-4 border-white dark:border-[#1a1a1a] flex items-center justify-center shadow-lg">
+                        <span class="text-white dark:text-black font-black text-xs">[[ attemptCount ]]</span>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tight">Access Denied</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 font-medium">Invalid credentials. You have <span class="text-pup-maroon dark:text-pup-gold font-bold">5 attempts</span> remaining.</p>
+                
+                <!-- Progress Dots -->
+                <div class="flex flex-col items-center gap-2 mb-8 bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-inner">
+                    <div class="flex gap-2.5">
+                        <div v-for="i in 5" :key="i" 
+                             :class="[
+                                i <= attemptCount ? 'bg-pup-maroon dark:bg-pup-gold scale-110 shadow-[0_0_10px_rgba(128,0,0,0.3)]' : 'bg-gray-200 dark:bg-gray-800',
+                                i === attemptCount ? 'animate-pulse' : ''
+                             ]" 
+                             class="w-3 h-3 rounded-full transition-all duration-500"></div>
+                    </div>
+                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Attempt [[ attemptCount ]] of 5</span>
+                </div>
+
+                <div class="space-y-2">
+                    <button @click="showAttemptModal = false" class="w-full py-3.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-sm hover:opacity-90 transition-all shadow-md active:scale-95">Try Again</button>
                 </div>
             </div>
         </div>
@@ -143,23 +196,91 @@
     <script>
         const { createApp } = Vue;
         createApp({
+            delimiters: ['[[', ']]'],
             data() {
                 return {
                     isDark: false,
-                    showPassword: false
+                    showPassword: false,
+                    isLoggingIn: false,
+                    loginData: { username: '', password: '' },
+
+                    // LOCKOUT STATE
+                    isLocked: {% if is_locked %}true{% else %}false{% endif %},
+                    lockoutTime: {{ remaining|default:0 }},
+                    lockoutInterval: null,
+                    showAttemptModal: false,
+                    attemptCount: 0,
+                }
+            },
+            computed: {
+                isModalActive() {
+                    return this.isLocked || this.showAttemptModal;
                 }
             },
             mounted() {
                 const savedTheme = localStorage.getItem('theme') || 'light';
                 this.isDark = savedTheme === 'dark';
                 if (this.isDark) document.documentElement.classList.add('dark');
+                if (this.isLocked) this.startLockoutCountdown();
             },
             methods: {
+                formatTime(seconds) {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                },
+                startLockoutCountdown() {
+                    if (this.lockoutInterval) clearInterval(this.lockoutInterval);
+                    this.lockoutInterval = setInterval(() => {
+                        this.lockoutTime--;
+                        if (this.lockoutTime <= 0) {
+                            clearInterval(this.lockoutInterval);
+                            this.isLocked = false;
+                            this.lockoutTime = 0;
+                        }
+                    }, 1000);
+                },
                 toggleTheme() {
                     this.isDark = !this.isDark;
                     const theme = this.isDark ? 'dark' : 'light';
                     document.documentElement.classList.toggle('dark');
                     localStorage.setItem('theme', theme);
+                },
+                async submitLogin() {
+                    if (!this.loginData.username || !this.loginData.password) return;
+                    this.isLoggingIn = true;
+                    const formData = new FormData();
+                    formData.append('username', this.loginData.username);
+                    formData.append('password', this.loginData.password);
+                    
+                    const csrfMatch = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+                    const token = csrfMatch ? csrfMatch.split('=')[1] : '';
+                    
+                    try {
+                        const response = await fetch('{% url "staff_login" %}', {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': token },
+                            body: formData
+                        });
+                        const data = await response.json();
+                        if (data.status === 'success') window.location.href = data.redirect_url;
+                        else if (data.status === 'lockout') {
+                            this.isLocked = true;
+                            this.lockoutTime = data.remaining;
+                            this.showAttemptModal = false;
+                            this.startLockoutCountdown();
+                        }
+                        else {
+                            if (data.message && data.message.includes('Attempt')) {
+                                const match = data.message.match(/\d+/);
+                                if (match) this.attemptCount = parseInt(match[0]);
+                                this.showAttemptModal = true;
+                            } else {
+                                alert(data.message || "Invalid credentials.");
+                            }
+                        }
+                    } catch (e) { alert("Connection error."); }
+                    finally { this.isLoggingIn = false; }
                 }
             }
         }).mount('#app');
