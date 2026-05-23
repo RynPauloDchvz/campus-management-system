@@ -1,0 +1,536 @@
+{% extends 'student_base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="{% static 'js/student.js' %}" defer></script>
+
+<div class="w-full relative pb-16 bg-white dark:bg-[#0a0a0a] min-h-screen">
+    
+    <div class="h-32 sm:h-64 w-full bg-gray-200 relative group" id="coverPhotoWrapper">
+        {% if student.cover_photo %}
+            <img src="{{ student.cover_photo.url }}" class="w-full h-full object-cover opacity-90" id="coverImage">
+        {% else %}
+            <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover opacity-90" id="coverImage">
+        {% endif %}
+        
+        <div class="cover-edit-icon absolute bottom-2 left-2 sm:bottom-4 sm:left-4 bg-black/60 p-2 sm:p-3 rounded-full shadow-md backdrop-blur-sm z-20 cursor-pointer hidden group-[.editable-mode]:flex" onclick="document.getElementById('coverFileInput').click()">
+            <i class="ph-bold ph-camera text-base sm:text-xl text-white"></i>
+        </div>
+        <input type="file" id="coverFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'coverImage')">
+    </div>
+
+    <div class="max-w-5xl mx-auto px-2 sm:px-6 lg:px-8 relative z-10">
+        
+        <div class="flex flex-col sm:flex-row items-center sm:items-end justify-between mb-8 gap-4 sm:gap-6 -mt-16 sm:-mt-24 px-4 sm:px-0 text-center sm:text-left">
+            
+            <div class="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-6 w-full">
+                <div class="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 z-30 mx-auto sm:mx-0 group" id="avatarWrapper">
+                    <div class="w-full h-full rounded-full border-4 sm:border-[6px] border-[#800000] dark:border-[#D4AF37] overflow-hidden bg-white shadow-md relative transition-colors">
+                        
+                        {% if student.profile_picture %}
+                            <img src="{{ student.profile_picture.url }}" class="w-full h-full object-cover" id="profileImage" alt="Profile">
+                        {% else %}
+                            <img src="{% static 'images/student.jpg' %}" class="w-full h-full object-cover" id="profileImage" alt="Profile">
+                        {% endif %}
+                        
+                        <div class="edit-overlay absolute inset-0 z-20 hidden group-[.editable-mode]:flex cursor-pointer items-center justify-center bg-black/50 text-white" onclick="document.getElementById('profileFileInput').click()">
+                            <i class="ph-bold ph-camera-plus text-2xl sm:text-4xl"></i>
+                        </div>
+                    </div>
+                    <div class="profile-edit-icon absolute bottom-0 right-0 sm:bottom-1 sm:right-1 bg-black/60 p-1.5 sm:p-2.5 rounded-full shadow-md backdrop-blur-sm z-40 cursor-pointer hidden group-[.editable-mode]:flex" onclick="document.getElementById('profileFileInput').click()">
+                        <i class="ph-bold ph-camera text-sm sm:text-lg text-white"></i>
+                    </div>
+                </div>
+                <input type="file" id="profileFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'profileImage')">
+
+                <div class="pb-1 sm:pb-3 flex-grow w-full">
+                    <div class="inline-block bg-white/60 dark:bg-black/60 backdrop-blur-sm px-3 py-1 rounded-xl mb-1 sm:mb-2 max-w-full">
+                        <h1 id="nameDisplay" class="text-2xl sm:text-4xl font-bold text-[#800000] dark:text-[#D4AF37] leading-tight font-orbitron truncate transition-colors drop-shadow-md">{{ student.full_name }}</h1>
+                        <input type="text" id="nameInput" class="hidden text-2xl sm:text-4xl font-bold bg-transparent border-b-2 border-[#800000] dark:border-[#D4AF37] focus:outline-none w-full text-[#800000] dark:text-[#D4AF37] font-orbitron" value="{{ student.full_name }}">
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-4 text-[0.65rem] sm:text-sm font-bold text-[#800000] dark:text-[#D4AF37] transition-colors mt-1">
+                        <span>0 event attended</span>
+                        <span class="text-green-600 dark:text-green-400">0 present</span>
+                        <span class="text-gray-500 dark:text-gray-400">0 absent</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pb-1 sm:pb-3 shrink-0 flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                <button type="button" onclick="document.getElementById('settingsModal').classList.remove('hidden')" class="bg-gray-100 dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-200 dark:hover:bg-gray-800 flex items-center justify-center">
+                    <i class="ph-bold ph-gear text-base sm:text-lg"></i>
+                </button>
+                <button type="button" id="editBtn" onclick="toggleEditMode()" class="bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-[0.65rem] sm:text-sm shadow-sm transition-colors hover:opacity-90 flex items-center gap-1 sm:gap-2">
+                    <i id="editBtnIcon" class="ph-bold ph-pencil-simple text-sm sm:text-lg"></i> 
+                    <span id="editBtnText" class="hidden sm:inline">Edit Profile</span>
+                    <span id="editBtnTextMobile" class="sm:hidden">Edit</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 sm:gap-4 mb-10 px-2 sm:px-0">
+            <div class="bg-[#f4f4f4] dark:bg-[#151515] py-3 sm:py-4 rounded-xl text-center border border-gray-200 dark:border-gray-800 transition-colors">
+                <span class="block text-[0.55rem] sm:text-[0.65rem] font-bold uppercase text-gray-500 mb-0.5 sm:mb-1 tracking-wide">Student Number</span>
+                <span class="block text-sm sm:text-lg font-bold text-[#800000] dark:text-[#D4AF37] font-orbitron transition-colors">{{ student.student_number }}</span>
+            </div>
+            
+            <div class="bg-[#f4f4f4] dark:bg-[#151515] py-3 sm:py-4 rounded-xl text-center border border-gray-200 dark:border-gray-800 transition-colors flex flex-col justify-center">
+                <span class="block text-[0.55rem] sm:text-[0.65rem] font-bold uppercase text-gray-500 mb-0.5 sm:mb-1 tracking-wide">Organization</span>
+                <span class="block text-[0.6rem] sm:text-[0.75rem] md:text-sm font-bold text-[#800000] dark:text-[#D4AF37] px-2 leading-tight transition-colors">
+                    {% if student.organization == 'ITO' %}ITO - INFORMATION TECHNOLOGY ORGANIZATION
+                    {% elif student.organization == 'YEO' %}YEO - YOUNG ENTREPRENEURSHIP ORGANIZATION
+                    {% elif student.organization == 'ITS' %}ITS - INSTITUTE OF TECHNOLOGY SOCIETY
+                    {% elif student.organization == 'FTO' %}FTO - FUTURE TEACHER ORGANIZATION
+                    {% elif student.organization == 'PAS' %}PAS - PUBLIC ADMINISTRATION SOCIETY
+                    {% elif student.organization == 'CAO' %}CAO - CULTURE AND ARTS
+                    {% elif student.organization == 'PRIDEVerse' %}PRIDEVerse
+                    {% elif student.organization == 'SSC' %}SSC - SUPREME STUDENT COUNCIL
+                    {% elif student.organization == 'ROTC' %}ROTC - Reserve Officers' Training Corps
+                    {% elif student.organization == 'NEWSETTE' %}NEWSETTE
+                    {% elif student.organization == 'PUSO' %}PUSO - PUP UNISAN SPORTS ORGANIZATION
+                    {% else %}{{ student.organization }}
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="bg-[#f4f4f4] dark:bg-[#151515] py-3 sm:py-4 rounded-xl text-center border border-gray-200 dark:border-gray-800 relative flex flex-col justify-center min-h-[60px] sm:min-h-[76px] transition-colors">
+                <span class="block text-[0.55rem] sm:text-[0.65rem] font-bold uppercase text-gray-500 mb-0.5 sm:mb-1 tracking-wide">Year Level</span>
+                <span id="yearDisplay" class="block text-sm sm:text-lg font-bold text-[#800000] dark:text-[#D4AF37] font-orbitron transition-colors">{{ student.year_level }}</span>
+                <div id="yearEditContainer" class="hidden relative w-[100px] sm:w-[150px] mx-auto items-center justify-center">
+                    <select id="yearSelect" class="w-full text-center bg-transparent border-none text-[#800000] dark:text-[#D4AF37] font-bold text-sm sm:text-lg focus:outline-none appearance-none cursor-pointer py-0.5 pr-4 sm:pr-6 font-orbitron transition-colors">
+                        <option value="1st Year" {% if student.year_level == '1st Year' %}selected{% endif %}>1st Year</option>
+                        <option value="2nd Year" {% if student.year_level == '2nd Year' %}selected{% endif %}>2nd Year</option>
+                        <option value="3rd Year" {% if student.year_level == '3rd Year' %}selected{% endif %}>3rd Year</option>
+                        <option value="4th Year" {% if student.year_level == '4th Year' %}selected{% endif %}>4th Year</option>
+                    </select>
+                    <i class="ph-bold ph-caret-down absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 text-[#800000] dark:text-[#D4AF37] pointer-events-none text-xs sm:text-base"></i>
+                </div>
+            </div>
+
+            <div class="bg-[#f4f4f4] dark:bg-[#151515] py-3 sm:py-4 rounded-xl text-center border border-gray-200 dark:border-gray-800 transition-colors flex flex-col justify-center min-h-[60px] sm:min-h-[76px]">
+                <span class="block text-[0.55rem] sm:text-[0.65rem] font-bold uppercase text-gray-500 mb-0.5 sm:mb-1 tracking-wide">Birthdate</span>
+                <span id="birthDisplay" class="block text-sm sm:text-lg font-bold text-[#800000] dark:text-[#D4AF37] transition-colors">
+                    {% if student.birthdate %}{{ student.birthdate|date:"M d, Y" }}{% else %}Not Set{% endif %}
+                </span>
+                <input type="date" id="birthInput" class="hidden bg-transparent border-b border-[#800000] dark:border-[#D4AF37] focus:outline-none text-center w-3/4 mx-auto text-[#800000] dark:text-[#D4AF37] font-bold text-sm [&::-webkit-calendar-picker-indicator]:dark:filter [&::-webkit-calendar-picker-indicator]:dark:invert" value="{{ student.birthdate|date:'Y-m-d' }}">
+            </div>
+        </div>
+
+        <div class="mb-10 mt-6">
+            <div class="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-800 pb-2 px-2 sm:px-0">
+                <h2 class="text-base sm:text-xl font-bold text-[#002147] dark:text-white flex items-center gap-2 font-orbitron">
+                    <i class="ph-fill ph-clock-counter-clockwise text-gray-500"></i> Recent Activity
+                </h2>
+                <a href="{% url 'student_event_history' %}" class="text-xs sm:text-sm font-bold text-[#800000] dark:text-[#D4AF37] hover:underline flex items-center gap-1 transition-colors">View All History <i class="ph-bold ph-arrow-right"></i></a>
+            </div>
+            
+            <div class="w-full text-center py-10 bg-gray-50 dark:bg-[#111] rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
+                <i class="ph-fill ph-calendar-blank text-4xl text-gray-400 mb-2"></i>
+                <p class="font-bold text-gray-900 dark:text-white text-sm">No events attended yet</p>
+                <p class="text-xs text-gray-500 mt-1">Your attendance history will appear here once you join campus events.</p>
+            </div>
+        </div>
+
+        <div class="mb-10 mt-6">
+            <div class="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-800 pb-2 px-2 sm:px-0">
+                <h2 class="text-base sm:text-xl font-bold text-[#002147] dark:text-white flex items-center gap-2 font-orbitron">
+                    <i class="ph-fill ph-bell text-gray-500"></i> Notifications
+                </h2>
+                <a href="{% url 'student_messages' %}" class="text-xs sm:text-sm font-bold text-[#800000] dark:text-[#D4AF37] hover:underline flex items-center gap-1 transition-colors">View All Messages <i class="ph-bold ph-arrow-right"></i></a>
+            </div>
+            
+            <div class="flex flex-col gap-3 px-2 sm:px-0">
+                
+                <div id="welcomeNotif" onclick="readAndOpenMessage(1, this)" class="notif-box unread bg-[#fcf8f8] dark:bg-[#1a1515] p-4 rounded-xl border-2 border-[#800000]/30 dark:border-[#D4AF37]/30 shadow-sm cursor-pointer hover:border-[#800000] dark:hover:border-[#D4AF37] transition-colors flex gap-4 items-start relative overflow-hidden">
+                    <div class="notif-stripe absolute top-0 right-0 w-2 h-full bg-[#800000] dark:bg-[#D4AF37]"></div>
+                    <div class="notif-icon w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+                        <i class="ph-fill ph-megaphone text-xl"></i>
+                    </div>
+                    <div class="flex-grow min-w-0 pr-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="font-bold text-gray-900 dark:text-white text-sm truncate">Welcome to PUPUni-CAMS!</h4>
+                            <span class="text-[0.6rem] font-bold text-[#800000] dark:text-[#D4AF37] shrink-0">System</span>
+                        </div>
+                        <p class="text-xs text-gray-700 dark:text-gray-300 font-semibold truncate">Mabuhay Iskolar ng Bayan! Welcome sa bagong Campus Activities Management System. We are thrilled to have you here.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="text-center pb-8 mt-10">
+            <button type="button" onclick="document.getElementById('logoutModal').classList.remove('hidden')" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-500 font-bold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-sm shadow-sm mx-auto">
+                <i class="ph-bold ph-sign-out text-lg"></i> Sign Out Account
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<div id="settingsModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('settingsModal').classList.add('hidden')"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-xl w-full max-w-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+        <button type="button" onclick="document.getElementById('settingsModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            <i class="ph-bold ph-x text-lg"></i>
+        </button>
+        <h3 class="text-2xl font-black text-[#800000] dark:text-[#D4AF37] mb-6 font-orbitron flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-4">
+            <i class="ph-fill ph-gear"></i> Settings
+        </h3>
+        <div class="mb-6 border-b border-gray-200 dark:border-gray-800 pb-6 text-left">
+            <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2"><i class="ph-fill ph-shield-check text-gray-500"></i> Account Information</h4>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">
+                Manage your security credentials. We strongly recommend updating your password every 6 months to keep your CAMS account secure.
+            </p>
+            <button type="button" onclick="document.getElementById('settingsModal').classList.add('hidden'); document.getElementById('passwordModal').classList.remove('hidden');" class="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-bold hover:border-[#800000] dark:hover:border-[#D4AF37] hover:text-[#800000] dark:hover:text-[#D4AF37] transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
+                <i class="ph-bold ph-lock-key"></i> Change Password
+            </button>
+        </div>
+        <div class="text-left mb-2">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2"><i class="ph-fill ph-bell text-gray-500"></i> Email Notifications</h4>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                        Receive important alerts regarding event registrations, schedule changes, and evaluation reminders directly to your inbox.
+                    </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                    <input type="checkbox" value="" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#800000] dark:peer-checked:bg-[#D4AF37]"></div>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="passwordModal" class="hidden fixed inset-0 z-[2010] flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('passwordModal').classList.add('hidden')"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-xl w-full max-w-sm p-6 sm:p-8 text-center border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+        <button type="button" onclick="document.getElementById('passwordModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            <i class="ph-bold ph-x text-lg"></i>
+        </button>
+        <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-[#111] rounded-full flex items-center justify-center mb-4 border border-gray-200 dark:border-gray-800">
+            <i class="ph-fill ph-envelope-simple text-3xl text-[#800000] dark:text-[#D4AF37]"></i>
+        </div>
+        <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 font-orbitron">Change Password</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
+            Click "Get Code" to receive a secure verification code to your email: <br>
+            <strong id="userEmailSpan">{{ student.email_address }}</strong>
+        </p>
+        <div class="flex flex-col gap-4 mb-6 text-left">
+            <div class="relative">
+                <label class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Verification Code</label>
+                <div class="relative flex items-center mt-1">
+                    <input type="text" id="resetCode" placeholder="Paste code from email" class="w-full bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl pl-4 pr-24 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] transition-colors">
+                    <button type="button" id="btnGetCodeProfile" onclick="sendPasswordResetCode()" class="absolute right-2 px-3 py-1.5 bg-gray-900 dark:bg-pup-gold text-white dark:text-black font-bold rounded-lg transition-colors text-xs shadow-sm">Get Code</button>
+                </div>
+            </div>
+            <div class="relative">
+                <label class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">New Password</label>
+                <input type="password" id="newPw" placeholder="••••••••" class="w-full bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl pl-4 pr-10 py-3 mt-1 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] transition-colors">
+                <button type="button" onclick="togglePwVisibility('newPw', 'eyeNew')" class="absolute right-3 top-[34px] text-gray-500 hover:text-[#800000] dark:hover:text-[#D4AF37]">
+                    <i id="eyeNew" class="ph-bold ph-eye text-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button type="button" onclick="document.getElementById('passwordModal').classList.add('hidden')" class="flex-1 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
+            <button type="button" id="btnSubmitPassword" onclick="submitPasswordChange()" class="flex-1 py-3 rounded-xl bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black font-bold hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2">Update</button>
+        </div>
+    </div>
+</div>
+
+<div id="messageModal" class="hidden fixed inset-0 z-[2010] flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('messageModal').classList.add('hidden')"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-xl w-full max-w-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+        <button type="button" onclick="document.getElementById('messageModal').classList.add('hidden')" class="absolute top-4 right-4 bg-gray-100 dark:bg-[#111] hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+            <i class="ph-bold ph-x text-lg"></i>
+        </button>
+        <div class="mb-5 pr-8">
+            <h3 id="msgModalTitle" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2">Message Title</h3>
+            <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400">
+                <span id="msgModalSender" class="text-[#800000] dark:text-[#D4AF37] bg-[#800000]/10 dark:bg-[#D4AF37]/10 px-2 py-1 rounded-md">Sender</span>
+                <span id="msgModalDate"><i class="ph-bold ph-clock"></i> Date Time</span>
+            </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl mb-6">
+            <p id="msgModalBody" class="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">Message body goes here.</p>
+        </div>
+        <div class="flex gap-3">
+            <button type="button" onclick="document.getElementById('messageModal').classList.add('hidden')" class="w-full py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm flex items-center justify-center gap-2">
+                Close Message
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="logoutModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('logoutModal').classList.add('hidden')"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-2xl shadow-xl w-full max-w-sm p-8 text-center border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+        <i class="ph-fill ph-warning-circle text-6xl text-[#D4AF37] mb-4"></i>
+        <h3 class="text-2xl font-black text-gray-900 dark:text-white mb-2 font-orbitron">Confirm Logout</h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-8 text-sm">Are you sure you want to securely log out of your account?</p>
+        <div class="flex gap-3">
+            <button type="button" onclick="document.getElementById('logoutModal').classList.add('hidden')" class="flex-1 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
+            <a href="{% url 'index' %}" class="flex-1 py-2.5 rounded-lg bg-[#800000] text-white font-bold hover:bg-red-900 transition-colors text-sm flex items-center justify-center">Yes, Sign Out</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getCsrfToken() {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; csrftoken=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+
+    // --- 🟢 PERSISTENT NOTIFICATION LOGIC (AUTO-READ) 🟢 ---
+    const studentNum = "{{ student.student_number }}"; 
+    const notifKey = "welcome_read_" + studentNum;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const notifBox = document.getElementById('welcomeNotif');
+        if (localStorage.getItem(notifKey) === 'true') {
+            applyReadStyles(notifBox);
+        }
+    });
+
+    function readAndOpenMessage(id, element) {
+        // 1. Mark as read immediately
+        applyReadStyles(element);
+        localStorage.setItem(notifKey, 'true');
+
+        // 2. Open Modal
+        if(id === 1) {
+            document.getElementById('msgModalTitle').innerText = "Welcome to PUPUni-CAMS!";
+            document.getElementById('msgModalSender').innerText = "System";
+            document.getElementById('msgModalDate').innerHTML = `<i class="ph-bold ph-clock"></i> Registration Date`;
+            document.getElementById('msgModalBody').innerText = "Mabuhay Iskolar ng Bayan! Welcome sa bagong Campus Activities Management System. We are thrilled to have you here. Your account has been successfully verified.";
+        }
+        document.getElementById('messageModal').classList.remove('hidden');
+    }
+
+    function applyReadStyles(element) {
+        if(!element) return;
+        element.classList.remove('unread', 'bg-[#fcf8f8]', 'dark:bg-[#1a1515]', 'border-2', 'border-[#800000]/30', 'dark:border-[#D4AF37]/30');
+        element.classList.add('read', 'bg-gray-50', 'dark:bg-[#111]', 'border', 'border-gray-200', 'dark:border-gray-800', 'opacity-70');
+        
+        const stripe = element.querySelector('.notif-stripe');
+        if(stripe) stripe.style.display = 'none';
+        
+        const iconWrap = element.querySelector('.notif-icon');
+        if(iconWrap) {
+            iconWrap.classList.remove('bg-blue-100', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-400');
+            iconWrap.classList.add('bg-gray-200', 'dark:bg-gray-800', 'text-gray-500');
+        }
+    }
+
+    // --- EDIT PROFILE LOGIC ---
+    let isEditMode = false;
+
+    function previewImage(event, imgId) {
+        const file = event.target.files[0];
+        if (file) {
+            document.getElementById(imgId).src = URL.createObjectURL(file);
+        }
+    }
+
+    async function toggleEditMode() {
+        const btn = document.getElementById('editBtn');
+        const btnText1 = document.getElementById('editBtnText');
+        const btnText2 = document.getElementById('editBtnTextMobile');
+        
+        const nameDisp = document.getElementById('nameDisplay');
+        const nameInp = document.getElementById('nameInput');
+        const yearDisp = document.getElementById('yearDisplay');
+        const yearCont = document.getElementById('yearEditContainer');
+        const birthDisp = document.getElementById('birthDisplay');
+        const birthInp = document.getElementById('birthInput');
+        const avatarWrap = document.getElementById('avatarWrapper');
+        const coverWrap = document.getElementById('coverPhotoWrapper');
+
+        if (!isEditMode) {
+            isEditMode = true;
+            btnText1.innerText = "Save Changes";
+            btnText2.innerText = "Save";
+            btn.classList.replace('bg-[#800000]', 'bg-green-600');
+            btn.classList.replace('dark:bg-[#D4AF37]', 'dark:bg-green-500');
+            
+            nameDisp.classList.add('hidden');
+            nameInp.classList.remove('hidden');
+            yearDisp.classList.add('hidden');
+            yearCont.classList.remove('hidden');
+            birthDisp.classList.add('hidden');
+            birthInp.classList.remove('hidden');
+            
+            avatarWrap.classList.add('editable-mode');
+            coverWrap.classList.add('editable-mode');
+
+        } else {
+            btn.disabled = true;
+            btnText1.innerText = "Saving...";
+            btnText2.innerText = "Saving...";
+
+            const formData = new FormData();
+            formData.append('full_name', nameInp.value);
+            formData.append('year_level', document.getElementById('yearSelect').value);
+            formData.append('birthdate', birthInp.value);
+            
+            const profileFile = document.getElementById('profileFileInput').files[0];
+            const coverFile = document.getElementById('coverFileInput').files[0];
+            
+            if (profileFile) formData.append('profile_picture', profileFile);
+            if (coverFile) formData.append('cover_photo', coverFile);
+
+            try {
+                const response = await fetch("{% url 'update_student_profile' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': getCsrfToken() },
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if(data.status === 'success') {
+                    nameDisp.innerText = nameInp.value;
+                    yearDisp.innerText = document.getElementById('yearSelect').value;
+                    
+                    const dateObj = new Date(birthInp.value);
+                    birthDisp.innerText = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                    isEditMode = false;
+                    btnText1.innerText = "Edit Profile";
+                    btnText2.innerText = "Edit";
+                    btn.classList.replace('bg-green-600', 'bg-[#800000]');
+                    btn.classList.replace('dark:bg-green-500', 'dark:bg-[#D4AF37]');
+                    
+                    nameInp.classList.add('hidden');
+                    nameDisp.classList.remove('hidden');
+                    yearCont.classList.add('hidden');
+                    yearDisp.classList.remove('hidden');
+                    birthInp.classList.add('hidden');
+                    birthDisp.classList.remove('hidden');
+                    
+                    avatarWrap.classList.remove('editable-mode');
+                    coverWrap.classList.remove('editable-mode');
+                    btn.disabled = false;
+                    
+                    if (profileFile || coverFile) {
+                        window.location.reload();
+                    }
+                } else {
+                    alert("Error: " + data.message);
+                    btn.disabled = false;
+                    btnText1.innerText = "Save Changes";
+                    btnText2.innerText = "Save";
+                }
+            } catch(e) {
+                alert("Network error while saving.");
+                btn.disabled = false;
+                btnText1.innerText = "Save Changes";
+                btnText2.innerText = "Save";
+            }
+        }
+    }
+
+    // --- CHANGE PASSWORD LOGIC ---
+    async function sendPasswordResetCode() {
+        const btn = document.getElementById('btnGetCodeProfile');
+        const email = document.getElementById('userEmailSpan').innerText;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i>';
+
+        const formData = new FormData();
+        formData.append('email_address', email);
+
+        try {
+            const response = await fetch("{% url 'generate_student_password' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                alert("Code sent to your email!");
+                let count = 60;
+                btn.innerText = `${count}s`;
+                const timer = setInterval(() => {
+                    count--;
+                    if (count <= 0) {
+                        clearInterval(timer);
+                        btn.disabled = false;
+                        btn.innerText = "Get Code";
+                    } else {
+                        btn.innerText = `${count}s`;
+                    }
+                }, 1000);
+            } else {
+                alert(data.message);
+                btn.disabled = false;
+                btn.innerText = "Get Code";
+            }
+        } catch (err) {
+            alert("Error connecting to server.");
+            btn.disabled = false;
+            btn.innerText = "Get Code";
+        }
+    }
+
+    async function submitPasswordChange() {
+        const code = document.getElementById('resetCode').value;
+        const newPw = document.getElementById('newPw').value;
+
+        if (!code || !newPw) {
+            alert("Please enter the verification code and your new password.");
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmitPassword');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Updating...';
+
+        const formData = new FormData();
+        formData.append('code', code);
+        formData.append('new_password', newPw);
+
+        try {
+            const response = await fetch("{% url 'update_student_password' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCsrfToken() },
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                alert("Password successfully updated!");
+                document.getElementById('passwordModal').classList.add('hidden');
+                document.getElementById('resetCode').value = '';
+                document.getElementById('newPw').value = '';
+            } else {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert("Error updating password.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Update";
+        }
+    }
+
+    function togglePwVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('ph-eye', 'ph-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('ph-eye-slash', 'ph-eye');
+        }
+    }
+</script>
+
+{% endblock content %}

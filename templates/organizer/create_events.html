@@ -1,0 +1,584 @@
+{% extends 'organizer_base.html' %} 
+{% load static %}
+
+{% block content %}
+<style>
+    .print-hide { display: none !important; }
+    /* Custom Select Arrow Hiding fallback */
+    select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+</style>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full min-h-screen">
+    
+    <div class="mb-10 border-b border-gray-200 dark:border-gray-800 pb-6 text-center sm:text-left">
+        <h1 class="font-sans font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Event Documents</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-2 font-sans">Create activity proposals, usage/excuse letters, or reschedule an existing event.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        
+        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden relative font-sans">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-pup-maroon dark:bg-pup-gold"></div>
+            
+            <form id="createEventForm" onsubmit="event.preventDefault(); generateLetter();" class="p-6 sm:p-8">
+                <input type="hidden" id="evtId" value="">
+
+                <div class="flex flex-col gap-5">
+                    <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3 flex justify-between items-center">
+                        <span id="formTitle">Document Form</span>
+                        <span id="editBadge" class="hidden bg-yellow-100 text-yellow-700 border border-yellow-300 text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-black shadow-sm animate-pulse">Edit Mode</span>
+                    </h3>
+
+                    <div>
+                        <label class="block text-[0.7rem] font-bold text-pup-maroon dark:text-pup-gold uppercase tracking-wider mb-1.5">Select Document Type</label>
+                        <div class="relative">
+                            <select id="letterType" onchange="toggleFormFields()" class="appearance-none w-full bg-maroon-50 dark:bg-gray-800 border-2 border-pup-maroon dark:border-pup-gold rounded-xl pl-4 pr-10 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none cursor-pointer transition-colors shadow-sm">
+                                <option value="approval">Letter for Activity Approval (Main Event)</option>
+                                <option value="excuse">Excuse & Request Usage Letter</option>
+                                <option value="reschedule">Letter for Rescheduling</option>
+                            </select>
+                            <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-700 dark:text-gray-300 pointer-events-none"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Requester Name</label>
+                            <input type="text" id="reqName" value="{{ request.user.first_name }}" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors" required>
+                        </div>
+                        <div>
+                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Organization</label>
+                            <input type="text" id="reqOrg" value="{{ org_acronym }}" readonly class="w-full bg-gray-200 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-black text-gray-700 dark:text-gray-400 outline-none cursor-not-allowed uppercase tracking-widest" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Adviser Full Name</label>
+                        <input type="text" id="advName" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors" placeholder="e.g., Prof. Maria Clara" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Event Title</label>
+                        <input type="text" id="evtTitle" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors" placeholder="e.g., IT Week Hackathon 2026" required>
+                    </div>
+
+                    <div id="rescheduleFields" class="hidden bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 p-4 rounded-xl flex flex-col gap-4">
+                        <div>
+                            <label class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Original Event Date</label>
+                            <input type="date" id="origDate" class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Reason for Rescheduling</label>
+                            <textarea id="reschedReason" rows="2" class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none resize-none" placeholder="e.g., due to the unavailability of the gymnasium..."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="excuseFields" class="hidden bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 p-4 rounded-xl flex flex-col gap-4">
+                        <div>
+                            <label class="block text-[0.7rem] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1.5">Target Participants to Excuse</label>
+                            <input type="text" id="excuseClasses" class="w-full bg-white dark:bg-[#151515] border border-blue-300 dark:border-blue-700 rounded-lg px-4 py-2.5 text-sm outline-none" placeholder="e.g., all students from BSIT 1-4">
+                        </div>
+                        <div>
+                            <label class="block text-[0.7rem] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1.5">Equipment to Request</label>
+                            <textarea id="reqEquipment" rows="2" class="w-full bg-white dark:bg-[#151515] border border-blue-300 dark:border-blue-700 rounded-lg px-4 py-2.5 text-sm outline-none resize-none" placeholder="e.g., sound system, two microphones, flags..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Target Date</label>
+                            <input type="date" id="evtDate" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors cursor-pointer" required>
+                        </div>
+                        <div>
+                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Start Time</label>
+                            <input type="time" id="evtStartTime" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors cursor-pointer" required>
+                        </div>
+                        <div>
+                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">End Time</label>
+                            <input type="time" id="evtEndTime" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors cursor-pointer" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Venue</label>
+                        <input type="text" id="evtVenue" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors" placeholder="e.g., PUP Main Campus Gym" required>
+                    </div>
+
+                    <div id="standardDescDiv">
+                        <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Description / Objective</label>
+                        <textarea id="evtDesc" rows="3" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors resize-none" placeholder="Briefly describe the purpose of the event..."></textarea>
+                    </div>
+
+                    <div class="mt-4 border-t border-gray-100 dark:border-gray-800 pt-5 flex gap-2">
+                        <button type="button" id="btnCancelEdit" onclick="cancelEdit()" class="hidden w-1/3 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 font-bold py-3 px-4 rounded-xl text-sm transition-all hover:bg-gray-300 dark:hover:bg-gray-700">Cancel</button>
+                        <button type="submit" class="flex-grow bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-3.5 px-6 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md">
+                            <i class="ph-bold ph-file-text text-lg"></i> PREVIEW REQUEST LETTER
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 relative font-sans h-full flex flex-col">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-pup-maroon dark:bg-pup-gold"></div>
+            
+            <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3 mb-4">
+                Submitted Proposals
+            </h3>
+            
+            <div id="eventsList" class="flex flex-col gap-3 overflow-y-auto max-h-[700px] pr-2 flex-grow" style="-ms-overflow-style: none; scrollbar-width: none;">
+                </div>
+        </div>
+        
+    </div>
+
+</div>
+
+<div id="viewModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-4 sm:p-6 font-sans">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeViewModal()"></div>
+    <div class="relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+        
+        <div class="bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
+            <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="ph-fill ph-eye text-pup-maroon dark:text-pup-gold text-xl"></i> View Submitted Proposal</h3>
+            <button type="button" onclick="closeViewModal()" class="text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
+        </div>
+
+        <div class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed" style="color: #000 !important; font-family: Arial, sans-serif !important; max-height: none;">
+            <p id="viewDate" class="mb-6 font-bold"></p>
+            <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
+            <p class="mb-6 leading-tight">Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus</p>
+            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong></p>
+            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
+            <p class="mb-4">Greetings!</p>
+            <p class="mb-4 text-justify indent-8">To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong id="viewOrg"></strong> will be conducting a seminar entitled <strong>"<span id="viewTitle"></span>"</strong>. <span id="viewDesc"></span></p>
+            <p class="mb-8 text-justify indent-8">The activity will be held on <strong><span id="viewEvtDate"></span></strong>, <strong><span id="viewStartTime"></span></strong> to <strong><span id="viewEndTime"></span></strong> at <strong><span id="viewVenue"></span></strong>.</p>
+            <p class="mb-12">Thank you for your kind consideration and usual support.</p>
+            <p class="mb-8">Respectfully yours,</p>
+            <div class="mb-8">
+                <p id="viewReqName" class="font-bold uppercase mb-0 whitespace-nowrap"></p>
+                <p class="mt-0"><span id="viewOrgPres"></span> President</p>
+            </div>
+            <div>
+                <p class="mb-6">Noted by:</p>
+                <p id="viewAdvName" class="font-bold uppercase mb-0 whitespace-nowrap"></p>
+                <p class="mt-0"><span id="viewOrgAdv"></span> Adviser</p>
+            </div>
+        </div>
+        </div>
+</div>
+
+<div id="letterModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 sm:p-6 font-sans">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm print-hide" onclick="closeLetterModal()"></div>
+    
+    <div class="relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+        <div class="print-hide bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
+            <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold text-xl"></i> Official Document Preview</h3>
+            <button type="button" onclick="closeLetterModal()" class="text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
+        </div>
+
+        <div id="printPaper" class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed" style="color: #000 !important; font-family: Arial, sans-serif !important; max-height: none;">
+            <p id="letDate" class="mb-6 font-bold"></p>
+            <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
+            <p class="mb-6 leading-tight">Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus</p>
+            
+            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong id="letReText">Approval of Organizational Student Activity</strong></p>
+            
+            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
+            <p class="mb-4">Greetings!</p>
+            
+            <div id="contentApproval" class="hidden">
+                <p class="mb-4 text-justify indent-8">
+                    To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, <span id="orgFullApp"></span> will be conducting a seminar entitled <strong>"<span id="titleApp"></span>"</strong>. <span id="descApp"></span>
+                </p>
+                <p class="mb-8 text-justify indent-8">
+                    The activity will be held on <strong><span id="dateApp"></span></strong>, <strong><span id="timeApp"></span></strong> at <strong><span id="venueApp"></span></strong>.
+                </p>
+            </div>
+
+            <div id="contentExcuse" class="hidden">
+                <p class="mb-4 text-justify indent-8">
+                    <span id="orgFullExc"></span> is organizing an event with the theme <strong>"<span id="titleExc"></span>"</strong> to be held on <strong><span id="dateExc"></span></strong>, <strong><span id="timeExc"></span></strong> at <strong><span id="venueExc"></span></strong>. <span id="descExc"></span>
+                </p>
+                <p class="mb-8 text-justify indent-8">
+                    In line with this, we respectfully request the excusal of <strong><span id="targetExc"></span></strong> whose classes will be affected to allow full participation without academic conflicts, and we also request usage of the aforementioned hall, together with <strong><span id="equipExc"></span></strong>.
+                </p>
+            </div>
+
+            <div id="contentReschedule" class="hidden">
+                <p class="mb-4 text-justify indent-8">
+                    We hope this letter finds you well and in good health. <span id="orgFullRes"></span> respectfully requests a rescheduling of our upcoming event entitled <strong>"<span id="titleRes"></span>"</strong>. The event is currently set for <strong id="origDateRes"></strong>.
+                </p>
+                <p class="mb-4 text-justify indent-8">
+                    We propose moving the event to <strong><span id="dateRes"></span></strong>, from <strong><span id="timeRes"></span></strong> at <strong><span id="venueRes"></span></strong>.
+                </p>
+                <p class="mb-8 text-justify indent-8">
+                    This request is made <span id="reasonRes"></span>. To ensure that our participants have an adequate venue and preparation, we believe this adjustment is necessary.
+                </p>
+            </div>
+
+            <p id="outroA" class="mb-12 hidden">Thank you for your kind consideration and usual support.</p>
+            <p id="outroB" class="mb-12 hidden">We look forward to your response. Thank you for your kind consideration and usual support!</p>
+            <p id="outroC" class="mb-12 hidden">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
+            
+            <p class="mb-8">Respectfully yours,</p>
+            <div class="mb-8">
+                <p class="font-bold uppercase mb-0 whitespace-nowrap"><span id="sigName"></span></p>
+                <p class="mt-0"><span id="sigOrg"></span> President</p>
+            </div>
+            <div>
+                <p class="mb-6">Noted by:</p>
+                <p class="font-bold uppercase mb-0 whitespace-nowrap"><span id="sigAdviser"></span></p>
+                <p class="mt-0"><span id="sigOrg2"></span> Adviser / Program Chair</p>
+            </div>
+        </div>
+
+        <div class="print-hide bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
+            <button type="button" data-url="{% url 'download_event_proposal_doc' %}" onclick="downloadWord(this)" class="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md"><i class="ph-bold ph-file-doc"></i> Download Word Doc</button>
+            <button type="button" onclick="closeLetterModal()" class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">Edit Form</button>
+            <button type="button" data-url="{% url 'submit_event_proposal' %}" onclick="submitToAdviser(this)" id="btnSubmitToAdviser" class="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
+                <i class="ph-bold ph-paper-plane-right"></i> Send to Adviser
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="successModal" class="hidden fixed inset-0 z-[6000] flex items-center justify-center p-4 font-sans print-hide">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm mx-auto text-center p-8 z-10 border border-gray-200 dark:border-gray-800">
+        <i class="ph-fill ph-check-circle text-6xl text-green-500 mb-4 inline-block"></i>
+        <h2 class="text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2 font-sans">Proposal Sent!</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Your event document has been successfully saved and sent.</p>
+        <button onclick="window.location.reload()" class="w-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-bold py-3 rounded-xl transition-colors shadow-md">Done</button>
+    </div>
+</div>
+
+{{ events_json|json_script:"events-data" }}
+
+<script>
+    const CSRF_TOKEN = "{{ csrf_token }}";
+    
+    // 🟢 DICTIONARY NG 11 ORGS AT PROGRAMS NILA PARA SA LETTER TEMPLATE 🟢
+    const ORG_DETAILS = {
+        "ITO": { program: "Bachelor of Science in Information Technology (BSIT) Program", fullname: "Information Technology Organization" },
+        "YEO": { program: "Bachelor of Science in Entrepreneurship (BSEntrep) Program", fullname: "Young Entrepreneurship Organization" },
+        "ITS": { program: "Diploma in Information Technology (DIT) Program", fullname: "Institute of Technology Society" },
+        "FTO": { program: "Bachelor of Elementary and Secondary Education Program", fullname: "Future Teachers Organization" },
+        "PAS": { program: "Bachelor of Public Administration (BPA) Program", fullname: "Public Administration Society" },
+        "CAO": { program: "Student Body", fullname: "Culture and Arts Organization" },
+        "PRIDEVerse": { program: "Student Body", fullname: "PRIDEVerse Organization" },
+        "SSC": { program: "Student Body", fullname: "Supreme Student Council" },
+        "ROTC": { program: "National Service Training Program", fullname: "Reserve Officers' Training Corps" },
+        "NEWSETTE": { program: "Student Body", fullname: "The Newsette Publication" },
+        "PUSO": { program: "Student Body", fullname: "PUP Unisan Sports Organization" }
+    };
+
+    let allEvents = [];
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        try {
+            const dataNode = document.getElementById('events-data');
+            if(dataNode) {
+                const parsed = JSON.parse(dataNode.textContent);
+                allEvents = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+                renderEvents(allEvents);
+            }
+        } catch(e) { console.error("Error loading events", e); }
+    });
+
+    function toggleFormFields() {
+        const type = document.getElementById('letterType').value;
+        const reschedFields = document.getElementById('rescheduleFields');
+        const excuseFields = document.getElementById('excuseFields');
+        const descDiv = document.getElementById('standardDescDiv');
+
+        reschedFields.classList.add('hidden');
+        excuseFields.classList.add('hidden');
+        descDiv.classList.remove('hidden');
+
+        if(type === 'reschedule') {
+            reschedFields.classList.remove('hidden');
+        } else if(type === 'excuse') {
+            excuseFields.classList.remove('hidden');
+        }
+    }
+
+    function renderEvents(eventsToRender) {
+        const container = document.getElementById('eventsList');
+        if(!container) return;
+
+        if(eventsToRender.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-16 bg-gray-50 dark:bg-[#111] border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl my-auto">
+                    <i class="ph-fill ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                    <p class="text-base font-bold text-gray-500">No events found.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        eventsToRender.forEach(ev => {
+            html += `
+                <div onclick="openViewModal(${ev.id})" class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 p-5 rounded-xl cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all group">
+                    <div class="flex justify-between items-start mb-2 gap-2">
+                        <h4 class="font-black text-sm text-gray-900 dark:text-white truncate group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">${ev.title || 'No Title'}</h4>
+                        <span class="bg-gray-200 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold whitespace-nowrap">${ev.status || ''}</span>
+                    </div>
+                    <p class="text-xs font-bold text-gray-500 flex items-center gap-1.5"><i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold"></i> ${ev.date || ''}</p>
+                    <p class="text-xs font-bold text-gray-500 flex items-center gap-1.5 mt-1 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> ${ev.venue || ''}</p>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function openViewModal(id) {
+        const ev = allEvents.find(e => e.id === id);
+        if(!ev) return;
+        
+        document.getElementById('viewDate').innerText = ev.date || "";
+        document.getElementById('viewOrg').innerText = ev.org || "";
+        document.getElementById('viewTitle').innerText = ev.title || "";
+        document.getElementById('viewDesc').innerText = ev.description || "";
+        document.getElementById('viewEvtDate').innerText = ev.date || "";
+        document.getElementById('viewStartTime').innerText = ev.start_time || "";
+        document.getElementById('viewEndTime').innerText = ev.end_time || "Finish";
+        document.getElementById('viewVenue').innerText = ev.venue || "";
+        document.getElementById('viewReqName').innerText = ev.requester_name || "";
+        document.getElementById('viewOrgPres').innerText = ev.org || "";
+        document.getElementById('viewAdvName').innerText = ev.adviser_name || "(Adviser Name)";
+        document.getElementById('viewOrgAdv').innerText = ev.org || "";
+
+        document.getElementById('viewModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeViewModal() {
+        document.getElementById('viewModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function cancelEdit() {
+        document.getElementById('createEventForm').reset();
+        document.getElementById('evtId').value = "";
+        document.getElementById('origDate').value = "";
+        document.getElementById('editBadge').classList.add('hidden');
+        document.getElementById('btnCancelEdit').classList.add('hidden');
+        
+        document.getElementById('reqName').value = "{{ request.user.first_name|escapejs }}";
+        document.getElementById('reqOrg').value = "{{ org_acronym|escapejs }}";
+        
+        // Reset dropdown
+        document.getElementById('letterType').value = 'approval';
+        toggleFormFields();
+    }
+
+    function formatTime(timeInput) {
+        if(!timeInput) return "";
+        let [hours, minutes] = timeInput.split(':');
+        hours = parseInt(hours, 10);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${hours}:${minutes} ${ampm}`;
+    }
+
+    function getOrgFullName(acronym) {
+        const details = ORG_DETAILS[acronym] || ORG_DETAILS["DEFAULT"];
+        return `The ${details.program}, through the ${details.fullname} (${acronym})`;
+    }
+
+    function generateLetter() {
+        const type = document.getElementById('letterType').value;
+        const orgAcr = document.getElementById('reqOrg').value;
+        const fullOrgText = getOrgFullName(orgAcr);
+        
+        const title = document.getElementById('evtTitle').value;
+        const dateRaw = document.getElementById('evtDate').value;
+        const sTime = formatTime(document.getElementById('evtStartTime').value);
+        const eTime = formatTime(document.getElementById('evtEndTime').value);
+        const venue = document.getElementById('evtVenue').value;
+        const desc = document.getElementById('evtDesc').value;
+        
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const today = new Date().toLocaleDateString('en-US', options); 
+        const formattedDate = new Date(dateRaw).toLocaleDateString('en-US', options);
+
+        // Hide all contents first
+        document.getElementById('contentApproval').classList.add('hidden');
+        document.getElementById('contentExcuse').classList.add('hidden');
+        document.getElementById('contentReschedule').classList.add('hidden');
+        document.getElementById('outroA').classList.add('hidden');
+        document.getElementById('outroB').classList.add('hidden');
+        document.getElementById('outroC').classList.add('hidden');
+
+        if(type === 'approval') {
+            document.getElementById('letReText').innerText = "Approval of Organizational Student Activity";
+            document.getElementById('contentApproval').classList.remove('hidden');
+            document.getElementById('outroA').classList.remove('hidden');
+            
+            document.getElementById('orgFullApp').innerText = fullOrgText;
+            document.getElementById('titleApp').innerText = title;
+            document.getElementById('descApp').innerText = desc;
+            document.getElementById('dateApp').innerText = formattedDate;
+            document.getElementById('timeApp').innerText = `${sTime} to ${eTime}`;
+            document.getElementById('venueApp').innerText = venue;
+        } 
+        else if (type === 'excuse') {
+            document.getElementById('letReText').innerText = "Excuse and Request Usage of Equipment/Facility";
+            document.getElementById('contentExcuse').classList.remove('hidden');
+            document.getElementById('outroB').classList.remove('hidden');
+            
+            document.getElementById('orgFullExc').innerText = fullOrgText;
+            document.getElementById('titleExc').innerText = title;
+            document.getElementById('dateExc').innerText = formattedDate;
+            document.getElementById('timeExc').innerText = `${sTime} to ${eTime}`;
+            document.getElementById('venueExc').innerText = venue;
+            document.getElementById('descExc').innerText = desc ? "This activity aims to " + desc : "";
+            
+            document.getElementById('targetExc').innerText = document.getElementById('excuseClasses').value || "all affected students";
+            document.getElementById('equipExc').innerText = document.getElementById('reqEquipment').value || "the necessary equipment";
+        }
+        else if (type === 'reschedule') {
+            document.getElementById('letReText').innerText = "Scheduling of Organizational Student Activity";
+            document.getElementById('contentReschedule').classList.remove('hidden');
+            document.getElementById('outroC').classList.remove('hidden');
+            
+            document.getElementById('orgFullRes').innerText = fullOrgText;
+            document.getElementById('titleRes').innerText = title;
+            document.getElementById('origDateRes').innerText = document.getElementById('origDate').value || "(Original Date)";
+            document.getElementById('dateRes').innerText = formattedDate;
+            document.getElementById('timeRes').innerText = `${sTime} to ${eTime}`;
+            document.getElementById('venueRes').innerText = venue;
+            document.getElementById('reasonRes').innerText = document.getElementById('reschedReason').value || "due to unforeseen circumstances";
+        }
+
+        // Common Signatories
+        document.getElementById('letDate').innerText = today;
+        document.getElementById('sigName').innerText = document.getElementById('reqName').value;
+        document.getElementById('sigOrg').innerText = orgAcr;
+        document.getElementById('sigAdviser').innerText = document.getElementById('advName').value;
+        document.getElementById('sigOrg2').innerText = orgAcr;
+
+        document.getElementById('letterModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLetterModal() {
+        document.getElementById('letterModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    // 🟢 UPDATED DOWNLOAD WORD FUNCTION 🟢
+    async function downloadWord(btnElement) {
+        const originalText = btnElement.innerHTML;
+        btnElement.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
+        btnElement.disabled = true;
+
+        const type = document.getElementById('letterType').value;
+        const orgAcr = document.getElementById('reqOrg').value;
+        const fullOrgText = getOrgFullName(orgAcr);
+        
+        const evtDateObj = new Date(document.getElementById('evtDate').value);
+        const formattedEvtDate = evtDateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const fullTimeStr = `${formatTime(document.getElementById('evtStartTime').value)} to ${formatTime(document.getElementById('evtEndTime').value)}`;
+
+        const payload = {
+            docType: type,
+            letDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            letName: document.getElementById('reqName').value,
+            letOrg: document.getElementById('reqOrg').value,
+            fullOrgName: fullOrgText,
+            letTitle: document.getElementById('evtTitle').value,
+            letDesc: document.getElementById('evtDesc').value,
+            letEvtDate: formattedEvtDate,
+            letEvtTime: fullTimeStr,
+            letVenue: document.getElementById('evtVenue').value,
+            sigName: document.getElementById('reqName').value,
+            sigOrg: document.getElementById('reqOrg').value,
+            sigAdviser: document.getElementById('advName').value,
+            targetClasses: document.getElementById('excuseClasses') ? document.getElementById('excuseClasses').value : "",
+            reqEquipment: document.getElementById('reqEquipment') ? document.getElementById('reqEquipment').value : "",
+            origDate: document.getElementById('origDate') ? document.getElementById('origDate').value : "",
+            reschedReason: document.getElementById('reschedReason') ? document.getElementById('reschedReason').value : ""
+        };
+
+        try {
+            const response = await fetch(btnElement.getAttribute('data-url'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${type.toUpperCase()}_Document_${payload.letOrg}.docx`; 
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                const errorData = await response.json();
+                alert("Failed to generate document: " + (errorData.message || "Unknown error"));
+            }
+        } catch (error) {
+            alert("System error! Check your connection.");
+        } finally {
+            btnElement.innerHTML = originalText;
+            btnElement.disabled = false;
+        }
+    }
+
+    async function submitToAdviser(btnElement) {
+        btnElement.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Sending...';
+        btnElement.disabled = true;
+
+        let formData = new FormData();
+        formData.append('csrfmiddlewaretoken', CSRF_TOKEN); 
+        formData.append('event_id', ""); 
+        formData.append('requester_name', document.getElementById('reqName').value);
+        formData.append('adviser_name', document.getElementById('advName').value);
+        formData.append('title', document.getElementById('evtTitle').value);
+        formData.append('date', document.getElementById('evtDate').value);
+        formData.append('start_time', document.getElementById('evtStartTime').value);
+        formData.append('end_time', document.getElementById('evtEndTime').value);
+        formData.append('venue', document.getElementById('evtVenue').value);
+        
+        // Dagdag details sa description para alam ng backend
+        const type = document.getElementById('letterType').value;
+        let finalDesc = document.getElementById('evtDesc').value;
+        if(type === 'reschedule') {
+            finalDesc = `[RESCHEDULE REQUEST] Reason: ${document.getElementById('reschedReason').value} | Original Desc: ${finalDesc}`;
+        } else if(type === 'excuse') {
+            finalDesc = `[EXCUSE & EQUIPMENT REQUEST] Target: ${document.getElementById('excuseClasses').value} | Equipment: ${document.getElementById('reqEquipment').value} | Desc: ${finalDesc}`;
+        }
+        formData.append('description', finalDesc);
+
+        try {
+            const response = await fetch(btnElement.getAttribute('data-url'), {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if(data.status === 'success') {
+                closeLetterModal();
+                document.getElementById('successModal').classList.remove('hidden');
+            } else {
+                alert("Error saving: " + data.message);
+                btnElement.innerHTML = '<i class="ph-bold ph-paper-plane-right"></i> Send to Adviser';
+                btnElement.disabled = false;
+            }
+        } catch (error) {
+            alert("Connection error! Please check your internet connection.");
+            btnElement.innerHTML = '<i class="ph-bold ph-paper-plane-right"></i> Send to Adviser';
+            btnElement.disabled = false;
+        }
+    }
+</script>
+{% endblock content %}

@@ -1,0 +1,169 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Adviser Panel | PUPUni-CAMS{% endblock %}</title>
+    
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{% static 'css/adviser.css' %}">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        pup: { maroon: '#800000', gold: '#D4AF37', dark: '#121212', darkcard: '#1e1e1e' },
+                        bglight: '#f4f6f8',
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="bg-bglight dark:bg-pup-dark text-gray-800 dark:text-gray-200 font-sans antialiased overflow-hidden transition-colors duration-300 sidebar-expanded">
+
+    <nav class="sidebar" id="sidebar">
+        <i class="ph-bold ph-list toggle-btn" onclick="toggleSidebar()"></i>
+
+        <div class="brand">
+            <img src="{% static 'images/PUPLogo.png' %}" class="logo-img" alt="PUP Logo">
+            <div class="brand-text-wrapper">
+                <span class="logo-text">ADVISER PANEL</span>
+                <span class="brand-subtitle">PUPUni-CAMS</span>
+            </div>
+        </div>
+
+        <div class="menu-label">Main Menu</div>
+        
+        <a href="{% url 'adviser_dashboard' %}" data-title="Event Approvals" class="nav-link {% if request.path == '/adviser/dashboard/' %}active{% endif %}">
+            <i class="ph-bold ph-check-circle"></i>
+            <span class="nav-text">Event Approvals</span>
+        </a>
+        
+        <a href="{% url 'adviser_history' %}" data-title="History" class="nav-link {% if request.path == '/adviser/history/' %}active{% endif %}">
+            <i class="ph-bold ph-clock-counter-clockwise"></i>
+            <span class="nav-text">History</span>
+        </a>
+
+        <div class="logout-btn-container">
+            <button onclick="document.getElementById('logoutModalOverlay').style.display='flex'" data-title="Logout" class="logout-btn">
+                <i class="ph-bold ph-sign-out"></i>
+                <span class="nav-text">Logout</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="main-wrapper">
+        <header class="bg-bglight dark:bg-pup-dark px-8 py-6 flex justify-between items-end shrink-0 transition-colors duration-300 border-b border-gray-200 dark:border-gray-800">
+            <div>
+                <h2 class="text-3xl font-extrabold text-pup-maroon dark:text-pup-gold tracking-tight mb-1">
+                    {% block page_title %}Event Approvals{% endblock %}
+                </h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                    {% block page_subtitle %}Review proposals, modify details, and verify permits.{% endblock %}
+                </p>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <button onclick="toggleGlobalTheme()" class="text-gray-500 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold transition">
+                    <i id="themeIcon" class="ph-fill ph-moon text-2xl"></i>
+                </button>
+                <div class="flex items-center gap-3">
+                    <div class="text-right leading-tight">
+                        <p class="font-bold text-sm text-gray-900 dark:text-white">{{ request.user.username|default:"admin" }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Org Adviser</p>
+                    </div>
+                    <div class="w-10 h-10 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black rounded-full flex items-center justify-center text-sm font-bold shadow-md">
+                        AD
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="app" v-cloak class="flex-1 overflow-y-auto px-8 py-6">
+            {% block content %}{% endblock %}
+            {% block modals %}{% endblock %}
+        </div>
+    </main>
+
+    <div id="logoutModalOverlay" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center border border-gray-100 dark:border-gray-800 transform transition-all">
+            
+            <i class="ph-bold ph-sign-out text-5xl text-[#dc3545] mb-2 inline-block"></i>
+            
+            <h3 class="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">Confirm Logout</h3>
+            <p class="text-gray-500 dark:text-gray-400 font-medium text-sm mb-8 leading-relaxed">
+                Are you sure you want to securely end your session?
+            </p>
+            
+            <div class="flex gap-4">
+                <button onclick="document.getElementById('logoutModalOverlay').style.display='none'" class="flex-1 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    Cancel
+                </button>
+                <form action="{% url 'admin:logout' %}" method="post" class="flex-1 m-0 p-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="/admin/login/">
+                    <button type="submit" class="w-full py-3 bg-[#dc3545] hover:bg-red-700 text-white rounded-xl font-bold transition-colors">
+                        Yes, Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Theme logic
+    const savedTheme = localStorage.getItem('theme');
+    const themeIcon = document.getElementById('themeIcon');
+    
+    if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        themeIcon.classList.replace('ph-moon', 'ph-sun');
+    }
+
+    function toggleGlobalTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            themeIcon.classList.replace('ph-sun', 'ph-moon');
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            themeIcon.classList.replace('ph-moon', 'ph-sun');
+        }
+    }
+
+    // Sidebar Toggle Logic
+    const sidebarState = localStorage.getItem('adviserSidebarState');
+    if(sidebarState === 'collapsed') {
+        document.body.classList.remove('sidebar-expanded');
+    }
+
+    function toggleSidebar() {
+        const body = document.body;
+        body.classList.toggle('sidebar-expanded');
+        if (body.classList.contains('sidebar-expanded')) {
+            localStorage.setItem('adviserSidebarState', 'expanded');
+        } else {
+            localStorage.setItem('adviserSidebarState', 'collapsed');
+        }
+    }
+</script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

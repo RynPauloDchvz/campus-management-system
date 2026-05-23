@@ -1,0 +1,187 @@
+
+
+/* Hero Background Animation */
+.hero-bg {
+    background-size: cover;
+    background-position: center;
+    transition: transform 10s ease;
+}
+.hero-container:hover .hero-bg {
+    transform: scale(1.05);
+}
+
+/* Smooth Card Hover Effects & Glowing Border */
+.action-card {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+}
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.1);
+}
+.dark .action-card:hover {
+    box-shadow: 0 15px 30px -5px rgba(255, 215, 0, 0.05);
+}
+
+/* Hide Scrollbar for Mobile Lists */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Timeline Style for Attendance History */
+.timeline-dot { position: relative; }
+.timeline-dot::after {
+    content: ''; position: absolute;
+    top: 24px; bottom: -24px; left: 50%;
+    transform: translateX(-50%); width: 2px;
+    background-color: rgba(128, 0, 0, 0.2); /* Maroon line */
+}
+.dark .timeline-dot::after { background-color: rgba(255, 215, 0, 0.2); /* Gold line */ }
+.event-item:last-child .timeline-dot::after { display: none; }
+
+/* Status Badges */
+.status-badge {
+    transition: all 0.3s ease;
+}
+.status-badge:hover {
+    transform: scale(1.05);
+}
+
+/* static/css/school_event.css */
+
+/* Hide Scrollbar for category filters */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Event Card Hover Effects */
+.event-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.event-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+.dark .event-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(255, 215, 0, 0.05);
+}
+
+/* Camera and Map Specific Styles */
+.camera-preview {
+    width: 100%;
+    height: 250px;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid transparent;
+}
+.camera-preview.scanning {
+    border-color: #D4AF37;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    animation: pulse-border 1.5s infinite;
+}
+#videoFeed, #proofFaceImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* Mirror effect para hindi baliktad ang mukha */
+}
+
+/* Leaflet Map overrides for Dark Mode */
+.dark .leaflet-layer,
+.dark .leaflet-control-zoom-in,
+.dark .leaflet-control-zoom-out,
+.dark .leaflet-control-attribution {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+@keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+}
+
+/* static/css/calendar.css */
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* =========================================
+   FULLCALENDAR CUSTOMIZATION (MODERN LOOK)
+   ========================================= */
+.fc { font-family: 'Inter', 'Rajdhani', sans-serif; }
+
+.fc .fc-toolbar-title { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 800; text-transform: uppercase; }
+.light .fc .fc-toolbar-title { color: #800000; }
+.dark .fc .fc-toolbar-title { color: #D4AF37; }
+
+.fc .fc-button-primary {
+    background-color: transparent !important; color: #6b7280 !important; border: 1px solid #e5e7eb !important;
+    border-radius: 0.5rem !important; font-weight: 700 !important; text-transform: capitalize !important;
+    padding: 0.4rem 1rem !important; transition: all 0.2s ease;
+}
+.dark .fc .fc-button-primary { color: #9ca3af !important; border-color: #374151 !important; }
+
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:hover {
+    background-color: #800000 !important; border-color: #800000 !important; color: #ffffff !important;
+}
+.dark .fc .fc-button-primary:not(:disabled):active,
+.dark .fc .fc-button-primary:not(:disabled).fc-button-active,
+.dark .fc .fc-button-primary:hover {
+    background-color: #D4AF37 !important; border-color: #D4AF37 !important; color: #000000 !important;
+}
+
+.fc-theme-standard td, .fc-theme-standard th { border-color: #f3f4f6; }
+.dark .fc-theme-standard td, .dark .fc-theme-standard th { border-color: #1f2937; }
+.fc-theme-standard th { padding: 10px 0; font-size: 0.8rem; text-transform: uppercase; color: #9ca3af; }
+
+.fc .fc-daygrid-day-number { font-weight: 600; font-size: 0.9rem; padding: 8px; }
+.light .fc .fc-daygrid-day-number { color: #111827; }
+.dark .fc .fc-daygrid-day-number { color: #f9fafb; }
+
+.fc .fc-day-today { background-color: rgba(128, 0, 0, 0.05) !important; }
+.dark .fc .fc-day-today { background-color: rgba(255, 215, 0, 0.05) !important; }
+
+.fc-event {
+    border: none !important; border-radius: 4px !important; padding: 2px 6px !important;
+    font-size: 0.75rem !important; font-weight: 700 !important; cursor: pointer !important;
+    transition: transform 0.2s ease !important; margin-bottom: 2px !important;
+}
+.fc-event:hover { transform: scale(1.02); filter: brightness(1.1); }
+
+/* =========================================
+   MOBILE FIX: FORCE 1 LINE TOOLBAR
+   ========================================= */
+@media (max-width: 640px) {
+    .fc .fc-toolbar {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        gap: 2px !important;
+        margin-bottom: 10px !important;
+    }
+    .fc .fc-toolbar-chunk {
+        display: flex !important;
+        align-items: center !important;
+        min-width: 0 !important; /* Payagan lumiit */
+        gap: 2px !important;
+    }
+    .fc .fc-button-primary {
+        padding: 0.15rem 0.3rem !important;
+        font-size: 0.6rem !important;
+    }
+    .fc .fc-toolbar-title {
+        font-size: 0.8rem !important;
+        margin: 0 0.1rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+}
+

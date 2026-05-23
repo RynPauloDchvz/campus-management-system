@@ -1,0 +1,417 @@
+{% extends 'adviser_base.html' %}
+{% load static %}
+
+{% block title %}Event Approvals | PUPUni-CAMS{% endblock %}
+{% block page_title %}Event Approvals{% endblock %}
+{% block page_subtitle %}Review incoming proposals and verify permits from Student Organizations.{% endblock %}
+
+{% block content %}
+<style>
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    [v-cloak] { display: none !important; }
+</style>
+
+<div id="app" v-cloak>
+    
+    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center mb-6 transition-colors duration-300">
+        <div class="flex items-center gap-3">
+            <span class="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2 uppercase tracking-widest"><i class="ph-bold ph-clock"></i> Action Required</span>
+        </div>
+        <div class="relative w-full sm:w-80 mt-3 sm:mt-0">
+            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input type="text" v-model="searchQuery" placeholder="Search event or org..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                    <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#111]">
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Organization</th>
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Event Title</th>
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Target Date</th>
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Status</th>
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+                    <tr v-if="filteredEvents.length === 0">
+                        <td colspan="5" class="py-12 text-center text-gray-500 font-medium">
+                            <i class="ph-fill ph-check-circle text-4xl text-green-500 mb-2 opacity-50 block"></i>
+                            No pending proposals at the moment. You're all caught up!
+                        </td>
+                    </tr>
+                    <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
+                        <td class="py-4 px-6 font-extrabold text-pup-maroon dark:text-pup-gold">[[ event.org ]]</td>
+                        <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
+                        <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400">[[ event.date ]]</td>
+                        <td class="py-4 px-6">
+                            <span v-if="event.status === 'PENDING ADVISER'" class="px-3 py-1 rounded border border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-500 text-[10px] font-extrabold uppercase tracking-wide">
+                                Initial Review
+                            </span>
+                            <span v-else-if="event.status === 'PERMIT VERIFICATION'" class="px-3 py-1 rounded border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-500 text-[10px] font-extrabold uppercase tracking-wide">
+                                Verify Signatures
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">
+                            <button @click="openModal(event)" class="bg-pup-maroon hover:bg-red-900 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-black text-white font-bold text-[11px] px-4 py-2 rounded-lg transition-colors shadow-sm">
+                                [[ event.status === 'PERMIT VERIFICATION' ? 'Check Documents' : 'Review Proposal' ]]
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div v-if="isModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+        <div class="bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+            
+            <div class="p-4 border-b border-gray-300 dark:border-gray-800 flex justify-between items-center bg-gray-100 dark:bg-[#111] shrink-0">
+                <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold text-xl"></i> 
+                    [[ selectedEvent.status === 'PERMIT VERIFICATION' ? 'Verify Signed Documents' : 'Review Event Proposal' ]]
+                </h3>
+                <button @click="closeModal" class="text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
+            </div>
+
+            <div class="p-6 sm:p-8 flex flex-col gap-6 overflow-y-auto max-h-[75vh]" v-if="selectedEvent">
+                
+                <div v-if="selectedEvent.status === 'PERMIT VERIFICATION'" class="bg-blue-50 dark:bg-blue-900/10 p-5 rounded-xl border border-blue-200 dark:border-blue-900/40 animate-fade-in shrink-0">
+                    <h4 class="text-sm font-black text-blue-800 dark:text-blue-300 mb-3 uppercase tracking-wide flex items-center gap-2">
+                        <i class="ph-bold ph-folder-open text-lg"></i> Uploaded Documents Verification
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div @click="viewActualDoc('Signed Request Letter', 'letter')" class="bg-white dark:bg-[#151515] p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group">
+                            <i class="ph-fill ph-file-text text-4xl text-gray-300 group-hover:text-blue-500 mb-2 transition-colors"></i>
+                            <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase">Signed Request Letter</span>
+                            <span class="text-[9px] text-blue-500 mt-1 block">Click to view image</span>
+                        </div>
+                        <div @click="viewActualDoc('Signed Permit', 'permit')" class="bg-white dark:bg-[#151515] p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group">
+                            <i class="ph-fill ph-certificate text-4xl text-gray-300 group-hover:text-blue-500 mb-2 transition-colors"></i>
+                            <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase">Signed Permit</span>
+                            <span class="text-[9px] text-blue-500 mt-1 block">Click to view image</span>
+                        </div>
+                        <div @click="viewActualDoc('Equipment Form', 'equipment')" class="bg-white dark:bg-[#151515] p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group">
+                            <i class="ph-fill ph-toolbox text-4xl text-gray-300 group-hover:text-blue-500 mb-2 transition-colors"></i>
+                            <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase">Equipment Form</span>
+                            <span class="text-[9px] text-blue-500 mt-1 block">Click to view image</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white text-black text-sm sm:text-base leading-relaxed p-8 sm:p-12 border border-gray-300 shadow-sm rounded-lg" style="color: #000 !important; font-family: Arial, sans-serif !important;">
+                    <p class="mb-6 font-bold">[[ selectedEvent.date ]]</p>
+                    
+                    <p class="mb-6 leading-tight">
+                        <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+                        Director<br>
+                        This Campus
+                    </p>
+
+                    <p class="mb-6 leading-tight">
+                        Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
+                    </p>
+
+                    <template v-if="parsedDescription">
+                        <template v-if="parsedDescription.type === 'standard'">
+                            <p class="mb-6">
+                                Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
+                            </p>
+                            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                            <p class="mb-4">Greetings!</p>
+                            <p class="mb-4 text-justify indent-8">
+                                To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.org ]]</strong> will be conducting a seminar entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
+                            </p>
+                            <p class="mb-8 text-justify indent-8">
+                                The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                            </p>
+                            <p class="mb-12">Thank you for your kind consideration and usual support.</p>
+                        </template>
+
+                        <template v-if="parsedDescription.type === 'excuse'">
+                            <p class="mb-6">
+                                Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong>
+                            </p>
+                            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                            <p class="mb-4">Greetings!</p>
+                            
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6 text-sm">
+                                <p class="text-blue-800 font-bold mb-2 uppercase tracking-wider text-xs"><i class="ph-bold ph-info"></i> Specific Requests:</p>
+                                <p class="text-blue-900 mb-1"><strong>Target Participants:</strong> [[ parsedDescription.target ]]</p>
+                                <p class="text-blue-900"><strong>Equipment Needed:</strong> [[ parsedDescription.equipment ]]</p>
+                            </div>
+
+                            <p class="mb-4 text-justify indent-8">
+                                The <strong>[[ selectedEvent.org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
+                            </p>
+                            <p class="mb-8 text-justify indent-8">
+                                The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                            </p>
+                            <p class="mb-12">We look forward to your response. Thank you for your kind consideration and usual support!</p>
+                        </template>
+
+                        <template v-if="parsedDescription.type === 'reschedule'">
+                            <p class="mb-6">
+                                Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong>
+                            </p>
+                            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                            <p class="mb-4">Greetings!</p>
+                            
+                            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-6 text-sm">
+                                <p class="text-yellow-800 font-bold mb-2 uppercase tracking-wider text-xs"><i class="ph-bold ph-warning-circle"></i> Reschedule Details:</p>
+                                <p class="text-yellow-900 mb-1"><strong>Reason:</strong> [[ parsedDescription.reason ]]</p>
+                            </div>
+
+                            <p class="mb-4 text-justify indent-8">
+                                We respectfully request a rescheduling for the event entitled <strong>"[[ selectedEvent.title ]]"</strong>. We propose moving the event to <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                            </p>
+                            <p class="mb-8 text-justify indent-8">
+                                [[ parsedDescription.originalDesc ]]
+                            </p>
+                            <p class="mb-12">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
+                        </template>
+                    </template>
+
+                    <p class="mb-8">Respectfully yours,</p>
+
+                    <div class="mb-8">
+                        <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+                        <p class="mt-0">[[ selectedEvent.org ]] President</p>
+                    </div>
+
+                    <div>
+                        <p class="mb-6">Noted by:</p>
+                        <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+                        <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
+                    </div>
+                </div>
+
+                <div v-if="isRejecting" class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-200 dark:border-red-900/40 animate-fade-in shrink-0">
+                    <label class="block text-xs font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest mb-1.5"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection (Required)</label>
+                    <textarea v-model="rejectReason" rows="3" placeholder="Please explain why this event proposal is being rejected..." class="w-full bg-white dark:bg-[#151515] border border-red-300 dark:border-red-800 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-red-500 text-gray-900 dark:text-white transition-colors resize-none"></textarea>
+                </div>
+
+                <div v-if="actionLoading" class="text-center py-2 text-pup-maroon dark:text-pup-gold font-bold text-sm shrink-0">
+                    <i class="ph-bold ph-spinner animate-spin"></i> Processing decision...
+                </div>
+            </div>
+
+            <div class="p-5 bg-gray-100 dark:bg-[#111] border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
+                <template v-if="!isRejecting">
+                    <button @click="initiateReject" :disabled="actionLoading" class="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold text-sm rounded-lg transition-colors disabled:opacity-50">Reject</button>
+                    <button @click="approveEvent" :disabled="actionLoading" class="px-6 py-2.5 bg-[#28a745] hover:bg-[#218838] text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md">
+                        <i class="ph-bold ph-check-circle"></i>
+                        [[ selectedEvent.status === 'PERMIT VERIFICATION' ? 'Verify Signatures & Forward' : 'Approve & Forward to Admin' ]]
+                    </button>
+                </template>
+                
+                <template v-else>
+                    <button @click="cancelReject" :disabled="actionLoading" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50">Cancel</button>
+                    <button @click="confirmReject" :disabled="actionLoading" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-md"><i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection</button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="isDocViewerOpen" class="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-fade-in" @click="closeDocViewer">
+        <div class="bg-gray-100 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col border border-gray-300 dark:border-gray-700" @click.stop>
+            <div class="p-4 border-b border-gray-300 dark:border-gray-700 flex justify-between items-center bg-gray-200 dark:bg-[#111]">
+                <h3 class="text-sm font-extrabold text-gray-800 dark:text-gray-300 tracking-widest uppercase"><i class="ph-bold ph-magnifying-glass-plus text-blue-500"></i> [[ viewedDocTitle ]]</h3>
+                <button @click="closeDocViewer" class="text-gray-500 hover:text-red-500 transition"><i class="ph-bold ph-x-circle text-2xl"></i></button>
+            </div>
+            
+            <div class="p-6 flex flex-col items-center justify-center min-h-[500px] text-center bg-white dark:bg-[#0a0a0a]">
+                <template v-if="viewedDocUrl">
+                    <img :src="viewedDocUrl" alt="Scanned Document" class="max-w-full max-h-[60vh] object-contain rounded-lg border border-gray-200 dark:border-gray-800 shadow-md mb-4">
+                    <span class="bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase flex items-center gap-2">
+                        <i class="ph-bold ph-check-circle text-lg"></i> Image Loaded Successfully
+                    </span>
+                </template>
+                <template v-else>
+                    <i class="ph-fill ph-image-broken text-8xl text-red-500/50 mb-4"></i>
+                    <h2 class="text-xl font-black text-gray-800 dark:text-white mb-2 uppercase tracking-wide">Image Not Found</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md">The student organization did not upload a valid image file or the file is missing from the server database.</p>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.DJANGO_EVENTS_DATA = JSON.parse('{{ events_json|escapejs|default:"[]" }}');
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const { createApp, ref, computed, onMounted } = Vue;
+    createApp({
+        delimiters: ['[[', ']]'],
+        setup() {
+            const isModalOpen = ref(false);
+            const selectedEvent = ref(null);
+            const actionLoading = ref(false);
+            const searchQuery = ref('');
+            
+            const isRejecting = ref(false); 
+            const rejectReason = ref('');
+
+            const isDocViewerOpen = ref(false);
+            const viewedDocTitle = ref('');
+            const viewedDocUrl = ref('');
+
+            let parsedData = [];
+            try {
+                parsedData = window.DJANGO_EVENTS_DATA || [];
+                if (typeof parsedData === 'string') {
+                    parsedData = JSON.parse(parsedData);
+                }
+            } catch(e) {}
+            
+            const events = ref(parsedData);
+
+            const filteredEvents = computed(() => {
+                if (!events.value || !Array.isArray(events.value)) return [];
+                return events.value.filter(e => {
+                    const searchLower = searchQuery.value.toLowerCase();
+                    return e.title.toLowerCase().includes(searchLower) || e.org.toLowerCase().includes(searchLower);
+                });
+            });
+
+            // 🟢 VUE PARSER PARA LINISIN ANG DESCRIPTION SA MODAL 🟢
+            const parsedDescription = computed(() => {
+                if (!selectedEvent.value) return null;
+                let desc = selectedEvent.value.description || "";
+                
+                if (desc.includes("[RESCHEDULE REQUEST]")) {
+                    let reasonStr = "";
+                    let origDescStr = "";
+                    
+                    let parts = desc.split("|");
+                    parts.forEach(part => {
+                        if(part.includes("Reason:")) reasonStr = part.replace("[RESCHEDULE REQUEST]", "").replace("Reason:", "").trim();
+                        if(part.includes("Original Desc:")) origDescStr = part.replace("Original Desc:", "").trim();
+                    });
+                    
+                    return { type: 'reschedule', reason: reasonStr, originalDesc: origDescStr };
+                } 
+                else if (desc.includes("[EXCUSE & EQUIPMENT REQUEST]")) {
+                    let targetStr = "";
+                    let equipStr = "";
+                    let origDescStr = "";
+                    
+                    let parts = desc.split("|");
+                    parts.forEach(part => {
+                        if(part.includes("Target:")) targetStr = part.replace("[EXCUSE & EQUIPMENT REQUEST]", "").replace("Target:", "").trim();
+                        if(part.includes("Equipment:")) equipStr = part.replace("Equipment:", "").trim();
+                        if(part.includes("Desc:")) origDescStr = part.replace("Desc:", "").trim();
+                    });
+
+                    return { type: 'excuse', target: targetStr, equipment: equipStr, originalDesc: origDescStr };
+                } 
+                else {
+                    return { type: 'standard', originalDesc: desc };
+                }
+            });
+
+            const openModal = (event) => { 
+                selectedEvent.value = event; 
+                isRejecting.value = false;
+                rejectReason.value = '';  
+                isModalOpen.value = true; 
+                document.body.style.overflow = 'hidden';
+            };
+            
+            const closeModal = () => { 
+                isModalOpen.value = false; 
+                document.body.style.overflow = '';
+                setTimeout(() => { selectedEvent.value = null; }, 300); 
+            };
+
+            const viewActualDoc = (title, docType) => {
+                viewedDocTitle.value = title;
+                if (docType === 'letter') {
+                    viewedDocUrl.value = selectedEvent.value.letter_url || '';
+                } else if (docType === 'permit') {
+                    viewedDocUrl.value = selectedEvent.value.permit_url || '';
+                } else if (docType === 'equipment') {
+                    viewedDocUrl.value = selectedEvent.value.equipment_url || ''; 
+                }
+                isDocViewerOpen.value = true;
+            };
+
+            const closeDocViewer = () => {
+                isDocViewerOpen.value = false;
+            };
+
+            const getCookie = (name) => {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break;
+                        }
+                    }
+                }
+                return cookieValue;
+            };
+
+            const updateEventStatus = async (status, remarks = "") => {
+                actionLoading.value = true;
+                try {
+                    const response = await fetch("{% url 'adviser_api_action' %}", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                        body: JSON.stringify({ event_id: selectedEvent.value.id, action: status, remarks: remarks })
+                    });
+                    const data = await response.json();
+                    if(data.status === 'success') {
+                        events.value = events.value.filter(e => e.id !== selectedEvent.value.id);
+                        closeModal();
+                    } else { alert(data.message); }
+                } catch(err) { alert('Error connecting to server.'); }
+                actionLoading.value = false;
+            };
+
+            const approveEvent = () => updateEventStatus('approve');
+            
+            const initiateReject = () => {
+                isRejecting.value = true;
+            };
+
+            const cancelReject = () => {
+                isRejecting.value = false;
+                rejectReason.value = '';
+            };
+
+            const confirmReject = () => {
+                if(rejectReason.value.trim() === '') {
+                    alert("Please provide a reason before confirming the rejection.");
+                    return;
+                }
+                updateEventStatus('reject', rejectReason.value);
+            };
+
+            return { 
+                events, filteredEvents, searchQuery, isModalOpen, selectedEvent, 
+                actionLoading, isRejecting, rejectReason, 
+                isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
+                openModal, closeModal, approveEvent, initiateReject, cancelReject, confirmReject,
+                parsedDescription // idinagdag ko ito para magamit sa HTML
+            }
+        }
+    }).mount('#app');
+</script>
+{% endblock %}

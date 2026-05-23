@@ -1,0 +1,306 @@
+{% extends 'organizer_base.html' %} 
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/organizer_home.css' %}">
+
+<style>
+    [v-cloak] { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+</style>
+
+<div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
+    
+    <div class="hero-container relative w-full h-[200px] sm:h-[250px] md:h-[300px] rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl mb-8 bg-gray-900">
+        
+        <img src="{% static 'images/banner/banner.jpg' %}" alt="PUP Banner" class="absolute inset-0 w-full h-full object-cover z-0">
+
+        <div class="absolute inset-0 bg-black/30 z-0"></div> 
+        <div class="absolute inset-0 bg-gradient-to-r from-pup-maroon/95 via-pup-maroon/60 to-black/80 dark:from-black/95 dark:via-pup-darkcard/80 dark:to-pup-darkbg/90 z-0"></div>
+        
+        <div class="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
+            <h1 class="font-extrabold text-2xl sm:text-4xl md:text-5xl text-pup-gold mb-2 drop-shadow-lg uppercase tracking-wide">Mabuhay, Organizer!</h1>
+            <p class="text-white/95 text-xs sm:text-sm md:text-lg font-medium tracking-wider md:tracking-widest uppercase text-shadow-md">Ang Iyong Sentro sa Pag-oorganisa ng mga Aktibidad</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-12">
+        <a href="{% url 'organizer_create_events' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
+            <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
+                <i class="ph-fill ph-calendar-plus text-2xl sm:text-3xl"></i>
+            </div>
+            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Create Event</h3>
+            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Propose & schedule new activities.</p>
+        </a>
+
+        <a href="{% url 'organizer_document_tracking' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
+            <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
+                <i class="ph-fill ph-folder-open text-2xl sm:text-3xl"></i>
+            </div>
+            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Document Tracking</h3>
+            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Track event proposals & reports.</p>
+        </a>
+
+        <a href="{% url 'organizer_manage_attendance' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
+            <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
+                <i class="ph-fill ph-users-three text-2xl sm:text-3xl"></i>
+            </div>
+            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Manage Attendance</h3>
+            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Monitor real-time participation logs.</p>
+        </a>
+
+        <a href="{% url 'organizer_analytics' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
+            <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
+                <i class="ph-fill ph-chart-pie-slice text-2xl sm:text-3xl"></i>
+            </div>
+            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Analytics Dashboard</h3>
+            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Review insights & sentiment reports.</p>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="lg:col-span-2 flex flex-col gap-8">
+            
+            <div>
+                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
+                    <i class="ph-bold ph-newspaper text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                    <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">University News</h2>
+                </div>
+                <div class="flex sm:grid sm:grid-cols-2 gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news)" class="min-w-[85%] sm:min-w-0 snap-center bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-200 dark:border-gray-800 transition-shadow cursor-pointer group">
+                        <div class="overflow-hidden h-40">
+                            <img :src="getStaticImageUrl(news.image)" :alt="news.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" @error="handleImageError">
+                        </div>
+                        <div class="p-5">
+                            <div class="text-[0.7rem] text-pup-maroon dark:text-pup-gold font-black tracking-wider mb-1 uppercase">[[ news.date ]]</div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white leading-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">[[ news.title ]]</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="ph-bold ph-warning-circle text-2xl text-red-600 dark:text-pup-gold"></i>
+                        <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Action Required</h2>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-pup-darkcard rounded-2xl border border-red-200 dark:border-pup-gold/30 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group hover:shadow-md transition-shadow relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 dark:bg-pup-gold"></div>
+                    <div class="flex gap-4 items-center pl-2">
+                        <div class="w-12 h-12 bg-red-50 dark:bg-pup-gold/10 rounded-full flex items-center justify-center text-red-500 dark:text-pup-gold">
+                            <i class="ph-fill ph-file-pdf text-2xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white text-lg">Tech Trends 2026 Concluded</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">The event has ended. Please generate the final attendance and evaluation report.</p>
+                        </div>
+                    </div>
+                    <button onclick="generateTerminalReport()" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-pup-darkbg text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="ph-bold ph-download-simple"></i> Generate Report
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="lg:col-span-1 flex flex-col gap-8">
+            
+            <div>
+                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
+                    <i class="ph-bold ph-calendar-star text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                    <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Managed Events</h2>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <div onclick="openManagedEventModal()" class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden group cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all hover:-translate-y-1">
+                        <div class="flex items-center gap-4 p-3">
+                            <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
+                                <img src="{% static 'images/background.jpg' %}" alt="Event" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            </div>
+                            <div class="flex-grow pr-2">
+                                <div class="text-[0.65rem] text-pup-maroon dark:text-pup-gold font-bold mb-0.5 uppercase">FEB 14, 2026</div>
+                                <h4 class="font-bold text-gray-900 dark:text-white text-sm leading-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">PUP General Assembly</h4>
+                                <div class="flex items-center justify-between mt-1.5">
+                                    <span class="text-[0.65rem] font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded border border-green-200 dark:border-green-800/50">Status: Approved</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
+                    <i class="ph-bold ph-clock-counter-clockwise text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                    <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Recent Logs</h2>
+                </div>
+                <div class="bg-white dark:bg-pup-darkcard rounded-3xl p-6 shadow-sm border border-gray-200 dark:border-gray-800">
+                    <div onclick="openLogModal('eval')" class="event-item flex gap-4 p-3 -ml-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#111] cursor-pointer transition-colors relative group">
+                        <div class="timeline-dot flex-shrink-0 w-10 flex flex-col items-center relative">
+                            <div class="absolute top-8 bottom-[-20px] w-[2px] bg-gray-200 dark:bg-gray-800"></div>
+                            <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 z-10">
+                                <i class="ph-bold ph-clipboard-text"></i>
+                            </div>
+                        </div>
+                        <div class="pb-2">
+                            <h4 class="font-bold text-gray-900 dark:text-white text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">Evaluation Form Drafted</h4>
+                            <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 mt-1 mb-1">Dec 10, 2025 • 02:30 PM</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-300">Drafted evaluation template for "Research Colloquium".</p>
+                        </div>
+                    </div>
+                    <div onclick="openLogModal('proposal')" class="event-item flex gap-4 p-3 -ml-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#111] cursor-pointer transition-colors relative group mt-2">
+                        <div class="timeline-dot flex-shrink-0 w-10 flex flex-col items-center">
+                            <div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 z-10">
+                                <i class="ph-bold ph-plus-circle"></i>
+                            </div>
+                        </div>
+                        <div class="pb-2">
+                            <h4 class="font-bold text-gray-900 dark:text-white text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">New Event Proposal</h4>
+                            <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 mt-1 mb-1">Nov 28, 2025 • 09:15 AM</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-300">Submitted "Tech Summit 2026" for admin approval.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<transition name="modal">
+    <div v-if="isEventModalOpen" class="fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden" v-cloak>
+        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" @click="closeModal"></div>
+        <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-[90%] sm:w-[80%] md:w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] overflow-hidden transform transition-all border border-gray-200 dark:border-gray-700">
+            <button @click="closeModal" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
+            <div class="overflow-y-auto hide-scrollbar w-full">
+                <div class="h-56 sm:h-72 w-full relative shrink-0">
+                    <img :src="getStaticImageUrl(selectedEvent.image)" :alt="selectedEvent.title" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                    <div class="absolute bottom-6 left-6 right-6">
+                        <div class="text-xs sm:text-sm text-pup-gold font-black tracking-wider mb-1 uppercase">[[ selectedEvent.date ]]</div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">[[ selectedEvent.title ]]</h2>
+                    </div>
+                </div>
+                <div class="p-6 sm:p-8 shrink-0 pb-10">
+                    <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300 mb-6 bg-gray-50 dark:bg-black/20 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                        <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                        <div>
+                            <div class="text-xs font-bold uppercase text-gray-400">Location</div>
+                            <div class="font-semibold text-gray-900 dark:text-white">[[ selectedEvent.location ]]</div>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-3">Overview</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed">[[ selectedEvent.description ]]</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</transition>
+
+<div id="managedEventModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeManagedEventModal()"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10">
+        <button onclick="closeManagedEventModal()" class="absolute top-4 right-4 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors z-[3010]">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-800 shrink-0">
+            <div class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold text-xs px-3 py-1 rounded-full uppercase mb-2 inline-flex items-center gap-1">
+                <i class="ph-fill ph-check-circle"></i> Status: Approved
+            </div>
+            <h2 class="text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2">PUP General Assembly</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400"><i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37]"></i> Feb 14, 2026 • PUP Main Campus Gym</p>
+        </div>
+        <div class="p-6 sm:p-8 overflow-y-auto hide-scrollbar flex-grow bg-gray-50 dark:bg-[#0a0a0a]">
+            <h3 class="font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Event Details</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+                Your proposal for the "PUP General Assembly" has been successfully approved by the Higher Administration. The event is now live and students can start registering.
+            </p>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-[#151515] p-4 rounded-xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
+                    <i class="ph-fill ph-users-three text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>
+                    <h4 class="font-bold text-gray-900 dark:text-white text-lg">150</h4>
+                    <p class="text-[0.65rem] uppercase font-bold text-gray-500">Registered</p>
+                </div>
+                <div class="bg-white dark:bg-[#151515] p-4 rounded-xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
+                    <i class="ph-fill ph-clipboard-text text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>
+                    <h4 class="font-bold text-gray-900 dark:text-white text-lg">Ready</h4>
+                    <p class="text-[0.65rem] uppercase font-bold text-gray-500">Evaluation Form</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="recentLogModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeLogModal()"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 text-center p-8">
+        <button onclick="closeLogModal()" class="absolute top-4 right-4 bg-gray-100 dark:bg-[#111] hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <div id="logModalIcon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2"></div>
+        <h2 id="logModalTitle" class="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">Log Action</h2>
+        <p id="logModalDate" class="text-[0.7rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-6">Date</p>
+        <div class="bg-gray-50 dark:bg-[#0a0a0a] p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+            <p id="logModalDesc" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">Description goes here.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function generateTerminalReport() {
+        const content = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset='utf-8'>
+                <title>Terminal Report</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; padding: 20px;">
+                <h1 style="text-align: center; color: #800000; margin-bottom: 0;">TERMINAL REPORT</h1>
+                <h3 style="text-align: center; color: #555; margin-top: 5px;">PUP Unisan Quezon Campus</h3>
+                <hr style="border: 1px solid #ccc; margin: 20px 0;">
+                
+                <h2>I. Event Details</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Event Name:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">Tech Trends 2026</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Date Concluded:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">April 06, 2026</td></tr>
+                    <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Status:</strong></td><td style="padding: 8px; border: 1px solid #ddd; color: green; font-weight: bold;">Successfully Completed</td></tr>
+                </table>
+
+                <h2>II. Attendance & Participation Summary</h2>
+                <ul style="line-height: 1.8;">
+                    <li><strong>Total Expected Attendees:</strong> 250 students</li>
+                    <li><strong>Actual Attendees / Participants:</strong> 235 students</li>
+                    <li><strong>Participation Rate:</strong> 94%</li>
+                    <li><strong>Evaluation Forms Received:</strong> 230</li>
+                </ul>
+
+                <h2>III. Event Highlights & Executive Summary</h2>
+                <p style="line-height: 1.6; text-align: justify;">
+                    The "Tech Trends 2026" event successfully brought together students and IT professionals to discuss emerging technologies, artificial intelligence, and the future of software development in the academic landscape. Interactive sessions and hands-on workshops were conducted with a high level of engagement from the student body. The overall feedback from the evaluation forms indicates a highly satisfactory rating.
+                </p>
+                <br><br>
+                <p style="text-align: left; font-size: 12px; color: #888;"><em>Document automatically generated via PUPUni-CAMS</em></p>
+            </body>
+            </html>
+        `;
+
+        const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Tech_Trends_2026_Terminal_Report.doc'; 
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+{% endblock content %}

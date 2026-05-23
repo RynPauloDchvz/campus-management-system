@@ -1,0 +1,284 @@
+{% extends 'organizer_base.html' %} 
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/manage_students.css' %}">
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+    
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="p-4 mb-2 text-sm rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400{% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="mb-6 border-b border-gray-200 dark:border-gray-800 pb-6 text-center sm:text-left">
+        <h1 class="font-sans font-black text-2xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide whitespace-nowrap sm:whitespace-normal">Manage Students</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-2 font-sans text-sm sm:text-base">Verify student registrations and assign them to their respective organizations.</p>
+    </div>
+
+    <div class="w-full text-center mb-6 flex flex-col items-center justify-center overflow-hidden px-2">
+        <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-2">Current View: <span class="text-pup-maroon dark:text-pup-gold">{{ org_acronym }}</span></p>
+        <div class="w-full flex justify-center">
+            <span class="bg-pup-maroon dark:bg-pup-gold text-white dark:text-black px-4 sm:px-6 py-2 rounded-full shadow-md inline-block max-w-full truncate text-xs sm:text-sm md:text-base font-black uppercase tracking-wider" title="{{ full_org_name }}">
+                {{ full_org_name }}
+            </span>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between font-sans">
+        <div class="relative w-full sm:w-96 shrink-0">
+            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search student name or number..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-colors">
+        </div>
+        
+        <div class="relative w-full sm:w-auto shrink-0">
+            <select id="yearFilter" onchange="filterTable()" class="w-full sm:w-auto bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3 font-bold text-sm cursor-pointer appearance-none pr-10 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors">
+                <option value="All">All Year Levels</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+            </select>
+            <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500"></i>
+        </div>
+    </div>
+
+    <h2 class="text-xl font-black text-gray-900 dark:text-white mb-3 uppercase tracking-wide">Pending Approvals</h2>
+    <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden font-sans mb-10">
+        <div class="hidden sm:grid grid-cols-12 gap-4 p-4 bg-gray-50 dark:bg-[#111] border-b border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <div class="col-span-5">Student Information</div>
+            <div class="col-span-3">Student Number</div>
+            <div class="col-span-2 text-center">Year Level</div>
+            <div class="col-span-2 text-center">Action</div>
+        </div>
+
+        <div class="divide-y divide-gray-100 dark:divide-gray-800">
+            {% for student in pending_students %}
+            <div class="student-item grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+                 data-id="{{ student.id }}"
+                 data-name="{{ student.full_name }}"
+                 data-search="{{ student.full_name|lower }} {{ student.student_number|lower }}"
+                 data-number="{{ student.student_number }}"
+                 data-year="{{ student.year_level }}"
+                 data-birth="{{ student.birthdate|date:'M d, Y' }}"
+                 data-avatar="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}"
+                 data-cover="{% if student.cover_photo %}{{ student.cover_photo.url }}{% else %}{% static 'images/background.jpg' %}{% endif %}"
+                 data-status="pending"
+                 onclick="handleRowClick(this)">
+                
+                <div class="col-span-5 flex items-center gap-3">
+                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <p class="font-bold text-gray-900 dark:text-white">{{ student.full_name }}</p>
+                        <p class="text-xs text-gray-500">{{ student.email_address }}</p>
+                    </div>
+                </div>
+                <div class="col-span-3 text-sm font-bold text-pup-maroon dark:text-pup-gold">{{ student.student_number }}</div>
+                <div class="col-span-2 text-center text-sm text-gray-600 dark:text-gray-400">{{ student.year_level }}</div>
+                <div class="col-span-2 text-center">
+                    <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold shadow-sm">Review</span>
+                </div>
+            </div>
+            {% empty %}
+                <div class="text-center py-12">
+                    <i class="ph-bold ph-users text-5xl text-gray-300 dark:text-gray-700 mb-3"></i>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white">No pending requests</h3>
+                    <p class="text-sm text-gray-500">There are no new registrations for {{ org_acronym }}.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <h2 class="text-xl font-black text-gray-900 dark:text-white mb-3 uppercase tracking-wide">Verified Members</h2>
+    <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden font-sans">
+        <div class="hidden sm:grid grid-cols-12 gap-4 p-4 bg-gray-50 dark:bg-[#111] border-b border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <div class="col-span-5">Student Information</div>
+            <div class="col-span-3">Student Number</div>
+            <div class="col-span-2 text-center">Year Level</div>
+            <div class="col-span-2 text-center">Status</div>
+        </div>
+
+        <div class="divide-y divide-gray-100 dark:divide-gray-800">
+            {% for student in approved_students %}
+            <div class="student-item grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+                 data-id="{{ student.id }}"
+                 data-name="{{ student.full_name }}"
+                 data-search="{{ student.full_name|lower }} {{ student.student_number|lower }}"
+                 data-number="{{ student.student_number }}"
+                 data-year="{{ student.year_level }}"
+                 data-birth="{{ student.birthdate|date:'M d, Y' }}"
+                 data-avatar="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}"
+                 data-cover="{% if student.cover_photo %}{{ student.cover_photo.url }}{% else %}{% static 'images/background.jpg' %}{% endif %}"
+                 data-status="approved"
+                 onclick="handleRowClick(this)">
+                
+                <div class="col-span-5 flex items-center gap-3">
+                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <p class="font-bold text-gray-900 dark:text-white">{{ student.full_name }}</p>
+                        <p class="text-xs text-gray-500">{{ student.email_address }}</p>
+                    </div>
+                </div>
+                <div class="col-span-3 text-sm font-bold text-gray-600 dark:text-gray-400">{{ student.student_number }}</div>
+                <div class="col-span-2 text-center text-sm text-gray-600 dark:text-gray-400">{{ student.year_level }}</div>
+                <div class="col-span-2 text-center">
+                    <span class="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold shadow-sm">Approved</span>
+                </div>
+            </div>
+            {% empty %}
+                <div class="text-center py-12">
+                    <i class="ph-bold ph-user-check text-5xl text-gray-300 dark:text-gray-700 mb-3"></i>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white">No verified members yet</h3>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div id="rawProfileModal" style="display: none;" class="fixed inset-0 z-[5000] flex items-center justify-center p-4 sm:p-6 font-sans">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="hideModal('rawProfileModal')"></div>
+    
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-lg mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors">
+        
+        <button type="button" onclick="hideModal('rawProfileModal')" class="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors z-[5010] backdrop-blur-md">
+            <i class="ph-bold ph-x"></i>
+        </button>
+
+        <div class="overflow-y-auto hide-scrollbar flex-grow">
+            <div class="h-32 sm:h-40 w-full relative bg-gray-200 dark:bg-gray-800">
+                <img id="rawCoverImg" src="" class="w-full h-full object-cover opacity-90">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+            </div>
+
+            <div class="px-6 sm:px-8 pb-8 relative -mt-12">
+                <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white dark:border-[#151515] overflow-hidden bg-gray-100 dark:bg-gray-900 shadow-md mb-4 mx-auto sm:mx-0">
+                    <img id="rawProfileImg" src="" class="w-full h-full object-cover">
+                </div>
+                
+                <div class="text-center sm:text-left">
+                    <h2 id="rawNameText" class="text-2xl font-black text-gray-900 dark:text-white font-sans leading-tight mb-1">Name</h2>
+                    <p id="rawNumberText" class="text-sm font-bold text-pup-maroon dark:text-pup-gold mb-6 tracking-wide">Number</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-8">
+                    <div class="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border border-gray-200 dark:border-gray-800 text-center">
+                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Year Level</span>
+                        <span id="rawYearText" class="block text-sm font-bold text-gray-900 dark:text-white">--</span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border border-gray-200 dark:border-gray-800 text-center">
+                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Birthdate</span>
+                        <span id="rawBirthText" class="block text-sm font-bold text-gray-900 dark:text-white">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="rawActionButtons" class="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a] flex gap-3 shrink-0">
+            <button type="button" onclick="triggerReject()" class="flex-1 py-3 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 font-bold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-sm">
+                Reject
+            </button>
+            <button type="button" onclick="triggerApprove()" class="flex-1 py-3 rounded-xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-bold hover:bg-red-950 dark:hover:bg-yellow-500 transition-colors text-sm shadow-md">
+                Approve & Assign
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="rawApproveModal" style="display: none;" class="fixed inset-0 z-[6000] flex items-center justify-center p-4 font-sans">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="hideModal('rawApproveModal')"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm mx-auto text-center p-8 z-10 border border-gray-200 dark:border-gray-800">
+        <i class="ph-fill ph-check-circle text-6xl text-green-500 mb-4 inline-block"></i>
+        <h2 class="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2 font-sans">Assign to Org?</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Are you sure you want to verify <strong id="rawConfirmNameText" class="text-gray-900 dark:text-white"></strong> and assign them to your organization?</p>
+        
+        <form action="{% url 'approve_individual_student' %}" method="POST" class="flex gap-3">
+            {% csrf_token %}
+            <input type="hidden" name="student_id" id="rawFormStudentId">
+            
+            <button type="button" onclick="hideModal('rawApproveModal')" class="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors text-sm">Yes, Assign</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentId = null;
+
+    // Bagong function: Kinukuha ang data mula sa attributes ng element na na-click
+    function handleRowClick(element) {
+        const id = element.getAttribute('data-id');
+        const name = element.getAttribute('data-name');
+        const stdNum = element.getAttribute('data-number');
+        const year = element.getAttribute('data-year');
+        const birth = element.getAttribute('data-birth');
+        const avatar = element.getAttribute('data-avatar');
+        const cover = element.getAttribute('data-cover');
+        const status = element.getAttribute('data-status');
+        
+        showModal(id, name, stdNum, year, birth, avatar, cover, status);
+    }
+
+    function showModal(id, name, stdNum, year, birth, avatar, cover, status) {
+        currentId = id;
+        
+        document.getElementById('rawNameText').innerText = name;
+        document.getElementById('rawNumberText').innerText = stdNum;
+        document.getElementById('rawYearText').innerText = year;
+        document.getElementById('rawBirthText').innerText = birth || 'Not Provided';
+        document.getElementById('rawProfileImg').src = avatar;
+        document.getElementById('rawCoverImg').src = cover;
+
+        if(status === 'approved') {
+            document.getElementById('rawActionButtons').style.display = 'none';
+        } else {
+            document.getElementById('rawActionButtons').style.display = 'flex';
+        }
+
+        document.getElementById('rawProfileModal').style.display = 'flex';
+    }
+
+    function hideModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    function triggerApprove() {
+        const name = document.getElementById('rawNameText').innerText;
+        document.getElementById('rawConfirmNameText').innerText = name;
+        document.getElementById('rawFormStudentId').value = currentId;
+        
+        hideModal('rawProfileModal');
+        document.getElementById('rawApproveModal').style.display = 'flex';
+    }
+
+    function triggerReject() {
+        hideModal('rawProfileModal');
+        alert("Reject functionality can be added here.");
+    }
+
+    function filterTable() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const yearFilter = document.getElementById('yearFilter').value;
+        const items = document.querySelectorAll('.student-item');
+
+        items.forEach(item => {
+            const textToSearch = item.getAttribute('data-search');
+            const itemYear = item.getAttribute('data-year');
+
+            const matchesQuery = textToSearch.includes(query);
+            const matchesYear = (yearFilter === 'All' || itemYear === yearFilter);
+
+            if(matchesQuery && matchesYear) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+</script>
+
+{% endblock content %}

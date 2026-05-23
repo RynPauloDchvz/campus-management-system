@@ -1,0 +1,115 @@
+{% extends 'student_base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/event_history.css' %}">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+<script>
+    const APP_STATIC_URL = "{% static 'images/' %}";
+    const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
+</script>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+        <div>
+            <a href="{% url 'student_profile' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors mb-2">
+                <i class="ph-bold ph-arrow-left"></i> Back to Profile
+            </a>
+            <h1 class="font-bold text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide font-sans">Event History</h1>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <div class="relative w-full sm:w-64">
+                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="historySearch" placeholder="Search record..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-2.5 pl-9 pr-3 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors">
+            </div>
+            
+            <div class="relative w-full sm:w-auto shrink-0">
+                <select id="historyTypeFilter" class="w-full sm:w-auto bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-none rounded-xl px-4 py-2.5 font-bold text-sm cursor-pointer appearance-none pr-8 focus:outline-none">
+                    <option value="All">All Records</option>
+                    <option value="Attendance">Attendance Only</option>
+                    <option value="Evaluation">Evaluations Only</option>
+                </select>
+                <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 pb-10" id="historyGrid">
+        </div>
+    
+    <div id="noResults" class="hidden text-center py-10 w-full col-span-full">
+        <i class="ph-bold ph-magnifying-glass-minus text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
+        <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">No Records Found</h3>
+        <p class="text-gray-500 text-sm mt-1">Try adjusting your search or filter.</p>
+    </div>
+
+</div>
+
+<div id="historyModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose" onclick="closeHistoryModal()"></div>
+    
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10">
+        
+        <button id="btnTopClose" onclick="closeHistoryModal()" class="absolute top-4 right-4 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+            <i class="ph-bold ph-x"></i>
+        </button>
+
+        <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-800 shrink-0">
+            <div id="modalType" class="bg-gray-200 dark:bg-[#111] inline-block text-gray-700 dark:text-gray-300 font-bold text-xs px-3 py-1 rounded-full uppercase mb-2">Record Type</div>
+            <h2 id="modalTitle" class="text-2xl font-black text-gray-900 dark:text-white leading-tight">Event Title</h2>
+        </div>
+
+        <div class="p-6 sm:p-8 overflow-y-auto hide-scrollbar flex-grow bg-gray-50 dark:bg-[#0a0a0a]">
+            
+            <div class="flex flex-col gap-3 mb-6">
+                <div id="modalDateTime" class="font-bold text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2"><i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> Date Time</div>
+                <div id="modalVenue" class="font-bold text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> Venue</div>
+            </div>
+
+            <div id="viewAttendanceProof" class="hidden">
+                <h3 class="font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Proof of Attendance</h3>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm w-full sm:w-1/3">
+                        <div class="w-full aspect-square rounded-xl bg-gray-200 dark:bg-black flex items-center justify-center mb-2 overflow-hidden">
+                            <i class="ph-fill ph-user text-4xl text-gray-400"></i>
+                        </div>
+                        <div class="text-[0.65rem] font-bold uppercase text-gray-400">Face Capture ID</div>
+                        <div class="text-xs font-bold text-green-600 dark:text-green-400"><i class="ph-fill ph-check-circle"></i> Matched</div>
+                    </div>
+                    <div class="flex flex-col gap-3 w-full sm:w-2/3">
+                        <div class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
+                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Timestamp Log</div>
+                            <div id="proofTime" class="font-bold text-gray-900 dark:text-white text-sm">--</div>
+                        </div>
+                        <div class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm flex-grow">
+                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-2">Location Signature</div>
+                            <div class="flex items-start gap-2">
+                                <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold shrink-0"></i>
+                                <div class="text-sm font-bold text-gray-900 dark:text-white leading-snug">Verified inside PUP Campus Perimeter.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="viewEvaluationProof" class="hidden text-center py-6">
+                <div class="w-20 h-20 mx-auto bg-pup-gold/20 rounded-full flex items-center justify-center mb-4 border border-pup-gold/50">
+                    <i class="ph-fill ph-star text-4xl text-pup-gold"></i>
+                </div>
+                <h3 class="font-black text-xl text-gray-900 dark:text-white mb-2">Evaluation Completed</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">You have successfully provided feedback for this event.</p>
+                <div class="inline-block bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-xl p-3 shadow-sm">
+                    <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Submission Date</div>
+                    <div id="evalTime" class="font-bold text-gray-900 dark:text-white text-sm">--</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/student.js' %}" defer></script>
+{% endblock content %}

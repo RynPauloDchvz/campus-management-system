@@ -1,0 +1,171 @@
+{% extends 'organizer_base.html' %} 
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<link rel="stylesheet" href="{% static 'css/manage_attendance.css' %}">
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">
+    
+    <div class="mb-8 border-b border-gray-200 dark:border-gray-800 pb-6 text-center sm:text-left">
+        <h1 class="font-black text-2xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Attendance Monitor</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base">Real-time tracking and verification of student participation.</p>
+    </div>
+
+    <div class="w-full text-center mb-6 flex flex-col items-center justify-center overflow-hidden px-2">
+        <p class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-2">Current View</p>
+        <div class="w-full flex justify-center">
+            <span class="bg-pup-maroon dark:bg-pup-gold text-white dark:text-black px-4 sm:px-6 py-2 rounded-full shadow-md inline-block max-w-full truncate text-xs sm:text-sm md:text-base font-black uppercase tracking-wider" title="{{ full_org_name }}">
+                {% if full_org_name %}
+                    {{ full_org_name }}
+                {% else %}
+                    UNASSIGNED / NO DATA PASSED
+                {% endif %}
+            </span>
+            
+            <input type="hidden" id="currentOrgAcronym" value="{{ org_acronym }}">
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 mb-6 flex flex-col lg:flex-row gap-4 items-center justify-between">
+        
+        <div class="flex flex-col sm:flex-row gap-4 w-full lg:w-auto items-center">
+            
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <span class="font-bold text-sm text-pup-maroon dark:text-pup-gold whitespace-nowrap">Year:</span>
+                <div class="relative w-full sm:w-auto">
+                    <select id="yearSelect" onchange="filterData()" class="w-full sm:w-auto bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-2 font-bold text-sm cursor-pointer appearance-none pr-10 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors">
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4" id="opt4th">4th Year</option>
+                    </select>
+                    <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500"></i>
+                </div>
+            </div>
+
+            <div class="hidden items-center gap-2 w-full sm:w-auto" id="programFilterGroup">
+                <span class="font-bold text-sm text-pup-maroon dark:text-pup-gold whitespace-nowrap">Program:</span>
+                <div class="relative w-full sm:w-auto">
+                    <select id="programSelect" onchange="filterData()" class="w-full sm:w-auto bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-2 font-bold text-sm cursor-pointer appearance-none pr-10 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors">
+                        <option value="all">All Programs</option>
+                        <option value="DIT">DIT</option>
+                        <option value="DOMT">DOMT</option>
+                    </select>
+                    <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative w-full lg:w-80 shrink-0">
+            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input type="text" id="searchInput" onkeyup="searchStudent()" placeholder="Search student name..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-2.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-colors">
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+        
+        <div class="p-5 sm:p-6 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-[#0a0a0a]">
+            <div>
+                <h3 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white" id="displayOrg">{{ org_acronym }}</h3>
+                <span class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400" id="displayProgram">{{ full_org_name }}</span>
+            </div>
+            <div class="text-right">
+                <span class="block text-2xl font-black text-pup-maroon dark:text-pup-gold" id="studentCount">0</span>
+                <span class="text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest">Students</span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto hide-scrollbar w-full">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                    <tr class="bg-gray-100 dark:bg-[#111] border-b border-gray-200 dark:border-gray-800 text-xs uppercase tracking-wider text-gray-500 font-bold">
+                        <th class="p-4 pl-6">Student Name</th>
+                        <th class="p-4">Student No.</th>
+                        <th class="p-4">Program/Course</th>
+                        <th class="p-4">Time In</th>
+                        <th class="p-4 pr-6">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-gray-100 dark:divide-gray-800">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="proofModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6 font-sans">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeProofModal()"></div>
+    
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors">
+        
+        <div class="p-6 sm:p-8 overflow-y-auto hide-scrollbar flex-grow">
+            
+            <button type="button" onclick="closeProofModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors z-[3010]">
+                <i class="ph-bold ph-x"></i>
+            </button>
+
+            <div class="mb-6">
+                <span class="inline-block bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[0.65rem] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2">Attendance Record</span>
+                <h2 id="modalEventTitle" class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight">Event Name Here</h2>
+            </div>
+            
+            <div class="border-b border-gray-200 dark:border-gray-800 pb-6 mb-6 text-sm text-gray-700 dark:text-gray-300 font-bold space-y-2">
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i>
+                    <span id="modalDateInfo">--</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i>
+                    <span id="modalVenueInfo">PUP Unisan Campus</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700">
+                    <i class="ph-fill ph-user text-pup-maroon dark:text-pup-gold text-lg"></i>
+                    <span id="modalName">Student Name</span>
+                    <span class="text-gray-400 font-normal">|</span>
+                    <span id="modalId" class="text-gray-500 font-normal">0000-00000</span>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4">Proof of Attendance</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                
+                <div class="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-[#111]">
+                    <div class="w-32 h-32 bg-gray-200 dark:bg-[#1a1a1a] rounded-xl flex items-center justify-center mb-4 overflow-hidden border border-gray-300 dark:border-gray-700 shadow-sm">
+                        <img id="proofFaceImg" src="" class="w-full h-full object-contain" alt="Face Scan">
+                    </div>
+                    <span class="text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest mb-1">Face Capture ID</span>
+                    <div class="flex items-center gap-1 text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full border border-green-200 dark:border-green-800/50">
+                        <i class="ph-fill ph-check-circle"></i> Matched
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    
+                    <div class="border border-gray-200 dark:border-gray-800 rounded-2xl p-5 bg-gray-50 dark:bg-[#111]">
+                        <span class="block text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest mb-2">Timestamp Log</span>
+                        <h4 id="geoTime" class="font-bold text-gray-900 dark:text-white text-base">--</h4>
+                        <div class="mt-2 text-xs font-bold px-2.5 py-1 rounded-full inline-block border" id="modalStatusBadge">--</div>
+                    </div>
+
+                    <div class="border border-gray-200 dark:border-gray-800 rounded-2xl p-5 bg-gray-50 dark:bg-[#111] flex-grow flex flex-col">
+                        <span class="block text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest mb-2">Location Signature</span>
+                        <div class="flex items-start gap-2 mb-3">
+                            <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-xl shrink-0 mt-0.5"></i>
+                            <span class="font-bold text-gray-900 dark:text-white text-sm">Verified inside PUP Campus Perimeter.</span>
+                        </div>
+                        <div id="realMap" class="w-full h-24 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-10 mt-auto"></div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/organizer.js' %}?v={% now 'U' %}"></script>
+{% endblock content %}

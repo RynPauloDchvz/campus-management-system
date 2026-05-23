@@ -1,0 +1,300 @@
+{% extends 'admin_base.html' %} 
+{% load static %}
+
+{% block title %}Organization Monitor | PUPUni-CAMS{% endblock %}
+
+{% block page_title %}Organization Monitor{% endblock %}
+{% block page_subtitle %}Track events, performance, and analytics for student organizations.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom Styling para sa Event List */
+    .event-row { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--border); transition: 0.2s; cursor: pointer; }
+    .event-row:last-child { border-bottom: none; }
+    .event-row:hover { background: var(--hover-bg); border-radius: 12px; padding: 20px 15px; margin: 0 -15px; }
+    
+    .event-info { display: flex; align-items: center; gap: 20px; }
+    .event-icon { width: 55px; height: 55px; border-radius: 14px; background: var(--card-bg); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--accent); border: 2px solid var(--border); font-weight: 900; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    
+    .event-title { font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin-bottom: 5px; display: block; transition: 0.2s;}
+    .event-row:hover .event-title { color: var(--accent); }
+    
+    .event-meta { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; display: flex; gap: 20px; }
+    .event-meta span { display: flex; align-items: center; gap: 6px; }
+    
+    .event-action i { font-size: 1.8rem; color: var(--border); transition: 0.2s; }
+    .event-row:hover .event-action i { color: var(--accent); transform: translateX(5px); }
+
+    /* Modal Analytics Styles */
+    .modal-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 25px; }
+    .modal-stat-box { background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; }
+    .modal-stat-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 5px; display: block; letter-spacing: 0.5px;}
+    .modal-stat-value { font-size: 2rem; font-weight: 800; color: var(--text-main); line-height: 1;}
+    .chart-panel { background: var(--input-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .chart-panel h4 { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 15px; letter-spacing: 0.5px;}
+
+    @media(max-width: 900px) {
+        .modal-charts { grid-template-columns: 1fr; }
+        .event-meta { flex-direction: column; gap: 5px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="control-bar">
+    <div class="filter-group">
+        <span style="font-weight: 800; text-transform: uppercase; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 1px;">Monitoring:</span>
+        <span id="currentOrgDisplay" class="badge badge-approved" style="font-size: 1.1rem; padding: 8px 15px;">All Organizations</span>
+    </div>
+    <div class="search-box">
+        <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+        <input type="text" id="searchEvent" class="search-input" placeholder="Search event title..." onkeyup="filterMonitor()">
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Total Events</span>
+        <span class="stat-value" id="statTotalEvents">0</span>
+        <i class="ph-fill ph-calendar-check stat-icon" style="color: #3b82f6;"></i>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Total Attendees</span>
+        <span class="stat-value" id="statTotalAttendees">0</span>
+        <i class="ph-fill ph-users stat-icon" style="color: #10b981;"></i>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Avg Rating</span>
+        <span class="stat-value" id="statAvgRating">0.0</span>
+        <i class="ph-fill ph-star stat-icon" style="color: #f59e0b;"></i>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Avg Sentiment</span>
+        <span class="stat-value" id="statAvgSentiment">0%</span>
+        <i class="ph-fill ph-smiley stat-icon" style="color: #ef4444;"></i>
+    </div>
+</div>
+
+<div class="table-section">
+    <div class="table-header">
+        <h2 class="table-title">Event Performance Records</h2>
+    </div>
+    
+    <div id="monitorListContainer" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+        </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div id="analyticsModal" class="modal">
+    <div class="modal-box" style="max-width: 850px; text-align: left; padding: 35px; width: 95%;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
+            <div>
+                <span id="modalOrgTag" class="badge badge-approved" style="margin-bottom: 10px; font-size: 0.8rem;">--</span>
+                <h2 id="modalEventTitle" style="font-size: 1.8rem; font-weight: 900; color: var(--text-main); margin-bottom: 5px; letter-spacing: -0.5px;">--</h2>
+                <p id="modalDate" style="color: var(--text-muted); font-size: 0.95rem; font-weight: 600;"><i class="ph-bold ph-calendar-blank"></i> --</p>
+            </div>
+            <button onclick="closeModal('analyticsModal')" style="background: none; border: none; font-size: 2rem; color: var(--text-muted); cursor: pointer; transition: 0.2s;"><i class="ph-bold ph-x"></i></button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+            <div class="modal-stat-box">
+                <span class="modal-stat-label">Avg Score</span>
+                <span class="modal-stat-value" style="color: #3b82f6;" id="modalScore">--</span>
+            </div>
+            <div class="modal-stat-box">
+                <span class="modal-stat-label">Sentiment</span>
+                <span class="modal-stat-value" style="color: #10b981;" id="modalSent">--</span>
+            </div>
+            <div class="modal-stat-box">
+                <span class="modal-stat-label">Attendees</span>
+                <span class="modal-stat-value" id="modalAttendees">--</span>
+            </div>
+            <div class="modal-stat-box">
+                <span class="modal-stat-label">Top Rated Area</span>
+                <span class="modal-stat-value" style="font-size: 1.2rem; display: flex; height: 100%; align-items: center; justify-content: center;" id="modalTopArea">--</span>
+            </div>
+        </div>
+
+        <div class="modal-charts">
+            <div class="chart-panel">
+                <h4>Ratings per Criteria</h4>
+                <div style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="modalBarChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-panel">
+                <h4 style="text-align: center;">Attendee Demographics</h4>
+                <div style="position: relative; height: 220px; width: 100%; display: flex; justify-content: center;">
+                    <canvas id="modalPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 🟢 DUMMY DATA FOR ALL ORGS 🟢
+    const systemEvents = [
+        { id: 1, org: 'ITO', title: "Seminar: AI Ethics", date: "May 12, 2026", attendees: 120, score: 4.8, sentiment: 92, topArea: 'Guest Speaker', barData: [4.9, 4.8, 4.2, 3.8, 4.7], pieData: [45, 30, 25, 20] },
+        { id: 2, org: 'YEO', title: "Startup Pitch Deck 101", date: "April 20, 2026", attendees: 80, score: 4.5, sentiment: 85, topArea: 'Relevance', barData: [4.5, 4.6, 4.0, 4.8, 4.5], pieData: [10, 40, 30, 0] },
+        { id: 3, org: 'ITO', title: "Web Dev Bootcamp", date: "May 05, 2026", attendees: 210, score: 3.9, sentiment: 65, topArea: 'Facilities', barData: [3.5, 3.8, 4.0, 4.2, 3.9], pieData: [100, 60, 40, 10] },
+        { id: 4, org: 'FTO', title: "Future Educators Symposium", date: "March 15, 2026", attendees: 150, score: 4.9, sentiment: 96, topArea: 'Time Mgt.', barData: [5.0, 4.9, 4.8, 4.7, 4.9], pieData: [50, 50, 25, 25] },
+        { id: 5, org: 'SSC', title: "General Assembly 2026", date: "Feb 10, 2026", attendees: 500, score: 4.1, sentiment: 75, topArea: 'Overall', barData: [4.0, 4.1, 4.5, 3.5, 4.2], pieData: [200, 150, 100, 50] },
+        { id: 6, org: 'PAS', title: "Public Policy Forum", date: "Jan 22, 2026", attendees: 95, score: 4.6, sentiment: 88, topArea: 'Relevance', barData: [4.8, 4.5, 4.6, 4.0, 4.7], pieData: [20, 25, 30, 20] }
+    ];
+
+    let barChartInstance = null;
+    let pieChartInstance = null;
+
+    // 🟢 Kunin ang Org parameter sa URL at I-set ang Variable 🟢
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentOrg = urlParams.get('org') ? urlParams.get('org').toUpperCase() : 'ALL';
+
+    // Update ng Badge Name sa UI
+    const orgDisplay = document.getElementById('currentOrgDisplay');
+    if (currentOrg === 'ALL') {
+        orgDisplay.innerText = "All Organizations Overview";
+    } else {
+        orgDisplay.innerText = currentOrg + " Events";
+    }
+
+    // 🟢 RENDER LIST & STATS 🟢
+    function filterMonitor() {
+        const searchVal = document.getElementById('searchEvent').value.toLowerCase();
+        
+        const filtered = systemEvents.filter(e => {
+            const matchOrg = currentOrg === 'ALL' || e.org === currentOrg;
+            const matchSearch = e.title.toLowerCase().includes(searchVal);
+            return matchOrg && matchSearch;
+        });
+
+        renderList(filtered);
+        updateStats(filtered);
+    }
+
+    function updateStats(data) {
+        document.getElementById('statTotalEvents').innerText = data.length;
+        if(data.length === 0) {
+            document.getElementById('statTotalAttendees').innerText = '0';
+            document.getElementById('statAvgRating').innerText = '0.0';
+            document.getElementById('statAvgSentiment').innerText = '0%';
+            return;
+        }
+        
+        let totalAtt = 0, totalScore = 0, totalSent = 0;
+        data.forEach(e => { totalAtt += e.attendees; totalScore += e.score; totalSent += e.sentiment; });
+        
+        document.getElementById('statTotalAttendees').innerText = totalAtt;
+        document.getElementById('statAvgRating').innerText = (totalScore / data.length).toFixed(1);
+        document.getElementById('statAvgSentiment').innerText = Math.round(totalSent / data.length) + '%';
+    }
+
+    function renderList(data) {
+        const container = document.getElementById('monitorListContainer');
+        container.innerHTML = '';
+        
+        if (data.length === 0) {
+            container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-muted); font-weight: 600;">No event records found for ${currentOrg === 'ALL' ? 'any organization' : currentOrg}.</div>`;
+            return;
+        }
+
+        data.forEach(event => {
+            let scoreColor = event.score >= 4.0 ? '#10b981' : '#f59e0b';
+            
+            const card = `
+                <div class="event-row" onclick="openAnalyticsModal(${event.id})">
+                    <div class="event-info">
+                        <div class="event-icon">${event.org}</div>
+                        <div>
+                            <span class="event-title">${event.title}</span>
+                            <div class="event-meta">
+                                <span><i class="ph-bold ph-calendar-blank"></i> ${event.date}</span>
+                                <span><i class="ph-bold ph-users"></i> ${event.attendees}</span>
+                                <span style="color: ${scoreColor}; font-weight: 800;"><i class="ph-fill ph-star"></i> ${event.score.toFixed(1)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="event-action"><i class="ph-bold ph-caret-right"></i></div>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+    }
+
+    // 🟢 MODAL LOGIC & CHARTS 🟢
+    function openAnalyticsModal(id) {
+        const event = systemEvents.find(e => e.id === id);
+        if (!event) return;
+
+        document.getElementById('modalOrgTag').innerText = event.org + " Event";
+        document.getElementById('modalEventTitle').innerText = event.title;
+        document.getElementById('modalDate').innerText = event.date;
+        document.getElementById('modalScore').innerText = event.score.toFixed(1);
+        document.getElementById('modalSent').innerText = event.sentiment + '%';
+        document.getElementById('modalAttendees').innerText = event.attendees;
+        document.getElementById('modalTopArea').innerText = event.topArea;
+
+        // Gamitin ang built-in modal function ng admin_base
+        const modal = document.getElementById('analyticsModal');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+        
+        setTimeout(() => renderCharts(event.barData, event.pieData), 100);
+    }
+
+    function renderCharts(barData, pieData) {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#9ca3af' : '#6b7280';
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+        // BAR CHART
+        const ctxBar = document.getElementById('modalBarChart').getContext('2d');
+        if (barChartInstance) barChartInstance.destroy();
+        barChartInstance = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: ['Relevance', 'Speaker', 'Time Mgt.', 'Facilities', 'Overall'],
+                datasets: [{
+                    data: barData,
+                    backgroundColor: ['#3b82f6', '#3b82f6', '#f59e0b', '#ef4444', '#10b981'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { max: 5.0, grid: { color: gridColor }, ticks: { color: textColor, font: {family: 'Inter', weight: 'bold'} } },
+                    y: { grid: { display: false }, ticks: { color: textColor, font: {family: 'Inter', weight: 'bold'} } }
+                }
+            }
+        });
+
+        // PIE CHART
+        const ctxPie = document.getElementById('modalPieChart').getContext('2d');
+        if (pieChartInstance) pieChartInstance.destroy();
+        pieChartInstance = new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: ['1st Yr', '2nd Yr', '3rd Yr', '4th Yr'],
+                datasets: [{
+                    data: pieData,
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#800000'],
+                    borderWidth: 0, hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '70%',
+                plugins: { legend: { position: 'bottom', labels: { color: textColor, font: {family: 'Inter', weight: 'bold'} } } }
+            }
+        });
+    }
+
+    window.addEventListener('load', filterMonitor);
+</script>
+{% endblock %}

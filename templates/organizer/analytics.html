@@ -1,0 +1,310 @@
+{% extends 'organizer_base.html' %} 
+{% load static %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="{% static 'css/organizer_analytics.css' %}">
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">
+    
+    <div class="mb-8 border-b border-gray-200 dark:border-gray-800 pb-6 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="font-black text-2xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Analytics Dashboard</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">Comprehensive event evaluation and sentiment reports.</p>
+        </div>
+
+        <div class="w-full sm:w-auto bg-gray-50 dark:bg-[#151515] p-3 sm:px-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex items-center justify-center gap-3">
+            <span class="font-bold text-sm text-gray-500 uppercase tracking-widest">Organization:</span>
+            <span class="font-black text-pup-maroon dark:text-pup-gold text-xl">{{ org_acronym }}</span>
+            <input type="hidden" id="orgSelect" value="{{ org_acronym }}">
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center transition-colors">
+            <i class="ph-fill ph-users-three text-3xl text-blue-600 dark:text-blue-500 mb-2"></i>
+            <h4 class="text-2xl font-black text-gray-900 dark:text-white" id="statTotalEval">565</h4>
+            <span class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Total Evaluations</span>
+        </div>
+        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center transition-colors">
+            <i class="ph-fill ph-star text-3xl text-yellow-500 dark:text-yellow-400 mb-2"></i>
+            <h4 class="text-2xl font-black text-gray-900 dark:text-white" id="statAvgStar">4.3</h4>
+            <span class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Average Rating</span>
+        </div>
+        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center transition-colors">
+            <i class="ph-fill ph-smiley text-3xl text-green-600 dark:text-green-500 mb-2"></i>
+            <h4 class="text-2xl font-black text-gray-900 dark:text-white" id="statPosSentiment">81%</h4>
+            <span class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Positive Sentiment</span>
+        </div>
+        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center transition-colors">
+            <i class="ph-fill ph-check-circle text-3xl text-pup-maroon dark:text-pup-gold mb-2"></i>
+            <h4 class="text-2xl font-black text-gray-900 dark:text-white mt-1">4</h4>
+            <span class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">Events Managed</span>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-[#151515] rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 sm:p-8 transition-colors">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b border-gray-100 dark:border-gray-800 pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2 tracking-tight">
+                    History Analytics
+                </h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">Select a record to analyze performance</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <div class="relative flex-grow sm:w-64">
+                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg"></i>
+                    <input type="text" id="searchEvent" placeholder="Search event title..." class="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 text-gray-900 dark:text-white transition-colors" onkeyup="filterEvents()">
+                </div>
+                <div class="relative shrink-0 w-full sm:w-auto">
+                    <i class="ph-bold ph-calendar-blank absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg"></i>
+                    <input type="month" id="filterMonth" class="w-full sm:w-48 pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 text-gray-900 dark:text-white transition-colors cursor-pointer appearance-none" onchange="filterEvents()">
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar" id="eventListContainer">
+            </div>
+    </div>
+
+</div>
+
+<div id="performanceModal" class="fixed inset-0 z-[2000] hidden items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closePerformanceModal()"></div>
+    
+    <div class="relative bg-[#ffffff] dark:bg-[#151515] w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl z-10 flex flex-col transform translate-y-full transition-transform duration-300 ease-out border border-transparent dark:border-gray-800" id="performanceModalBox">
+        
+        <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-4 sm:hidden"></div>
+
+        <div class="p-6 sm:p-8">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <span class="text-[10px] font-black tracking-[0.2em] text-blue-600 dark:text-blue-400 uppercase">Performance Report</span>
+                    <h2 class="text-2xl font-black text-gray-900 dark:text-white leading-tight mt-1" id="modalEventTitle">--</h2>
+                </div>
+                <button onclick="closePerformanceModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm text-center transition-colors">
+                    <span class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Average Score</span>
+                    <div class="flex items-baseline justify-center gap-1">
+                        <span class="text-4xl font-black text-blue-600 dark:text-blue-500" id="modalAvgScore">--</span>
+                        <span class="text-sm font-bold text-gray-400 dark:text-gray-600">/ 5.0</span>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm text-center transition-colors">
+                    <span class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Sentiment</span>
+                    <div class="flex items-baseline justify-center gap-1">
+                        <span class="text-4xl font-black" id="modalSentiment">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8 bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-gray-800 transition-colors">
+                <span class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4 pl-2">Response Distribution</span>
+                <div class="w-full h-[180px] relative">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+
+            <a href="{% url 'organizer_feedback_detail' %}" class="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98] block text-center text-decoration-none">
+                View Detailed Feedback
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom Scrollbar for Event List */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #374151; }
+</style>
+
+<script>
+    // 🟢 DUMMY DATA PARA SA EVENTS (Connected ito later sa Database mo) 🟢
+    const eventHistoryData = [
+        { id: 1, title: "Seminar: AI Ethics", date: "May 12, 2026", respondents: 120, score: 4.8, sentiment: 92, dist: [2, 5, 10, 30, 95] },
+        { id: 2, title: "Workshop: Python Basics", date: "May 10, 2026", respondents: 85, score: 4.2, sentiment: 78, dist: [5, 15, 25, 60, 45] },
+        { id: 3, title: "Web Dev Bootcamp", date: "May 05, 2026", respondents: 210, score: 3.9, sentiment: 65, dist: [15, 25, 45, 80, 50] },
+        { id: 4, title: "Tech Leadership Summit", date: "April 28, 2026", respondents: 150, score: 4.6, sentiment: 88, dist: [3, 8, 15, 55, 85] },
+        { id: 5, title: "IT Week Opening Salvo", date: "March 15, 2026", respondents: 320, score: 4.9, sentiment: 96, dist: [1, 2, 5, 20, 150] }
+    ];
+
+    let distChartInstance = null;
+
+    // 🟢 RENDER EVENT LIST (Tumatanggap ng data para sa Filter) 🟢
+    function renderEventList(dataToRender) {
+        const container = document.getElementById('eventListContainer');
+        container.innerHTML = '';
+        
+        if (dataToRender.length === 0) {
+            container.innerHTML = `
+                <div class="py-10 text-center text-gray-500 dark:text-gray-400 font-medium">
+                    <i class="ph-fill ph-magnifying-glass text-4xl mb-2 opacity-50"></i>
+                    <p>No events found matching your filter.</p>
+                </div>
+            `;
+            return;
+        }
+
+        dataToRender.forEach(event => {
+            let dotColor = event.score >= 4.0 ? 'bg-green-500 dark:bg-green-400' : 'bg-orange-500 dark:bg-orange-400';
+
+            const card = `
+                <div onclick="openPerformanceModal(${event.id})" class="cursor-pointer group bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 sm:p-6 flex items-center justify-between hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all">
+                    <div class="flex items-start gap-4">
+                        <div class="w-2.5 h-2.5 rounded-full ${dotColor} mt-2.5 shadow-sm shrink-0"></div>
+                        <div>
+                            <h3 class="font-black text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">${event.title}</h3>
+                            <p class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 mt-1"><i class="ph-bold ph-calendar-blank"></i> ${event.date} &nbsp;•&nbsp; <i class="ph-bold ph-users"></i> ${event.respondents} Respondents</p>
+                        </div>
+                    </div>
+                    <i class="ph-bold ph-caret-right text-gray-400 dark:text-gray-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all text-xl"></i>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+    }
+
+    // 🟢 SEARCH & CALENDAR FILTER LOGIC 🟢
+    function filterEvents() {
+        const searchTerm = document.getElementById('searchEvent').value.toLowerCase();
+        const monthFilter = document.getElementById('filterMonth').value; // Format: "YYYY-MM"
+
+        const filtered = eventHistoryData.filter(event => {
+            const matchSearch = event.title.toLowerCase().includes(searchTerm);
+            
+            let matchDate = true;
+            if (monthFilter) {
+                // Convert text date "May 12, 2026" to Date object, then to "YYYY-MM" string for exact match
+                const d = new Date(event.date);
+                if (!isNaN(d)) {
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const eventMonthStr = `${yyyy}-${mm}`;
+                    matchDate = (eventMonthStr === monthFilter);
+                }
+            }
+
+            return matchSearch && matchDate;
+        });
+
+        renderEventList(filtered);
+    }
+
+    // 🟢 OPEN MODAL & RENDER CHART 🟢
+    function openPerformanceModal(id) {
+        const event = eventHistoryData.find(e => e.id === id);
+        if (!event) return;
+
+        document.getElementById('modalEventTitle').innerText = event.title;
+        document.getElementById('modalAvgScore').innerText = event.score.toFixed(1);
+        
+        const sentimentEl = document.getElementById('modalSentiment');
+        sentimentEl.innerText = event.sentiment + '%';
+        
+        if (event.sentiment >= 80) sentimentEl.className = "text-4xl font-black text-green-600 dark:text-green-500";
+        else if (event.sentiment >= 60) sentimentEl.className = "text-4xl font-black text-green-600 dark:text-green-500"; 
+        else sentimentEl.className = "text-4xl font-black text-orange-600 dark:text-orange-500";
+
+        const modal = document.getElementById('performanceModal');
+        const box = document.getElementById('performanceModalBox');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        setTimeout(() => {
+            box.classList.remove('translate-y-full');
+            box.classList.add('translate-y-0');
+            renderSmoothChart(event.dist);
+        }, 10);
+    }
+
+    // 🟢 CLOSE MODAL 🟢
+    function closePerformanceModal() {
+        const modal = document.getElementById('performanceModal');
+        const box = document.getElementById('performanceModalBox');
+        
+        box.classList.remove('translate-y-0');
+        box.classList.add('translate-y-full');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+
+    // 🟢 SMOOTH AREA CHART 🟢
+    function renderSmoothChart(dataArray) {
+        const ctx = document.getElementById('distributionChart').getContext('2d');
+        
+        let gradient = ctx.createLinearGradient(0, 0, 0, 180);
+        gradient.addColorStop(0, 'rgba(37, 99, 235, 0.5)'); 
+        gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+
+        if (distChartInstance) { distChartInstance.destroy(); }
+
+        distChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['1★', '2★', '3★', '4★', '5★'],
+                datasets: [{
+                    data: dataArray,
+                    borderColor: '#3b82f6', 
+                    borderWidth: 3,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.4, 
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#3b82f6',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)', // Dark background for tooltip
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        padding: 10,
+                        titleFont: { family: 'Inter', size: 12 },
+                        bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    y: { 
+                        display: false, 
+                        beginAtZero: true,
+                        max: Math.max(...dataArray) + 15
+                    }, 
+                    x: { 
+                        grid: { display: false }, 
+                        ticks: { color: '#9ca3af', font: { family: 'Inter', weight: 'bold', size: 12 } },
+                        border: { display: false }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+            }
+        });
+    }
+
+    // Initialize list on load
+    window.addEventListener('load', () => {
+        renderEventList(eventHistoryData);
+    });
+</script>
+{% endblock content %}

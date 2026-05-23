@@ -1,0 +1,229 @@
+{% extends 'organizer_base.html' %}
+{% load static %}
+
+{% block content %}
+<div v-pre>
+    <style>
+        .doc-vault-card { transition: all 0.2s ease-in-out; }
+        .doc-vault-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+
+    <textarea id="vault-data" style="display: none;">{{ vault_json|safe }}</textarea>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans min-h-screen">
+        
+        <div class="flex flex-col gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+            <div>
+                <a href="{% url 'organizer_profile' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Profile
+                </a>
+            </div>
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h1 class="font-black text-2xl sm:text-3xl lg:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Document Vault</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base max-w-md">Upload your signed physical documents (Request Letter, Permit, and Equipment Form) to finalize event publication.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="vaultGrid">
+        </div>
+
+        <div id="noVaultResults" class="hidden text-center py-20 bg-white dark:bg-[#151515] rounded-3xl border border-gray-200 border-dashed dark:border-gray-800">
+            <i class="ph-fill ph-folder-open text-6xl text-gray-300 dark:text-gray-700 mb-4 block"></i>
+            <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">No events ready for upload</h3>
+            <p class="text-gray-500 text-sm mt-1">Events that have passed initial Admin approval will appear here.</p>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 sm:p-6">
+        <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeUploadModal()"></div>
+        
+        <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] border border-gray-200 dark:border-gray-700 z-10 animate-in fade-in zoom-in duration-200">
+            
+            <div class="p-6 sm:p-8 border-b border-gray-100 dark:border-gray-800 shrink-0">
+                <h2 id="modalVaultTitle" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-1 leading-tight">Event Title</h2>
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Attach Signed Documents</p>
+            </div>
+
+            <div class="p-6 sm:p-8 overflow-y-auto flex-grow" style="-ms-overflow-style: none; scrollbar-width: none;">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 text-center">1. Signed Request Letter</p>
+                        <div onclick="document.getElementById('letterFileInput').click()" class="w-full aspect-[3/4] bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-800 flex flex-col items-center justify-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-colors overflow-hidden group relative">
+                            <img id="letterPreview" class="hidden w-full h-full object-cover absolute inset-0 z-10">
+                            <div id="letterPlaceholder" class="text-center p-4 relative z-0">
+                                <i class="ph-bold ph-file-text text-3xl text-gray-400 group-hover:text-pup-maroon dark:group-hover:text-pup-gold"></i>
+                                <p class="mt-2 text-xs font-bold text-gray-500">Tap to upload</p>
+                            </div>
+                        </div>
+                        <input type="file" id="letterFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'letterPreview', 'letterPlaceholder')">
+                    </div>
+
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 text-center">2. Permit to Conduct Activity</p>
+                        <div onclick="document.getElementById('permitFileInput').click()" class="w-full aspect-[3/4] bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-800 flex flex-col items-center justify-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-colors overflow-hidden group relative">
+                            <img id="permitPreview" class="hidden w-full h-full object-cover absolute inset-0 z-10">
+                            <div id="permitPlaceholder" class="text-center p-4 relative z-0">
+                                <i class="ph-bold ph-certificate text-3xl text-gray-400 group-hover:text-pup-maroon dark:group-hover:text-pup-gold"></i>
+                                <p class="mt-2 text-xs font-bold text-gray-500">Tap to upload</p>
+                            </div>
+                        </div>
+                        <input type="file" id="permitFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'permitPreview', 'permitPlaceholder')">
+                    </div>
+
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 text-center">3. Equipment Form</p>
+                        <div onclick="document.getElementById('equipmentFileInput').click()" class="w-full aspect-[3/4] bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-800 flex flex-col items-center justify-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-colors overflow-hidden group relative">
+                            <img id="equipmentPreview" class="hidden w-full h-full object-cover absolute inset-0 z-10">
+                            <div id="equipmentPlaceholder" class="text-center p-4 relative z-0">
+                                <i class="ph-bold ph-toolbox text-3xl text-gray-400 group-hover:text-pup-maroon dark:group-hover:text-pup-gold"></i>
+                                <p class="mt-2 text-xs font-bold text-gray-500">Tap to upload</p>
+                            </div>
+                        </div>
+                        <input type="file" id="equipmentFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'equipmentPreview', 'equipmentPlaceholder')">
+                    </div>
+
+                </div>
+
+                <div class="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-200 dark:border-blue-900/30 flex items-start gap-3">
+                    <i class="ph-fill ph-info text-blue-600 dark:text-blue-400 text-xl shrink-0 mt-0.5"></i>
+                    <p class="text-xs text-blue-800 dark:text-blue-300 leading-relaxed font-medium">Please ensure that <strong>all three documents</strong> have complete manual signatures before submitting to the Adviser.</p>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a] shrink-0">
+                <div class="flex gap-3">
+                    <button onclick="closeUploadModal()" class="flex-1 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
+                    <button onclick="submitDocuments()" id="btnSubmitVault" class="flex-1 py-3.5 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors text-sm shadow-lg flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-paper-plane-tilt"></i> Submit Documents
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let vaultData = [];
+        let currentEventId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const raw = document.getElementById('vault-data').value;
+                if (raw.trim() !== '') vaultData = JSON.parse(raw);
+                renderVault();
+            } catch(e) { console.error(e); }
+        });
+
+        function renderVault() {
+            const grid = document.getElementById('vaultGrid');
+            const empty = document.getElementById('noVaultResults');
+            if(vaultData.length === 0) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+            
+            grid.innerHTML = vaultData.map(doc => `
+                <div class="doc-vault-card bg-white dark:bg-[#151515] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 text-[10px] font-black px-2.5 py-1 rounded uppercase">Initial Approval Granted</span>
+                        <i class="ph-fill ph-folder-lock text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                    </div>
+                    <h3 class="font-black text-gray-900 dark:text-white text-lg leading-tight mb-1 truncate">${doc.eventName}</h3>
+                    <p class="text-xs font-bold text-gray-500 mb-6 uppercase tracking-wider">${doc.orgName}</p>
+                    
+                    <div class="space-y-3">
+                        <button onclick="openUploadModal(${doc.id}, '${doc.eventName}')" class="w-full py-3 rounded-lg bg-pup-maroon dark:bg-pup-gold text-white dark:text-black text-xs font-black hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                            <i class="ph-bold ph-upload-simple"></i> Upload Signed Documents
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openUploadModal(id, title) {
+            currentEventId = id;
+            document.getElementById('modalVaultTitle').innerText = title;
+            document.getElementById('uploadModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            
+            // Reset image previews for all 3
+            document.getElementById('letterPreview').classList.add('hidden');
+            document.getElementById('letterPlaceholder').classList.remove('hidden');
+            document.getElementById('letterFileInput').value = '';
+
+            document.getElementById('permitPreview').classList.add('hidden');
+            document.getElementById('permitPlaceholder').classList.remove('hidden');
+            document.getElementById('permitFileInput').value = '';
+
+            document.getElementById('equipmentPreview').classList.add('hidden');
+            document.getElementById('equipmentPlaceholder').classList.remove('hidden');
+            document.getElementById('equipmentFileInput').value = '';
+        }
+
+        function previewImage(event, previewId, placeholderId) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.getElementById(previewId);
+                img.src = e.target.result;
+                img.classList.remove('hidden');
+                document.getElementById(placeholderId).classList.add('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function submitDocuments() {
+            const letterInput = document.getElementById('letterFileInput');
+            const permitInput = document.getElementById('permitFileInput');
+            const equipmentInput = document.getElementById('equipmentFileInput'); // Bagong input
+            
+            // Validation para sa tatlong files
+            if(!letterInput.files[0] || !permitInput.files[0] || !equipmentInput.files[0]) {
+                alert("Please attach ALL THREE documents: Signed Request Letter, Permit to Conduct Activity, and Equipment Form.");
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitVault');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Submitting...';
+            
+            const formData = new FormData();
+            formData.append('event_id', currentEventId);
+            formData.append('letter_image', letterInput.files[0]);
+            formData.append('permit_image', permitInput.files[0]);
+            formData.append('equipment_image', equipmentInput.files[0]); // Idinagdag sa request papuntang views.py
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch("{% url 'upload_signed_permit' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert("Documents successfully uploaded! Sent to Adviser for verification.");
+                    location.reload(); 
+                } else {
+                    alert("Error: " + data.message);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Submit Documents';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("System error. Please try again.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Submit Documents';
+            });
+        }
+    </script>
+</div>
+{% endblock content %}

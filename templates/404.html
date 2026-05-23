@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | PUPUni-CAMS</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        pup: {
+                            maroon: '#800000',
+                            gold: '#D4AF37',
+                            dark: '#0a0a0a',
+                            card: '#161616',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+        .text-glow-sm { text-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+        .bg-grid {
+            background-image: radial-gradient(#1a1a1a 1px, transparent 1px);
+            background-size: calc(10 * 1px) calc(10 * 1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-pup-dark text-white font-sans antialiased flex flex-col justify-center items-center p-4 sm:p-6 bg-grid selection:bg-pup-gold selection:text-black">
+
+    <div class="w-full max-w-xl bg-pup-card border border-gray-800 p-6 sm:p-12 rounded-3xl shadow-2xl text-center animate-fadeIn relative overflow-hidden group">
+        
+        <div class="absolute -top-20 -right-20 w-40 h-40 bg-pup-maroon/30 rounded-full blur-[80px] group-hover:bg-pup-maroon/50 transition-colors duration-500"></div>
+
+        <div class="mb-6 inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-pup-dark border border-gray-800 relative z-10 shadow-inner">
+            <i class="ph-fill ph-detective text-4xl sm:text-5xl text-pup-gold text-glow-sm"></i>
+        </div>
+
+        <h1 class="font-extrabold text-6xl sm:text-8xl text-white tracking-tighter text-glow-sm mb-1 relative z-10">404</h1>
+        
+        <h2 class="font-bold text-lg sm:text-2xl text-pup-gold uppercase tracking-wider mb-5 relative z-10">
+            Hala! Nawawala ang Iskolar!
+        </h2>
+        
+        <div class="w-16 sm:w-20 h-1 bg-pup-maroon mx-auto mb-6 rounded-full"></div>
+        
+        <p class="text-gray-400 text-[0.8rem] sm:text-base leading-relaxed mb-10 max-w-md mx-auto relative z-10 text-justify">
+            Pasensya na, pero looks like mali ang URL or inaccessible na 'tong page sa <strong>Campus Activities Management System</strong>. Baka expired na 'tong event or cancel na 'yung permit. Double check mo na lang, okay?
+        </p>
+
+        <div class="flex flex-row gap-2 sm:gap-3 justify-center relative z-10 w-full">
+            <button onclick="window.history.back()" class="flex-1 px-2 sm:px-6 py-3 rounded-xl border border-gray-700 text-gray-300 font-semibold hover:bg-gray-800 hover:text-white transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-[0.7rem] sm:text-sm">
+                <i class="ph-bold ph-arrow-left text-base"></i> Go Back muna
+            </button>
+            <a href="/" class="flex-1 px-2 sm:px-6 py-3 rounded-xl bg-pup-maroon hover:bg-[#600000] text-white font-semibold transition-all shadow-md flex items-center justify-center gap-1.5 sm:gap-2 text-[0.7rem] sm:text-sm">
+                <i class="ph-bold ph-house text-base"></i> Uwi sa Homepage
+            </a>
+        </div>
+
+    </div>
+
+    <div class="mt-8 text-center w-full p-4">
+        <p class="text-[0.6rem] sm:text-[0.65rem] text-gray-700 font-medium uppercase tracking-widest flex items-center justify-center gap-2">
+            <img src="https://upload.wikimedia.org/wikipedia/en/thumb/c/c8/Polytechnic_University_of_the_Philippines_Official_Seal.svg/1200px-Polytechnic_University_of_the_Philippines_Official_Seal.svg.png" class="h-3 sm:h-4 opacity-50 grayscale" alt="PUP Seal">
+            PUP Uni-CAMS • Official Page
+        </p>
+    </div>
+
+</body>
+</html>

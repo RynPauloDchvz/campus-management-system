@@ -1,0 +1,369 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Manage Organizers | PUPUni-CAMS{% endblock %}
+
+{% block page_title %}Manage Student Organizers{% endblock %}
+{% block page_subtitle %}Create and monitor accounts for organization representatives.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* --- MANAGE ACCOUNTS SPECIFIC STYLES --- */
+    .actions-dropdown { position: relative; display: inline-block; }
+    .actions-menu { display: none; position: absolute; right: 0; top: 100%; background: var(--card-bg); min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index: 100; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
+    .actions-dropdown.active .actions-menu { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    .action-item { padding: 10px 15px; display: flex; align-items: center; gap: 10px; color: var(--text-main); text-decoration: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+    .action-item:hover { background: var(--hover-bg); color: var(--accent); }
+    .action-item.danger:hover { background: rgba(220, 53, 69, 0.1); color: var(--danger); }
+    
+    .user-cell { display: flex; align-items: center; gap: 12px; }
+    .user-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+    .user-name { font-weight: 700; color: var(--text-main); display: block; }
+    .user-username { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Modals Custom Styles */
+    .form-group { margin-bottom: 15px; text-align: left; }
+    .form-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input { padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-family: 'Inter'; font-size: 0.9rem; width: 100%; outline: none; }
+    .form-input:focus { border-color: var(--accent); }
+</style>
+{% endblock %}
+
+{% block tabs %}
+<div class="tab-container">
+    <a href="{% url 'manage_accounts' %}" class="tab-link">Student</a>
+    <a href="{% url 'manage_organizers' %}" class="tab-link active">Student Org</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="control-bar" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+    <div class="filter-group">
+        <select id="orgFilter" class="custom-select" onchange="filterUsers()">
+            <option value="all">All Organizations</option>
+            <option value="ITO">ITO</option>
+            <option value="ITS">ITS</option>
+            <option value="YEO">YEO</option>
+            <option value="FTO">FTO</option>
+            <option value="PAS">PAS</option>
+            <option value="CAO">CAO</option>
+            <option value="NEWS">NEWS (NEWSETTE)</option>
+            <option value="PRIDE">PRIDE (PRIDEVerse)</option>
+            <option value="ROTC">ROTC</option>
+            <option value="PUSO">PUSO</option>
+            <option value="SSC">SSC</option>
+        </select>
+        <div class="search-box">
+            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search name or username..." onkeyup="filterUsers()">
+        </div>
+    </div>
+    
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <!-- 🟢 HISTORY BUTTON 🟢 -->
+        <a href="{% url 'account_history' %}" class="btn-cancel" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+            <i class="ph-bold ph-clock-counter-clockwise"></i> Account History
+        </a>
+
+        <!-- 🟢 CREATE BUTTON FOR STUDENT ORG 🟢 -->
+        <button class="btn-primary" onclick="openModal('createOrgModal')" style="display: flex; align-items: center; gap: 8px;">
+            <i class="ph-bold ph-user-plus"></i> Create Org Account
+        </button>
+    </div>
+</div>
+
+<div class="table-section">
+    <div style="overflow-x: auto; max-height: 65vh;">
+        <table id="usersTable">
+            <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
+                <tr>
+                    <th>Organizer Details</th>
+                    <th>Login Username</th>
+                    <th>Assigned Org</th>
+                    <th>Status</th>
+                    <th style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data populated by JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- 🟢 CREATE MODAL 🟢 -->
+<div id="createOrgModal" class="modal">
+    <div class="modal-box" style="max-width: 450px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
+            <div>
+                <h3 class="modal-title" style="margin: 0; font-size: 1.2rem;">Create Org Account</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Set up login credentials for student organizers.</p>
+            </div>
+            <button onclick="closeModal('createOrgModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="createForm" @submit.prevent>
+            <div class="form-group">
+                <label class="form-label">Full Name (Representative)</label>
+                <input type="text" id="c_name" required placeholder="e.g. Juan Dela Cruz" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Assign Organization</label>
+                <select id="c_org" required class="form-input" style="cursor: pointer;">
+                    <option value="" disabled selected>Select Organization</option>
+                    <option value="ITO">ITO - Information Technology Org</option>
+                    <option value="ITS">ITS - Institute of Technology Society</option>
+                    <option value="YEO">YEO - Young Entrepreneurship Org</option>
+                    <option value="FTO">FTO - Future Teacher Org</option>
+                    <option value="PAS">PAS - Public Administration Society</option>
+                    <option value="CAO">CAO - Culture and Arts</option>
+                    <option value="NEWS">NEWS - NEWSETTE</option>
+                    <option value="PRIDE">PRIDE - PRIDEVerse</option>
+                    <option value="ROTC">ROTC - Reserve Officers' Training Corps</option>
+                    <option value="PUSO">PUSO - PUP Unisan Sports Org</option>
+                    <option value="SSC">SSC - Supreme Student Council</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Login Username</label>
+                <input type="text" id="c_username" required placeholder="e.g. ORG-ITO-01" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Login Password</label>
+                <input type="password" id="c_password" required placeholder="Enter secure password" class="form-input">
+            </div>
+            <div class="modal-actions" style="justify-content: flex-end; margin-top: 25px;">
+                <button type="button" class="btn-cancel" onclick="closeModal('createOrgModal')">Cancel</button>
+                <button type="button" class="btn-primary" onclick="submitAction('create')">Create Account</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 🟢 EDIT MODAL 🟢 -->
+<div id="editOrgModal" class="modal">
+    <div class="modal-box" style="max-width: 450px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
+            <div>
+                <h3 class="modal-title" style="margin: 0; font-size: 1.2rem;">Edit Credentials</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Modify the login access of the organizer.</p>
+            </div>
+            <button onclick="closeModal('editOrgModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="editForm" @submit.prevent>
+            <input type="hidden" id="e_id">
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" id="e_name" required class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Organization</label>
+                <select id="e_org" required class="form-input" style="cursor: pointer;">
+                    <option value="ITO">ITO - Information Technology Org</option>
+                    <option value="ITS">ITS - Institute of Technology Society</option>
+                    <option value="YEO">YEO - Young Entrepreneurship Org</option>
+                    <option value="FTO">FTO - Future Teacher Org</option>
+                    <option value="PAS">PAS - Public Administration Society</option>
+                    <option value="CAO">CAO - Culture and Arts</option>
+                    <option value="NEWS">NEWS - NEWSETTE</option>
+                    <option value="PRIDE">PRIDE - PRIDEVerse</option>
+                    <option value="ROTC">ROTC - Reserve Officers' Training Corps</option>
+                    <option value="PUSO">PUSO - PUP Unisan Sports Org</option>
+                    <option value="SSC">SSC - Supreme Student Council</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Login Username</label>
+                <input type="text" id="e_username" required class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">New Password (Optional)</label>
+                <input type="password" id="e_password" placeholder="Leave blank to keep current password" class="form-input">
+            </div>
+            <div class="modal-actions" style="justify-content: flex-end; margin-top: 25px;">
+                <button type="button" class="btn-cancel" onclick="closeModal('editOrgModal')">Cancel</button>
+                <button type="button" class="btn-primary" onclick="submitAction('edit')">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 🟢 DEACTIVATE / DELETE MODAL 🟢 -->
+<div id="deleteModal" class="modal">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <i class="ph-fill ph-warning-circle" style="font-size: 4rem; color: var(--danger); margin-bottom: 15px;"></i>
+        <h3 class="modal-title" style="margin-bottom: 10px;">Deactivate Access?</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">
+            Are you sure you want to deactivate and remove the access of <strong id="d_name" style="color: var(--text-main);"></strong>? Their record will be moved to Account History.
+        </p>
+        <input type="hidden" id="d_id">
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeModal('deleteModal')">Cancel</button>
+            <button type="button" class="btn-primary" style="background: var(--danger);" onclick="submitAction('delete')">Yes, Deactivate</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 🟢 KUMUKUHA NG TUNAY NA DATA SA DATABASE 🟢
+    let usersData = JSON.parse('{{ organizers_json|escapejs|default:"[]" }}');
+
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        
+        if(data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted);">No active accounts found.</td></tr>`;
+            return;
+        }
+
+        data.forEach(user => {
+            let badgeClass = user.status === 'Active' ? 'badge-approved' : 'badge-rejected';
+
+            const row = `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <img src="${user.avatar}" class="user-avatar">
+                            <div>
+                                <span class="user-name">${user.name}</span>
+                                <span class="user-username">Organizer Representative</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-family: monospace; font-weight: 600;">${user.username}</td>
+                    <td style="font-weight: 800; color: var(--accent);">${user.org}</td>
+                    <td><span class="badge ${badgeClass}">${user.status}</span></td>
+                    <td style="text-align: center;">
+                        <div class="actions-dropdown" id="dropdown-${user.id}">
+                            <button class="btn-action-small" onclick="toggleMenu(${user.id})">
+                                <i class="ph-bold ph-dots-three-outline-vertical"></i> Manage
+                            </button>
+                            <div class="actions-menu" style="text-align:left;">
+                                <a class="action-item" onclick="openEditModal(${user.id})"><i class="ph-bold ph-pencil-simple"></i> Edit Credentials</a>
+                                <hr style="border-color: var(--border); margin:0;">
+                                <a class="action-item danger" onclick="openDeleteModal(${user.id})"><i class="ph-bold ph-warning-circle"></i> Deactivate Access</a>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function filterUsers() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const org = document.getElementById('orgFilter').value;
+        
+        const filtered = usersData.filter(user => {
+            const matchSearch = user.name.toLowerCase().includes(search) || user.username.toLowerCase().includes(search);
+            const matchOrg = org === 'all' || user.org === org;
+            return matchSearch && matchOrg;
+        });
+        renderTable(filtered);
+    }
+
+    function toggleMenu(id) {
+        document.querySelectorAll('.actions-dropdown').forEach(d => {
+            if(d.id !== `dropdown-${id}`) d.classList.remove('active');
+        });
+        document.getElementById(`dropdown-${id}`).classList.toggle('active');
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.btn-action-small') && !event.target.matches('.ph-dots-three-outline-vertical')) {
+            document.querySelectorAll('.actions-dropdown').forEach(d => d.classList.remove('active'));
+        }
+    }
+
+    // 🟢 MODAL CONTROLS 🟢
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            // Clear passwords security
+            if(document.getElementById('c_password')) document.getElementById('c_password').value = '';
+            if(document.getElementById('e_password')) document.getElementById('e_password').value = '';
+        }, 200);
+    }
+
+    // NAKA-PREFILL ANG DATA PAG CLINICK ANG EDIT
+    function openEditModal(id) {
+        const user = usersData.find(u => u.id === id);
+        document.getElementById('e_id').value = user.id;
+        document.getElementById('e_name').value = user.name;
+        document.getElementById('e_org').value = user.org;
+        document.getElementById('e_username').value = user.username;
+        document.getElementById('e_password').value = ''; 
+        openModal('editOrgModal');
+    }
+
+    function openDeleteModal(id) {
+        const user = usersData.find(u => u.id === id);
+        document.getElementById('d_id').value = user.id;
+        document.getElementById('d_name').innerText = user.name + ' (' + user.org + ')';
+        openModal('deleteModal');
+    }
+
+    // 🟢 DATABASE API REQUESTS (CREATE, EDIT, DELETE) 🟢
+    async function submitAction(action) {
+        let payload = { action: action };
+
+        if (action === 'create') {
+            payload.name = document.getElementById('c_name').value;
+            payload.org = document.getElementById('c_org').value;
+            payload.username = document.getElementById('c_username').value;
+            payload.password = document.getElementById('c_password').value;
+            if(!payload.name || !payload.org || !payload.username || !payload.password) return alert("Fill all fields.");
+        } 
+        else if (action === 'edit') {
+            payload.id = document.getElementById('e_id').value;
+            payload.name = document.getElementById('e_name').value;
+            payload.org = document.getElementById('e_org').value;
+            payload.username = document.getElementById('e_username').value;
+            payload.password = document.getElementById('e_password').value; // optional
+            if(!payload.name || !payload.org || !payload.username) return alert("Name, Org, and Username are required.");
+        } 
+        else if (action === 'delete') {
+            payload.id = document.getElementById('d_id').value;
+        }
+
+        const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
+
+        try {
+            const response = await fetch("{% url 'organizer_api_action' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': tokenValue },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if(data.status === 'success') {
+                alert(data.message);
+                location.reload(); // Refresh para makita ang update galing database
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (error) {
+            alert("Server Error. Please try again.");
+        }
+    }
+
+    window.addEventListener('load', () => {
+        renderTable(usersData);
+    });
+</script>
+{% endblock %}

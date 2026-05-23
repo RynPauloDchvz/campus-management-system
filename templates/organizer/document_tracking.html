@@ -1,0 +1,112 @@
+{% extends 'organizer_base.html' %}
+{% load static %}
+
+{% block content %}
+<div v-pre>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .doc-card { transition: all 0.2s ease-in-out; }
+        .doc-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+    </style>
+
+    <textarea id="django-docs-data" style="display: none;">{{ documents_json|safe }}</textarea>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans min-h-screen">
+
+        <div class="flex flex-col gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+            <div>
+                <a href="{% url 'organizer_profile' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Profile
+                </a>
+            </div>
+
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div class="w-full md:w-auto text-center md:text-left">
+                    <h1 class="font-black text-2xl sm:text-3xl lg:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide whitespace-nowrap">Document Tracking</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base max-w-md mx-auto md:mx-0">Monitor the real-time approval progress and physical location of your event proposals.</p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 w-full md:w-auto shrink-0">
+                    <div class="relative w-full sm:w-64">
+                        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="trackSearch" onkeyup="filterTrackingDocs()" placeholder="Search Event Name..." class="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors shadow-sm text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div class="relative w-full sm:w-auto">
+                        <select id="trackStatusFilter" onchange="filterTrackingDocs()" class="w-full sm:w-auto bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-none rounded-xl px-5 py-3 font-bold text-sm cursor-pointer appearance-none pr-10 focus:outline-none shadow-sm">
+                            <option value="All">All Documents</option>
+                            <option value="Pending">Pending Approvals</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                        <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pb-10" id="trackingGrid">
+            </div>
+        
+        <div id="noResults" class="hidden text-center py-16 w-full col-span-full bg-white dark:bg-[#151515] rounded-3xl border border-gray-200 border-dashed dark:border-gray-800">
+            <i class="ph-fill ph-files text-5xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+            <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">No Documents Found</h3>
+            <p class="text-gray-500 text-sm mt-1">You haven't submitted any event proposals yet, or no matches found.</p>
+        </div>
+
+    </div>
+
+    <div id="trackingModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6 font-sans">
+        <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose" onclick="closeTrackingModal()"></div>
+        
+        <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors animate-in fade-in zoom-in duration-200">
+            
+            <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-800 shrink-0 bg-gray-50 dark:bg-[#0a0a0a]">
+                <div class="flex items-center gap-2 mb-3">
+                    <span id="modalOrgName" class="bg-gray-200 dark:bg-[#111] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-[0.65rem] px-3 py-1 rounded-full uppercase tracking-widest">ORG</span>
+                    <span id="modalStatusBadge" class="font-bold text-[0.65rem] px-3 py-1 rounded-full uppercase tracking-widest border">Status</span>
+                </div>
+                <h2 id="modalEventTitle" class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight mb-1">Event Title</h2>
+                <p id="modalDocType" class="text-sm font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1"><i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold"></i> Official Event Proposal Document</p>
+            </div>
+
+            <div class="p-6 sm:p-8 overflow-y-auto flex-grow" style="-ms-overflow-style: none; scrollbar-width: none;">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-8">
+                    
+                    <div class="md:col-span-2 flex flex-col">
+                        <h3 class="text-xs font-bold uppercase text-gray-400 mb-4 tracking-wider">Approval Progress</h3>
+                        <div id="timelineContainer" class="timeline space-y-0">
+                            </div>
+                    </div>
+
+                    <div class="md:col-span-3 flex flex-col">
+                        <h3 class="text-xs font-bold uppercase text-gray-400 mb-4 tracking-wider">Current Physical Location</h3>
+                        <div class="bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-gray-800 flex flex-col flex-grow">
+                            <div class="flex items-start gap-2 mb-3">
+                                <i class="ph-fill ph-map-pin text-xl text-pup-maroon dark:text-pup-gold animate-bounce shrink-0"></i>
+                                <strong id="modalCurrentLoc" class="text-gray-900 dark:text-white text-sm sm:text-base leading-tight">Office Name with Full Address</strong>
+                            </div>
+                            <div id="docMap" class="w-full h-48 sm:h-full min-h-[250px] rounded-xl border border-gray-300 dark:border-gray-700 shadow-inner z-10 overflow-hidden relative"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div id="modalFooter" class="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a] shrink-0">
+                <button onclick="closeTrackingModal()" class="w-full py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
+                    Close Tracker
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/organizer.js' %}"></script>
+
+{% endblock content %}

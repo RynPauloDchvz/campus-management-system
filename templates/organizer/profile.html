@@ -1,0 +1,566 @@
+{% extends 'organizer_base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/organizer_profile.css' %}">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+<style>
+    .editable-field-active {
+        background-color: rgba(0, 0, 0, 0.04) !important;
+        border-color: rgba(128, 0, 0, 0.4) !important;
+        border-style: dashed !important;
+        border-width: 2px !important;
+    }
+    .dark .editable-field-active {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 215, 0, 0.4) !important;
+    }
+    .notif-read {
+        opacity: 0.6;
+        background-color: #f9fafb !important;
+        box-shadow: none !important;
+    }
+    .dark .notif-read {
+        background-color: #111111 !important;
+    }
+    
+    /* HORIZONTAL SCROLLBAR HIDING */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+
+<div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300">
+    
+    <div class="h-32 sm:h-64 w-full bg-gray-200 relative group transition-colors" id="coverPhotoWrapper">
+        <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover opacity-90" id="coverImage" onerror="this.src=window.DEFAULT_LOGO">
+        
+        <div id="coverEditOverlay" class="absolute inset-0 z-10 bg-black/40 items-center justify-center cursor-pointer transition-colors" style="display: none;" onclick="document.getElementById('coverFileInput').click()">
+            <div class="bg-black/60 p-3 sm:p-4 rounded-full shadow-md backdrop-blur-sm hover:bg-[#800000] dark:hover:bg-[#D4AF37] transition-colors group-hover/cover">
+                <i class="ph-bold ph-camera text-xl sm:text-2xl text-white dark:hover:text-black"></i>
+            </div>
+        </div>
+        <input type="file" id="coverFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'coverImage')">
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        <div class="flex flex-col sm:flex-row items-center sm:items-end justify-between mb-8 gap-4 sm:gap-6 -mt-16 sm:-mt-24 px-2 sm:px-0 text-center sm:text-left">
+            
+            <div class="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-6 w-full min-w-0">
+                <div class="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 z-30 mx-auto sm:mx-0" id="avatarWrapper">
+                    <div class="w-full h-full rounded-full border-4 sm:border-[6px] border-[#800000] dark:border-[#D4AF37] overflow-hidden bg-white shadow-md relative transition-colors">
+                        <img src="https://ui-avatars.com/api/?name={{ full_name|urlencode }}&background=800000&color=fff" class="w-full h-full object-cover" id="profileImage" alt="Profile">
+                        
+                        <div id="profileEditOverlay" class="absolute inset-0 z-20 hidden bg-black/50 items-center justify-center cursor-pointer hover:bg-black/70 transition-colors" style="display: none;" onclick="document.getElementById('profileFileInput').click()">
+                            <i class="ph-bold ph-camera-plus text-2xl sm:text-4xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                <input type="file" id="profileFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'profileImage')">
+
+                <div class="pb-1 sm:pb-3 flex-grow w-full min-w-0">
+                    <div class="mb-2">
+                        <h1 class="text-2xl sm:text-4xl font-black text-[#800000] dark:text-[#D4AF37] leading-tight truncate transition-colors uppercase tracking-wide bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md px-4 py-1.5 rounded-xl border border-gray-200/50 dark:border-gray-800/50 shadow-sm inline-block max-w-full" id="profileFullNameDisplay">
+                            {{ full_name }}
+                        </h1>
+                    </div>
+                    
+                    <div id="nameEditContainer" class="items-center justify-center sm:justify-start gap-2 mb-2 w-full max-w-sm mx-auto sm:mx-0" style="display: none;">
+                        <input type="text" id="inputEditName" value="{{ full_name }}" class="w-full bg-white dark:bg-[#111] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-lg sm:text-xl font-black text-gray-900 dark:text-white outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors text-center sm:text-left uppercase tracking-wide shadow-lg">
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-[0.65rem] sm:text-sm font-bold text-gray-600 dark:text-gray-400 transition-colors">
+                        <span class="bg-gray-200 dark:bg-gray-800 px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white uppercase shadow-sm">{{ org_acronym }} PRESIDENT</span>
+                        <span class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200/50 dark:border-gray-800/50 shadow-sm"><i class="ph-fill ph-calendar-check text-green-600 dark:text-green-400"></i> {{ completed_events|length }} Events Published</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pb-1 sm:pb-3 shrink-0 flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto mt-4 sm:mt-0 relative z-40">
+                
+                <a href="{% url 'organizer_event_vault' %}" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-[#800000] dark:text-[#D4AF37] px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Document Vault (Signed Permits)">
+                    <i class="ph-bold ph-folder-lock text-base sm:text-lg"></i>
+                </a>
+
+                <a href="{% url 'organizer_document_tracking' %}" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Document Tracking">
+                    <i class="ph-bold ph-files text-base sm:text-lg"></i>
+                </a>
+                <a href="{% url 'organizer_attendance_history' %}" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Attendance History">
+                    <i class="ph-bold ph-clock-counter-clockwise text-base sm:text-lg"></i>
+                </a>
+                <button onclick="openSettingsModal()" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Notification Settings">
+                    <i id="notifBellIcon" class="ph-bold ph-bell-ringing text-base sm:text-lg transition-transform"></i>
+                </button>
+                <button id="editBtn" onclick="toggleOrgProfileEdit()" class="bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-[0.65rem] sm:text-sm shadow-sm transition-colors hover:opacity-90 flex items-center gap-1 sm:gap-2">
+                    <i class="ph-bold ph-pencil-simple text-sm sm:text-lg"></i> <span class="hidden sm:inline" id="editBtnText">Edit Profile</span><span class="sm:hidden" id="editBtnMobile">Edit</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-10 px-2 sm:px-0">
+            <div class="bg-white dark:bg-[#151515] py-3 sm:py-4 rounded-xl text-center border border-gray-200 dark:border-gray-800 shadow-sm transition-colors px-1 sm:px-2 flex flex-col justify-center">
+                <span class="block text-[0.55rem] sm:text-[0.65rem] font-bold uppercase text-gray-500 mb-0.5 sm:mb-1 tracking-wider truncate">Student No.</span>
+                <span class="block text-[0.7rem] sm:text-base font-black text-[#800000] dark:text-[#D4AF37] transition-colors truncate">{{ student_number }}</span>
+            </div>
+            
+            <div class="bg-white dark:bg-[#151515] py-3 sm:py-4 rounded-xl text-center border border-gray-200 dark:border-gray-800 shadow-sm transition-colors px-1 sm:px-2 flex flex-col justify-center">
+                <span class="block text-[0.55rem] sm:text-[0.65rem] font-bold uppercase text-gray-500 mb-0.5 sm:mb-1 tracking-wider truncate">Organization</span>
+                <span class="block text-[0.7rem] sm:text-base font-black text-gray-900 dark:text-white uppercase transition-colors truncate">{{ org_acronym }}</span>
+            </div>
+            
+            <div class="bg-white dark:bg-[#151515] py-3 sm:py-4 rounded-xl text-center border border-gray-200 dark:border-gray-800 shadow-sm transition-colors px-1 sm:px-2 flex flex-col justify-center">
+                <span class="block text-[0.55rem] sm:text-[0.65rem] font-bold uppercase text-gray-500 mb-0.5 sm:mb-1 tracking-wider truncate">Status</span>
+                <span class="flex items-center justify-center gap-1 text-[0.7rem] sm:text-base font-black text-green-600 dark:text-green-400 transition-colors truncate">
+                    <i class="ph-fill ph-check-circle"></i> Active
+                </span>
+            </div>
+        </div>
+
+        <div class="mb-10 mt-6 px-2 sm:px-0">
+            <div class="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-800 pb-3">
+                <h2 class="text-lg sm:text-xl font-black text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-wide">
+                    <i class="ph-fill ph-check-square-offset text-green-500"></i> Completed Events
+                </h2>
+                <a href="{% url 'organizer_analytics' %}" class="text-[10px] sm:text-xs font-bold text-[#800000] dark:text-[#D4AF37] hover:underline uppercase transition-colors flex items-center gap-1">
+                    <span class="hidden sm:inline">View Analytics</span><span class="sm:hidden">Analytics</span> <i class="ph-bold ph-chart-bar"></i>
+                </a>
+            </div>
+            
+            {% if completed_events %}
+                <div class="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar">
+                    {% for evt in completed_events %}
+                        <div onclick="openAnalyticsModal(this)" 
+                             data-title="{{ evt.event_title }}"
+                             class="shrink-0 w-64 sm:w-80 bg-white dark:bg-[#151515] p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col justify-between cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all snap-start">
+                            <div>
+                                <h4 class="font-black text-gray-900 dark:text-white text-base mb-1 truncate">{{ evt.event_title }}</h4>
+                                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest"><i class="ph-bold ph-calendar"></i> {{ evt.event_date }}</p>
+                            </div>
+                            <div class="mt-5 flex justify-between items-center">
+                                <span class="px-3 py-1 rounded border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1">
+                                    Published
+                                </span>
+                                <i class="ph-bold ph-chart-line-up text-gray-400"></i>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200 border-dashed dark:border-gray-800 p-8 text-center shadow-sm transition-colors flex flex-col items-center justify-center min-h-[150px]">
+                    <i class="ph-fill ph-calendar-blank text-4xl text-gray-300 dark:text-gray-700 mb-2"></i>
+                    <h3 class="font-bold text-gray-500 dark:text-gray-400 text-sm">No completed events yet.</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-600 mt-1">Fully approved events will be displayed in this section.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-10 mt-6 px-2 sm:px-0">
+            <div class="flex flex-row items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-800 pb-3 gap-2">
+                <h2 class="text-base sm:text-xl font-black text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-wide truncate">
+                    <i class="ph-fill ph-bell text-gray-500 shrink-0"></i> 
+                    <span class="truncate">Alerts</span>
+                </h2>
+                
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
+                    <button onclick="markAllAsRead()" class="text-[10px] sm:text-xs font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors uppercase flex items-center gap-1">
+                        <i class="ph-bold ph-checks"></i> <span class="hidden sm:inline">Mark all read</span><span class="sm:hidden">Read All</span>
+                    </button>
+                    <span class="text-gray-300 dark:text-gray-700 hidden sm:inline">|</span>
+                    <a href="{% url 'organizer_message_history' %}" class="text-[10px] sm:text-xs font-bold text-[#800000] dark:text-[#D4AF37] hover:underline uppercase transition-colors flex items-center gap-1">
+                        <span class="hidden sm:inline">View All</span><span class="sm:hidden">All</span> <i class="ph-bold ph-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            
+            {% if recent_events or pending_students %}
+                <div class="flex flex-col gap-3" id="notificationList">
+                    
+                    {% for student in pending_students %}
+                        <div onclick="window.location.href=this.dataset.url" 
+                             data-url="{% url 'organizer_manage_students' %}"
+                             data-notif-id="stud_{{ student.id }}"
+                             class="notif-item bg-white dark:bg-[#151515] p-4 rounded-xl shadow-sm border border-blue-200 dark:border-blue-900/40 cursor-pointer hover:shadow-md transition-all flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                    <i class="ph-bold ph-user-plus text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900 dark:text-white text-sm sm:text-base">New Student Registration</h4>
+                                    <p class="text-xs font-bold text-blue-600 dark:text-blue-500 uppercase tracking-wide mt-0.5">
+                                        {{ student.full_name }} is waiting for approval
+                                    </p>
+                                </div>
+                            </div>
+                            <i class="ph-bold ph-caret-right text-gray-400"></i>
+                        </div>
+                    {% endfor %}
+
+                    {% for evt in recent_events %}
+                        <div onclick="openEventMessage(this)" 
+                             data-id="evt_{{ evt.id }}"
+                             data-title="{{ evt.event_title }}"
+                             data-status="{{ evt.event_status }}"
+                             data-remarks="{{ evt.remarks|default:'' }}"
+                             class="notif-item bg-white dark:bg-[#151515] p-4 rounded-xl shadow-sm border cursor-pointer hover:shadow-md transition-all flex items-center justify-between
+                             {% if evt.event_status == 'Approved' %} border-green-200 dark:border-green-900/40 
+                             {% elif evt.event_status == 'Admin Approved' %} border-blue-200 dark:border-blue-900/40
+                             {% elif evt.event_status == 'Rejected' %} border-red-200 dark:border-red-900/40 
+                             {% else %} border-yellow-200 dark:border-yellow-900/40 {% endif %}">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0
+                                     {% if evt.event_status == 'Approved' %} bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400
+                                     {% elif evt.event_status == 'Admin Approved' %} bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400
+                                     {% elif evt.event_status == 'Rejected' %} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400
+                                     {% else %} bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400 {% endif %}">
+                                    {% if evt.event_status == 'Approved' %} <i class="ph-bold ph-check-circle text-xl"></i>
+                                    {% elif evt.event_status == 'Admin Approved' %} <i class="ph-bold ph-file-signature text-xl"></i>
+                                    {% elif evt.event_status == 'Rejected' %} <i class="ph-bold ph-x-circle text-xl"></i>
+                                    {% else %} <i class="ph-bold ph-clock text-xl"></i> {% endif %}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900 dark:text-white text-sm sm:text-base">{{ evt.event_title }}</h4>
+                                    <p class="text-xs font-bold 
+                                        {% if evt.event_status == 'Approved' %}text-green-600 dark:text-green-500
+                                        {% elif evt.event_status == 'Admin Approved' %}text-blue-600 dark:text-blue-500
+                                        {% elif evt.event_status == 'Rejected' %}text-red-600 dark:text-red-500
+                                        {% else %}text-yellow-600 dark:text-yellow-500{% endif %} uppercase tracking-wide mt-0.5">
+                                        Status: {{ evt.event_status }}
+                                    </p>
+                                </div>
+                            </div>
+                            <i class="ph-bold ph-caret-right text-gray-400"></i>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200 border-dashed dark:border-gray-800 p-8 text-center shadow-sm transition-colors flex flex-col items-center justify-center min-h-[150px]">
+                    <i class="ph-fill ph-bell-slash text-4xl text-gray-300 dark:text-gray-700 mb-2"></i>
+                    <h3 class="font-bold text-gray-500 dark:text-gray-400 text-sm">No new alerts.</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-600 mt-1">Once you have student registrations or event updates, they will appear here.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="text-center pb-8 mt-12">
+            <button onclick="openLogoutModal()" class="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-red-600 dark:text-red-500 font-bold hover:bg-red-50 hover:border-red-200 dark:hover:bg-red-900/10 dark:hover:border-red-900/50 transition-colors text-sm shadow-sm mx-auto">
+                <i class="ph-bold ph-sign-out text-lg"></i> Sign Out Account
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<div id="eventMessageModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 font-sans">
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeEventMessage()"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-md p-8 text-center border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+        
+        <div id="evtMsgIcon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-5 border-2"></div>
+        <h3 id="evtMsgTitle" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide"></h3>
+        <p id="evtMsgBody" class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-6"></p>
+
+        <div id="evtMsgReasonContainer" class="hidden bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 p-4 rounded-xl text-left mb-6">
+            <span class="block text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1">Reason for Rejection:</span>
+            <p id="evtMsgReasonText" class="text-sm font-medium text-red-700 dark:text-red-400"></p>
+        </div>
+        
+        <button onclick="closeEventMessage()" class="w-full py-3 rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors text-sm shadow-sm">
+            Close Message
+        </button>
+    </div>
+</div>
+
+<div id="analyticsModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 font-sans">
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAnalyticsModal()"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 text-left transition-colors">
+        
+        <button onclick="closeAnalyticsModal()" class="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+            <i class="ph-bold ph-x text-lg"></i>
+        </button>
+        
+        <p class="text-[10px] font-extrabold text-blue-500 uppercase tracking-widest mb-1">Performance Report</p>
+        <h3 id="analyticsModalTitle" class="text-2xl font-black text-gray-900 dark:text-white mb-6 leading-tight pr-8">Event Title Here</h3>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center shadow-sm">
+                <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Average Score</p>
+                <div class="text-3xl font-black text-blue-600 dark:text-blue-400">4.8<span class="text-sm text-gray-400">/5.0</span></div>
+            </div>
+            <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center shadow-sm">
+                <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Sentiment</p>
+                <div class="text-3xl font-black text-green-500">92%</div>
+            </div>
+        </div>
+
+        <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+            <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-4">Response Distribution</p>
+            <div class="h-24 w-full flex items-end justify-between gap-2 relative">
+                <svg class="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                    <path d="M 0,80 Q 25,80 50,60 T 100,10 L 100,100 L 0,100 Z" fill="rgba(37, 99, 235, 0.1)"></path>
+                    <path d="M 0,80 Q 25,80 50,60 T 100,10" fill="none" stroke="#2563eb" stroke-width="2"></path>
+                </svg>
+                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-2 z-10"></div>
+                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-3 z-10"></div>
+                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-6 z-10"></div>
+                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-10 z-10"></div>
+                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-20 z-10"></div>
+            </div>
+            <div class="flex justify-between mt-2 text-xs font-bold text-gray-400">
+                <span>1★</span><span>2★</span><span>3★</span><span>4★</span><span>5★</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="settingsModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 font-sans">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSettingsModal()"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+        <button onclick="closeSettingsModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+            <i class="ph-bold ph-x text-lg"></i>
+        </button>
+        <h3 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-wide flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-4">
+            <i class="ph-fill ph-bell-ringing text-pup-maroon dark:text-pup-gold"></i> Preferences
+        </h3>
+        
+        <div class="text-left mb-6">
+            <h4 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Notification Settings</h4>
+            
+            <div class="flex items-center justify-between gap-4 mb-4 bg-gray-50 dark:bg-[#111] p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+                <div>
+                    <h4 class="text-base font-bold text-gray-900 dark:text-white mb-0.5">Account & Event Alerts</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Alert me for event proposal updates and student account registrations.</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input type="checkbox" id="notifToggle" class="sr-only peer" onchange="toggleNotifSetting()">
+                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#800000] dark:peer-checked:bg-[#D4AF37]"></div>
+                </label>
+            </div>
+        </div>
+        
+        <div class="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl p-4 flex items-start gap-3">
+            <i class="ph-fill ph-info text-blue-600 dark:text-blue-400 text-lg shrink-0 mt-0.5"></i>
+            <p class="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">Account credentials (Passwords) are managed strictly by the System Administrator. Contact the admin office for password resets.</p>
+        </div>
+    </div>
+</div>
+
+<div id="logoutModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 font-sans">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeLogoutModal()"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+        <div class="w-20 h-20 mx-auto bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4 border border-red-100 dark:border-red-900/30">
+            <i class="ph-fill ph-sign-out text-4xl text-red-500"></i>
+        </div>
+        <h3 class="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">Sign Out?</h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-8 text-sm">Are you sure you want to securely log out of your Organizer account?</p>
+        
+        <div class="flex gap-3">
+            <button onclick="closeLogoutModal()" class="flex-1 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
+            <form action="{% url 'admin_logout' %}" method="post" class="flex-1 m-0">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'index' %}">
+                <button type="submit" class="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors text-sm shadow-md flex items-center justify-center">Yes, Sign Out</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.DEFAULT_LOGO = "{% static 'images/PUPLogo.png' %}";
+
+    let readNotifs = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+    let notifSettingEnabled = localStorage.getItem('notif_enabled') !== 'false';
+
+    function initNotifications() {
+        const notifItems = document.querySelectorAll('.notif-item');
+        let unreadCount = 0;
+        
+        notifItems.forEach(item => {
+            let notifId = "";
+            if(item.hasAttribute('data-id')) { notifId = item.getAttribute('data-id'); }
+            else if(item.hasAttribute('data-notif-id')) { notifId = item.getAttribute('data-notif-id'); }
+
+            if(readNotifs.includes(notifId)) {
+                item.classList.add('notif-read');
+            } else {
+                item.classList.remove('notif-read');
+                unreadCount++;
+            }
+        });
+
+        const bell = document.getElementById('notifBellIcon');
+        document.getElementById('notifToggle').checked = notifSettingEnabled;
+
+        if (unreadCount > 0 && notifSettingEnabled) {
+            bell.classList.add('animate-bounce', 'text-[#800000]', 'dark:text-[#D4AF37]');
+        } else {
+            bell.classList.remove('animate-bounce', 'text-[#800000]', 'dark:text-[#D4AF37]');
+        }
+    }
+
+    // 🟢 BINAGO ANG NOTIFICATION MESSAGES PARA SA 2-STEP APPROVAL 🟢
+    function openEventMessage(element) {
+        const notifId = element.dataset.id;
+        const title = element.dataset.title;
+        const status = element.dataset.status;
+        const remarks = element.dataset.remarks;
+
+        if(!readNotifs.includes(notifId)) {
+            readNotifs.push(notifId);
+            localStorage.setItem('read_notifs', JSON.stringify(readNotifs));
+            initNotifications();
+        }
+
+        const modal = document.getElementById('eventMessageModal');
+        const icon = document.getElementById('evtMsgIcon');
+        const titleEl = document.getElementById('evtMsgTitle');
+        const bodyEl = document.getElementById('evtMsgBody');
+        const reasonBox = document.getElementById('evtMsgReasonContainer');
+        const reasonText = document.getElementById('evtMsgReasonText');
+
+        if(status === 'Approved') {
+            icon.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-5 border-4 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-green-500 text-4xl";
+            icon.innerHTML = '<i class="ph-fill ph-check-circle"></i>';
+            titleEl.innerText = "Event Officially Published!";
+            titleEl.className = "text-xl sm:text-2xl font-black text-green-600 dark:text-green-500 mb-2 uppercase tracking-wide";
+            bodyEl.innerHTML = `Congratulations! The Administration has verified your signed documents. Your event <strong>"${title}"</strong> is now fully approved and published in the system. The countdown timer is now active for the students!`;
+            reasonBox.classList.add('hidden');
+        } 
+        else if(status === 'Admin Approved') {
+            icon.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-5 border-4 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-500 text-4xl";
+            icon.innerHTML = '<i class="ph-fill ph-file-signature"></i>';
+            titleEl.innerText = "Initial Approval Granted!";
+            titleEl.className = "text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-500 mb-2 uppercase tracking-wide";
+            bodyEl.innerHTML = `Great news! Your event proposal for <strong>"${title}"</strong> has received initial approval.<br><br><span class="text-pup-maroon dark:text-pup-gold font-bold">ACTION REQUIRED:</span> Please print the documents, secure all necessary manual signatures, and upload both the <strong class="text-gray-900 dark:text-white">Signed Request Letter</strong> and <strong class="text-gray-900 dark:text-white">Permit to Conduct Activity</strong> in your Document Vault to finalize the publication.`;
+            reasonBox.classList.add('hidden');
+        }
+        else if (status === 'Rejected') {
+            icon.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-5 border-4 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 text-red-500 text-4xl";
+            icon.innerHTML = '<i class="ph-fill ph-x-circle"></i>';
+            titleEl.innerText = "Event Rejected";
+            titleEl.className = "text-xl sm:text-2xl font-black text-red-600 dark:text-red-500 mb-2 uppercase tracking-wide";
+            bodyEl.innerHTML = `Unfortunately, your event proposal for <strong>"${title}"</strong> was rejected. Please review the reason below.`;
+            reasonBox.classList.remove('hidden');
+            reasonText.innerText = remarks && remarks.trim() !== 'None' ? remarks : "No specific reason provided.";
+        } 
+        else {
+            icon.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-5 border-4 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-500 text-4xl";
+            icon.innerHTML = '<i class="ph-fill ph-clock"></i>';
+            titleEl.innerText = "Event Pending";
+            titleEl.className = "text-xl sm:text-2xl font-black text-yellow-600 dark:text-yellow-500 mb-2 uppercase tracking-wide";
+            bodyEl.innerHTML = `Your event proposal for <strong>"${title}"</strong> is currently being reviewed. Please wait for further updates.`;
+            reasonBox.classList.add('hidden');
+        }
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function openAnalyticsModal(element) {
+        const title = element.dataset.title;
+        document.getElementById('analyticsModalTitle').innerText = title;
+        document.getElementById('analyticsModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeAnalyticsModal() {
+        document.getElementById('analyticsModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function markAllAsRead() {
+        const notifItems = document.querySelectorAll('.notif-item');
+        notifItems.forEach(item => {
+            let notifId = "";
+            if(item.hasAttribute('data-id')) { notifId = item.getAttribute('data-id'); }
+            else if(item.hasAttribute('data-notif-id')) { notifId = item.getAttribute('data-notif-id'); }
+
+            if(notifId && !readNotifs.includes(notifId)) readNotifs.push(notifId);
+        });
+        localStorage.setItem('read_notifs', JSON.stringify(readNotifs));
+        initNotifications();
+    }
+
+    function toggleNotifSetting() {
+        notifSettingEnabled = document.getElementById('notifToggle').checked;
+        localStorage.setItem('notif_enabled', notifSettingEnabled);
+        initNotifications();
+    }
+
+    window.onload = initNotifications;
+
+    function closeEventMessage() {
+        document.getElementById('eventMessageModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    let isOrgEditMode = false;
+    
+    async function toggleOrgProfileEdit() {
+        const btn = document.getElementById('editBtn');
+        const btnText = document.getElementById('editBtnText');
+        const btnMobile = document.getElementById('editBtnMobile');
+        const nameDisplay = document.getElementById('profileFullNameDisplay');
+        const nameInputContainer = document.getElementById('nameEditContainer');
+        const inputEditName = document.getElementById('inputEditName');
+        const profileOverlay = document.getElementById('profileEditOverlay');
+        const coverOverlay = document.getElementById('coverEditOverlay');
+
+        if (!isOrgEditMode) {
+            isOrgEditMode = true;
+            btn.classList.replace('bg-[#800000]', 'bg-green-600');
+            btn.classList.replace('dark:bg-[#D4AF37]', 'dark:bg-green-500');
+            btn.classList.replace('dark:text-black', 'dark:text-white');
+            btnText.innerText = "Save Changes";
+            btnMobile.innerText = "Save";
+            btn.querySelector('i').classList.replace('ph-pencil-simple', 'ph-floppy-disk');
+            
+            nameDisplay.style.display = 'none';
+            nameInputContainer.style.display = 'flex';
+            profileOverlay.style.display = 'flex';
+            coverOverlay.style.display = 'flex';
+
+        } else {
+            btnText.innerText = "Saving...";
+            btn.disabled = true;
+
+            const payload = { full_name: inputEditName.value };
+
+            try {
+                const response = await fetch("{% url 'update_organizer_profile' %}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+
+                if(data.status === 'success') {
+                    nameDisplay.innerText = inputEditName.value;
+                    isOrgEditMode = false;
+                    btn.classList.replace('bg-green-600', 'bg-[#800000]');
+                    btn.classList.replace('dark:bg-green-500', 'dark:bg-[#D4AF37]');
+                    btn.classList.replace('dark:text-white', 'dark:text-black');
+                    btnText.innerText = "Edit Profile";
+                    btnMobile.innerText = "Edit";
+                    btn.querySelector('i').classList.replace('ph-floppy-disk', 'ph-pencil-simple');
+                    
+                    nameInputContainer.style.display = 'none';
+                    nameDisplay.style.display = 'inline-block';
+                    profileOverlay.style.display = 'none';
+                    coverOverlay.style.display = 'none';
+                    alert("Profile successfully updated!");
+                } else { alert("Error saving profile: " + data.message); }
+            } catch (error) { alert("Something went wrong connecting to the server."); } 
+            finally {
+                if (isOrgEditMode) { btnText.innerText = "Save Changes"; btnMobile.innerText = "Save"; }
+                btn.disabled = false;
+            }
+        }
+    }
+
+    function openLogoutModal() { document.getElementById('logoutModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+    function closeLogoutModal() { document.getElementById('logoutModal').classList.add('hidden'); document.body.style.overflow = ''; }
+    function openSettingsModal() { document.getElementById('settingsModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+    function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); document.body.style.overflow = ''; }
+</script>
+{% endblock content %}

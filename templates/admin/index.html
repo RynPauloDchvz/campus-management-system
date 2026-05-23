@@ -1,0 +1,250 @@
+{% extends 'admin_base.html' %} 
+{% load static %}
+
+{% block title %}Admin Dashboard | PUPUni-CAMS{% endblock %}
+
+{% block page_title %}System Overview{% endblock %}
+{% block page_subtitle %}Welcome back, Administrator.{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Total Events</span>
+        <span class="stat-value">48</span>
+        <i class="ph-bold ph-calendar-check stat-icon"></i>
+    </div>
+    <div class="stat-card" style="--accent: var(--warning);">
+        <span class="stat-label">Pending Approval</span>
+        <span class="stat-value">5</span>
+        <i class="ph-bold ph-clock-countdown stat-icon"></i>
+    </div>
+    <div class="stat-card" style="--accent: #17a2b8;">
+        <span class="stat-label">Active Orgs</span>
+        <span class="stat-value">5</span>
+        <i class="ph-bold ph-buildings stat-icon"></i>
+    </div>
+    <div class="stat-card" style="--accent: var(--success);">
+        <span class="stat-label">Engaged Students</span>
+        <span class="stat-value">1,240</span>
+        <i class="ph-bold ph-student stat-icon"></i>
+    </div>
+</div>
+
+<div class="charts-container">
+    <div class="chart-box">
+        <h3 class="chart-title">Ratings Overview</h3>
+        <div class="chart-wrapper"><canvas id="ratingChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+        <h3 class="chart-title">Comments Sentiment</h3>
+        <div class="chart-wrapper"><canvas id="sentimentChart"></canvas></div>
+    </div>
+    <div class="chart-box">
+        <h3 class="chart-title">Event Frequency</h3>
+        <div class="chart-wrapper"><canvas id="eventChart"></canvas></div>
+    </div>
+</div>
+
+<div class="table-section">
+    <div class="table-header">
+        <h3 class="table-title">Recent Event Requests</h3>
+        <a href="/admin/event-approvals/" class="view-all-btn" style="text-decoration:none; color:var(--accent);">View All <i class="ph-bold ph-arrow-right"></i></a>
+    </div>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Organization</th>
+                    <th>Event Title</th>
+                    <th>Target Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: 700; color: var(--accent);">ITO</td>
+                    <td>Tech Summit 2026</td>
+                    <td>March 28, 2026</td>
+                    <td><span class="badge badge-pending">Pending</span></td>
+                    <td><button class="btn-action-small" onclick="openReviewModal('ITO', 'Tech Summit 2026', 'Good day! We are respectfully requesting approval for the IT Tech Summit 2026. Attached herewith are the Letter of Request, Event Proposal, and proposed Budget Breakdown for your review.')">Review</button></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700; color: var(--accent);">BPA</td>
+                    <td>Leadership Seminar</td>
+                    <td>April 05, 2026</td>
+                    <td><span class="badge badge-approved">Approved</span></td>
+                    <td>
+                        <a href="/admin/event-approvals/">
+                            <button class="btn-action-small">View Details</button>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 700; color: var(--accent);">FTO</td>
+                    <td>Teaching Methodologies</td>
+                    <td>April 12, 2026</td>
+                    <td><span class="badge badge-pending">Pending</span></td>
+                    <td><button class="btn-action-small" onclick="openReviewModal('FTO', 'Teaching Methodologies', 'We would like to submit our proposal for the upcoming Teaching Methodologies Workshop aimed at all Education students. Kindly check the attached documents.')">Review</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div id="reviewModal" class="modal">
+    <div class="modal-box" style="max-width: 500px; text-align: left; padding: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 15px;">
+            <span class="modal-title" style="margin: 0; font-size: 1.2rem;">Event Request Preview</span>
+            <button onclick="closeReviewModal()" style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;"><i class="ph-bold ph-x"></i></button>
+        </div>
+        
+        <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 12px;">
+            <span class="badge" id="modalOrgBadge" style="background: rgba(255, 215, 0, 0.15); color: var(--pup-gold); border: 1px solid var(--pup-gold);">ORG</span>
+            <span id="modalEventTitle" style="font-weight: 800; color: var(--text-main); font-size: 1.1rem;">Event Title Placeholder</span>
+        </div>
+        
+        <div style="background: var(--hover-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin: 15px 0 25px 0;">
+            <span style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px;">Message / Request Snippet:</span>
+            <p id="modalRequestText" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6; font-style: italic;">
+                "Loading request message..."
+            </p>
+        </div>
+
+        <div class="modal-actions" style="justify-content: flex-end; margin-top: 10px;">
+            <button class="btn-cancel" onclick="closeReviewModal()">Cancel</button>
+            <a href="/admin/event-approvals/" style="text-decoration: none;">
+                <button class="btn-primary" style="display:flex; align-items:center; gap:8px;">View All Details <i class="ph-bold ph-arrow-right"></i></button>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Modal Functions
+    function openReviewModal(orgName, eventTitle, requestText) {
+        document.getElementById('modalOrgBadge').innerText = orgName;
+        document.getElementById('modalEventTitle').innerText = eventTitle;
+        document.getElementById('modalRequestText').innerText = '"' + requestText + '"';
+        const modal = document.getElementById('reviewModal');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+
+    function closeReviewModal() {
+        const modal = document.getElementById('reviewModal');
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 200);
+    }
+
+    // Charts Configuration
+    let ratingChart, sentimentChart, eventChart;
+
+    function renderCharts() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+        const textColor = isDark ? '#9ca3af' : '#6b7280';
+        const gold = '#D4AF37';
+        const maroon = '#800000';
+
+        const ctxRating = document.getElementById('ratingChart').getContext('2d');
+        ratingChart = new Chart(ctxRating, {
+            type: 'bar',
+            data: {
+                labels: ['5 Star', '4 Star', '3 Star', '2 Star', '1 Star'],
+                datasets: [{
+                    label: 'Ratings',
+                    data: [120, 45, 15, 5, 2],
+                    backgroundColor: [gold, gold, '#17a2b8', '#ffc107', '#dc3545'],
+                    borderRadius: 6
+                }]
+            },
+            options: { 
+                indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
+                scales: { 
+                    x: { grid: { color: gridColor }, ticks: { color: textColor } }, 
+                    y: { grid: { display: false }, ticks: { color: textColor, font: {weight: 'bold'} } } 
+                }, 
+                plugins: { legend: { display: false } } 
+            }
+        });
+
+        const ctxSentiment = document.getElementById('sentimentChart').getContext('2d');
+        sentimentChart = new Chart(ctxSentiment, {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive', 'Neutral', 'Negative'],
+                datasets: [{
+                    data: [70, 20, 10],
+                    backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                    borderWidth: 0, hoverOffset: 4
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, cutout: '70%',
+                plugins: { legend: { position: 'bottom', labels: { color: textColor, padding: 20, usePointStyle: true } } } 
+            }
+        });
+
+        const ctxEvent = document.getElementById('eventChart').getContext('2d');
+        eventChart = new Chart(ctxEvent, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Events Held',
+                    data: [2, 5, 3, 8, 4, 6],
+                    borderColor: maroon, backgroundColor: 'rgba(128, 0, 0, 0.1)',
+                    borderWidth: 3, tension: 0.4, fill: true,
+                    pointBackgroundColor: gold, pointRadius: 4
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                scales: { 
+                    y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } }, 
+                    x: { ticks: { color: textColor }, grid: { display: false } } 
+                }, 
+                plugins: { legend: { display: false } } 
+            }
+        });
+    }
+
+    function updateChartsTheme(theme) {
+        if(!ratingChart) return;
+        const isDark = theme === 'dark';
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+        const textColor = isDark ? '#9ca3af' : '#6b7280';
+        
+        [ratingChart, eventChart].forEach(chart => {
+            if(chart.options.scales.x) {
+                chart.options.scales.x.ticks.color = textColor;
+                if(chart.options.scales.x.grid) chart.options.scales.x.grid.color = gridColor;
+            }
+            if(chart.options.scales.y) {
+                chart.options.scales.y.ticks.color = textColor;
+                if(chart.options.scales.y.grid) chart.options.scales.y.grid.color = gridColor;
+            }
+            chart.update();
+        });
+        
+        sentimentChart.options.plugins.legend.labels.color = textColor;
+        sentimentChart.update();
+    }
+
+    window.addEventListener('load', renderCharts);
+
+    document.querySelectorAll('.theme-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setTimeout(() => {
+                const newTheme = document.documentElement.getAttribute('data-theme');
+                updateChartsTheme(newTheme);
+            }, 50); 
+        });
+    });
+</script>
+{% endblock %}

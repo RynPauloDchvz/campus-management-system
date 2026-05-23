@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Portal | PUPUni-CAMS</title>
+    
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        pup: {
+                            maroon: '#800000',
+                            gold: '#D4AF37',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        [v-cloak] { display: none; }
+        .bg-pup-image {
+            background-image: url("{% static 'images/PUP1.jpg' %}");
+            background-size: cover;
+            background-position: center;
+        }
+        input::placeholder { color: #9ca3af; }
+    </style>
+</head>
+<body class="bg-white dark:bg-[#121212] transition-colors duration-300 antialiased font-sans overflow-hidden">
+
+    <div id="app" v-cloak class="flex min-h-screen">
+        
+        <!-- 🟢 LEFT SIDE: Admin Branding (Compact Layout) 🟢 -->
+        <div class="hidden lg:flex lg:w-[45%] relative flex-col justify-center p-12 xl:p-16 overflow-hidden">
+            <div class="absolute inset-0 bg-pup-maroon dark:bg-[#1a1a1a] z-0"></div>
+            <div class="absolute inset-0 opacity-30 bg-pup-image mix-blend-overlay z-10"></div>
+            
+            <div class="relative z-20">
+                <img src="{% static 'images/PUPLogo.png' %}" alt="PUP Logo" class="w-20 h-20 mb-6">
+                
+                <h3 class="text-pup-gold text-sm font-bold tracking-widest uppercase mb-2">
+                    PUP Unisan Quezon
+                </h3>
+                <h1 class="text-5xl xl:text-6xl font-black text-white mb-4 leading-tight">
+                    Campus Activities Management System
+                </h1>
+                <p class="text-white/70 text-lg font-medium leading-relaxed max-w-md">
+                    System Staff Portal for administrators and organization advisers.
+                </p>
+            </div>
+        </div>
+
+        <!-- 🟢 RIGHT SIDE: Login Form (Username & Password Only) 🟢 -->
+        <div class="w-full lg:w-[55%] flex flex-col relative bg-white dark:bg-[#0f0f0f]">
+            
+            <!-- Theme Toggle -->
+            <div class="absolute top-6 right-6 z-50">
+                <button @click="toggleTheme" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center text-xl shadow-sm hover:scale-110 transition-all">
+                    <i :class="isDark ? 'ph-fill ph-sun text-pup-gold' : 'ph-fill ph-moon text-gray-600'"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+                <div class="w-full max-w-[400px]">
+                    
+                    <div class="mb-10 text-center lg:text-left">
+                        <h2 class="text-4xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">Welcome Back</h2>
+                        <p class="text-gray-500 dark:text-gray-400 font-medium">Sign in to your staff account.</p>
+                    </div>
+
+                    {% if messages %}
+                        <div class="mb-6">
+                            {% for message in messages %}
+                                <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl text-xs font-bold flex items-center gap-3">
+                                    <i class="ph-bold ph-warning-circle text-lg"></i>
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form action="{% url 'staff_login' %}" method="post" class="space-y-5">
+                        {% csrf_token %}
+
+                        <!-- Username Field -->
+                        <div class="space-y-1.5">
+                            <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">Username</label>
+                            <div class="relative group">
+                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-600 text-xl group-focus-within:text-pup-maroon dark:group-focus-within:text-pup-gold transition-colors">
+                                    <i class="ph-bold ph-user-circle"></i>
+                                </div>
+                                <input type="text" name="username" required placeholder="Enter your username"
+                                    class="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-[#181818] border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-pup-maroon/10 dark:focus:ring-pup-gold/10 focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white font-semibold transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center px-1">
+                                <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Password</label>
+                                <a href="#" class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold hover:underline uppercase tracking-wider">Forgot?</a>
+                            </div>
+                            <div class="relative group">
+                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-600 text-xl group-focus-within:text-pup-maroon dark:group-focus-within:text-pup-gold transition-colors">
+                                    <i class="ph-bold ph-lock-key"></i>
+                                </div>
+                                <input :type="showPassword ? 'text' : 'password'" name="password" required placeholder="••••••••"
+                                    class="w-full pl-12 pr-12 py-4 rounded-xl bg-gray-50 dark:bg-[#181818] border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-pup-maroon/10 dark:focus:ring-pup-gold/10 focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white font-semibold transition-all">
+                                <button type="button" @click="showPassword = !showPassword" 
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-pup-gold text-xl transition-colors">
+                                    <i :class="showPassword ? 'ph-bold ph-eye-slash' : 'ph-bold ph-eye'"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" 
+                            class="w-full py-4 rounded-xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black text-sm uppercase tracking-[0.2em] shadow-lg hover:opacity-90 transition-all active:scale-[0.98] mt-4">
+                            Sign In
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    isDark: false,
+                    showPassword: false
+                }
+            },
+            mounted() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                this.isDark = savedTheme === 'dark';
+                if (this.isDark) document.documentElement.classList.add('dark');
+            },
+            methods: {
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    const theme = this.isDark ? 'dark' : 'light';
+                    document.documentElement.classList.toggle('dark');
+                    localStorage.setItem('theme', theme);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

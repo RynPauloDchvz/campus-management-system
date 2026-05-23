@@ -1,0 +1,211 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Account History | PUPUni-CAMS{% endblock %}
+
+{% block page_title %}Account History{% endblock %}
+{% block page_subtitle %}View records of deactivated students and organization accounts.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-cell { display: flex; align-items: center; gap: 12px; }
+    .user-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+    .user-name { font-weight: 700; color: var(--text-main); display: block; }
+    .user-username { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* 🟢 EXACT MATCH PROFILE VIEW MODAL 🟢 */
+    #profileModalBox { max-width: 420px; padding: 0; border-radius: 20px; overflow: hidden; background: #ffffff; position: relative; }
+    .profile-cover { width: 100%; height: 140px; background-color: #111; background-image: url('{% static "images/PUP1.jpg" %}'); background-size: cover; background-position: center; position: relative; }
+    .profile-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.2s; z-index: 10; font-family: sans-serif; font-size: 1.1rem; }
+    .profile-close:hover { background: var(--danger); }
+    
+    .profile-info { padding: 60px 30px 30px 30px; text-align: left; position: relative; background: #ffffff; }
+    .profile-avatar-container { position: absolute; top: -55px; left: 30px; }
+    .profile-avatar-container img { width: 110px; height: 110px; border-radius: 50%; border: 5px solid #ffffff; background: #ffffff; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    
+    .profile-name { font-size: 1.7rem; font-weight: 900; color: #111827; margin: 0; line-height: 1.2; font-family: 'Inter', sans-serif; letter-spacing: -0.5px; }
+    .profile-id { font-size: 0.95rem; font-weight: 800; color: #800000; margin-top: 5px; margin-bottom: 25px; font-family: 'Inter', sans-serif; }
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .profile-card-stat { border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px; text-align: center; background: #ffffff; }
+    .profile-card-stat small { display: block; font-size: 0.65rem; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-family: 'Inter', sans-serif; }
+    .profile-card-stat span { display: block; font-size: 1rem; font-weight: 800; color: #111827; font-family: 'Inter', sans-serif; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="control-bar" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+    <div class="filter-group">
+        <select id="typeFilter" class="custom-select" onchange="filterHistory()">
+            <option value="all">All Accounts</option>
+            <option value="Student">Students Only</option>
+            <option value="Student Org">Student Orgs Only</option>
+        </select>
+        <select id="orgFilter" class="custom-select" onchange="filterHistory()">
+            <option value="all">All Organizations</option>
+            <option value="ITO">ITO</option>
+            <option value="ITS">ITS</option>
+            <option value="YEO">YEO</option>
+            <option value="FTO">FTO</option>
+            <option value="PAS">PAS</option>
+            <option value="CAO">CAO</option>
+            <option value="NEWS">NEWS</option>
+            <option value="PRIDE">PRIDE</option>
+            <option value="ROTC">ROTC</option>
+            <option value="PUSO">PUSO</option>
+            <option value="SSC">SSC</option>
+        </select>
+        <select id="yearFilter" class="custom-select" onchange="filterHistory()">
+            <option value="all">All Year Levels</option>
+            <option value="1st Year">1st Year</option>
+            <option value="2nd Year">2nd Year</option>
+            <option value="3rd Year">3rd Year</option>
+            <option value="4th Year">4th Year</option>
+        </select>
+        <div class="search-box">
+            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search name or ID..." onkeyup="filterHistory()">
+        </div>
+    </div>
+    
+    <a href="{% url 'manage_accounts' %}" class="btn-cancel" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+        <i class="ph-bold ph-arrow-left"></i> Back to Active
+    </a>
+</div>
+
+<div class="table-section">
+    <div style="overflow-x: auto; max-height: 65vh;">
+        <table id="historyTable">
+            <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
+                <tr>
+                    <th>Account Name</th>
+                    <th>Account Type</th>
+                    <th>Organization</th>
+                    <th>Year Level</th>
+                    <th>Status</th>
+                    <th style="text-align: center;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Populated by JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div id="profileModal" class="modal">
+    <div class="modal-box" id="profileModalBox">
+        <div class="profile-cover" id="viewCover">
+            <button class="profile-close" onclick="closeModal('profileModal')">✕</button>
+        </div>
+        <div class="profile-info">
+            <div class="profile-avatar-container">
+                <img src="" id="viewAvatar" alt="Profile">
+            </div>
+            <h2 class="profile-name" id="viewName">--</h2>
+            <div class="profile-id" id="viewId">--</div>
+            
+            <div class="profile-grid">
+                <div class="profile-card-stat">
+                    <small>Year Level</small>
+                    <span id="viewYear">--</span>
+                </div>
+                <div class="profile-card-stat">
+                    <small>Birthdate</small>
+                    <span id="viewBirth">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let historyData = JSON.parse('{{ history_json|escapejs|default:"[]" }}');
+
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        
+        if(data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--text-muted);">No history records found.</td></tr>`;
+            return;
+        }
+
+        data.forEach(user => {
+            const row = `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <img src="${user.avatar}" class="user-avatar">
+                            <div>
+                                <span class="user-name">${user.name}</span>
+                                <span class="user-username">${user.username}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-weight: 700;">${user.type}</td>
+                    <td style="font-weight: 800; color: var(--accent);">${user.org}</td>
+                    <td>${user.year}</td>
+                    <td><span class="badge badge-rejected">${user.status}</span></td>
+                    <td style="text-align: center;">
+                        <button class="btn-action-small" onclick="viewProfile('${user.id}')">
+                            <i class="ph-bold ph-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function filterHistory() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const type = document.getElementById('typeFilter').value;
+        const org = document.getElementById('orgFilter').value;
+        const year = document.getElementById('yearFilter').value;
+        
+        const filtered = historyData.filter(user => {
+            const matchSearch = user.name.toLowerCase().includes(search) || user.username.toLowerCase().includes(search);
+            const matchType = type === 'all' || user.type === type;
+            const matchOrg = org === 'all' || user.org === org;
+            const matchYear = year === 'all' || user.year === year || user.year === 'N/A'; // Orgs have N/A year
+            return matchSearch && matchType && matchOrg && matchYear;
+        });
+        renderTable(filtered);
+    }
+
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('active');
+        setTimeout(() => { modal.style.display = 'none'; }, 200);
+    }
+
+    function viewProfile(id) {
+        const user = historyData.find(u => u.id === id);
+        document.getElementById('viewAvatar').src = user.avatar;
+        document.getElementById('viewName').innerText = user.name;
+        document.getElementById('viewId').innerText = user.username; 
+        document.getElementById('viewYear').innerText = user.year || 'Not Provided';
+        
+        if (user.birthdate && user.birthdate !== '') {
+            let dateObj = new Date(user.birthdate);
+            let formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('viewBirth').innerText = isNaN(dateObj) ? user.birthdate : formattedDate;
+        } else {
+            document.getElementById('viewBirth').innerText = 'Not Provided';
+        }
+        openModal('profileModal');
+    }
+
+    window.addEventListener('load', () => renderTable(historyData));
+</script>
+{% endblock %}

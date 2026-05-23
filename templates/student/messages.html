@@ -1,0 +1,158 @@
+{% extends 'student_base.html' %}
+{% load static %}
+
+{% block content %}
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="{% static 'js/student.js' %}" defer></script>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+        <div>
+            <a href="{% url 'student_profile' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors mb-2">
+                <i class="ph-bold ph-arrow-left"></i> Back to Profile
+            </a>
+            <h1 class="font-bold text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide font-orbitron flex items-center gap-3">
+                <i class="ph-fill ph-bell"></i> All Messages
+            </h1>
+        </div>
+
+        <div class="relative w-full md:w-72 shrink-0">
+            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="messageSearch" placeholder="Search by title or sender..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-10 pr-3 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors shadow-sm">
+        </div>
+    </div>
+
+    <div class="flex flex-col gap-4 pb-10" id="messagesList">
+        
+        <div id="welcomeMsgCard" onclick="readAndOpenMessage(1, this)" 
+             class="msg-card unread bg-[#fcf8f8] dark:bg-[#1a1515] p-5 rounded-2xl border-2 border-[#800000]/30 dark:border-[#D4AF37]/30 shadow-sm cursor-pointer transition-all flex gap-4 sm:gap-6 items-start relative overflow-hidden" 
+             data-title="welcome to pupuni-cams" 
+             data-sender="system">
+            
+            <div class="notif-stripe absolute top-0 right-0 w-2 h-full bg-[#800000] dark:bg-[#D4AF37]"></div>
+            
+            <div class="notif-icon w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+                <i class="ph-fill ph-megaphone text-2xl"></i>
+            </div>
+            <div class="flex-grow min-w-0 pr-4">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1 gap-1 sm:gap-4">
+                    <h4 class="font-bold text-gray-900 dark:text-white text-base truncate">Welcome to PUPUni-CAMS!</h4>
+                    <span class="text-xs font-bold text-[#800000] dark:text-[#D4AF37] shrink-0">Registration Date</span>
+                </div>
+                <span class="inline-block bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[0.65rem] font-bold px-2 py-0.5 rounded-md mb-2">System Admin</span>
+                <p class="text-sm text-gray-700 dark:text-gray-300 font-semibold truncate">Mabuhay Iskolar ng Bayan! Welcome sa bagong Campus Activities Management System. We are thrilled to have you here...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="noResults" class="hidden text-center py-10 w-full">
+        <i class="ph-bold ph-envelope-simple text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
+        <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">No Messages Found</h3>
+        <p class="text-gray-500 text-sm mt-1">We couldn't find anything matching your search.</p>
+    </div>
+</div>
+
+<div id="messageModal" class="hidden fixed inset-0 z-[2010] flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('messageModal').classList.add('hidden')"></div>
+    
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-xl w-full max-w-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+        <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="absolute top-4 right-4 bg-gray-100 dark:bg-[#111] hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+            <i class="ph-bold ph-x text-lg"></i>
+        </button>
+
+        <div class="mb-5 pr-8">
+            <h3 id="msgModalTitle" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2">Message Title</h3>
+            <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400">
+                <span id="msgModalSender" class="text-[#800000] dark:text-[#D4AF37] bg-[#800000]/10 dark:bg-[#D4AF37]/10 px-2 py-1 rounded-md">Sender</span>
+                <span id="msgModalDate"><i class="ph-bold ph-clock"></i> Date Time</span>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl mb-6">
+            <p id="msgModalBody" class="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">Message body goes here.</p>
+        </div>
+
+        <div class="flex gap-3">
+            <button type="button" onclick="document.getElementById('messageModal').classList.add('hidden')" class="w-full py-3.5 rounded-xl border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm flex items-center justify-center gap-2">
+                Close Message
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 🟢 PERSISTENT SYNC LOGIC 🟢 ---
+    const studentNum = "{{ user.username }}"; // Standard Django user identification
+    const notifKey = "welcome_read_" + studentNum;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const welcomeCard = document.getElementById('welcomeMsgCard');
+        
+        // 1. Apply read status from localStorage upon load
+        if (localStorage.getItem(notifKey) === 'true') {
+            applyReadStyles(welcomeCard);
+        }
+
+        // 2. Local Search Logic
+        const searchInput = document.getElementById('messageSearch');
+        const cards = document.querySelectorAll('.msg-card');
+        const noResults = document.getElementById('noResults');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const title = card.getAttribute('data-title');
+                const sender = card.getAttribute('data-sender');
+                
+                if(title.includes(query) || sender.includes(query)) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if(visibleCount === 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        });
+    });
+
+    function readAndOpenMessage(id, element) {
+        // Mark as read and save to localStorage
+        applyReadStyles(element);
+        localStorage.setItem(notifKey, 'true');
+
+        // Open Modal with content
+        if(id === 1) {
+            document.getElementById('msgModalTitle').innerText = "Welcome to PUPUni-CAMS!";
+            document.getElementById('msgModalSender').innerText = "System Admin";
+            document.getElementById('msgModalDate').innerHTML = `<i class="ph-bold ph-clock"></i> Registration Date`;
+            document.getElementById('msgModalBody').innerText = "Mabuhay Iskolar ng Bayan! Welcome sa bagong Campus Activities Management System. We are thrilled to have you here. Your account has been successfully verified.";
+        }
+        document.getElementById('messageModal').classList.remove('hidden');
+    }
+
+    function applyReadStyles(element) {
+        if(!element) return;
+        // Match the profile.html read styles
+        element.classList.remove('unread', 'bg-[#fcf8f8]', 'dark:bg-[#1a1515]', 'border-2', 'border-[#800000]/30', 'dark:border-[#D4AF37]/30');
+        element.classList.add('read', 'bg-gray-50', 'dark:bg-[#111]', 'border', 'border-gray-200', 'dark:border-gray-800', 'opacity-70');
+        
+        const stripe = element.querySelector('.notif-stripe');
+        if(stripe) stripe.style.display = 'none';
+        
+        const iconWrap = element.querySelector('.notif-icon');
+        if(iconWrap) {
+            iconWrap.classList.remove('bg-blue-100', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-400');
+            iconWrap.classList.add('bg-gray-200', 'dark:bg-gray-800', 'text-gray-500');
+        }
+    }
+</script>
+{% endblock content %}

@@ -1,0 +1,489 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUPUni-CAMS | Portal</title>
+    
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        pup: {
+                            maroon: '#800000',
+                            gold: '#D4AF37', /* 🟢 Softer Metallic Gold para iwas sakit sa mata 🟢 */
+                            darkbg: '#121212',
+                            darkcard: '#1e1e1e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <style>
+        [v-cloak] { display: none; }
+        :root {
+            --img-pup1: url("{% static 'images/PUP1.jpg' %}");
+        }
+        /* Custom Scrollbar for the form side */
+        .form-scroll::-webkit-scrollbar { width: 6px; }
+        .form-scroll::-webkit-scrollbar-track { background: transparent; }
+        .form-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        .dark .form-scroll::-webkit-scrollbar-thumb { background-color: #334155; }
+        
+        @keyframes scan {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+        .scan-line { animation: scan 2s linear infinite; }
+    </style>
+</head>
+<body class="bg-white dark:bg-pup-darkbg text-gray-800 dark:text-gray-200 transition-colors duration-300 antialiased selection:bg-pup-gold selection:text-black overflow-hidden">
+
+    <div id="app" v-cloak class="flex min-h-screen w-full relative">
+        
+        <!-- THEME TOGGLE (Absolute Top Right) -->
+        <button @click="toggleTheme" class="absolute top-4 right-5 sm:top-6 sm:right-6 z-50 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gray-100 dark:bg-pup-darkcard border border-gray-200 dark:border-gray-800 flex items-center justify-center text-lg sm:text-xl hover:text-pup-maroon dark:hover:text-pup-gold transition-all shadow-sm">
+            <i :class="isDark ? 'ph-fill ph-sun' : 'ph-fill ph-moon'"></i>
+        </button>
+
+        <!-- 🟢 LEFT SIDE: BRANDING (Hidden on Mobile) 🟢 -->
+        <div class="hidden lg:flex lg:w-1/2 relative flex-col justify-end p-12 overflow-hidden bg-pup-maroon dark:bg-[#111]">
+            <!-- 🟢 INAYOS: Mas visible na background sa Dark Mode 🟢 -->
+            <div class="absolute inset-0 bg-cover bg-center opacity-40 dark:opacity-50 mix-blend-overlay dark:mix-blend-normal transition-opacity duration-300" style="background-image: var(--img-pup1);"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-pup-maroon via-pup-maroon/80 to-transparent dark:from-[#111]/95 dark:via-[#111]/60 dark:to-transparent"></div>
+            
+            <div class="relative z-10 text-white pb-10">
+                <img src="{% static 'images/PUPLogo.png' %}" alt="PUP Logo" class="w-24 h-24 mb-6 drop-shadow-lg">
+                <h3 class="text-pup-gold text-sm font-bold tracking-widest uppercase mb-2 drop-shadow-md">PUP Unisan Quezon</h3>
+                <h1 class="text-5xl xl:text-6xl font-black mb-3 tracking-tight drop-shadow-md leading-tight">Campus Activities<br>Management System</h1>
+                <p class="text-white/80 font-medium text-lg max-w-md drop-shadow-md">Your centralized portal for discovering events, managing attendance, and organizing campus activities.</p>
+            </div>
+        </div>
+
+        <!-- 🟢 RIGHT SIDE: FORMS 🟢 -->
+        <div class="w-full lg:w-1/2 h-screen overflow-y-auto form-scroll flex flex-col justify-center items-center p-6 sm:p-12 relative bg-white dark:bg-pup-darkbg z-0">
+
+            <div class="w-full max-w-md my-auto transition-all duration-500">
+                
+                <!-- PUP LOGO FOR MOBILE ONLY -->
+                <div class="lg:hidden flex flex-col items-center mb-8">
+                    <img src="{% static 'images/PUPLogo.png' %}" alt="PUP Logo" class="w-20 h-20 mb-3">
+                    <h1 class="text-2xl font-black tracking-tight text-gray-900 dark:text-white">PUPUni-CAMS</h1>
+                </div>
+
+                <!-- ============================================== -->
+                <!-- 🟢 LOGIN VIEW 🟢 -->
+                <!-- ============================================== -->
+                <div v-if="currentView === 'login'" class="w-full animate-[fadeIn_0.3s_ease-out]">
+                    <div class="mb-8 text-center sm:text-left">
+                        <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-2">Welcome Back</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Sign in to your portal account.</p>
+                    </div>
+
+                    <form @submit.prevent="submitLogin" class="space-y-5">
+                        <!-- Student No Only -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-pup-gold mb-1.5 uppercase tracking-wider">Student Number</label>
+                            <div class="relative">
+                                <i class="ph-bold ph-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                                <input type="text" v-model="loginData.student_number" required placeholder="202X-XXXXX-UQ-0" class="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm transition-colors">
+                            </div>
+                        </div>
+                        
+                        <!-- Password -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-pup-gold uppercase tracking-wider">Password</label>
+                                <a href="#" class="text-xs font-bold text-pup-maroon dark:text-pup-gold hover:underline">Forgot Password?</a>
+                            </div>
+                            <div class="relative">
+                                <i class="ph-bold ph-lock-key absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                                <input :type="showPassword ? 'text' : 'password'" v-model="loginData.password" required placeholder="••••••••" class="w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm transition-colors">
+                                <!-- Eye Toggle -->
+                                <button type="button" @click="showPassword = !showPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                                    <i :class="showPassword ? 'ph-bold ph-eye-slash' : 'ph-bold ph-eye'" class="text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" :disabled="isLoggingIn" class="w-full py-4 mt-4 rounded-xl bg-pup-maroon hover:bg-red-900 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-70">
+                            <i v-if="isLoggingIn" class="ph-bold ph-spinner animate-spin text-lg"></i>
+                            <span v-text="isLoggingIn ? 'Signing In...' : 'Sign In'"></span>
+                        </button>
+                    </form>
+
+                    <!-- Switch to Register Link -->
+                    <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-8 font-medium">
+                        Don't have an account? 
+                        <a href="#" @click.prevent="switchView('register')" class="text-pup-maroon dark:text-pup-gold font-bold hover:underline ml-1 transition-colors">Create one</a>
+                    </p>
+                </div>
+
+
+                <!-- ============================================== -->
+                <!-- 🟢 REGISTER VIEW 🟢 -->
+                <!-- ============================================== -->
+                <div v-if="currentView === 'register'" class="w-full animate-[fadeIn_0.3s_ease-out] flex flex-col">
+                    
+                    <!-- 🟢 PERSISTENT PROGRESS BAR 🟢 -->
+                    <div class="w-full h-1.5 bg-gray-100 dark:bg-gray-800 flex rounded-full overflow-hidden mb-8 shrink-0">
+                        <div class="h-full bg-pup-maroon dark:bg-pup-gold transition-all duration-500" :style="{ width: (registerStep / 3 * 100) + '%' }"></div>
+                    </div>
+
+                    <!-- STEP 1: VERIFICATION -->
+                    <div v-if="registerStep === 1" class="flex flex-col items-center text-center py-2">
+                        <div class="w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6 border border-gray-100 dark:border-gray-700">
+                            <i class="ph-fill ph-student text-4xl text-pup-maroon dark:text-pup-gold"></i>
+                        </div>
+                        <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2">Student Verification</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-8">Are you a currently enrolled student at PUP Unisan?</p>
+                        
+                        <div class="w-full flex flex-col gap-3">
+                            <button @click="registerStep = 2" class="w-full py-4 rounded-xl bg-pup-maroon hover:bg-red-900 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm transition-all shadow-md">Yes, I am a student</button>
+                            <button @click="switchView('login')" class="w-full py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-sm transition-all">No, take me back</button>
+                        </div>
+
+                        <!-- Switch to Login Link -->
+                        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-8 font-medium">
+                            Already have an account? 
+                            <a href="#" @click.prevent="switchView('login')" class="text-pup-maroon dark:text-pup-gold font-bold hover:underline ml-1 transition-colors">Log in here</a>
+                        </p>
+                    </div>
+
+                    <!-- STEP 2: FORM DETAILS -->
+                    <div v-if="registerStep === 2" class="pb-6">
+                        <form @submit.prevent="verifyAndProceed" class="w-full">
+                            
+                            <div class="text-center sm:text-left mb-6">
+                                <h2 class="text-xl font-black dark:text-white uppercase tracking-tight">Account Setup</h2>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Please provide your details below.</p>
+                            </div>
+
+                            <!-- 🟢 Image Uploads sa pinakataas ng form 🟢 -->
+                            <div class="relative mb-14 bg-gray-50 dark:bg-[#111] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                                <div class="h-32 w-full bg-gray-200 dark:bg-gray-800 relative group">
+                                    <img v-if="coverPreview" :src="coverPreview" class="w-full h-full object-cover" />
+                                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><i class="ph-bold ph-camera text-white text-3xl"></i></div>
+                                    <input type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" @change="previewImage($event, 'cover')">
+                                </div>
+                                <div class="absolute -bottom-10 left-6 w-20 h-20 bg-white dark:bg-pup-darkcard rounded-full border-4 border-white dark:border-pup-darkcard shadow-md group z-20 flex items-center justify-center overflow-hidden">
+                                    <img v-if="profilePreview" :src="profilePreview" class="w-full h-full object-cover" />
+                                    <div v-else class="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400"><i class="ph-fill ph-user text-3xl"></i></div>
+                                    <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><i class="ph-bold ph-camera text-white text-xl"></i></div>
+                                    <input type="file" accept="image/*" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30" @change="previewImage($event, 'profile')">
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Full Name</label>
+                                    <input type="text" v-model="formData.full_name" required placeholder="Juan Dela Cruz" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm">
+                                </div>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Student Number</label>
+                                        <input type="text" v-model="formData.student_number" required placeholder="202X-XXXXX-UQ-0" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Date of Birth</label>
+                                        <input type="date" v-model="formData.birthdate" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm [&::-webkit-calendar-picker-indicator]:dark:filter [&::-webkit-calendar-picker-indicator]:dark:invert cursor-pointer">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-4">
+                                    <!-- 🟢 PROGRAM ANG NAUNA 🟢 -->
+                                    <div class="relative">
+                                        <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Program</label>
+                                        <select v-model="formData.program" @change="handleProgramChange" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm appearance-none cursor-pointer">
+                                            <option value="" disabled selected>Select Program</option>
+                                            <option value="BSIT">BSIT - BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY</option>
+                                            <option value="BEED">BEED - BACHELOR OF ELEMENTARY EDUCATION</option>
+                                            <option value="BSENT">BSENT - BACHELOR OF SCIENCE IN ENTREPRENEURSHIP</option>
+                                            <option value="BPA">BPA - BACHELOR OF PUBLIC ADMINISTRATION</option>
+                                            <option value="DOMT">DOMT - DIPLOMA IN OFFICE MANAGEMENT TECHNOLOGY MAJOR IN LEGAL OFFICE MANAGEMENT</option>
+                                            <option value="DIT">DIT - DIPLOMA IN INFORMATION TECHNOLOGY</option>
+                                        </select>
+                                        <i class="ph-bold ph-caret-down absolute right-4 top-[35px] pointer-events-none text-gray-400"></i>
+                                    </div>
+                                    <!-- 🟢 DYNAMIC YEAR LEVEL 🟢 -->
+                                    <div class="relative">
+                                        <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Year Level</label>
+                                        <select v-model="formData.year_level" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm appearance-none cursor-pointer">
+                                            <option value="" disabled selected>Select Year</option>
+                                            <option v-for="year in availableYears" :key="year" :value="year">[[ year ]]</option>
+                                        </select>
+                                        <i class="ph-bold ph-caret-down absolute right-4 top-[35px] pointer-events-none text-gray-400"></i>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Email Address</label>
+                                    <input type="email" v-model="formData.email_address" required placeholder="you@pup.edu.ph" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm">
+                                </div>
+
+                                <div>
+                                    <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">System Password</label>
+                                    <div class="relative flex items-center">
+                                        <input type="text" v-model="formData.password" required placeholder="Check email for code..." class="w-full px-4 py-3 pr-28 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm">
+                                        <button type="button" @click="sendGeneratedPassword" :disabled="isSendingPassword || !formData.email_address || countdown > 0" class="absolute right-2 px-3 py-1.5 bg-gray-900 hover:bg-black dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold rounded-lg transition-colors text-xs disabled:opacity-50 shadow-sm">
+                                            <span v-if="isSendingPassword"><i class="ph-bold ph-spinner animate-spin"></i></span>
+                                            <span v-else-if="countdown > 0">Wait [[ countdown ]]s</span>
+                                            <span v-else>Get Code</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-3 mt-8">
+                                <button type="button" @click="registerStep = 1" class="w-1/3 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-[#111] dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold transition-all shadow-sm text-sm">Back</button>
+                                <button type="submit" :disabled="isVerifying" class="w-2/3 bg-pup-maroon hover:bg-red-900 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold py-3.5 rounded-xl transition-all shadow-md text-sm flex items-center justify-center gap-2 disabled:opacity-50">
+                                    <i v-if="isVerifying" class="ph-bold ph-spinner animate-spin text-lg"></i>
+                                    <span v-text="isVerifying ? 'Checking...' : 'Next Step'"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- STEP 3: FACE ENROLLMENT -->
+                    <div v-if="registerStep === 3" class="flex flex-col items-center text-center py-4">
+                        <h2 class="text-xl font-black dark:text-white mb-1 uppercase tracking-tight">Face Enrollment</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">Position your face within the frame.</p>
+                        
+                        <div class="relative w-64 h-64 sm:w-72 sm:h-72 rounded-3xl overflow-hidden bg-gray-900 border-4 border-gray-200 dark:border-gray-700 shadow-inner mb-6 mx-auto">
+                            <video v-show="!faceCaptured" ref="video" autoplay playsinline class="w-full h-full object-cover"></video>
+                            <img v-if="faceCaptured" :src="capturedFace" class="w-full h-full object-cover" />
+                            <div v-if="!faceCaptured && isCameraActive" class="absolute inset-0 pointer-events-none">
+                                <div class="absolute inset-10 border-2 border-dashed border-pup-gold/50 rounded-full opacity-50"></div>
+                                <div class="absolute top-0 left-0 w-full h-1 bg-pup-gold/60 blur-sm scan-line"></div>
+                            </div>
+                            <div v-if="!isCameraActive && !faceCaptured" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 gap-2">
+                                <i class="ph-bold ph-camera-rotate text-5xl"></i>
+                                <span class="text-xs font-bold">Ready to capture</span>
+                            </div>
+                        </div>
+
+                        <div class="w-full space-y-3">
+                            <button v-if="!isCameraActive" @click="startCamera" class="w-full py-3.5 rounded-xl bg-gray-900 text-white dark:bg-pup-gold dark:text-black font-bold text-sm flex justify-center items-center gap-2 transition-colors">
+                                <i class="ph-bold ph-power text-lg"></i> Activate Camera
+                            </button>
+                            <button v-if="isCameraActive && !faceCaptured" @click="captureFace" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm flex justify-center items-center gap-2 transition-all">
+                                <i class="ph-bold ph-bounding-box text-lg"></i> Register Face ID
+                            </button>
+                            <div v-if="faceCaptured" class="flex flex-col gap-3">
+                                <button @click="submitFinalRegistration" :disabled="isSubmitting" class="w-full py-3.5 rounded-xl bg-green-600 hover:bg-green-700 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm flex justify-center items-center gap-2 shadow-lg disabled:opacity-50 transition-colors">
+                                    <i v-if="!isSubmitting" class="ph-bold ph-check-circle text-lg"></i>
+                                    <i v-else class="ph-bold ph-spinner animate-spin text-lg"></i> 
+                                    <span v-text="isSubmitting ? 'Saving...' : 'Complete Registration'"></span>
+                                </button>
+                                <button @click="retakeFace" :disabled="isSubmitting" class="w-full py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 font-bold text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-[#111] transition-colors">Retake Photo</button>
+                            </div>
+                            
+                            <button @click="registerStep = 2; stopCamera()" :disabled="isSubmitting" class="w-full py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-[#111] dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold transition-all shadow-sm text-sm mt-2 disabled:opacity-50">
+                                Back to Form
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            delimiters: ['[[', ']]'], 
+            data() {
+                return {
+                    isDark: false,
+                    currentView: 'login', 
+                    
+                    // LOGIN DATA
+                    showPassword: false,
+                    isLoggingIn: false,
+                    loginData: { student_number: '', password: '' },
+
+                    // REGISTER DATA
+                    registerStep: 1,
+                    profilePreview: null, coverPreview: null,
+                    capturedFace: null, faceCaptured: false,
+                    isCameraActive: false, videoStream: null,
+                    isSubmitting: false, isSendingPassword: false, 
+                    isVerifying: false, countdown: 0, timerInterval: null,
+                    
+                    formData: {
+                        full_name: '', student_number: '', birthdate: '',
+                        year_level: '', program: '', email_address: '', password: '',
+                    }
+                }
+            },
+            computed: {
+                // 🟢 DYNAMIC YEAR LEVEL LOGIC 🟢
+                availableYears() {
+                    // Kung ang pinili ay DOMT o DIT, hanggang 3rd year lang
+                    if (['DOMT', 'DIT'].includes(this.formData.program)) {
+                        return ['1st Year', '2nd Year', '3rd Year'];
+                    }
+                    // Kung BSIT, BEED, BSENT, BPA o wala pa, hanggang 4th year
+                    return ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+                }
+            },
+            mounted() {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme === 'dark') { this.isDark = true; document.documentElement.classList.add('dark'); }
+            },
+            methods: {
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    document.documentElement.classList.toggle('dark', this.isDark);
+                    localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+                },
+                switchView(view) {
+                    this.stopCamera(); 
+                    this.currentView = view;
+                    this.registerStep = 1;
+                    this.profilePreview = this.coverPreview = this.capturedFace = null;
+                    this.faceCaptured = this.isCameraActive = false;
+                    this.formData = { full_name: '', student_number: '', birthdate: '', year_level: '', program: '', email_address: '', password: '' };
+                },
+
+                // 🟢 AUTO RESET YEAR LEVEL KAPAG NAGPALIT NG PROGRAM 🟢
+                handleProgramChange() {
+                    if (['DOMT', 'DIT'].includes(this.formData.program) && this.formData.year_level === '4th Year') {
+                        this.formData.year_level = '';
+                    }
+                },
+
+                async submitLogin() {
+                    if (!this.loginData.student_number || !this.loginData.password) return;
+                    this.isLoggingIn = true;
+                    const formData = new FormData();
+                    formData.append('student_number', this.loginData.student_number);
+                    formData.append('password', this.loginData.password);
+                    const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+                    const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
+                    try {
+                        const response = await fetch('/portal/login/', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
+                        const data = await response.json();
+                        if (data.status === 'success') window.location.href = data.redirect_url;
+                        else alert(data.message);
+                    } catch (error) { alert("Connection error."); }
+                    finally { this.isLoggingIn = false; }
+                },
+                previewImage(event, type) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => { this[type === 'profile' ? 'profilePreview' : 'coverPreview'] = e.target.result; };
+                        reader.readAsDataURL(file);
+                        if(type === 'profile') this.formData.profile_file = file;
+                        if(type === 'cover') this.formData.cover_file = file;
+                    }
+                },
+                
+                // 🟢 CAMERA PERMISSION ALERT 🟢
+                async startCamera() {
+                    const permit = confirm("Allow PUPUni-CAMS to access your camera for Face ID registration?");
+                    if (!permit) return; // Cancel operation if false
+                    
+                    try {
+                        this.videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                        this.$refs.video.srcObject = this.videoStream;
+                        this.isCameraActive = true;
+                    } catch (err) { alert("Camera access denied or unavailable."); }
+                },
+
+                stopCamera() {
+                    if (this.videoStream) {
+                        this.videoStream.getTracks().forEach(track => track.stop());
+                        this.videoStream = null; this.isCameraActive = false;
+                    }
+                },
+                captureFace() {
+                    const video = this.$refs.video;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    this.capturedFace = canvas.toDataURL('image/jpeg');
+                    this.faceCaptured = true; this.stopCamera();
+                },
+                retakeFace() { this.faceCaptured = false; this.capturedFace = null; this.startCamera(); },
+                startCountdown() {
+                    this.countdown = 60;
+                    if(this.timerInterval) clearInterval(this.timerInterval);
+                    this.timerInterval = setInterval(() => {
+                        this.countdown--;
+                        if(this.countdown <= 0) clearInterval(this.timerInterval);
+                    }, 1000);
+                },
+                async sendGeneratedPassword() {
+                    if (!this.formData.email_address) return;
+                    this.isSendingPassword = true;
+                    const formData = new FormData();
+                    formData.append('email_address', this.formData.email_address);
+                    const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+                    const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
+                    try {
+                        const response = await fetch('/student/generate-password', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
+                        const data = await response.json();
+                        if(data.status === 'success') { alert(data.message); this.startCountdown(); }
+                        else alert(data.message);
+                    } catch (error) { alert("Failed to connect."); }
+                    finally { this.isSendingPassword = false; }
+                },
+                async verifyAndProceed() {
+                    if(!this.formData.password) { alert("Code required."); return; }
+                    this.isVerifying = true;
+                    const formData = new FormData();
+                    formData.append('password', this.formData.password);
+                    const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+                    const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
+                    try {
+                        const response = await fetch('/student/verify-password', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
+                        const data = await response.json();
+                        if (data.status === 'success') this.registerStep = 3; 
+                        else alert(data.message); 
+                    } catch (error) { alert("Verification error."); }
+                    finally { this.isVerifying = false; }
+                },
+                async submitFinalRegistration() {
+                    this.isSubmitting = true;
+                    const orgMapping = { 'BSIT': 'ITO', 'BSENT': 'YEO', 'BPA': 'PAS', 'BEED': 'FTO', 'DOMT': 'ITS', 'DIT': 'ITS' };
+                    const assignedOrg = orgMapping[this.formData.program] || 'UNKNOWN';
+                    const formData = new FormData();
+                    Object.keys(this.formData).forEach(key => formData.append(key, this.formData[key]));
+                    formData.append('organization', assignedOrg); 
+                    formData.append('facial_registration_data', this.capturedFace); 
+                    if (this.formData.profile_file) formData.append('profile_picture', this.formData.profile_file);
+                    if (this.formData.cover_file) formData.append('cover_photo', this.formData.cover_file);
+                    const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+                    const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
+                    try {
+                        const response = await fetch('/student/register', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
+                        const data = await response.json();
+                        if (data.status === 'success') { alert(data.message); this.switchView('login'); }
+                        else alert(data.message);
+                    } catch (error) { alert("Error connecting to server."); }
+                    finally { this.isSubmitting = false; }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

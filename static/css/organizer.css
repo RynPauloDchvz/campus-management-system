@@ -1,0 +1,318 @@
+/* static/css/organizer_home.css */
+
+/* Custom Select Dropdown Arrow */
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+
+/* Equipment Checkbox Cards styling */
+.equip-card {
+    background: var(--input-bg); 
+    border: 2px solid transparent;
+    padding: 15px 10px; 
+    border-radius: 12px; 
+    text-align: center;
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    position: relative;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    background-color: rgba(128, 128, 128, 0.05); /* Light default bg */
+}
+
+/* Dark mode adjustments for equip-card managed by Tailwind classes usually, but fallback here */
+html.dark .equip-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+html:not(.dark) .equip-card {
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.equip-card:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Hide actual checkbox */
+.equip-card input { 
+    position: absolute; 
+    opacity: 0; 
+    cursor: pointer; 
+    height: 0; 
+    width: 0; 
+}
+
+/* Active/Checked State */
+html.dark .equip-card:has(input:checked) { 
+    border-color: #D4AF37; /* pup-gold */
+    background: rgba(255, 215, 0, 0.1); 
+    color: #D4AF37;
+}
+html:not(.dark) .equip-card:has(input:checked) { 
+    border-color: #800000; /* pup-maroon */
+    background: rgba(128, 0, 0, 0.05); 
+    color: #800000;
+}
+
+.equip-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.equip-content i {
+    font-size: 2rem;
+}
+
+.equip-content span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* static/css/manage_students.css */
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Row Hover Effect for Desktop */
+.student-row {
+    transition: all 0.2s ease;
+}
+.student-row:hover {
+    background-color: rgba(128, 0, 0, 0.03);
+}
+html.dark .student-row:hover {
+    background-color: rgba(255, 215, 0, 0.05);
+}
+
+/* static/css/manage_attendance.css */
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Row Hover & Pointer for Table */
+#tableBody tr {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+#tableBody tr:hover {
+    background-color: rgba(128, 0, 0, 0.05);
+}
+html.dark #tableBody tr:hover {
+    background-color: rgba(255, 215, 0, 0.05);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-block;
+}
+.present { background: rgba(40, 167, 69, 0.1); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); }
+.late { background: rgba(255, 193, 7, 0.1); color: #d39e00; border: 1px solid rgba(255, 193, 7, 0.3); }
+html.dark .late { color: #ffc107; }
+.absent { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3); }
+
+/* DARK MODE FILTER for Leaflet Map */
+html.dark .leaflet-layer {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+/* static/css/organizer_analytics.css */
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Custom Select Dropdown Arrow hidden on select (replaced by Phosphor Icon) */
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Smooth fade for charts */
+canvas {
+    animation: chartFadeIn 0.8s ease;
+}
+
+@keyframes chartFadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* static/css/organizer_profile.css */
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Edit Mode Classes */
+.editable-mode .editable-field {
+    border-bottom: 2px dashed var(--pup-maroon) !important;
+    background-color: rgba(128,0,0,0.05) !important;
+    padding-bottom: 2px;
+}
+html.dark .editable-mode .editable-field {
+    border-bottom: 2px dashed var(--pup-gold) !important;
+    background-color: rgba(255,215,0,0.05) !important;
+}
+
+.editable-field {
+    transition: all 0.3s ease;
+}
+
+/* Hide standard dropdown arrow when editing */
+select.editable-field {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Event Card Hover Effects */
+.event-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.event-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+.dark .event-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(255, 215, 0, 0.05);
+}
+
+/* Camera and Map Specific Styles */
+.camera-preview {
+    width: 100%;
+    height: 250px;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid transparent;
+}
+.camera-preview.scanning {
+    border-color: #D4AF37;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    animation: pulse-border 1.5s infinite;
+}
+#videoFeed, #proofFaceImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* Mirror effect para hindi baliktad ang mukha */
+}
+
+/* Leaflet Map overrides for Dark Mode */
+.dark .leaflet-layer,
+.dark .leaflet-control-zoom-in,
+.dark .leaflet-control-zoom-out,
+.dark .leaflet-control-attribution {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+@keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+}
+
+/* static/css/document_tracking.css */
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Grid Card Hover */
+.doc-card {
+    transition: all 0.3s ease;
+}
+.doc-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 20px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Timeline Customization */
+.timeline-step {
+    position: relative;
+}
+/* The dot */
+.timeline-step::before {
+    content: '';
+    position: absolute;
+    left: -23px; /* Align with border-l-2 */
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #d1d5db; /* Default Gray */
+    border: 2px solid var(--bg-body, #fff);
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+/* Status Colors for Dots */
+.timeline-step.completed::before {
+    background-color: #22c55e; /* Green */
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+.timeline-step.current::before {
+    background-color: #eab308; /* Yellow */
+    box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.2);
+    animation: pulse-dot 2s infinite;
+}
+.timeline-step.rejected::before {
+    background-color: #ef4444; /* Red */
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+html.dark .timeline-step::before { border-color: #151515; }
+
+@keyframes pulse-dot {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(234, 179, 8, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+}
+
+/* Dark Mode Leaflet Map Filter */
+html.dark .leaflet-layer,
+html.dark .leaflet-control-zoom-in,
+html.dark .leaflet-control-zoom-out,
+html.dark .leaflet-control-attribution {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}

@@ -1,0 +1,246 @@
+{% extends 'organizer_base.html' %} 
+{% load static %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">
+    
+    <div class="mb-8">
+        <a href="{% url 'organizer_analytics' %}" class="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:text-gray-400 dark:hover:text-pup-gold transition-colors mb-4">
+            <i class="ph-bold ph-arrow-left"></i> Back to Analytics
+        </a>
+        
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
+            <div>
+                <span class="text-[10px] font-black tracking-[0.2em] text-blue-600 dark:text-blue-400 uppercase">Detailed Event Report</span>
+                <h1 class="font-black text-3xl sm:text-4xl text-gray-900 dark:text-white mt-1 leading-tight tracking-tight">Seminar: AI Ethics</h1>
+                <p class="text-sm font-bold text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-4">
+                    <span><i class="ph-bold ph-calendar-blank"></i> May 12, 2026</span>
+                    <span><i class="ph-bold ph-users"></i> 120 Respondents</span>
+                </p>
+            </div>
+            
+            <button class="w-full md:w-auto px-6 py-3 rounded-xl bg-gray-100 dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-[#222] transition-colors flex items-center justify-center gap-2 text-sm shadow-sm">
+                <i class="ph-bold ph-download-simple"></i> Export PDF Report
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-5 transition-colors">
+            <div class="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <i class="ph-fill ph-star text-3xl"></i>
+            </div>
+            <div>
+                <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Overall Rating</span>
+                <div class="flex items-baseline gap-1"><span class="text-3xl font-black text-gray-900 dark:text-white">4.8</span><span class="text-sm font-bold text-gray-400">/ 5.0</span></div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-5 transition-colors">
+            <div class="w-14 h-14 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400">
+                <i class="ph-fill ph-smiley text-3xl"></i>
+            </div>
+            <div>
+                <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Overall Sentiment</span>
+                <div class="flex items-baseline gap-1"><span class="text-3xl font-black text-gray-900 dark:text-white">92%</span><span class="text-sm font-bold text-gray-400">Positive</span></div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-[#151515] p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-5 transition-colors">
+            <div class="w-14 h-14 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                <i class="ph-fill ph-target text-3xl"></i>
+            </div>
+            <div>
+                <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Highest Rated Area</span>
+                <span class="text-xl font-black text-gray-900 dark:text-white leading-tight">Guest Speaker</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <div class="lg:col-span-2 bg-white dark:bg-[#151515] p-6 sm:p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors flex flex-col">
+            <div class="mb-6">
+                <h3 class="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-list-numbers text-pup-maroon dark:text-pup-gold"></i> Ratings per Criteria</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">Average score based on the evaluation questions.</p>
+            </div>
+            <div class="relative w-full h-[300px] flex-grow">
+                <canvas id="questionsBarChart"></canvas>
+            </div>
+        </div>
+
+        <div class="lg:col-span-1 bg-white dark:bg-[#151515] p-6 sm:p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors flex flex-col items-center">
+            <div class="mb-6 w-full text-left">
+                <h3 class="text-lg font-black text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-chart-pie-slice text-blue-500"></i> Attendees</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">Respondent distribution by year level.</p>
+            </div>
+            <div class="relative w-full max-w-[220px] aspect-square mx-auto">
+                <canvas id="yearLevelChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-[#151515] rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 sm:p-8 transition-colors">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-gray-100 dark:border-gray-800 pb-4">
+            <div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-chats-circle text-green-500"></i> Open Feedback & Comments</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">Anonymous qualitative responses from attendees.</p>
+            </div>
+            <div class="flex gap-2">
+                <select id="sentimentFilter" class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors">
+                    <option value="all">All Sentiments</option>
+                    <option value="positive">Positive Only</option>
+                    <option value="neutral">Neutral Only</option>
+                    <option value="negative">Needs Improvement</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="commentsContainer">
+            <div class="p-5 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-8 h-8 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center text-green-700 dark:text-green-300"><i class="ph-bold ph-smiley"></i></div>
+                    <div>
+                        <span class="block text-xs font-black text-green-700 dark:text-green-400 uppercase">Positive</span>
+                        <span class="block text-[10px] text-gray-500">3rd Year Student</span>
+                    </div>
+                </div>
+                <p class="text-sm font-medium text-gray-800 dark:text-gray-300 leading-relaxed">"The speaker was very knowledgeable about AI ethics. I learned a lot especially about the biases in machine learning models. Great job ITO!"</p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-8 h-8 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center text-green-700 dark:text-green-300"><i class="ph-bold ph-smiley"></i></div>
+                    <div>
+                        <span class="block text-xs font-black text-green-700 dark:text-green-400 uppercase">Positive</span>
+                        <span class="block text-[10px] text-gray-500">4th Year Student</span>
+                    </div>
+                </div>
+                <p class="text-sm font-medium text-gray-800 dark:text-gray-300 leading-relaxed">"Very timely topic. The venue was well-prepared and the registration process was smooth."</p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300"><i class="ph-bold ph-smiley-meh"></i></div>
+                    <div>
+                        <span class="block text-xs font-black text-gray-700 dark:text-gray-400 uppercase">Neutral</span>
+                        <span class="block text-[10px] text-gray-500">1st Year Student</span>
+                    </div>
+                </div>
+                <p class="text-sm font-medium text-gray-800 dark:text-gray-300 leading-relaxed">"The seminar was okay. The topic was a bit advanced for us freshmen, but the free snacks were good."</p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-8 h-8 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center text-red-700 dark:text-red-300"><i class="ph-bold ph-smiley-sad"></i></div>
+                    <div>
+                        <span class="block text-xs font-black text-red-700 dark:text-red-400 uppercase">Needs Improvement</span>
+                        <span class="block text-[10px] text-gray-500">2nd Year Student</span>
+                    </div>
+                </div>
+                <p class="text-sm font-medium text-gray-800 dark:text-gray-300 leading-relaxed">"The sound system at the back was terrible. We couldn't hear the speaker clearly during the Q&A portion. Please fix the mics next time."</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Theme logic for charts (para bumagay sa Dark/Light mode)
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#9ca3af' : '#6b7280';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+
+    // 🟢 BAR CHART: Ratings Per Question 🟢
+    const ctxBar = document.getElementById('questionsBarChart').getContext('2d');
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: [
+                'Relevance of Topic', 
+                'Speaker Knowledge', 
+                'Time Management', 
+                'Venue & Facilities', 
+                'Overall Experience'
+            ],
+            datasets: [{
+                label: 'Average Score',
+                data: [4.9, 4.8, 4.2, 3.8, 4.7], // Example Data
+                backgroundColor: [
+                    'rgba(37, 99, 235, 0.8)', // Blue
+                    'rgba(37, 99, 235, 0.8)', 
+                    'rgba(245, 158, 11, 0.8)', // Orange (medyo mababa)
+                    'rgba(239, 68, 68, 0.8)',  // Red (mababa)
+                    'rgba(16, 185, 129, 0.8)'  // Green
+                ],
+                borderRadius: 6,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y', // Ginawang horizontal para madaling basahin ang tanong
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                    titleFont: { family: 'Inter', size: 12 },
+                    bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
+                    padding: 12,
+                    displayColors: false
+                }
+            },
+            scales: {
+                x: {
+                    max: 5.0,
+                    grid: { color: gridColor },
+                    ticks: { color: textColor, font: { family: 'Inter', weight: 'bold' } }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { color: textColor, font: { family: 'Inter', weight: '600' } }
+                }
+            }
+        }
+    });
+
+    // 🟢 DOUGHNUT CHART: Year Level Demographics 🟢
+    const ctxPie = document.getElementById('yearLevelChart').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
+            datasets: [{
+                data: [45, 30, 25, 20], // Example Data (Total: 120)
+                backgroundColor: [
+                    '#3b82f6', // Blue
+                    '#10b981', // Green
+                    '#f59e0b', // Yellow
+                    '#800000'  // PUP Maroon
+                ],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '600' }, padding: 15 }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                    bodyFont: { family: 'Inter', size: 13, weight: 'bold' },
+                    padding: 10
+                }
+            }
+        }
+    });
+</script>
+{% endblock content %}

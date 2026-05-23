@@ -1,0 +1,269 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Manage Students | PUPUni-CAMS{% endblock %}
+
+{% block page_title %}Manage Students{% endblock %}
+{% block page_subtitle %}Monitor, view profiles, and deactivate student accounts for record history.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .actions-dropdown { position: relative; display: inline-block; }
+    .actions-menu { display: none; position: absolute; right: 0; top: 100%; background: var(--card-bg); min-width: 160px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index: 100; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
+    .actions-dropdown.active .actions-menu { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    .action-item { padding: 10px 15px; display: flex; align-items: center; gap: 10px; color: var(--text-main); text-decoration: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+    .action-item:hover { background: var(--hover-bg); color: var(--accent); }
+    .action-item.danger:hover { background: rgba(220, 53, 69, 0.1); color: var(--danger); }
+    
+    .user-cell { display: flex; align-items: center; gap: 12px; }
+    .user-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+    .user-name { font-weight: 700; color: var(--text-main); display: block; }
+    .user-username { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* 🟢 EXACT MATCH PROFILE VIEW MODAL 🟢 */
+    #profileModalBox { max-width: 420px; padding: 0; border-radius: 20px; overflow: hidden; background: #ffffff; position: relative; }
+    .profile-cover { width: 100%; height: 140px; background-color: #111; background-image: url('{% static "images/PUP1.jpg" %}'); background-size: cover; background-position: center; position: relative; }
+    .profile-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.2s; z-index: 10; font-family: sans-serif; font-size: 1.1rem; }
+    .profile-close:hover { background: var(--danger); }
+    
+    .profile-info { padding: 60px 30px 30px 30px; text-align: left; position: relative; background: #ffffff; }
+    .profile-avatar-container { position: absolute; top: -55px; left: 30px; }
+    .profile-avatar-container img { width: 110px; height: 110px; border-radius: 50%; border: 5px solid #ffffff; background: #ffffff; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    
+    .profile-name { font-size: 1.7rem; font-weight: 900; color: #111827; margin: 0; line-height: 1.2; font-family: 'Inter', sans-serif; letter-spacing: -0.5px; }
+    .profile-id { font-size: 0.95rem; font-weight: 800; color: #800000; margin-top: 5px; margin-bottom: 25px; font-family: 'Inter', sans-serif; }
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .profile-card-stat { border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px; text-align: center; background: #ffffff; }
+    .profile-card-stat small { display: block; font-size: 0.65rem; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-family: 'Inter', sans-serif; }
+    .profile-card-stat span { display: block; font-size: 1rem; font-weight: 800; color: #111827; font-family: 'Inter', sans-serif; }
+</style>
+{% endblock %}
+
+{% block tabs %}
+<div class="tab-container">
+    <a href="{% url 'manage_accounts' %}" class="tab-link active">Student</a>
+    <a href="{% url 'manage_organizers' %}" class="tab-link">Student Org</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="control-bar" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+    <div class="filter-group">
+        <select id="orgFilter" class="custom-select" onchange="filterUsers()">
+            <option value="all">All Organizations</option>
+            <option value="ITO">ITO</option>
+            <option value="ITS">ITS</option>
+            <option value="YEO">YEO</option>
+            <option value="FTO">FTO</option>
+            <option value="PAS">PAS</option>
+            <option value="CAO">CAO</option>
+            <option value="NEWS">NEWS (NEWSETTE)</option>
+            <option value="PRIDE">PRIDE (PRIDEVerse)</option>
+            <option value="ROTC">ROTC</option>
+            <option value="PUSO">PUSO</option>
+            <option value="SSC">SSC</option>
+        </select>
+        <div class="search-box">
+            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search name or student ID..." onkeyup="filterUsers()">
+        </div>
+    </div>
+    
+    <!-- 🟢 HISTORY BUTTON 🟢 -->
+    <a href="{% url 'account_history' %}" class="btn-cancel" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+        <i class="ph-bold ph-clock-counter-clockwise"></i> Account History
+    </a>
+</div>
+
+<div class="table-section">
+    <div style="overflow-x: auto; max-height: 65vh;">
+        <table id="usersTable">
+            <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
+                <tr>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Organization</th>
+                    <th>Status</th>
+                    <th style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data populated by JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- 🟢 PROFILE VIEW MODAL 🟢 -->
+<div id="profileModal" class="modal">
+    <div class="modal-box" id="profileModalBox">
+        <div class="profile-cover" id="viewCover">
+            <button class="profile-close" onclick="closeModal('profileModal')">✕</button>
+        </div>
+        <div class="profile-info">
+            <div class="profile-avatar-container">
+                <img src="" id="viewAvatar" alt="Profile">
+            </div>
+            <h2 class="profile-name" id="viewName">--</h2>
+            <div class="profile-id" id="viewId">--</div>
+            
+            <div class="profile-grid">
+                <div class="profile-card-stat">
+                    <small>Year Level</small>
+                    <span id="viewYear">--</span>
+                </div>
+                <div class="profile-card-stat">
+                    <small>Birthdate</small>
+                    <span id="viewBirth">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🟢 DEACTIVATE MODAL 🟢 -->
+<div id="deactivateModal" class="modal">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <i class="ph-fill ph-warning-circle" style="font-size: 4rem; color: var(--danger); margin-bottom: 15px;"></i>
+        <h3 class="modal-title" style="margin-bottom: 10px;">Deactivate Student?</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">
+            Are you sure you want to deactivate <strong id="d_name" style="color: var(--text-main);"></strong>? Their record will be moved to Account History.
+        </p>
+        <input type="hidden" id="d_id">
+        <div class="modal-actions" style="justify-content: center; gap: 10px;">
+            <button type="button" class="btn-cancel" onclick="closeModal('deactivateModal')">Cancel</button>
+            <button type="button" class="btn-primary" style="background: var(--danger);" onclick="submitAction('deactivate')">Yes, Deactivate</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let usersData = JSON.parse('{{ students_json|escapejs|default:"[]" }}');
+
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        
+        if(data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted);">No active student accounts found.</td></tr>`;
+            return;
+        }
+
+        data.forEach(user => {
+            let badgeClass = user.status === 'Active' ? 'badge-approved' : 'badge-pending';
+
+            const row = `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <img src="${user.avatar}" class="user-avatar" style="cursor:pointer;" onclick="viewProfile(${user.id})">
+                            <div>
+                                <span class="user-name" style="cursor:pointer;" onclick="viewProfile(${user.id})">${user.name}</span>
+                                <span class="user-username">${user.email || 'Student'}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-family: monospace; font-weight: 600;">${user.username}</td>
+                    <td style="font-weight: 800; color: var(--accent);">${user.org}</td>
+                    <td><span class="badge ${badgeClass}">${user.status}</span></td>
+                    <td style="text-align: center;">
+                        <div class="actions-dropdown" id="dropdown-${user.id}">
+                            <button class="btn-action-small" onclick="toggleMenu(${user.id})">
+                                <i class="ph-bold ph-dots-three-outline-vertical"></i> Manage
+                            </button>
+                            <div class="actions-menu" style="text-align:left;">
+                                <a class="action-item" onclick="viewProfile(${user.id})"><i class="ph-bold ph-user-circle"></i> View Profile</a>
+                                <hr style="border-color: var(--border); margin:0;">
+                                <a class="action-item danger" onclick="openDeactivateModal(${user.id})"><i class="ph-bold ph-warning-circle"></i> Deactivate Account</a>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function filterUsers() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const org = document.getElementById('orgFilter').value;
+        const filtered = usersData.filter(user => {
+            const matchSearch = user.name.toLowerCase().includes(search) || user.username.toLowerCase().includes(search);
+            const matchOrg = org === 'all' || user.org === org;
+            return matchSearch && matchOrg;
+        });
+        renderTable(filtered);
+    }
+
+    function toggleMenu(id) {
+        document.querySelectorAll('.actions-dropdown').forEach(d => { if(d.id !== `dropdown-${id}`) d.classList.remove('active'); });
+        document.getElementById(`dropdown-${id}`).classList.toggle('active');
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.btn-action-small') && !event.target.matches('.ph-dots-three-outline-vertical')) {
+            document.querySelectorAll('.actions-dropdown').forEach(d => d.classList.remove('active'));
+        }
+    }
+
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('active');
+        setTimeout(() => { modal.style.display = 'none'; }, 200);
+    }
+
+    function viewProfile(id) {
+        const user = usersData.find(u => u.id === id);
+        document.getElementById('viewAvatar').src = user.avatar;
+        document.getElementById('viewName').innerText = user.name;
+        document.getElementById('viewId').innerText = user.username; 
+        document.getElementById('viewYear').innerText = user.year || 'Not Provided';
+        if (user.birthdate) {
+            let dateObj = new Date(user.birthdate);
+            let formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('viewBirth').innerText = isNaN(dateObj) ? user.birthdate : formattedDate;
+        } else {
+            document.getElementById('viewBirth').innerText = 'Not Provided';
+        }
+        openModal('profileModal');
+    }
+
+    function openDeactivateModal(id) {
+        const user = usersData.find(u => u.id === id);
+        document.getElementById('d_id').value = user.id;
+        document.getElementById('d_name').innerText = user.name;
+        openModal('deactivateModal');
+    }
+
+    async function submitAction(action) {
+        let payload = { action: action, id: document.getElementById('d_id').value };
+        const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken=')).split('=')[1];
+
+        try {
+            const response = await fetch("/admin/api/student-action/", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if(data.status === 'success') {
+                alert(data.message);
+                location.reload(); 
+            } else { alert("Error: " + data.message); }
+        } catch (error) { alert("Server Error. Please try again."); }
+    }
+
+    window.addEventListener('load', () => renderTable(usersData));
+</script>
+{% endblock %}

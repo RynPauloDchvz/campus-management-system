@@ -1,0 +1,246 @@
+{% extends 'student_base.html' %}
+{% load static %}
+
+{% block content %}
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+<style>
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .star-btn { transition: transform 0.1s ease, color 0.2s ease; }
+    .star-btn:hover { transform: scale(1.2); }
+    .star-active { color: #D4AF37 !important; } 
+</style>
+
+<div class="w-full bg-gray-900 relative h-48 sm:h-64 flex items-end">
+    <img id="headerImg" src="{% static 'images/background.jpg' %}" class="absolute inset-0 w-full h-full object-cover opacity-50">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
+    <div class="relative z-10 p-6 sm:p-10 w-full max-w-4xl mx-auto">
+        <a href="{% url 'student_evaluation' %}" class="absolute top-4 left-4 sm:top-6 sm:left-6 text-white hover:text-pup-gold transition-colors flex items-center gap-2 text-sm font-bold bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10">
+            <i class="ph-bold ph-arrow-left text-lg"></i> Back
+        </a>
+        <div id="headerCategory" class="bg-pup-gold inline-block text-black font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2 mt-8">Category</div>
+        <h2 id="headerTitle" class="text-3xl sm:text-5xl font-black text-white leading-tight">Event Title</h2>
+        <p class="text-gray-300 text-sm mt-1">Official Evaluation Form</p>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+    <div class="bg-white dark:bg-[#0a0a0a] rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
+        
+        <div class="border-b border-gray-200 dark:border-gray-800 pb-4 mb-6 text-center">
+            <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wide">Performance Rating</h3>
+            <p class="text-sm text-gray-500 mt-1">Please rate the following aspects of the event honestly.</p>
+        </div>
+
+        <div id="questionsContainer" class="flex flex-col gap-6 mb-8">
+            </div>
+
+        <div class="bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-8 shadow-sm">
+            <label class="block text-sm font-bold uppercase text-gray-600 dark:text-gray-400 mb-3">Additional Comments</label>
+            <textarea id="evalComments" rows="5" placeholder="Share your detailed feedback, suggestions, or concerns here..." class="w-full bg-white dark:bg-[#111] border border-gray-300 dark:border-gray-700 rounded-xl p-4 text-base text-gray-900 dark:text-white focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold resize-y shadow-inner"></textarea>
+            <p class="text-xs text-gray-500 mt-3 flex items-center gap-1"><i class="ph-fill ph-robot text-pup-maroon dark:text-pup-gold text-lg"></i> Your response will be analyzed using NLP Sentiment Engine.</p>
+        </div>
+
+        <button id="btnSubmitEval" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-4 sm:py-5 px-6 rounded-xl text-lg flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md transform hover:-translate-y-0.5">
+            <i class="ph-bold ph-paper-plane-tilt text-2xl"></i> SUBMIT FEEDBACK
+        </button>
+
+    </div>
+</div>
+
+<div id="successModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
+    
+    <div class="relative bg-white dark:bg-[#111] rounded-3xl shadow-2xl w-full max-w-md mx-auto flex flex-col items-center justify-center p-10 sm:p-12 text-center border border-gray-200 dark:border-gray-700 z-10 transform scale-95 transition-transform duration-300" id="successBox">
+        
+        <button id="btnCloseModal" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+            <i class="ph-bold ph-x"></i>
+        </button>
+
+        <div class="w-24 h-24 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-6 shrink-0 shadow-lg ring-4 ring-green-500/20">
+            <i class="ph-bold ph-check text-5xl text-white"></i>
+        </div>
+        <h2 class="text-3xl font-black text-gray-900 dark:text-white mb-3">Thank You!</h2>
+        <p class="text-gray-500 dark:text-gray-400 mb-8 text-base leading-relaxed">Your feedback has been successfully submitted and analyzed.</p>
+        
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. Fetch Event Details from SessionStorage
+    const currentTitle = sessionStorage.getItem('currentEvalTitle') || "General Event Evaluation";
+    const currentCategory = sessionStorage.getItem('currentEvalCategory') || "Feedback";
+    const currentImg = sessionStorage.getItem('currentEvalImg') || "{% static 'images/background.jpg' %}";
+
+    document.getElementById('headerTitle').innerText = currentTitle;
+    document.getElementById('headerCategory').innerText = currentCategory;
+    document.getElementById('headerImg').src = currentImg;
+
+    // 2. Generate 25 Questions (5 Categories)
+    const evaluationData = [
+        {
+            category: "Venue & Facilities",
+            questions: [
+                "Cleanliness of the venue?",
+                "Comfort of the seating arrangements?",
+                "Quality of audio/visual equipment?",
+                "Accessibility of the location?",
+                "Adequacy of space for all participants?"
+            ]
+        },
+        {
+            category: "Speaker / Facilitator",
+            questions: [
+                "Knowledge and expertise of the speaker?",
+                "Clarity of the presentation?",
+                "Ability to engage the audience effectively?",
+                "Responsiveness to questions and clarifications?",
+                "Time management during the session?"
+            ]
+        },
+        {
+            category: "Content & Relevance",
+            questions: [
+                "Relevance of the topic to your field/course?",
+                "Clarity of the event's overall objectives?",
+                "Usefulness of the learning materials provided?",
+                "Depth of the subject matter covered?",
+                "Applicability of knowledge gained in real life?"
+            ]
+        },
+        {
+            category: "Organization & Logistics",
+            questions: [
+                "Efficiency of the registration process?",
+                "Punctuality of the event schedule?",
+                "Clarity of prior announcements and communications?",
+                "Quality of food/refreshments (if applicable)?",
+                "Helpfulness and approachability of the event staff?"
+            ]
+        },
+        {
+            category: "Overall Experience",
+            questions: [
+                "Your overall satisfaction with the event?",
+                "Value for the time you invested?",
+                "Likelihood of attending similar events in the future?",
+                "Likelihood of recommending this event to others?",
+                "Did the event meet your initial expectations?"
+            ]
+        }
+    ];
+    
+    const emojis = ['😐', '😡', '😟', '😐', '🙂', '🤩']; 
+
+    const container = document.getElementById('questionsContainer');
+    let globalQIndex = 1;
+
+    evaluationData.forEach((section) => {
+        // Category Header
+        const headerHTML = `
+            <div class="mt-6 mb-2">
+                <h3 class="text-sm sm:text-base font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest border-b border-gray-300 dark:border-gray-800 pb-2 flex items-center gap-2">
+                    <i class="ph-fill ph-check-square-offset"></i> ${section.category}
+                </h3>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', headerHTML);
+
+        // Category Questions
+        section.questions.forEach((q) => {
+            const html = `
+                <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors">
+                    <p class="text-sm font-bold text-gray-700 dark:text-gray-300 sm:w-2/3 leading-snug">${globalQIndex}. ${q}</p>
+                    <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-1/3">
+                        <div class="flex items-center gap-1 sm:gap-2 star-group" data-q="${globalQIndex}" data-value="0">
+                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="1"></i>
+                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="2"></i>
+                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="3"></i>
+                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="4"></i>
+                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="5"></i>
+                        </div>
+                        <div class="text-3xl" id="emoji-${globalQIndex}">😐</div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            globalQIndex++;
+        });
+    });
+
+    // 3. Star Click Logic
+    document.querySelectorAll('.star-group').forEach(group => {
+        const stars = group.querySelectorAll('.star-btn');
+        const qId = group.getAttribute('data-q');
+        const emojiDisplay = document.getElementById(`emoji-${qId}`);
+
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.getAttribute('data-val'));
+                group.setAttribute('data-value', rating);
+                
+                stars.forEach((s, idx) => {
+                    if(idx < rating) {
+                        s.classList.remove('text-gray-300', 'dark:text-gray-700');
+                        s.classList.add('star-active');
+                    } else {
+                        s.classList.add('text-gray-300', 'dark:text-gray-700');
+                        s.classList.remove('star-active');
+                    }
+                });
+
+                emojiDisplay.innerText = emojis[rating];
+                emojiDisplay.classList.add('animate-bounce');
+                setTimeout(() => emojiDisplay.classList.remove('animate-bounce'), 500);
+            });
+        });
+    });
+
+    // 4. Submit & Validation Logic
+    const btnSubmit = document.getElementById('btnSubmitEval');
+    const modal = document.getElementById('successModal');
+    const modalBox = document.getElementById('successBox');
+
+    btnSubmit.addEventListener('click', function() {
+        // Requirement: Must answer ALL 25 questions
+        let allAnswered = true;
+        document.querySelectorAll('.star-group').forEach(g => {
+            if(parseInt(g.getAttribute('data-value')) === 0) allAnswered = false;
+        });
+
+        if(!allAnswered) {
+            alert("Please provide a rating for ALL 25 questions before submitting.");
+            return;
+        }
+
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-2xl"></i> ANALYZING SENTIMENT...';
+        this.disabled = true;
+
+        // Simulate VADER Processing delay
+        setTimeout(() => {
+            // Save to LocalStorage as Completed
+            const evaluatedEvents = JSON.parse(localStorage.getItem('evaluatedEvents') || '{}');
+            evaluatedEvents[currentTitle] = true;
+            localStorage.setItem('evaluatedEvents', JSON.stringify(evaluatedEvents));
+
+            // Show Success Modal
+            modal.classList.remove('hidden');
+            setTimeout(() => modalBox.classList.remove('scale-95'), 10);
+            
+            this.innerHTML = originalText;
+            this.disabled = false;
+        }, 1500);
+    });
+
+    // Close Modal -> Redirect to Masterlist
+    document.getElementById('btnCloseModal').addEventListener('click', () => {
+        window.location.href = "{% url 'student_evaluation' %}";
+    });
+});
+</script>
+{% endblock content %}

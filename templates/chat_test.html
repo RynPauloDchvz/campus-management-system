@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- PANG-MOBILE OPTIMIZATION: Pinipigilan ang automatic zoom-in sa phone -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PUPUni-CAMS AI Assistant</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        /* BASE STYLES & MOBILE FIRST */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f0f2f5; 
+            margin: 0; padding: 0;
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; height: 100dvh; /* For mobile browser compatibility */
+        }
+        
+        .chat-container { 
+            width: 100%; height: 100%; 
+            background-color: #ffffff; 
+            display: flex; flex-direction: column; 
+            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+        }
+
+        /* KAPAG SA LAPTOP O MALAKING SCREEN, MAGIGING FLOATING BOX SIYA */
+        @media (min-width: 480px) {
+            .chat-container {
+                width: 420px;
+                height: 90vh;
+                max-height: 700px;
+                border-radius: 20px;
+                border: 1px solid rgba(0,0,0,0.08);
+            }
+        }
+        
+        /* HEADER */
+        .chat-header { 
+            background: linear-gradient(135deg, #800000 0%, #a31515 100%);
+            color: white; padding: 18px 20px; 
+            display: flex; align-items: center; gap: 12px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 2; 
+        }
+
+        .bot-avatar {
+            width: 42px; height: 42px; 
+            background-color: #ffffff; color: #800000;
+            border-radius: 50%; display: flex; 
+            justify-content: center; align-items: center; 
+            font-size: 22px; font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .header-text { display: flex; flex-direction: column; }
+        .header-title { font-weight: 700; font-size: 16px; letter-spacing: 0.3px; }
+        .header-subtitle { font-size: 12px; opacity: 0.9; display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+        .status-dot { width: 8px; height: 8px; background-color: #4CAF50; border-radius: 50%; box-shadow: 0 0 5px #4CAF50; }
+        
+        /* MESSAGES AREA */
+        .chat-messages { 
+            flex: 1; padding: 20px; overflow-y: auto; 
+            display: flex; flex-direction: column; gap: 18px; 
+            background-color: #ffffff; scroll-behavior: smooth; 
+        }
+        
+        /* MESSAGE BUBBLES */
+        .msg-wrapper { position: relative; display: flex; flex-direction: column; max-width: 88%; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .msg-wrapper.received { align-self: flex-start; align-items: flex-start; }
+        .msg-wrapper.sent { align-self: flex-end; align-items: flex-end; }
+        
+        .msg-bubble { 
+            padding: 12px 16px; font-size: 14px; line-height: 1.5; 
+            word-wrap: break-word; white-space: pre-line; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .received .msg-bubble { background-color: #f3f4f6; color: #1f2937; border-radius: 20px 20px 20px 4px; }
+        .sent .msg-bubble { background-color: #800000; color: #ffffff; border-radius: 20px 20px 4px 20px; }
+        
+        /* SUGGESTION CHIPS (BUTTONS) */
+        .suggestions-container { display: flex; flex-direction: column; gap: 8px; margin-top: -5px; margin-bottom: 15px; width: 100%; align-items: flex-start; }
+        .suggestion-chip { 
+            background-color: #ffffff; border: 1.5px solid #800000; color: #800000; 
+            padding: 10px 16px; border-radius: 20px; font-size: 13.5px; 
+            cursor: pointer; font-weight: 600; text-align: left; 
+            max-width: 95%; line-height: 1.4; transition: all 0.2s ease; 
+        }
+        .suggestion-chip:hover, .suggestion-chip:active { background-color: #800000; color: white; transform: translateY(-2px); }
+        .suggestion-chip.end-btn { border-color: #059669; color: #059669; background-color: #ecfdf5; }
+        .suggestion-chip.end-btn:hover, .suggestion-chip.end-btn:active { background-color: #059669; color: white; }
+        .suggestion-chip.back-btn { border-color: #6b7280; color: #6b7280; background-color: #f9fafb; }
+        .suggestion-chip.back-btn:hover, .suggestion-chip.back-btn:active { background-color: #6b7280; color: white; }
+
+        /* TYPING INDICATOR */
+        .typing-indicator { display: flex; gap: 5px; padding: 12px 16px; background-color: #f3f4f6; border-radius: 20px 20px 20px 4px; width: fit-content; align-items: center; }
+        .dot { width: 6px; height: 6px; background-color: #9ca3af; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        .dot:nth-child(1) { animation-delay: -0.32s; } .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* INPUT AREA */
+        .chat-input-area { 
+            display: flex; padding: 15px; border-top: 1px solid #e5e7eb; 
+            background-color: #ffffff; align-items: center; gap: 10px; 
+            padding-bottom: env(safe-area-inset-bottom, 20px); /* Pang-iPhone notch fix */
+        }
+        .chat-input-area input { 
+            flex: 1; padding: 20px 10px; border: 1px solid #e5e7eb; 
+            border-radius: 24px; outline: none; font-size: 15px; /* 16px para iwas zoom sa iOS */
+            background-color: #f9fafb; transition: border-color 0.2s; 
+        }
+        .chat-input-area input:focus { border-color: #800000; }
+        .chat-input-area button { 
+            background-color: #800000; color: white; border: none; 
+            font-weight: 600; font-size: 14px; padding: 12px 20px; 
+            border-radius: 24px; cursor: pointer; transition: transform 0.1s; 
+        }
+        .chat-input-area button:active { transform: scale(0.92); }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="bot-avatar">🤖</div>
+            <div class="header-text">
+                <span class="header-title">PUPUni-CAMS AI</span>
+                <span class="header-subtitle"><span class="status-dot"></span> All-in-One System Guide</span>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatbox">
+            <div class="msg-wrapper received">
+                <div class="msg-bubble">Hi there! 👋 Ako ang AI Assistant ng PUPUni-CAMS. Alam ko ang bawat detalye ng system natin. Saan mo kailangan ng tulong ngayon? Pili ka lang sa baba o i-type ang concern mo.</div>
+            </div>
+            <div class="suggestions-container" id="suggestions"></div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="messageInput" placeholder="I-type ang iyong tanong..." onkeypress="handleEnter(event)">
+            <button onclick="processTextInput()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatbox = document.getElementById("chatbox");
+        const suggestionsBox = document.getElementById("suggestions");
+
+        // 🟢 DEEP NESTED KNOWLEDGE BASE (ALL SYSTEM FEATURES INCLUDED) 🟢
+        const botFlow = {
+            "main": {
+                choices: [
+                    { label: "👤 Accounts & Profile (Login, Manage, Admin)", target: "account_main" },
+                    { label: "📅 Events (Create, Calendar, Approvals)", target: "events_main" },
+                    { label: "📸 Attendance & Face Scan", target: "attendance_main" },
+                    { label: "📊 Analytics & System Features", target: "features_main" }
+                ]
+            },
+
+            // =====================================
+            // 1. ACCOUNT, PROFILE & ADMIN MANAGE
+            // =====================================
+            "account_main": {
+                botReply: "Anong part ng account management ang gusto mong malaman?",
+                choices: [
+                    { label: "Paano i-update ang Profile ko?", target: "account_profile" },
+                    { label: "Reset Password & Login Issues", target: "account_login" },
+                    { label: "Admin: Paano i-manage ang mga users?", target: "account_admin" },
+                    { label: "⬅️ Ibang Topic", target: "main", isBack: true }
+                ]
+            },
+            "account_profile": {
+                botReply: "Para mag-update ng Profile:\n1. Mag-login at pumunta sa iyong Dashboard.\n2. I-click ang 'Profile' sa menu.\n3. Dito mo pwedeng palitan ang iyong Full Name, Year Level, Birthdate, at mag-upload ng bagong Profile Picture o Cover Photo.\n\nI-click lang ang Save pagkatapos!",
+                choices: [
+                    { label: "Okay, gets ko na!", target: "end_loop", isEnd: true },
+                    { label: "May iba pa akong tanong sa Accounts", target: "account_main" }
+                ]
+            },
+            "account_login": {
+                botReply: "Kung may issue sa login o password:\n\n• Students: Lumapit sa Organizer para i-reset nila ang password mo sa kanilang dashboard.\n• Organizers: Mag-email sa pupunicams@gmail.com para matulungan ng Admin.\n• Pending Approval: Hintayin lang i-verify ng Organizer ang account mo bago ka maka-login.",
+                choices: [
+                    { label: "Salamat, malinaw ito.", target: "end_loop", isEnd: true },
+                    { label: "May follow-up ako sa Accounts", target: "account_main" }
+                ]
+            },
+            "account_admin": {
+                botReply: "Para sa mga Admins, nasa 'Manage Accounts' ang control:\n\n• Active Users: Makikita rito ang lahat ng verified at pending students.\n• Create/Edit Org: Dito pwedeng gawan ng bagong account ang mga Student Orgs.\n• Deactivate: Pwedeng i-deactivate ang users at ilipat sila sa 'Account History' para sa records.",
+                choices: [
+                    { label: "Astig, salamat sa info!", target: "end_loop", isEnd: true },
+                    { label: "Tingnan ko yung ibang features", target: "main" }
+                ]
+            },
+
+            // =====================================
+            // 2. EVENTS, CALENDAR & APPROVALS
+            // =====================================
+            "events_main": {
+                botReply: "Lahat ng tungkol sa Events ay nandito. Ano ang kailangan mo?",
+                choices: [
+                    { label: "Paano gumawa ng Event? (Organizers)", target: "events_create" },
+                    { label: "Admin: Paano mag-approve ng Events?", target: "events_admin" },
+                    { label: "Saan makikita ang mga upcoming events?", target: "events_calendar" },
+                    { label: "⬅️ Ibang Topic", target: "main", isBack: true }
+                ]
+            },
+            "events_create": {
+                botReply: "Organizers, pumunta lang sa 'Create Events' page. Ilagay ang detalye ng event niyo. Note: Hindi ito agad lalabas sa students. Papasok muna ito sa Document Tracking at hihintayin ang approval ni Admin.",
+                choices: [
+                    { label: "Paano i-approve ng Admin?", target: "events_admin" },
+                    { label: "Okay, salamat!", target: "end_loop", isEnd: true }
+                ]
+            },
+            "events_admin": {
+                botReply: "Admins, pumunta sa 'Event Approvals' tab. Dito niyo makikita lahat ng pending requests ng mga Organizers. Kapag kinlick niyo ang 'Approve', tsaka pa lang ito magpapakita sa Event Calendar ng buong campus.",
+                choices: [
+                    { label: "Salamat, nakuha ko na.", target: "end_loop", isEnd: true },
+                    { label: "Ibang tanong sa Events", target: "events_main" }
+                ]
+            },
+            "events_calendar": {
+                botReply: "Para sa lahat ng users, makikita niyo ang mga approved activities sa 'Event Calendar' o 'School Events' tab. Dito rin pwede i-check ang History ng mga events na na-attendan niyo na.",
+                choices: [
+                    { label: "Salamat!", target: "end_loop", isEnd: true },
+                    { label: "Paano naman magpa-attendance?", target: "attendance_main" }
+                ]
+            },
+
+            // =====================================
+            // 3. ATTENDANCE & FACE SCAN
+            // =====================================
+            "attendance_main": {
+                botReply: "Ang Face Recognition Scanner ang gamit natin sa Attendance. Ano ang gusto mong malaman?",
+                choices: [
+                    { label: "Paano mag-Time In / Time Out?", target: "att_scan" },
+                    { label: "Laging nag-e-error ang mukha ko", target: "att_error" },
+                    { label: "Saan makikita ang Attendance History?", target: "att_history" },
+                    { label: "⬅️ Ibang Topic", target: "main", isBack: true }
+                ]
+            },
+            "att_scan": {
+                botReply: "Sa araw ng event, io-open ng Organizer ang camera sa 'Manage Attendance' page.\n\nTitingin lang ang Student sa camera, magwe-wait ng ilang segundo, at kapag nag-match ang mukha, automatic nang ma-re-record ang Time-In o Time-Out nila. Walang logbook na kailangan!",
+                choices: [
+                    { label: "Wow, ang bilis! Salamat.", target: "end_loop", isEnd: true },
+                    { label: "Pano kung ayaw gumana?", target: "att_error" }
+                ]
+            },
+            "att_error": {
+                botReply: "Kung hindi mabasa ang mukha mo:\n1. Siguraduhing maliwanag at walang shadow sa mukha mo.\n2. Tanggalin muna ang salamin o mask.\n3. Kung ayaw talaga, pwedeng i-reset ng Organizer ang Face Data mo sa dashboard nila para makapag-register ka ulit.",
+                choices: [
+                    { label: "Sige, susubukan ko 'yan.", target: "end_loop", isEnd: true },
+                    { label: "Saan makikita yung record ko?", target: "att_history" }
+                ]
+            },
+            "att_history": {
+                botReply: "Lahat ng Time-In at Time-Out records ay naka-save sa system. Pwede itong i-check sa 'Attendance History' menu ng inyong account. Real-time itong nag-uupdate!",
+                choices: [
+                    { label: "Salamat sa info!", target: "end_loop", isEnd: true },
+                    { label: "May iba pa akong tatanungin", target: "main" }
+                ]
+            },
+
+            // =====================================
+            // 4. ANALYTICS & EXTRA FEATURES
+            // =====================================
+            "features_main": {
+                botReply: "Marami pa tayong features! Alin dito ang gusto mong i-explore?",
+                choices: [
+                    { label: "📊 Analytics Dashboard", target: "feat_analytics" },
+                    { label: "⭐ Event Evaluation / Rating", target: "feat_eval" },
+                    { label: "📄 Document Tracking", target: "feat_docs" },
+                    { label: "⬅️ Ibang Topic", target: "main", isBack: true }
+                ]
+            },
+            "feat_analytics": {
+                botReply: "Ang Analytics ay ginagamit ng Organizers at Admins. Dito nagje-generate ang system ng mga graphs at charts base sa attendance at evaluation results. Sobrang laking tulong nito para sa inyong post-event narrative reports!",
+                choices: [
+                    { label: "Salamat, ang laking tulong nito!", target: "end_loop", isEnd: true },
+                    { label: "Tungkol naman sa Evaluation?", target: "feat_eval" }
+                ]
+            },
+            "feat_eval": {
+                botReply: "Pagkatapos ng event, pwedeng pumunta ang Students sa 'Evaluation Form' para mag-rate at mag-iwan ng comments. Ang mga ratings na ito ang magre-reflect sa Analytics ng mga Organizers.",
+                choices: [
+                    { label: "Gets ko na, salamat!", target: "end_loop", isEnd: true },
+                    { label: "May iba pa ba?", target: "features_main" }
+                ]
+            },
+            "feat_docs": {
+                botReply: "Gumagamit ang system ng 'Document Tracking' para hindi mawala ang mga event proposals ng Organizers. Dito makikita in real-time kung ang request ninyo ay naka-Pending pa, Approved, o Rejected ni Admin.",
+                choices: [
+                    { label: "Salamat, malinaw ito.", target: "end_loop", isEnd: true },
+                    { label: "Bumalik sa una", target: "main" }
+                ]
+            },
+
+            // =====================================
+            // FALLBACK PARA SA MGA TINYPE
+            // =====================================
+            "unknown": {
+                botReply: "Sorry, hindi ko masyadong na-gets 'yun. 😅 Pero dahil system expert ako, pili ka nalang sa mga topics na 'to para ma-guide kita nang maayos:",
+                choices: [
+                    { label: "👤 Account, Login & Admin", target: "account_main" },
+                    { label: "📅 Events & Approvals", target: "events_main" },
+                    { label: "📸 Face Scanner & Attendance", target: "attendance_main" },
+                    { label: "⚙️ Analytics & Evaluation", target: "features_main" }
+                ]
+            }
+        };
+
+        window.onload = () => { renderChoices("main"); };
+
+        function renderChoices(nodeKey) {
+            suggestionsBox.innerHTML = ""; 
+            const node = botFlow[nodeKey];
+            if (!node || !node.choices) return;
+
+            node.choices.forEach(choice => {
+                let btn = document.createElement("div");
+                
+                if(choice.isEnd) btn.className = "suggestion-chip end-btn";
+                else if(choice.isBack) btn.className = "suggestion-chip back-btn";
+                else btn.className = "suggestion-chip";
+
+                btn.innerText = choice.label;
+                btn.onclick = () => handleChoiceClick(choice.target, choice.label);
+                suggestionsBox.appendChild(btn);
+            });
+            scrollToBottom();
+        }
+
+        function handleChoiceClick(targetKey, label) {
+            suggestionsBox.innerHTML = ""; 
+            
+            let isMenuCommand = label.includes("Ibang Topic") || label.includes("Bumalik sa");
+            if(!isMenuCommand) appendUserMessage(label); 
+
+            let typingMsg = appendTypingIndicator();
+
+            setTimeout(() => {
+                typingMsg.remove();
+                if (targetKey === "end_loop") {
+                    appendBotMessage("No problem! Nandito lang ako kung may kailangan ka ulit. 😊");
+                    setTimeout(() => { renderChoices("main"); }, 1200); 
+                    return; 
+                }
+                const node = botFlow[targetKey];
+                appendBotMessage(node.botReply); 
+                renderChoices(targetKey);
+            }, 800);
+        }
+
+        // 🧠 BROAD KEYWORD LOGIC (SIMULATED AI)
+        function processTextInput() {
+            let inputField = document.getElementById("messageInput");
+            let text = inputField.value.trim();
+            if (text === "") return;
+
+            suggestionsBox.innerHTML = ""; 
+            appendUserMessage(text);
+            inputField.value = "";
+
+            let typingMsg = appendTypingIndicator();
+            let lowerText = text.toLowerCase();
+
+            setTimeout(() => {
+                typingMsg.remove();
+                
+                // ACCOUNT & ADMIN
+                if (lowerText.includes("password") || lowerText.includes("nakalimutan") || lowerText.includes("reset")) {
+                    appendBotMessage(botFlow["account_password"].botReply);
+                    renderChoices("account_password");
+                } else if (lowerText.includes("admin") || lowerText.includes("manage account") || lowerText.includes("deactivate")) {
+                    appendBotMessage(botFlow["account_admin"].botReply);
+                    renderChoices("account_admin");
+                } else if (lowerText.includes("profile") || lowerText.includes("picture") || lowerText.includes("update")) {
+                    appendBotMessage(botFlow["account_profile"].botReply);
+                    renderChoices("account_profile");
+                } else if (lowerText.includes("register") || lowerText.includes("login") || lowerText.includes("code")) {
+                    appendBotMessage(botFlow["account_main"].botReply);
+                    renderChoices("account_main");
+                }
+                // ATTENDANCE & FACE
+                else if (lowerText.includes("face") || lowerText.includes("mukha") || lowerText.includes("camera") || lowerText.includes("scan")) {
+                    appendBotMessage(botFlow["attendance_main"].botReply);
+                    renderChoices("attendance_main");
+                } else if (lowerText.includes("attend") || lowerText.includes("time in") || lowerText.includes("history") || lowerText.includes("record")) {
+                    appendBotMessage(botFlow["attendance_main"].botReply);
+                    renderChoices("attendance_main");
+                }
+                // EVENTS & DOCS
+                else if (lowerText.includes("event") || lowerText.includes("approve") || lowerText.includes("calendar") || lowerText.includes("create")) {
+                    appendBotMessage(botFlow["events_main"].botReply);
+                    renderChoices("events_main");
+                } else if (lowerText.includes("document") || lowerText.includes("permit") || lowerText.includes("track")) {
+                    appendBotMessage(botFlow["feat_docs"].botReply);
+                    renderChoices("feat_docs");
+                }
+                // ANALYTICS & EVALUATION
+                else if (lowerText.includes("eval") || lowerText.includes("rate") || lowerText.includes("feedback")) {
+                    appendBotMessage(botFlow["feat_eval"].botReply);
+                    renderChoices("feat_eval");
+                } else if (lowerText.includes("analytic") || lowerText.includes("graph") || lowerText.includes("report") || lowerText.includes("data")) {
+                    appendBotMessage(botFlow["feat_analytics"].botReply);
+                    renderChoices("feat_analytics");
+                }
+                // FALLBACK
+                else {
+                    appendBotMessage(botFlow["unknown"].botReply);
+                    renderChoices("unknown");
+                }
+            }, 1000); 
+        }
+
+        function appendUserMessage(text) {
+            let msgWrapper = document.createElement("div");
+            msgWrapper.className = "msg-wrapper sent";
+            msgWrapper.innerHTML = `<div class="msg-bubble">${text}</div>`;
+            chatbox.insertBefore(msgWrapper, suggestionsBox);
+            scrollToBottom();
+        }
+
+        function appendBotMessage(text) {
+            let msgWrapper = document.createElement("div");
+            msgWrapper.className = "msg-wrapper received";
+            msgWrapper.innerHTML = `<div class="msg-bubble">${text}</div>`;
+            chatbox.insertBefore(msgWrapper, suggestionsBox);
+            scrollToBottom();
+        }
+
+        function appendTypingIndicator() {
+            let wrapper = document.createElement("div");
+            wrapper.className = "msg-wrapper received typing-msg";
+            wrapper.innerHTML = `<div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+            chatbox.insertBefore(wrapper, suggestionsBox);
+            scrollToBottom();
+            return wrapper;
+        }
+
+        function handleEnter(event) { if (event.key === "Enter") processTextInput(); }
+        
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatbox.scrollTop = chatbox.scrollHeight;
+            }, 50);
+        }
+    </script>
+</body>
+</html>
