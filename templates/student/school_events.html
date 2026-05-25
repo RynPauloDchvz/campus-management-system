@@ -651,18 +651,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 feedback.innerText = "Identity Matched! Processing attendance...";
                 feedback.className = "text-sm font-bold text-green-600 dark:text-green-400 text-center mb-4 transition-colors mx-auto w-full";
 
-                setTimeout(() => {
+                setTimeout(async () => {
                     if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
                     
-                    participatedEvents[currentEventTitle] = {
-                        image: faceImageData,
-                        lat: userLat.toFixed(6),
-                        lng: userLng.toFixed(6),
-                        address: detectedAddress || "Location Identified via OpenStreetMap",
-                        time: new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'medium' })
-                    };
-                    
-                    switchView('viewSuccess');
+                    const formData = new FormData();
+                    formData.append('event_title', currentEventTitle);
+                    formData.append('face_matched', 'true'); // In this demo, success means true
+                    formData.append('is_valid_location', 'true'); // Simplified for now
+                    formData.append('latitude', userLat);
+                    formData.append('longitude', userLng);
+
+                    try {
+                        const response = await fetch("{% url 'record_attendance' %}", {
+                            method: 'POST',
+                            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                            body: formData
+                        });
+                        const data = await response.json();
+                        
+                        participatedEvents[currentEventTitle] = {
+                            image: faceImageData,
+                            lat: userLat.toFixed(6),
+                            lng: userLng.toFixed(6),
+                            address: detectedAddress || "Location Identified via OpenStreetMap",
+                            time: new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'medium' })
+                        };
+                        
+                        switchView('viewSuccess');
+                    } catch (e) {
+                        alert("Error saving attendance to server.");
+                        btn.disabled = false;
+                        btn.innerText = 'Retry Submission';
+                    }
                 }, 1200);
             }
         }, 2000);

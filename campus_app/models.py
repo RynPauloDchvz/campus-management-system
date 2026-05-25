@@ -90,6 +90,7 @@ class Student(models.Model):
     
     is_verified = models.BooleanField(default=False) 
     face_encoding = models.TextField(null=True, blank=True) 
+    email_notifications = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         if self.password and not self.password.startswith('pbkdf2_'): 

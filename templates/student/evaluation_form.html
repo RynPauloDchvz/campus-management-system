@@ -205,11 +205,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('successModal');
     const modalBox = document.getElementById('successBox');
 
-    btnSubmit.addEventListener('click', function() {
+    btnSubmit.addEventListener('click', async function() {
         // Requirement: Must answer ALL 25 questions
         let allAnswered = true;
+        let totalRating = 0;
         document.querySelectorAll('.star-group').forEach(g => {
-            if(parseInt(g.getAttribute('data-value')) === 0) allAnswered = false;
+            const val = parseInt(g.getAttribute('data-value'));
+            if(val === 0) allAnswered = false;
+            totalRating += val;
         });
 
         if(!allAnswered) {
@@ -221,20 +224,37 @@ document.addEventListener('DOMContentLoaded', () => {
         this.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-2xl"></i> ANALYZING SENTIMENT...';
         this.disabled = true;
 
-        // Simulate VADER Processing delay
-        setTimeout(() => {
-            // Save to LocalStorage as Completed
-            const evaluatedEvents = JSON.parse(localStorage.getItem('evaluatedEvents') || '{}');
-            evaluatedEvents[currentTitle] = true;
-            localStorage.setItem('evaluatedEvents', JSON.stringify(evaluatedEvents));
+        const formData = new FormData();
+        formData.append('event_title', currentTitle);
+        formData.append('rating', (totalRating / 25).toFixed(1));
+        formData.append('comments', document.getElementById('evalComments').value);
 
-            // Show Success Modal
-            modal.classList.remove('hidden');
-            setTimeout(() => modalBox.classList.remove('scale-95'), 10);
-            
+        try {
+            const response = await fetch("{% url 'submit_evaluation' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                // Save to LocalStorage as Completed
+                const evaluatedEvents = JSON.parse(localStorage.getItem('evaluatedEvents') || '{}');
+                evaluatedEvents[currentTitle] = true;
+                localStorage.setItem('evaluatedEvents', JSON.stringify(evaluatedEvents));
+
+                // Show Success Modal
+                modal.classList.remove('hidden');
+                setTimeout(() => modalBox.classList.remove('scale-95'), 10);
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (error) {
+            alert("Connection error while submitting evaluation.");
+        } finally {
             this.innerHTML = originalText;
             this.disabled = false;
-        }, 1500);
+        }
     });
 
     // Close Modal -> Redirect to Masterlist

@@ -4,6 +4,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.models import User 
+from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.core.mail import send_mail 
 from django.conf import settings 
@@ -70,13 +71,13 @@ def check_account_lockout(identifier):
 def record_failed_attempt(identifier):
     lockout, created = LoginLockout.objects.get_or_create(identifier=identifier)
     lockout.failed_attempts += 1
-    
+
     if lockout.failed_attempts % 5 == 0:
         lockout_minutes = (lockout.failed_attempts // 5) * 2
         lockout.lockout_until = timezone.now() + timedelta(minutes=lockout_minutes)
         lockout.save()
         return True, lockout_minutes * 60, lockout.failed_attempts
-    
+
     lockout.save()
     return False, 0, lockout.failed_attempts
 
@@ -98,14 +99,14 @@ def portal_login_view(request):
 
         student_number = request.POST.get('student_number')
         password = request.POST.get('password')
-        
+
         # Check Account Lockout
         is_acc_locked, acc_remaining = check_account_lockout(student_number)
         if is_acc_locked:
             return JsonResponse({"status": "lockout", "message": "Account locked.", "remaining": acc_remaining})
 
         user = authenticate(request, username=student_number, password=password)
-        
+
         if user is not None:
             # Check if this is a Staff/Admin trying to login here (RBAC strict separation)
             if user.is_superuser or (user.is_staff and not OrgProfile.objects.filter(user=user).exists()):
@@ -115,7 +116,7 @@ def portal_login_view(request):
             request.session['failed_attempts_portal'] = 0
             if 'lockout_until_portal' in request.session: del request.session['lockout_until_portal']
             reset_account_lockout(student_number)
-            
+
             if OrgProfile.objects.filter(user=user).exists():
                 login(request, user)
                 return JsonResponse({"status": "success", "redirect_url": "/organizer/homepage"})
@@ -131,7 +132,7 @@ def portal_login_view(request):
         else:
             # Failed attempt logic
             is_locked_now, lock_time, total_attempts = record_failed_attempt(student_number)
-            
+
             if is_locked_now:
                 request.session['lockout_until_portal'] = (timezone.now() + timedelta(seconds=lock_time)).isoformat()
                 return JsonResponse({
@@ -139,7 +140,7 @@ def portal_login_view(request):
                     "message": f"Too many failed attempts ({total_attempts}). Please wait.", 
                     "remaining": lock_time
                 })
-                
+
             return JsonResponse({"status": "error", "message": f"Incorrect credentials. Attempt {total_attempts % 5} of 5."})
 
     return redirect('index')
@@ -150,16 +151,16 @@ def portal_login_view(request):
 def forgot_password_view(request):
     if request.method == 'POST':
         identifier = request.POST.get('identifier') # Student Number or Username
-        
+
         try:
             user = User.objects.get(username=identifier)
             email = user.email
-            
+
             if not email:
                 # Try to get from Student profile if not in User
                 student = Student.objects.filter(user=user).first()
                 if student: email = student.email_address
-            
+
             if not email:
                 return JsonResponse({"status": "error", "message": "No email associated with this account. Please contact Admin."})
 
@@ -168,12 +169,12 @@ def forgot_password_view(request):
             temp_code = ''.join(random.choice(chars) for i in range(8))
             request.session['reset_code'] = temp_code
             request.session['reset_user_id'] = user.id
-            
+
             html_content = render_to_string('email/change_password.html', {
                 'password': temp_code,
                 'email_address': email
             })
-            
+
             send_mail(
                 "Password Reset Request - PUPUni-CAMS",
                 strip_tags(html_content),
@@ -183,7 +184,7 @@ def forgot_password_view(request):
                 fail_silently=False,
             )
             return JsonResponse({"status": "success", "message": "Verification code sent to your registered email!"})
-            
+
         except User.DoesNotExist:
             return JsonResponse({"status": "error", "message": "Account not found in our records."})
         except Exception as e:
@@ -195,10 +196,10 @@ def verify_reset_code(request):
     if request.method == 'POST':
         typed_code = request.POST.get('code')
         saved_code = request.session.get('reset_code')
-        
+
         if not saved_code or typed_code != saved_code:
             return JsonResponse({"status": "error", "message": "Incorrect verification code."})
-            
+
         return JsonResponse({"status": "success"})
     return JsonResponse({"status": "error", "message": "Invalid request."})
 
@@ -206,20 +207,20 @@ def complete_password_reset(request):
     if request.method == 'POST':
         new_password = request.POST.get('new_password')
         user_id = request.session.get('reset_user_id')
-        
+
         if not user_id:
             return JsonResponse({"status": "error", "message": "Session expired. Please try again."})
-            
+
         user = User.objects.get(id=user_id)
         user.set_password(new_password)
         user.save()
-        
+
         # Cleanup
         if 'reset_code' in request.session: del request.session['reset_code']
         if 'reset_user_id' in request.session: del request.session['reset_user_id']
         if 'failed_attempts' in request.session: request.session['failed_attempts'] = 0
         if 'lockout_until' in request.session: del request.session['lockout_until']
-        
+
         return JsonResponse({"status": "success", "message": "Password successfully reset! You can now login."})
     return JsonResponse({"status": "error", "message": "Invalid request."})
 
@@ -231,18 +232,18 @@ def generate_student_password(request):
         email = request.POST.get('email_address')
         if not email:
             return JsonResponse({"status": "error", "message": "Please enter an email address first."})
-        
+
         chars = string.ascii_letters + string.digits
         random_password = ''.join(random.choice(chars) for i in range(10))
         request.session['generated_password'] = random_password 
-        
+
         try:
             html_content = render_to_string('email/create_account.html', {
                 'password': random_password,
                 'email_address': email
             })
             text_content = strip_tags(html_content)
-            
+
             send_mail(
                 "Your Account Password - PUPUni-CAMS",
                 text_content,             
@@ -254,20 +255,20 @@ def generate_student_password(request):
             return JsonResponse({"status": "success", "message": "Code sent! Please check your email inbox (and spam folder)."})
         except Exception as e:
             return JsonResponse({"status": "error", "message": f"Email Error: {str(e)}"})
-            
+
     return JsonResponse({"status": "error", "message": "Invalid request."})
 
 def verify_student_password(request):
     if request.method == 'POST':
         typed_password = request.POST.get('password')
         saved_password = request.session.get('generated_password')
-        
+
         if not saved_password:
             return JsonResponse({"status": "error", "message": "Please click 'Get Code' first to receive your password."})
-            
+
         if typed_password != saved_password:
             return JsonResponse({"status": "error", "message": "Incorrect Code! Please make sure you copied the exact password from your email."})
-            
+
         return JsonResponse({"status": "success"})
     return JsonResponse({"status": "error", "message": "Invalid request."})
 
@@ -276,7 +277,7 @@ def student_register(request):
         try:
             password = request.POST.get('password')
             saved_password = request.session.get('generated_password')
-            
+
             if not saved_password or password != saved_password:
                 return JsonResponse({"status": "error", "message": "Authentication failed. Invalid password."})
 
@@ -330,7 +331,94 @@ def student_profile(request):
         student = Student.objects.get(user=request.user)
     except Student.DoesNotExist:
         return redirect('index')
-    return render(request, 'student/profile.html', {'student': student})
+
+    # 🟢 CONSTRUCT RECENT NOTIFICATIONS FOR PROFILE PREVIEW
+    notifications = get_student_notifications(student)
+    recent_notifications = notifications[:4]  # Show only top 4 on profile
+
+    # 🟢 STATS FOR STUDENT
+    attended_count = Attendance.objects.filter(student=student).count()
+    present_count = Attendance.objects.filter(student=student, face_matched=True, is_valid_location=True).count()
+    absent_count = attended_count - present_count # Simplistic
+
+    context = {
+        'student': student,
+        'notifications': recent_notifications,
+        'attended_count': attended_count,
+        'present_count': present_count,
+        'absent_count': absent_count
+    }
+    return render(request, 'student/profile.html', context)
+
+def get_student_notifications(student):
+    notifications = []
+
+    # 1. Welcome Message
+    notifications.append({
+        'id': f"welcome_{student.id}",
+        'type': 'system',
+        'title': 'Welcome to PUPUni-CAMS!',
+        'message': f"Mabuhay {student.full_name}! Your account has been verified. You can now participate in campus events and track your attendance.",
+        'sender': 'System Admin',
+        'date': student.created_at.strftime('%b %d, %Y') if student.created_at else 'System',
+        'timestamp': student.created_at.timestamp() if student.created_at else 0,
+        'status': 'System'
+    })
+
+    # 2. Upcoming Events (Approved & Future)
+    upcoming_events = Event.objects.filter(event_status='Approved', event_date__gte=timezone.now().date()).order_by('event_date')[:5]
+    for evt in upcoming_events:
+        notifications.append({
+            'id': f"event_{evt.id}",
+            'type': 'event',
+            'title': f"Upcoming: {evt.event_title}",
+            'message': f"An exciting event '{evt.event_title}' is happening on {evt.event_date.strftime('%B %d')} at {evt.venue}. Don't miss out!",
+            'sender': evt.org_id,
+            'date': evt.created_at.strftime('%b %d, %Y'),
+            'timestamp': evt.created_at.timestamp(),
+            'status': 'Approved'
+        })
+
+    # 3. Attendance Issues
+    attendance_issues = Attendance.objects.filter(student=student).filter(Q(face_matched=False) | Q(is_valid_location=False)).order_by('-time_in')[:5]
+    for att in attendance_issues:
+        issue_msg = ""
+        if not att.face_matched and not att.is_valid_location:
+            issue_msg = "Face recognition failed and you were outside the event geofence."
+        elif not att.face_matched:
+            issue_msg = "Face recognition failed during your attendance check."
+        else:
+            issue_msg = "You were detected outside the designated event location."
+
+        notifications.append({
+            'id': f"att_{att.id}",
+            'type': 'alert',
+            'title': f"Attendance Issue: {att.event.event_title}",
+            'message': f"There was a problem recording your attendance for {att.event.event_title}. {issue_msg} Please contact the organizer.",
+            'sender': 'Security System',
+            'date': att.time_in.strftime('%b %d, %Y'),
+            'timestamp': att.time_in.timestamp(),
+            'status': 'Rejected'
+        })
+
+    # Sort by timestamp descending
+    notifications.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+    return notifications
+
+@user_passes_test(is_student_strictly, login_url='/')
+def student_messages(request):
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        return redirect('index')
+
+    notifications = get_student_notifications(student)
+
+    context = {
+        'student': student,
+        'notifications_json': json.dumps(notifications)
+    }
+    return render(request, 'student/messages.html', context)
 
 @user_passes_test(is_student_strictly, login_url='/')
 def update_student_password(request):
@@ -346,10 +434,10 @@ def update_student_password(request):
         user.set_password(new_password)
         user.save()
         login(request, user) 
-        
+
         if 'generated_password' in request.session:
             del request.session['generated_password']
-            
+
         return JsonResponse({"status": "success", "message": "Password updated successfully!"})
     return JsonResponse({"status": "error", "message": "Invalid request."})
 
@@ -361,16 +449,16 @@ def update_student_profile(request):
             full_name = request.POST.get('full_name')
             year_level = request.POST.get('year_level')
             birthdate = request.POST.get('birthdate')
-            
+
             if full_name: student.full_name = full_name
             if year_level: student.year_level = year_level
             if birthdate: student.birthdate = birthdate
-            
+
             if 'profile_picture' in request.FILES:
                 student.profile_picture = request.FILES['profile_picture']
             if 'cover_photo' in request.FILES:
                 student.cover_photo = request.FILES['cover_photo']
-                
+
             student.save()
             return JsonResponse({"status": "success", "message": "Profile updated successfully!"})
         except Exception as e:
@@ -389,13 +477,11 @@ def student_evaluation(request): return render(request, 'student/evaluation.html
 def student_evaluation_form(request): return render(request, 'student/evaluation_form.html')
 @user_passes_test(is_student_strictly, login_url='/')
 def student_event_history(request): return render(request, 'student/event_history.html')
-@user_passes_test(is_student_strictly, login_url='/')
-def student_messages(request): return render(request, 'student/messages.html')
-
 
 # ==========================================
 # ORGANIZER VIEWS
 # ==========================================
+
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_homepage(request): 
     try:
@@ -588,17 +674,72 @@ def approve_individual_student(request):
             student.is_verified = True
             student.save()
             
-            send_mail(
-                f"Account Approved - {student.organization} Student Portal",
-                f"Hello {student.full_name},\n\nCongratulations! Your account for the Student Portal has been approved.\n\nYou can now log in using your Student Number: {student.student_number}.\n\nThank you!",
-                settings.EMAIL_HOST_USER,
-                [student.email_address],
-                fail_silently=True, 
-            )
+            # 🟢 SEND HTML WELCOME EMAIL
+            send_student_email(student, 'welcome', {})
+
             messages.success(request, f"Successfully assigned {student.full_name} to {student.organization}!")
         except Student.DoesNotExist:
             messages.error(request, "Student not found.")
     return redirect('organizer_manage_students')
+
+# ==========================================
+# 🟢 UTILITY: SEND STUDENT EMAIL NOTIFICATION
+# ==========================================
+def send_student_email(student, email_type, context_data):
+    if not student.email_notifications:
+        return False
+    
+    subject = "PUPUni-CAMS Notification"
+    template_name = ""
+    
+    if email_type == 'welcome':
+        subject = f"Account Approved - {student.organization} Student Portal"
+        template_name = "email/welcome_email.html"
+    elif email_type == 'event_alert':
+        subject = f"New Event: {context_data.get('event_title')}"
+        template_name = "email/event_alert.html"
+    elif email_type == 'attendance':
+        subject = f"Attendance Issue: {context_data.get('event_title')}"
+        template_name = "email/attendance_status.html"
+    elif email_type == 'evaluation':
+        subject = f"Evaluation Issue: {context_data.get('event_title')}"
+        template_name = "email/evaluation_issue.html"
+    
+    if not template_name:
+        return False
+
+    context_data['full_name'] = student.full_name
+    context_data['email_address'] = student.email_address
+
+    html_message = render_to_string(template_name, context_data)
+    plain_message = strip_tags(html_message)
+
+    try:
+        send_mail(
+            subject,
+            plain_message,
+            settings.EMAIL_HOST_USER,
+            [student.email_address],
+            html_message=html_message,
+            fail_silently=True
+        )
+        return True
+    except:
+        return False
+
+@user_passes_test(is_student_strictly, login_url='/')
+def update_notification_preference(request):
+    if request.method == 'POST':
+        enabled = request.POST.get('email_notifications') == 'true'
+        try:
+            student = Student.objects.get(user=request.user)
+            student.email_notifications = enabled
+            student.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
 
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_manage_attendance(request): 
@@ -912,6 +1053,65 @@ def event_approvals_view(request):
         'history_json': json.dumps(history_data)
     })
 
+@user_passes_test(is_student_strictly, login_url='/')
+def record_attendance(request):
+    if request.method == 'POST':
+        try:
+            student = Student.objects.get(user=request.user)
+            event_title = request.POST.get('event_title')
+            face_matched = request.POST.get('face_matched') == 'true'
+            is_valid_location = request.POST.get('is_valid_location') == 'true'
+            lat = request.POST.get('latitude')
+            lng = request.POST.get('longitude')
+            
+            event = Event.objects.get(event_title=event_title, event_status='Approved')
+            
+            attendance = Attendance.objects.create(
+                student=student,
+                event=event,
+                face_matched=face_matched,
+                is_valid_location=is_valid_location,
+                latitude=lat,
+                longitude=lng
+            )
+            
+            # 🟢 TRIGGER EMAIL IF ISSUES
+            if not face_matched or not is_valid_location:
+                face_status = "✅ Matched" if face_matched else "❌ Failed"
+                loc_status = "✅ Within Venue" if is_valid_location else "❌ Outside Venue"
+                
+                send_student_email(student, 'attendance', {
+                    'event_title': event.event_title,
+                    'face_status': face_status,
+                    'location_status': loc_status,
+                    'timestamp': attendance.time_in.strftime('%Y-%m-%d %H:%M:%S')
+                })
+                
+            return JsonResponse({'status': 'success', 'message': 'Attendance recorded!'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+@user_passes_test(is_student_strictly, login_url='/')
+def submit_evaluation(request):
+    if request.method == 'POST':
+        try:
+            student = Student.objects.get(user=request.user)
+            event_title = request.POST.get('event_title')
+            # Mocking evaluation save for now as there's no model for it yet
+            # But we trigger the "Issue" email if something is missing
+            
+            rating = request.POST.get('rating')
+            if not rating:
+                send_student_email(student, 'evaluation', {'event_title': event_title})
+                return JsonResponse({'status': 'error', 'message': 'Rating required'})
+
+            return JsonResponse({'status': 'success', 'message': 'Evaluation saved!'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
 def admin_api_action(request):
     if request.method == 'POST':
@@ -931,6 +1131,19 @@ def admin_api_action(request):
                     if data.get('event_date'): event.event_date = data.get('event_date')
                     if data.get('event_time'): event.start_time = data.get('event_time')
                     
+                    event.save() # Save before sending emails to ensure data is updated
+
+                    # 🟢 SEND EVENT ALERT TO ALL STUDENTS OF THE ORG
+                    students = Student.objects.filter(organization__iexact=event.org_id, is_verified=True, email_notifications=True)
+                    for s in students:
+                        send_student_email(s, 'event_alert', {
+                            'event_title': event.event_title,
+                            'org_name': ORG_FULL_NAMES.get(event.org_id, event.org_id),
+                            'event_date': event.event_date.strftime('%B %d, %Y'),
+                            'start_time': event.start_time.strftime('%I:%M %p'),
+                            'venue': event.venue
+                        })
+
                     message = "Signatures verified! Event has been fully approved and published with countdown!"
                 else:
                     event.event_status = 'Approved'

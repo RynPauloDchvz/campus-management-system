@@ -2,157 +2,221 @@
 {% load static %}
 
 {% block content %}
-<script src="https://unpkg.com/@phosphor-icons/web"></script>
-<script src="{% static 'js/student.js' %}" defer></script>
+<style>
+    /* Malambot na transition para sa Hover Effects */
+    .notif-card-transition { 
+        transition: all 0.2s ease-in-out; 
+    }
+    .notif-card-transition:hover { 
+        transform: translateX(5px); 
+        box-shadow: 0 6px 15px rgba(0,0,0,0.05); 
+    }
+    
+    /* Pumuputol sa mahabang text para hindi lumaki ang box */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;  
+        overflow: hidden;
+    }
+</style>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+<script id="django-notifs-data" type="application/json">
+    {{ notifications_json|safe }}
+</script>
 
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
-        <div>
-            <a href="{% url 'student_profile' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors mb-2">
+<div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300 pt-8">
+    
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-8">
+            <a href="{% url 'student_profile' %}" class="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">
                 <i class="ph-bold ph-arrow-left"></i> Back to Profile
             </a>
-            <h1 class="font-bold text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide font-orbitron flex items-center gap-3">
-                <i class="ph-fill ph-bell"></i> All Messages
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+            <h1 class="text-3xl sm:text-4xl font-black text-pup-maroon dark:text-pup-gold uppercase tracking-wide flex items-center gap-3">
+                <i class="ph-fill ph-bell text-3xl"></i> Student Notifications
             </h1>
-        </div>
-
-        <div class="relative w-full md:w-72 shrink-0">
-            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            <input type="text" id="messageSearch" placeholder="Search by title or sender..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-10 pr-3 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors shadow-sm">
-        </div>
-    </div>
-
-    <div class="flex flex-col gap-4 pb-10" id="messagesList">
-        
-        <div id="welcomeMsgCard" onclick="readAndOpenMessage(1, this)" 
-             class="msg-card unread bg-[#fcf8f8] dark:bg-[#1a1515] p-5 rounded-2xl border-2 border-[#800000]/30 dark:border-[#D4AF37]/30 shadow-sm cursor-pointer transition-all flex gap-4 sm:gap-6 items-start relative overflow-hidden" 
-             data-title="welcome to pupuni-cams" 
-             data-sender="system">
             
-            <div class="notif-stripe absolute top-0 right-0 w-2 h-full bg-[#800000] dark:bg-[#D4AF37]"></div>
+            <div class="relative w-full sm:w-80 shrink-0">
+                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" id="searchInput" onkeyup="filterNotifications()" placeholder="Search notifications..." class="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#151515] rounded-xl pl-10 pr-4 py-3 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition shadow-sm">
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-4" id="notificationsContainer">
+            <!-- Notifications will be rendered here via JS -->
+        </div>
+
+    </div>
+
+    <!-- Message Detail Modal -->
+    <div id="messageModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="relative bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10 animate-in fade-in zoom-in duration-200">
             
-            <div class="notif-icon w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
-                <i class="ph-fill ph-megaphone text-2xl"></i>
+            <div id="modalIconWrapper" class="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4">
+                <i id="modalIcon" class="ph-fill text-5xl"></i>
             </div>
-            <div class="flex-grow min-w-0 pr-4">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-1 gap-1 sm:gap-4">
-                    <h4 class="font-bold text-gray-900 dark:text-white text-base truncate">Welcome to PUPUni-CAMS!</h4>
-                    <span class="text-xs font-bold text-[#800000] dark:text-[#D4AF37] shrink-0">Registration Date</span>
-                </div>
-                <span class="inline-block bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[0.65rem] font-bold px-2 py-0.5 rounded-md mb-2">System Admin</span>
-                <p class="text-sm text-gray-700 dark:text-gray-300 font-semibold truncate">Mabuhay Iskolar ng Bayan! Welcome sa bagong Campus Activities Management System. We are thrilled to have you here...</p>
-            </div>
-        </div>
-
-    </div>
-
-    <div id="noResults" class="hidden text-center py-10 w-full">
-        <i class="ph-bold ph-envelope-simple text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
-        <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">No Messages Found</h3>
-        <p class="text-gray-500 text-sm mt-1">We couldn't find anything matching your search.</p>
-    </div>
-</div>
-
-<div id="messageModal" class="hidden fixed inset-0 z-[2010] flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('messageModal').classList.add('hidden')"></div>
-    
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-xl w-full max-w-lg p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 transition-colors">
-        <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="absolute top-4 right-4 bg-gray-100 dark:bg-[#111] hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
-            <i class="ph-bold ph-x text-lg"></i>
-        </button>
-
-        <div class="mb-5 pr-8">
-            <h3 id="msgModalTitle" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2">Message Title</h3>
-            <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400">
-                <span id="msgModalSender" class="text-[#800000] dark:text-[#D4AF37] bg-[#800000]/10 dark:bg-[#D4AF37]/10 px-2 py-1 rounded-md">Sender</span>
-                <span id="msgModalDate"><i class="ph-bold ph-clock"></i> Date Time</span>
-            </div>
-        </div>
-
-        <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 p-5 rounded-2xl mb-6">
-            <p id="msgModalBody" class="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">Message body goes here.</p>
-        </div>
-
-        <div class="flex gap-3">
-            <button type="button" onclick="document.getElementById('messageModal').classList.add('hidden')" class="w-full py-3.5 rounded-xl border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm flex items-center justify-center gap-2">
+            
+            <h3 id="modalTitle" class="text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight"></h3>
+            
+            <p id="modalBody" class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-8 px-2 font-medium"></p>
+            
+            <button onclick="closeModal()" class="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-all text-base shadow-sm">
                 Close Message
             </button>
         </div>
     </div>
+
 </div>
 
 <script>
-    // --- 🟢 PERSISTENT SYNC LOGIC 🟢 ---
-    const studentNum = "{{ user.username }}"; // Standard Django user identification
-    const notifKey = "welcome_read_" + studentNum;
+    let notifications = [];
+    let currentFiltered = [];
+    let readNotifs = JSON.parse(localStorage.getItem('student_read_notifs') || '[]');
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const welcomeCard = document.getElementById('welcomeMsgCard');
+    // Load Data from Django
+    try {
+        const rawData = document.getElementById('django-notifs-data').textContent;
+        if (rawData && rawData.trim() !== '') {
+            notifications = JSON.parse(rawData.trim());
+            currentFiltered = notifications;
+        }
+    } catch (error) {
+        console.error("Error loading notifications:", error);
+    }
+
+    function renderNotifications(dataList) {
+        const container = document.getElementById('notificationsContainer');
         
-        // 1. Apply read status from localStorage upon load
-        if (localStorage.getItem(notifKey) === 'true') {
-            applyReadStyles(welcomeCard);
+        if (dataList.length === 0) {
+            container.innerHTML = `
+                <div class="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200 border-dashed dark:border-gray-800 p-12 text-center shadow-sm">
+                    <i class="ph-fill ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-700 mb-3 block"></i>
+                    <h3 class="font-bold text-gray-500 dark:text-gray-400 text-lg">No notifications found.</h3>
+                </div>
+            `;
+            return;
         }
 
-        // 2. Local Search Logic
-        const searchInput = document.getElementById('messageSearch');
-        const cards = document.querySelectorAll('.msg-card');
-        const noResults = document.getElementById('noResults');
+        let htmlString = '';
 
-        searchInput.addEventListener('input', function() {
-            const query = this.value.toLowerCase();
-            let visibleCount = 0;
+        dataList.forEach((notif, index) => {
+            const isRead = readNotifs.includes(notif.id);
+            
+            let borderClass = 'border-l-blue-500';
+            let iconBg = 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+            let iconClass = 'ph-megaphone';
 
-            cards.forEach(card => {
-                const title = card.getAttribute('data-title');
-                const sender = card.getAttribute('data-sender');
-                
-                if(title.includes(query) || sender.includes(query)) {
-                    card.style.display = 'flex';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            if(visibleCount === 0) {
-                noResults.classList.remove('hidden');
-            } else {
-                noResults.classList.add('hidden');
+            if (notif.type === 'event') {
+                borderClass = 'border-l-green-500';
+                iconBg = 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+                iconClass = 'ph-calendar-star';
+            } else if (notif.type === 'alert') {
+                borderClass = 'border-l-red-500';
+                iconBg = 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+                iconClass = 'ph-warning-circle';
             }
+
+            const readClass = isRead 
+                ? 'opacity-60 bg-gray-50 dark:bg-[#111111] border-gray-300 dark:border-gray-800' 
+                : 'bg-white dark:bg-[#151515] shadow-sm hover:shadow-md border-gray-200 dark:border-gray-700';
+
+            htmlString += `
+                <div onclick="handleNotifClick(${index})" 
+                     class="notif-card-transition cursor-pointer border-l-[5px] rounded-2xl p-5 sm:p-6 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${borderClass} ${readClass}">
+                    
+                    <div class="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-xl shadow-inner ${iconBg}">
+                            <i class="ph-fill ${iconClass}"></i>
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-gray-900 dark:text-white text-base truncate mb-1">${notif.title}</h4>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                    ${notif.sender}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                                ${notif.message}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="shrink-0 sm:text-right mt-2 sm:mt-0">
+                        <span class="text-xs font-bold text-pup-maroon dark:text-pup-gold block uppercase tracking-wider">${notif.date}</span>
+                    </div>
+                </div>
+            `;
         });
-    });
 
-    function readAndOpenMessage(id, element) {
-        // Mark as read and save to localStorage
-        applyReadStyles(element);
-        localStorage.setItem(notifKey, 'true');
+        container.innerHTML = htmlString;
+    }
 
-        // Open Modal with content
-        if(id === 1) {
-            document.getElementById('msgModalTitle').innerText = "Welcome to PUPUni-CAMS!";
-            document.getElementById('msgModalSender').innerText = "System Admin";
-            document.getElementById('msgModalDate').innerHTML = `<i class="ph-bold ph-clock"></i> Registration Date`;
-            document.getElementById('msgModalBody').innerText = "Mabuhay Iskolar ng Bayan! Welcome sa bagong Campus Activities Management System. We are thrilled to have you here. Your account has been successfully verified.";
+    function filterNotifications() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        if (query === "") {
+            currentFiltered = notifications;
+            renderNotifications(currentFiltered);
+            return;
         }
+        currentFiltered = notifications.filter(n => {
+            return (n.title || '').toLowerCase().includes(query) || 
+                   (n.sender || '').toLowerCase().includes(query) || 
+                   (n.message || '').toLowerCase().includes(query);
+        });
+        renderNotifications(currentFiltered);
+    }
+
+    function handleNotifClick(index) {
+        const notif = currentFiltered[index];
+        if (!readNotifs.includes(notif.id)) {
+            readNotifs.push(notif.id);
+            localStorage.setItem('student_read_notifs', JSON.stringify(readNotifs));
+            renderNotifications(currentFiltered);
+        }
+        openModal(notif);
+    }
+
+    function openModal(notif) {
+        const iconWrapper = document.getElementById('modalIconWrapper');
+        const icon = document.getElementById('modalIcon');
+        const titleEl = document.getElementById('modalTitle');
+        const bodyEl = document.getElementById('modalBody');
+
+        bodyEl.innerHTML = notif.message;
+        titleEl.innerText = notif.title;
+
+        if (notif.type === 'event') {
+            iconWrapper.className = "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4 border-green-100 bg-green-50 text-green-500 dark:border-green-900/30 dark:bg-green-900/20";
+            icon.className = "ph-fill ph-calendar-star";
+            titleEl.className = "text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight text-green-600 dark:text-green-500";
+        } else if (notif.type === 'alert') {
+            iconWrapper.className = "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4 border-red-100 bg-red-50 text-red-500 dark:border-red-900/30 dark:bg-red-900/20";
+            icon.className = "ph-fill ph-warning-circle";
+            titleEl.className = "text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight text-red-600 dark:text-red-500";
+        } else {
+            iconWrapper.className = "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4 border-blue-100 bg-blue-50 text-blue-500 dark:border-blue-900/30 dark:bg-blue-900/20";
+            icon.className = "ph-fill ph-megaphone";
+            titleEl.className = "text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight text-blue-600 dark:text-blue-500";
+        }
+
         document.getElementById('messageModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
     }
 
-    function applyReadStyles(element) {
-        if(!element) return;
-        // Match the profile.html read styles
-        element.classList.remove('unread', 'bg-[#fcf8f8]', 'dark:bg-[#1a1515]', 'border-2', 'border-[#800000]/30', 'dark:border-[#D4AF37]/30');
-        element.classList.add('read', 'bg-gray-50', 'dark:bg-[#111]', 'border', 'border-gray-200', 'dark:border-gray-800', 'opacity-70');
-        
-        const stripe = element.querySelector('.notif-stripe');
-        if(stripe) stripe.style.display = 'none';
-        
-        const iconWrap = element.querySelector('.notif-icon');
-        if(iconWrap) {
-            iconWrap.classList.remove('bg-blue-100', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-400');
-            iconWrap.classList.add('bg-gray-200', 'dark:bg-gray-800', 'text-gray-500');
-        }
+    function closeModal() {
+        document.getElementById('messageModal').classList.add('hidden');
+        document.body.style.overflow = '';
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        if(notifications.length > 0) renderNotifications(notifications);
+    });
 </script>
-{% endblock content %}
+{% endblock %}

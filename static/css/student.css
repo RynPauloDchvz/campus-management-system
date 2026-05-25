@@ -47,6 +47,33 @@
     transform: scale(1.05);
 }
 
+/* Profile Edit Mode Styles */
+.editable-field-active {
+    background-color: rgba(128, 0, 0, 0.05) !important;
+    border-color: rgba(128, 0, 0, 0.3) !important;
+    border-style: dashed !important;
+    border-width: 2px !important;
+}
+.dark .editable-field-active {
+    background-color: rgba(212, 175, 55, 0.05) !important;
+    border-color: rgba(212, 175, 55, 0.3) !important;
+}
+
+/* Notification Box Styles */
+.notif-item {
+    transition: all 0.2s ease-in-out;
+}
+.notif-item:hover {
+    transform: translateX(4px);
+}
+.notif-read {
+    opacity: 0.6;
+    background-color: #f9fafb !important;
+}
+.dark .notif-read {
+    background-color: #111111 !important;
+}
+
 /* static/css/school_event.css */
 
 /* Hide Scrollbar for category filters */
