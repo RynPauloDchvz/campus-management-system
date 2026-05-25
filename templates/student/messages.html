@@ -49,9 +49,9 @@
                 <h3 class="font-bold text-gray-500 dark:text-gray-400 text-lg">No notifications found.</h3>
             </div>
 
-            <div v-for="(notif, index) in filteredNotifs" :key="notif.id" @click="handleNotifAction(notif)" 
+            <div v-for="(notif, index) in filteredNotifs" :key="notif.id" @click="openMessageModal(notif)" 
                  class="notif-card-transition cursor-pointer border-l-[5px] rounded-2xl p-5 sm:p-6 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
-                 :class="[getNotifTypeClasses(notif.type), isRead(notif.id) ? 'opacity-60 bg-gray-50 dark:bg-[#111111] border-gray-300 dark:border-gray-800' : 'bg-white dark:bg-[#151515] shadow-sm hover:shadow-md border-gray-200 dark:border-gray-700']">
+                 :class="[getNotifBorderClass(notif.type, notif.status), isRead(notif.id) ? 'opacity-60 bg-gray-50 dark:bg-[#111111] border-gray-300 dark:border-gray-800' : 'bg-white dark:bg-[#151515] shadow-sm hover:shadow-md border-gray-200 dark:border-gray-700']">
                 
                 <div class="flex items-start sm:items-center gap-4 flex-1 min-w-0">
                     <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-xl shadow-inner" :class="getIconBg(notif.type)">
@@ -79,91 +79,43 @@
 
     </div>
 
-    <!-- Message Detail Modal -->
-    <div v-if="isMsgModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4">
-        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" @click="isMsgModalOpen = false"></div>
-        <div class="relative bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10">
-            <div class="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4" :class="getModalIconWrapperClass(currentMsg.type)">
-                <i class="ph-fill text-5xl" :class="getIconClass(currentMsg.type)"></i>
-            </div>
-            <h3 class="text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight" :class="getModalTitleClass(currentMsg.type)">[[ currentMsg.title ]]</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-8 px-2 font-medium">[[ currentMsg.message ]]</p>
-            <button @click="isMsgModalOpen = false" class="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-all text-base shadow-sm">
-                Close Message
-            </button>
-        </div>
-    </div>
-
 </div>
 
-<script>
+    <script id="django-notifs-data" type="application/json">
+        {{ notifications_json|safe }}
+    </script>
+
+    <script>
     (function() {
-        const notifData = {
-            allNotifs: {{ notifications_json|safe|default:"[]"|escapejs }},
-            readNotifs: JSON.parse(localStorage.getItem('student_read_notifs') || '[]'),
-            filteredNotifs: [],
-            isMsgModalOpen: false,
-            currentMsg: {}
-        };
-        notifData.filteredNotifs = notifData.allNotifs;
-
-        if (window.VUE_APP_CONFIG) {
-            const originalData = window.VUE_APP_CONFIG.data;
-            window.VUE_APP_CONFIG.data = function() {
-                return {
-                    ...originalData.call(this),
-                    ...notifData
-                };
-            };
-
-            // Add Methods
-            Object.assign(window.VUE_APP_CONFIG.methods, {
-                isRead(id) {
-                    return this.readNotifs.includes(id);
-                },
-                getNotifTypeClasses(type) {
-                    if (type === 'event') return 'border-l-green-500';
-                    if (type === 'alert') return 'border-l-red-500';
-                    return 'border-l-blue-500';
-                },
-                getIconBg(type) {
-                    if (type === 'event') return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
-                    if (type === 'alert') return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
-                    return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
-                },
-                getIconClass(type) {
-                    if (type === 'event') return 'ph-calendar-star';
-                    if (type === 'alert') return 'ph-warning-circle';
-                    return 'ph-megaphone';
-                },
-                getModalIconWrapperClass(type) {
-                    if (type === 'event') return 'border-green-100 bg-green-50 text-green-500 dark:border-green-900/30 dark:bg-green-900/20';
-                    if (type === 'alert') return 'border-red-100 bg-red-50 text-red-500 dark:border-red-900/30 dark:bg-red-900/20';
-                    return 'border-blue-100 bg-blue-50 text-blue-500 dark:border-blue-900/30 dark:bg-blue-900/20';
-                },
-                getModalTitleClass(type) {
-                    if (type === 'event') return 'text-green-600 dark:text-green-500';
-                    if (type === 'alert') return 'text-red-600 dark:text-red-500';
-                    return 'text-blue-600 dark:text-blue-500';
-                },
-                filterNotifications(event) {
-                    const query = event.target.value.toLowerCase().trim();
-                    this.filteredNotifs = this.allNotifs.filter(n => 
-                        (n.title || '').toLowerCase().includes(query) || 
-                        (n.sender || '').toLowerCase().includes(query) || 
-                        (n.message || '').toLowerCase().includes(query)
-                    );
-                },
-                handleNotifAction(notif) {
-                    if (!this.readNotifs.includes(notif.id)) {
-                        this.readNotifs.push(notif.id);
-                        localStorage.setItem('student_read_notifs', JSON.stringify(this.readNotifs));
-                    }
-                    this.currentMsg = notif;
-                    this.isMsgModalOpen = true;
-                }
-            });
+        let allNotifs = [];
+        try {
+            const rawData = document.getElementById('django-notifs-data').textContent;
+            if (rawData && rawData.trim() !== '') {
+                allNotifs = JSON.parse(rawData.trim());
+            }
+        } catch (error) {
+            console.error("Error loading notifications:", error);
         }
+
+        const notifData = {
+            allNotifs: allNotifs,
+            filteredNotifs: allNotifs
+        };
+
+        window.VUE_APP_DATA = window.VUE_APP_DATA || {};
+        Object.assign(window.VUE_APP_DATA, notifData);
+
+        window.VUE_APP_METHODS = window.VUE_APP_METHODS || {};
+        Object.assign(window.VUE_APP_METHODS, {
+            filterNotifications(event) {
+                const query = event.target.value.toLowerCase().trim();
+                this.filteredNotifs = this.allNotifs.filter(n => 
+                    (n.title || '').toLowerCase().includes(query) || 
+                    (n.sender || '').toLowerCase().includes(query) || 
+                    (n.message || '').toLowerCase().includes(query)
+                );
+            }
+        });
     })();
-</script>
+    </script>
 {% endblock %}

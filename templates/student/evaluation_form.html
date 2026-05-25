@@ -50,20 +50,54 @@
     </div>
 </div>
 
-<div id="successModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6">
+<div id="successModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
     
-    <div class="relative bg-white dark:bg-[#111] rounded-3xl shadow-2xl w-full max-w-md mx-auto flex flex-col items-center justify-center p-10 sm:p-12 text-center border border-gray-200 dark:border-gray-700 z-10 transform scale-95 transition-transform duration-300" id="successBox">
+    <div class="relative bg-white dark:bg-[#111] rounded-[2.5rem] shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-10 text-center border border-gray-200 dark:border-gray-800 z-10 transform scale-95 transition-transform duration-300 font-sans" id="successBox">
         
         <button id="btnCloseModal" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
             <i class="ph-bold ph-x"></i>
         </button>
 
-        <div class="w-24 h-24 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-6 shrink-0 shadow-lg ring-4 ring-green-500/20">
-            <i class="ph-bold ph-check text-5xl text-white"></i>
+        <div class="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-6 shrink-0 shadow-lg ring-4 ring-green-500/10">
+            <i class="ph-bold ph-check text-4xl text-white"></i>
         </div>
-        <h2 class="text-3xl font-black text-gray-900 dark:text-white mb-3">Thank You!</h2>
-        <p class="text-gray-500 dark:text-gray-400 mb-8 text-base leading-relaxed">Your feedback has been successfully submitted and analyzed.</p>
+        
+        <div class="mb-6">
+            <h2 class="text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">EVALUATION SAVED</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Your feedback has been successfully submitted.</p>
+        </div>
+
+        <!-- Receipt-style Summary -->
+        <div class="w-full space-y-4 mb-8">
+            <div class="bg-gray-50 dark:bg-[#151515] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 text-center">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Overall Rating Given</span>
+                <div class="flex flex-col items-center gap-1">
+                    <div id="successStars" class="flex text-pup-gold text-2xl gap-0.5 mb-1">
+                        <!-- Stars injected here -->
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span id="successRating" class="text-3xl font-black text-pup-maroon dark:text-pup-gold">5.0</span>
+                        <span class="text-xs font-bold text-gray-400 uppercase">/ 5.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-[#0a0a0a] p-5 rounded-2xl border border-gray-100 dark:border-gray-800 text-left">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-1.5 h-4 bg-pup-maroon dark:bg-pup-gold rounded-full"></div>
+                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Feedback Analysis</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Sentiment Engine:</span>
+                    <span class="text-[10px] font-black text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md uppercase tracking-wider">Positive</span>
+                </div>
+            </div>
+        </div>
+
+        <button id="btnReceiptDone" class="w-full py-4 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black rounded-2xl text-xs transition-all shadow-md hover:opacity-90 active:scale-95 uppercase tracking-[0.2em]">
+            Proceed to Dashboard
+        </button>
         
     </div>
 </div>
@@ -243,6 +277,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 evaluatedEvents[currentTitle] = true;
                 localStorage.setItem('evaluatedEvents', JSON.stringify(evaluatedEvents));
 
+                // Populate Success Modal Data
+                const finalRating = (totalRating / 25);
+                document.getElementById('successRating').innerText = finalRating.toFixed(1);
+                
+                let starsHtml = '';
+                for(let i=1; i<=5; i++){
+                    if(i <= Math.floor(finalRating)) {
+                        starsHtml += '<i class="ph-fill ph-star"></i>';
+                    } else if(i === Math.ceil(finalRating) && finalRating % 1 !== 0) {
+                        starsHtml += '<i class="ph-fill ph-star-half"></i>';
+                    } else {
+                        starsHtml += '<i class="ph ph-star text-gray-300 dark:text-gray-700"></i>';
+                    }
+                }
+                document.getElementById('successStars').innerHTML = starsHtml;
+
                 // Show Success Modal
                 modal.classList.remove('hidden');
                 setTimeout(() => modalBox.classList.remove('scale-95'), 10);
@@ -258,8 +308,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Close Modal -> Redirect to Masterlist
-    document.getElementById('btnCloseModal').addEventListener('click', () => {
-        window.location.href = "{% url 'student_evaluation' %}";
+    ['btnCloseModal', 'btnReceiptDone'].forEach(id => {
+        document.getElementById(id).addEventListener('click', () => {
+            window.location.href = "{% url 'student_evaluation' %}";
+        });
     });
 });
 </script>

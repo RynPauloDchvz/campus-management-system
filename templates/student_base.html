@@ -183,8 +183,10 @@
             {% endblock content %}
         </main>
 
+        <!-- FOOTER (Restored exactly to Organizer Base Layout) -->
         <footer class="bg-[#050505] text-white pt-10 pb-6 px-4 md:px-8 font-sans border-t-4 border-pup-maroon dark:border-pup-gold overflow-hidden mt-20">
             <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between gap-8 md:gap-10">
+                
                 <div class="lg:w-1/3 flex flex-col items-center lg:items-start text-center lg:text-left">
                     <div class="flex items-center gap-3 mb-4">
                         <img src="{% static 'images/PUPLogo.png' %}" class="h-10 md:h-12 object-contain bg-white rounded-full p-0.5" alt="PUP Logo">
@@ -194,7 +196,9 @@
                         The official Campus Activities Management System of Polytechnic University of the Philippines - Unisan Quezon Campus.
                     </p>
                 </div>
+
                 <div class="lg:w-2/3 grid grid-cols-3 gap-2 md:gap-8 lg:pl-10 text-center lg:text-left mt-6 lg:mt-0">
+                    
                     <div>
                         <h3 class="text-pup-gold font-bold text-[11px] md:text-base mb-3 md:mb-4 tracking-wide">Quick Links</h3>
                         <ul class="flex flex-col gap-2 md:gap-3 text-[10px] md:text-sm text-gray-400">
@@ -203,43 +207,139 @@
                             <li><a href="{% url 'student_event_calendar' %}" class="hover:text-pup-gold transition-colors">Event Calendar</a></li>
                         </ul>
                     </div>
+
                     <div>
-                        <h3 class="text-pup-gold font-bold text-[11px] md:text-base mb-3 md:mb-4 tracking-wide">My Activities</h3>
+                        <h3 class="text-pup-gold font-bold text-[11px] md:text-base mb-3 md:mb-4 tracking-wide">My Hub</h3>
                         <ul class="flex flex-col gap-2 md:gap-3 text-[10px] md:text-sm text-gray-400">
-                            <li><a href="{% url 'student_evaluation' %}" class="hover:text-pup-gold transition-colors">Evaluation</a></li>
-                            <li><a href="{% url 'student_event_history' %}" class="hover:text-pup-gold transition-colors">Attendance</a></li>
+                            <li><a href="{% url 'student_evaluation' %}" class="hover:text-pup-gold transition-colors">Evaluation Hub</a></li>
+                            <li><a href="{% url 'student_event_history' %}" class="hover:text-pup-gold transition-colors">Attendance History</a></li>
                             <li><a href="{% url 'student_messages' %}" class="hover:text-pup-gold transition-colors">Notifications</a></li>
                         </ul>
                     </div>
+
                     <div>
-                        <h3 class="text-pup-gold font-bold text-[11px] md:text-base mb-3 md:mb-4 tracking-wide">Account</h3>
+                        <h3 class="text-pup-gold font-bold text-[11px] md:text-base mb-3 md:mb-4 tracking-wide">Support</h3>
                         <ul class="flex flex-col gap-2 md:gap-3 text-[10px] md:text-sm text-gray-400">
-                            <li><a href="{% url 'student_profile' %}" class="hover:text-pup-gold transition-colors">Profile</a></li>
+                            <li><a href="{% url 'student_profile' %}" class="hover:text-pup-gold transition-colors">My Profile</a></li>
                             <li><a href="#" @click.prevent="openLogoutModal" class="hover:text-pup-gold transition-colors">Log Out</a></li>
                             <li><a href="https://www.facebook.com/pupunisan" target="_blank" class="hover:text-pup-gold transition-colors">PUP Unisan FB</a></li>
                         </ul>
                     </div>
+
                 </div>
             </div>
+
+            <div class="max-w-7xl mx-auto">
+                <hr class="border-white/10 mt-10 md:mt-12 mb-8" />
+            </div>
+
+            <div class="w-full max-w-screen-xl mx-auto mb-10 overflow-x-auto no-scrollbar">
+                <div class="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8">
+                    
+                    <div class="flex justify-center gap-3 md:gap-8 shrink-0">
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/ITO.png' %}" alt="ITO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">ITO</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/ITS.png' %}" alt="ITS" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">ITS</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/YEO.png' %}" alt="YEO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">YEO</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/FTO.png' %}" alt="FTO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">FTO</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/PAS.png' %}" alt="PAS" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">PAS</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-3 md:gap-8 shrink-0">
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/CAO.png' %}" alt="CAO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">CAO</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/NEWSETTE.png' %}" alt="NEWSETTE" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">NEWS</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/PRIDE.png' %}" alt="PRIDE" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">PRIDE</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/ROTC.png' %}" alt="ROTC" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">ROTC</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/PUSO.jpg' %}" alt="PUSO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">PUSO</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-3 md:gap-8 shrink-0 mt-2 md:mt-0">
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/SSC.png' %}" alt="SSC" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">SSC</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
             <div class="text-center text-gray-500 text-xs md:text-sm border-t border-white/10 pt-6 max-w-7xl mx-auto mt-4">
                 &copy; 2026 Polytechnic University of the Philippines. All rights reserved.
             </div>
         </footer>
 
-        <!-- Logout Modal -->
-        <div v-cloak v-show="isLogoutModalOpen" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-            <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl p-6 w-full max-sm border border-gray-200 dark:border-gray-800">
+        <!-- LOGOUT MODAL (Compact Card matching Organizer Base) -->
+        <div v-cloak v-show="isLogoutModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+            <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gray-200 dark:border-gray-800 transform scale-100 transition-transform font-sans">
                 <div class="text-center mb-6">
-                    <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="ph-fill ph-sign-out text-3xl text-pup-maroon dark:text-red-500"></i>
+                    <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200 dark:border-red-900/40">
+                        <i class="ph-fill ph-sign-out text-3xl text-[#800000] dark:text-red-500"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Log Out</h3>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm">Are you sure you want to log out of your account?</p>
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">Sign Out?</h3>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium leading-relaxed px-2">Are you sure you want to securely log out of your Student account?</p>
                 </div>
                 <div class="flex gap-3 w-full">
-                    <button type="button" @click="closeLogoutModal" class="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-semibold transition-colors">Cancel</button>
-                    <a href="{% url 'index' %}" class="flex-1 py-2.5 px-4 bg-pup-maroon hover:bg-red-800 text-white rounded-lg font-semibold transition-colors text-center flex items-center justify-center">Yes, Log Out</a>
+                    <button type="button" @click="closeLogoutModal" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold transition-colors uppercase text-[10px] tracking-widest border border-gray-200 dark:border-gray-700">Cancel</button>
+                    <form action="{% url 'admin_logout' %}" method="post" class="flex-1 m-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'index' %}">
+                        <button type="submit" class="w-full py-3 px-4 bg-[#800000] hover:bg-red-900 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 text-center flex items-center justify-center uppercase text-[10px] tracking-widest border-none cursor-pointer">Yes, Sign Out</button>
+                    </form>
                 </div>
+            </div>
+        </div>
+
+        <!-- 🔔 UNIFIED MESSAGE DETAIL MODAL (Matching Organizer Standard) 🔔 -->
+        <div v-cloak v-if="isMsgModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4">
+            <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" @click="closeModal"></div>
+            <div class="relative bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10 animate-in fade-in zoom-in duration-200">
+                
+                <div class="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4" :class="getModalIconWrapperClass(currentMsg.type)">
+                    <i class="ph-fill text-5xl" :class="getIconClass(currentMsg.type)"></i>
+                </div>
+                
+                <h3 class="text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight" :class="getModalTitleClass(currentMsg.type)">[[ currentMsg.title ]]</h3>
+                
+                <p class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-8 px-2 font-medium">[[ currentMsg.message ]]</p>
+
+                <!-- Remarks for Rejected status (e.g. Attendance Issues) -->
+                <div v-if="currentMsg.status === 'Rejected'" class="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-5 rounded-2xl text-left mb-8">
+                    <span class="block text-[11px] font-black text-red-500 uppercase tracking-widest mb-2">Reason/Details:</span>
+                    <p class="text-sm font-bold text-red-800 dark:text-red-400">[[ currentMsg.remarks || 'No additional details provided.' ]]</p>
+                </div>
+                
+                <button @click="closeModal" class="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-all text-base shadow-sm">
+                    Close Message
+                </button>
             </div>
         </div>
 
@@ -247,8 +347,9 @@
 
     <!-- 🟢 VUE CONSOLIDATION LOGIC 🟢 -->
     <script>
-        window.VUE_APP_DATA = {};
-        window.VUE_APP_METHODS = {};
+        // Use existing if defined by page, else new object
+        window.VUE_APP_DATA = window.VUE_APP_DATA || {};
+        window.VUE_APP_METHODS = window.VUE_APP_METHODS || {};
 
         const baseAppConfig = {
             delimiters: ['[[', ']]'],
@@ -279,7 +380,7 @@
                     selectedEvent: {},
                     isEventModalOpen: false,
                     allNotifs: [],
-                    readNotifs: [],
+                    readNotifs: JSON.parse(localStorage.getItem('student_read_notifs') || '[]'),
                     filteredNotifs: [],
                     isMsgModalOpen: false,
                     currentMsg: {},
@@ -343,8 +444,12 @@
                     localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
                 },
                 handleHeaderProfileClick() {
-                    if (this.currentUrl === 'student_profile') return;
-                    this.showProfileBubble = !this.showProfileBubble;
+                    if (window.innerWidth >= 768) {
+                        window.location.href = "{% url 'student_profile' %}";
+                    } else {
+                        if (this.currentUrl === 'student_profile') return;
+                        this.showProfileBubble = !this.showProfileBubble;
+                    }
                 },
                 handleNavClick(item, index) {
                     if (item.name === 'Theme') {
@@ -371,6 +476,49 @@
                 closeLogoutModal() {
                     this.isLogoutModalOpen = false;
                     document.body.style.overflow = '';
+                },
+                // --- 🔔 Unified Notification Helpers 🔔 ---
+                isRead(id) {
+                    return this.readNotifs.includes(id);
+                },
+                getNotifBorderClass(type, status) {
+                    if (type === 'event' || status === 'Approved') return 'border-l-green-500';
+                    if (type === 'alert' || status === 'Rejected') return 'border-l-red-500';
+                    return 'border-l-blue-500';
+                },
+                getIconBg(type) {
+                    if (type === 'event') return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+                    if (type === 'alert') return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+                    return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+                },
+                getIconClass(type) {
+                    if (type === 'event') return 'ph-calendar-star';
+                    if (type === 'alert') return 'ph-warning-circle';
+                    return 'ph-megaphone';
+                },
+                getModalIconWrapperClass(type) {
+                    if (type === 'event') return 'border-green-100 bg-green-50 text-green-500 dark:border-green-900/30 dark:bg-green-900/20';
+                    if (type === 'alert') return 'border-red-100 bg-red-50 text-red-500 dark:border-red-900/30 dark:bg-red-900/20';
+                    return 'border-blue-100 bg-blue-50 text-blue-500 dark:border-blue-900/30 dark:bg-blue-900/20';
+                },
+                getModalTitleClass(type) {
+                    if (type === 'event') return 'text-green-600 dark:text-green-500';
+                    if (type === 'alert') return 'text-red-600 dark:text-red-500';
+                    return 'text-blue-600 dark:text-blue-500';
+                },
+                openMessageModal(notif) {
+                    if (!this.readNotifs.includes(notif.id)) {
+                        this.readNotifs.push(notif.id);
+                        localStorage.setItem('student_read_notifs', JSON.stringify(this.readNotifs));
+                    }
+                    this.currentMsg = notif;
+                    this.isMsgModalOpen = true;
+                    document.body.style.overflow = 'hidden';
+                },
+                markAllAsRead() {
+                    const allIds = this.allNotifs.map(n => n.id);
+                    this.readNotifs = [...new Set([...this.readNotifs, ...allIds])];
+                    localStorage.setItem('student_read_notifs', JSON.stringify(this.readNotifs));
                 },
                 getStaticImageUrl(filename) {
                     return "{% static 'images/' %}" + filename;

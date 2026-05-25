@@ -6,53 +6,135 @@
 
 <link rel="stylesheet" href="{% static 'css/calendar.css' %}">
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+<div class="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
     <div class="text-center mb-8">
         <h1 class="font-bold text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">University Calendar</h1>
         <p class="text-gray-500 dark:text-gray-400 mt-2">Track university-wide schedules and your organization's events.</p>
     </div>
 
-    <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-8 overflow-hidden transition-colors">
-        <div id="calendar" class="min-h-[500px] sm:min-h-[700px]"></div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Calendar (Left Side) -->
+        <div class="lg:col-span-2 bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-8 overflow-hidden transition-colors flex flex-col">
+            <div id="calendar" class="min-h-[500px] sm:min-h-[700px] flex-grow w-full"></div>
+        </div>
+
+        <!-- Right Side (Stats Banner & Event List) -->
+        <div class="flex flex-col gap-6 lg:border-l border-gray-200 dark:border-gray-800 lg:pl-8">
+            <!-- Banner -->
+            <div class="bg-gradient-to-br from-pup-maroon to-red-900 dark:from-pup-gold dark:to-yellow-600 rounded-3xl p-6 text-white dark:text-black shadow-lg relative overflow-hidden flex items-center justify-between">
+                <div class="relative z-10">
+                    <h3 class="font-black text-5xl mb-1" id="totalEventsBanner">3</h3>
+                    <p class="text-xs font-bold opacity-90 uppercase tracking-widest">Total Upcoming Events</p>
+                </div>
+                <i class="ph-fill ph-calendar-star text-7xl opacity-20 transform rotate-12 absolute -right-2 -bottom-2"></i>
+            </div>
+            
+            <!-- Masterlist Header & Browse Button -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between mt-2">
+                    <h2 class="font-black text-xl text-gray-900 dark:text-white uppercase tracking-wide">Event Masterlist</h2>
+                </div>
+                <a href="{% url 'student_school_events' %}" class="flex items-center justify-center gap-2 w-full py-3 bg-gray-50 dark:bg-black/20 text-xs font-bold text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold hover:bg-red-50 dark:hover:bg-yellow-900/10 transition-all border border-gray-200 dark:border-gray-800 rounded-xl uppercase tracking-widest shadow-sm">
+                    <i class="ph-bold ph-magnifying-glass"></i> Browse All Events
+                </a>
+            </div>
+            
+            <!-- Event List -->
+            <div class="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-2 hide-scrollbar pb-4" id="masterlistContainer">
+                
+                <!-- Event Card 1 -->
+                <div class="js-masterlist-card bg-white dark:bg-pup-darkcard rounded-2xl p-4 border border-gray-100 dark:border-gray-800 flex gap-4 cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all shadow-sm group" 
+                     data-title="Research Colloquium" data-category="Academic" data-date="MAY 12, 2026" data-time="08:00 AM" data-venue="Audio Visual Room" data-desc="Present and defend your capstone projects and research papers in front of university panels." data-img="{% static 'images/research.jpg' %}">
+                    <div class="w-20 h-20 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] shrink-0 overflow-hidden">
+                        <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                    </div>
+                    <div class="flex flex-col justify-center min-w-0 flex-grow">
+                        <div class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold mb-1 truncate">MAY 12, 2026 • 08:00 AM</div>
+                        <h4 class="font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate text-sm">Research Colloquium</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin"></i> Audio Visual Room</p>
+                    </div>
+                    <div class="flex items-center text-gray-300 dark:text-gray-700 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">
+                        <i class="ph-bold ph-caret-right text-xl"></i>
+                    </div>
+                </div>
+
+                <!-- Event Card 2 -->
+                <div class="js-masterlist-card bg-white dark:bg-pup-darkcard rounded-2xl p-4 border border-gray-100 dark:border-gray-800 flex gap-4 cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all shadow-sm group"
+                     data-title="IT Week Hackathon" data-category="Academic" data-date="JUN 05, 2026" data-time="07:00 AM" data-venue="Computer Lab 1" data-desc="A 24-hour coding challenge. Build innovative solutions for campus problems." data-img="{% static 'images/tech_talk.jpg' %}">
+                    <div class="w-20 h-20 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] shrink-0 overflow-hidden">
+                        <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                    </div>
+                    <div class="flex flex-col justify-center min-w-0 flex-grow">
+                        <div class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold mb-1 truncate">JUN 05, 2026 • 07:00 AM</div>
+                        <h4 class="font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate text-sm">IT Week Hackathon</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin"></i> Computer Lab 1</p>
+                    </div>
+                    <div class="flex items-center text-gray-300 dark:text-gray-700 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">
+                        <i class="ph-bold ph-caret-right text-xl"></i>
+                    </div>
+                </div>
+
+                <!-- Event Card 3 -->
+                <div class="js-masterlist-card bg-white dark:bg-pup-darkcard rounded-2xl p-4 border border-gray-100 dark:border-gray-800 flex gap-4 cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all shadow-sm group"
+                     data-title="PUP Intramurals" data-category="Sports" data-date="AUG 15, 2026" data-time="08:00 AM" data-venue="University Oval" data-desc="Annual university sports competition. Represent your college!" data-img="{% static 'images/background.jpg' %}">
+                    <div class="w-20 h-20 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] shrink-0 overflow-hidden">
+                        <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                    </div>
+                    <div class="flex flex-col justify-center min-w-0 flex-grow">
+                        <div class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold mb-1 truncate">AUG 15, 2026 • 08:00 AM</div>
+                        <h4 class="font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate text-sm">PUP Intramurals</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin"></i> University Oval</p>
+                    </div>
+                    <div class="flex items-center text-gray-300 dark:text-gray-700 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">
+                        <i class="ph-bold ph-caret-right text-xl"></i>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Calendar Modal -->
-<div id="calendarModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
-    <div id="calendarModalBg" class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-md p-8 border border-gray-100 dark:border-gray-800 z-10 font-sans">
-        <button id="closeCalModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
-            <i class="ph-bold ph-x text-2xl"></i>
+<!-- Event Details Modal (Similar to Participation Hub Modal) -->
+<div id="masterlistModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden p-4 sm:p-6">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose"></div>
+    
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 transform transition-transform scale-95 opacity-0 duration-300" id="modalContentBlock">
+        
+        <button id="btnTopClose" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
+            <i class="ph-bold ph-x"></i>
         </button>
-        
-        <div class="flex items-center gap-3 mb-6">
-            <div id="modalCategoryBadge" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-pup-maroon text-white dark:bg-pup-gold dark:text-black">
-                CATEGORY
-            </div>
-        </div>
-        
-        <h2 id="calModalTitle" class="text-2xl font-black text-gray-900 dark:text-white mb-4 leading-tight">Event Title</h2>
-        
-        <div class="space-y-4 mb-8">
-            <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300">
-                <i class="ph-fill ph-calendar text-2xl text-pup-maroon dark:text-pup-gold"></i>
-                <div>
-                    <div class="text-[10px] font-bold uppercase text-gray-400">Date & Time</div>
-                    <div id="calModalDateTime" class="font-bold">--</div>
-                </div>
-            </div>
-            <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300">
-                <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold"></i>
-                <div>
-                    <div class="text-[10px] font-bold uppercase text-gray-400">Venue</div>
-                    <div id="calModalVenue" class="font-bold">--</div>
-                </div>
-            </div>
-        </div>
 
-        <button id="btnViewOnEvents" class="w-full py-4 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black rounded-2xl text-sm transition-all shadow-md hover:scale-[1.02] active:scale-95 uppercase tracking-widest">
-            View in Hub
-        </button>
+        <div class="flex flex-col w-full h-full overflow-y-auto hide-scrollbar">
+            <div class="h-64 sm:h-80 w-full relative shrink-0 bg-gray-900">
+                <img id="modalImg" src="" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                <div class="absolute bottom-6 left-6 right-6">
+                    <div id="modalCategory" class="bg-pup-gold inline-block text-black font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2">Category</div>
+                    <h2 id="modalTitle" class="text-3xl sm:text-4xl font-black text-white leading-tight">Title</h2>
+                </div>
+            </div>
+            
+            <div class="p-6 sm:p-10 shrink-0 flex-grow">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-gray-50 dark:bg-black/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                    <div>
+                        <div class="text-xs font-bold uppercase text-gray-400 mb-1">Date & Time</div>
+                        <div id="modalDateTime" class="font-bold text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> Date Time</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold uppercase text-gray-400 mb-1">Venue</div>
+                        <div id="modalVenue" class="font-bold text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> Venue</div>
+                    </div>
+                </div>
+                
+                <h3 class="font-bold text-xl text-gray-900 dark:text-white mb-3">About the Event</h3>
+                <p id="modalDesc" class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-10">Description</p>
+                
+                <a href="{% url 'student_school_events' %}" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-[0.7rem] sm:text-sm md:text-lg flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md transform hover:-translate-y-0.5 uppercase tracking-widest whitespace-nowrap">
+                    <i class="ph-bold ph-list-dashes text-lg sm:text-xl"></i> View in Participation Hub
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -60,6 +142,34 @@
 function initCalendarLogic() {
     const calendarEl = document.getElementById('calendar');
     if (!calendarEl) return;
+
+    // Define mock data mapping for calendar events to their details
+    const eventDetailsMap = {
+        'Research Colloquium': {
+            category: 'Academic',
+            date: 'MAY 12, 2026',
+            time: '08:00 AM',
+            venue: 'Audio Visual Room',
+            desc: 'Present and defend your capstone projects and research papers in front of university panels.',
+            img: "{% static 'images/research.jpg' %}"
+        },
+        'IT Week Hackathon': {
+            category: 'Academic',
+            date: 'JUN 05, 2026',
+            time: '07:00 AM',
+            venue: 'Computer Lab 1',
+            desc: 'A 24-hour coding challenge. Build innovative solutions for campus problems.',
+            img: "{% static 'images/tech_talk.jpg' %}"
+        },
+        'PUP Intramurals': {
+            category: 'Sports',
+            date: 'AUG 15, 2026',
+            time: '08:00 AM',
+            venue: 'University Oval',
+            desc: 'Annual university sports competition. Represent your college!',
+            img: "{% static 'images/background.jpg' %}"
+        }
+    };
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -70,39 +180,82 @@ function initCalendarLogic() {
         },
         themeSystem: 'standard',
         events: [
-            { title: 'Research Colloquium', start: '2026-05-12', extendedProps: { category: 'Academic', venue: 'Audio Visual Room', time: '08:00 AM' }, backgroundColor: '#800000', borderColor: '#800000' },
-            { title: 'IT Week Hackathon', start: '2026-06-05', extendedProps: { category: 'Academic', venue: 'Computer Lab 1', time: '07:00 AM' }, backgroundColor: '#800000', borderColor: '#800000' },
-            { title: 'PUP Intramurals', start: '2026-08-15', end: '2026-08-20', extendedProps: { category: 'Sports', venue: 'University Oval', time: '08:00 AM' }, backgroundColor: '#D4AF37', borderColor: '#D4AF37', textColor: '#000' }
+            { title: 'Research Colloquium', start: '2026-05-12', backgroundColor: '#800000', borderColor: '#800000' },
+            { title: 'IT Week Hackathon', start: '2026-06-05', backgroundColor: '#800000', borderColor: '#800000' },
+            { title: 'PUP Intramurals', start: '2026-08-15', end: '2026-08-20', backgroundColor: '#D4AF37', borderColor: '#D4AF37', textColor: '#000' }
         ],
         eventClick: function(info) {
-            const event = info.event;
-            document.getElementById('calModalTitle').innerText = event.title;
-            document.getElementById('modalCategoryBadge').innerText = event.extendedProps.category;
-            document.getElementById('calModalDateTime').innerText = event.start.toLocaleDateString('en-US', { dateStyle: 'long' }) + ' • ' + event.extendedProps.time;
-            document.getElementById('calModalVenue').innerText = event.extendedProps.venue;
-            
-            const modal = document.getElementById('calendarModal');
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
+            const eventTitle = info.event.title;
+            const details = eventDetailsMap[eventTitle];
+            if (details) {
+                openModal(eventTitle, details.category, details.date, details.time, details.venue, details.desc, details.img);
+            }
+        },
+        height: '100%'
     });
     calendar.render();
 
-    function closeCalModal() {
-        document.getElementById('calendarModal').classList.add('hidden');
-        document.body.style.overflow = '';
+    // Masterlist card clicks
+    const masterlistCards = document.querySelectorAll('.js-masterlist-card');
+    masterlistCards.forEach(card => {
+        card.addEventListener('click', () => {
+            openModal(
+                card.dataset.title,
+                card.dataset.category,
+                card.dataset.date,
+                card.dataset.time,
+                card.dataset.venue,
+                card.dataset.desc,
+                card.dataset.img
+            );
+        });
+    });
+
+    function openModal(title, category, date, time, venue, desc, imgSrc) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalCategory').innerText = category;
+        document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${date} • ${time}`;
+        document.getElementById('modalVenue').innerHTML = `<i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> ${venue}`;
+        document.getElementById('modalDesc').innerText = desc;
+        
+        const imgEl = document.getElementById('modalImg');
+        imgEl.src = imgSrc;
+        imgEl.onerror = function() {
+            this.src = "{% static 'images/PUPLogo.png' %}";
+            this.classList.remove('object-cover');
+            this.classList.add('object-contain', 'p-4');
+        };
+
+        const modal = document.getElementById('masterlistModal');
+        const modalContent = document.getElementById('modalContentBlock');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Animation trigger
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
     }
 
-    const closeBtn = document.getElementById('closeCalModalBtn');
-    if(closeBtn) closeBtn.addEventListener('click', closeCalModal);
+    function closeModal() {
+        const modal = document.getElementById('masterlistModal');
+        const modalContent = document.getElementById('modalContentBlock');
+        
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300); // match duration-300
+    }
+
+    const closeBtn = document.getElementById('btnTopClose');
+    if(closeBtn) closeBtn.addEventListener('click', closeModal);
     
-    const bgOverlay = document.getElementById('calendarModalBg');
-    if(bgOverlay) bgOverlay.addEventListener('click', closeCalModal);
-    
-    const viewBtn = document.getElementById('btnViewOnEvents');
-    if(viewBtn) viewBtn.addEventListener('click', () => {
-        window.location.href = "{% url 'student_school_events' %}";
-    });
+    const bgOverlay = document.getElementById('bgOverlayClose');
+    if(bgOverlay) bgOverlay.addEventListener('click', closeModal);
 }
 
 window.addEventListener('load', () => {

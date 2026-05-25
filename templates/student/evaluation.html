@@ -2,85 +2,128 @@
 {% load static %}
 
 {% block content %}
-<!-- Consistent Style with School Events -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+<div class="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
 
     <div class="text-center mb-8">
         <h1 class="font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold mb-4 uppercase tracking-wide">Evaluation Center</h1>
-        
-        <div class="relative max-w-2xl mx-auto">
-            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
-            <input type="text" id="evalSearch" placeholder="Search events to evaluate..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full py-3.5 pl-12 pr-6 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm sm:text-base">
-        </div>
+        <p class="text-gray-500 dark:text-gray-400 mt-2">Manage your pending evaluations and view past submissions.</p>
     </div>
 
-    <!-- Category Filters (Consistent with Events) -->
-    <div class="flex overflow-x-auto hide-scrollbar gap-3 justify-start lg:justify-center mb-8 px-2 sm:px-0 pb-2">
-        <button data-category="All" class="js-category-btn active whitespace-nowrap bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-pup-maroon dark:border-pup-gold border px-5 py-2 rounded-full font-bold text-sm transition-colors">All Pending</button>
-        <button data-category="Academic" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Academic</button>
-        <button data-category="Sports" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Sports</button>
-        <button data-category="Cultural" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Cultural</button>
-        <button data-category="Organization" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Organization</button>
-    </div>
-
-    <h2 class="text-xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight flex items-center gap-2">
-        <i class="ph-fill ph-clipboard-text text-pup-maroon dark:text-pup-gold"></i> Available Evaluations
-    </h2>
-
-    <!-- Grid matching School Events -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 pb-10 px-2 sm:px-0" id="evalGrid">
-        
-        <div class="js-eval-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Research Colloquium 2025" data-category="Academic" data-date="MAY 12, 2025" data-org="PUP UNISAN">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-                <div class="absolute top-2 right-2 bg-pup-gold text-black text-[8px] font-black px-2 py-0.5 rounded-full shadow-sm">PENDING</div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Side: Available Evaluations -->
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                    <i class="ph-fill ph-clipboard-text text-pup-maroon dark:text-pup-gold"></i> Available Evaluations
+                </h2>
             </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate uppercase">MAY 12, 2025</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Research Colloquium 2025</h3>
-                <p class="text-[0.65rem] md:text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate">
-                    <i class="ph-fill ph-users text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">By PUP UNISAN</span>
-                </p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-4">
-                    <span class="text-xs font-bold uppercase text-gray-400">Evaluate Now</span>
-                    <i class="ph-bold ph-arrow-right text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
+            
+            <div class="relative w-full mb-2">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
+                <input type="text" id="evalSearch" placeholder="Search events to evaluate..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full py-3.5 pl-12 pr-6 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm sm:text-base">
             </div>
-        </div>
 
-    </div>
-    
-    <div id="noResults" class="hidden text-center py-20 w-full col-span-full">
-        <i class="ph-bold ph-smiley-wink text-6xl text-gray-300 dark:text-gray-700 mb-4"></i>
-        <h3 class="font-bold text-xl text-gray-500 dark:text-gray-400">All caught up!</h3>
-        <p class="text-sm text-gray-400 mt-1">You have no pending evaluations at the moment.</p>
-    </div>
+            <!-- Category Filters -->
+            <div class="flex overflow-x-auto hide-scrollbar gap-3 justify-start pb-2">
+                <button data-category="All" class="js-category-btn active whitespace-nowrap bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-pup-maroon dark:border-pup-gold border px-5 py-2 rounded-full font-bold text-sm transition-colors">All Pending</button>
+                <button data-category="Academic" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Academic</button>
+                <button data-category="Sports" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Sports</button>
+                <button data-category="Cultural" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Cultural</button>
+            </div>
 
-    <!-- Evaluation History -->
-    <div class="mt-16 border-t border-gray-200 dark:border-gray-800 pt-10">
-        <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-6 flex items-center gap-3 uppercase tracking-tight">
-            <i class="ph-bold ph-clock-counter-clockwise text-pup-maroon dark:text-pup-gold"></i> Submission History
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="bg-white dark:bg-pup-darkcard p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm opacity-70">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="text-[10px] font-black uppercase tracking-widest text-gray-400">Completed</div>
-                    <div class="flex text-pup-gold text-xs">
-                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+            <!-- Grid matching School Events -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-10" id="evalGrid">
+                <div class="js-eval-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Research Colloquium 2025" data-category="Academic" data-date="MAY 12, 2025" data-org="PUP UNISAN">
+                    <div class="w-28 sm:w-full h-28 sm:h-36 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r sm:border-r-0 sm:border-b border-gray-200 dark:border-gray-800">
+                        <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                        <div class="absolute top-2 right-2 bg-pup-gold text-black text-[8px] font-black px-2 py-0.5 rounded-full shadow-sm">PENDING</div>
+                    </div>
+                    <div class="p-3 sm:p-4 flex flex-col justify-center w-full min-w-0">
+                        <div class="text-[0.6rem] font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate uppercase">MAY 12, 2025</div>
+                        <h3 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white leading-tight mb-1 truncate">Research Colloquium 2025</h3>
+                        <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate">
+                            <i class="ph-fill ph-users text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">By PUP UNISAN</span>
+                        </p>
+                        <div class="hidden sm:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-4">
+                            <span class="text-xs font-bold uppercase text-gray-400">Evaluate Now</span>
+                            <i class="ph-bold ph-arrow-right text-pup-maroon dark:text-pup-gold text-lg"></i>
+                        </div>
                     </div>
                 </div>
-                <h4 class="font-bold text-gray-900 dark:text-white mb-1 uppercase">Tech-Talk 1.0</h4>
-                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Submitted: Nov 22, 2025</p>
+            </div>
+            
+            <div id="noResults" class="hidden text-center py-20 w-full">
+                <i class="ph-bold ph-smiley-wink text-6xl text-gray-300 dark:text-gray-700 mb-4"></i>
+                <h3 class="font-bold text-xl text-gray-500 dark:text-gray-400">All caught up!</h3>
+                <p class="text-sm text-gray-400 mt-1">You have no pending evaluations at the moment.</p>
+            </div>
+        </div>
+
+        <!-- Right Side: Submission History -->
+        <div class="flex flex-col gap-6 lg:border-l border-gray-200 dark:border-gray-800 lg:pl-8">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                    <i class="ph-bold ph-clock-counter-clockwise text-pup-maroon dark:text-pup-gold"></i> Submission History
+                </h2>
+            </div>
+
+            <!-- History Search -->
+            <div class="relative w-full">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" id="historySearch" placeholder="Search history..." class="w-full bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm">
+            </div>
+
+            <!-- History List -->
+            <div class="flex flex-col gap-3 overflow-y-auto max-h-[600px] pr-2 hide-scrollbar pb-4" id="historyContainer">
+                <!-- History Item 1 -->
+                <div class="js-history-card bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all group" data-title="Tech-Talk 1.0" data-date="Nov 22, 2025" data-rating="5" data-feedback="The speaker was excellent and the topics were very relevant to our current subjects.">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="text-[10px] font-black uppercase tracking-widest text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md">Completed</div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-black text-gray-900 dark:text-white">5.0</span>
+                            <div class="flex text-pup-gold text-[10px]">
+                                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-gray-900 dark:text-white mb-1 uppercase text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">Tech-Talk 1.0</h4>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex justify-between items-center">
+                        Submitted: Nov 22, 2025
+                        <i class="ph-bold ph-caret-right text-base opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all"></i>
+                    </p>
+                </div>
+                
+                <!-- History Item 2 -->
+                <div class="js-history-card bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all group" data-title="Foundation Day 2025" data-date="Oct 10, 2025" data-rating="4.5" data-feedback="Great event overall, but the venue was a bit crowded during the afternoon sessions.">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="text-[10px] font-black uppercase tracking-widest text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md">Completed</div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-black text-gray-900 dark:text-white">4.5</span>
+                            <div class="flex text-pup-gold text-[10px]">
+                                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star-half"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-gray-900 dark:text-white mb-1 uppercase text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">Foundation Day 2025</h4>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex justify-between items-center">
+                        Submitted: Oct 10, 2025
+                        <i class="ph-bold ph-caret-right text-base opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all"></i>
+                    </p>
+                </div>
+            </div>
+            
+            <div id="noHistoryResults" class="hidden text-center py-10 w-full">
+                <p class="text-sm text-gray-400">No matching history found.</p>
             </div>
         </div>
     </div>
 
 </div>
 
-<!-- Start Evaluation Modal (Consistent Style) -->
-<div id="evalStartModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
+<!-- Start Evaluation Modal -->
+<div id="evalStartModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-6">
     <div id="evalModalBg" class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10 font-sans">
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10 font-sans transform scale-95 opacity-0 transition-all duration-300" id="evalModalContent">
         <div class="w-24 h-24 mx-auto bg-pup-maroon/10 dark:bg-pup-gold/10 rounded-full flex items-center justify-center mb-6 text-pup-maroon dark:text-pup-gold text-5xl shadow-inner">
             <i class="ph-fill ph-info"></i>
         </div>
@@ -97,13 +140,71 @@
     </div>
 </div>
 
+<!-- History Details Modal -->
+<div id="historyModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-6">
+    <div id="historyModalBg" class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-[2.5rem] shadow-2xl w-full max-w-md p-8 sm:p-10 border border-gray-100 dark:border-gray-800 z-10 font-sans transform scale-95 opacity-0 transition-all duration-300" id="historyModalContent">
+        
+        <button id="btnCloseHistoryModal" class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors z-20">
+            <i class="ph-bold ph-x text-xl"></i>
+        </button>
+
+        <div class="flex items-center justify-center mb-8">
+            <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-500 text-4xl shadow-inner border border-green-200 dark:border-green-800/50">
+                <i class="ph-fill ph-check-circle"></i>
+            </div>
+        </div>
+        
+        <div class="text-center mb-8">
+            <div class="text-[11px] font-black uppercase tracking-[0.2em] text-green-500 mb-2">Submission Detailed View</div>
+            <h2 id="histModalTitle" class="text-2xl font-black text-gray-900 dark:text-white uppercase leading-tight mb-2 tracking-tight">Event Title</h2>
+            <div class="flex items-center justify-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-700"></span>
+                <p id="histModalDate" class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Submitted: Date</p>
+                <span class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-700"></span>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <!-- Rating Section -->
+            <div class="bg-gray-50 dark:bg-[#111] p-6 rounded-[2rem] border border-gray-200 dark:border-gray-800 shadow-sm">
+                <div class="flex flex-col items-center text-center">
+                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Overall Performance Rating</span>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div id="histModalRating" class="flex text-pup-gold text-2xl gap-0.5">
+                            <!-- Stars injected here -->
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span id="histModalScore" class="text-3xl font-black text-gray-900 dark:text-white">5.0</span>
+                        <span class="text-sm font-bold text-gray-400">/ 5.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback Section -->
+            <div class="bg-white dark:bg-[#0a0a0a] p-6 rounded-[2rem] border border-gray-200 dark:border-gray-800 shadow-sm">
+                <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 text-center">Student Narrative Feedback</span>
+                <div class="relative">
+                    <i class="ph-fill ph-quotes text-3xl text-pup-maroon/10 dark:text-pup-gold/10 absolute -top-2 -left-2"></i>
+                    <p id="histModalFeedback" class="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed text-center px-4 relative z-10">
+                        "Feedback goes here..."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function initEvaluationPageLogic() {
+    // --- Pending Evaluations Logic ---
     const searchInput = document.getElementById('evalSearch');
     const filterBtns = document.querySelectorAll('.js-category-btn');
     const evalCards = document.querySelectorAll('.js-eval-card');
     const noResults = document.getElementById('noResults');
-    const modal = document.getElementById('evalStartModal');
+    const evalModal = document.getElementById('evalStartModal');
+    const evalModalContent = document.getElementById('evalModalContent');
 
     function filterEvals() {
         if (!searchInput || !noResults) return;
@@ -153,14 +254,22 @@ function initEvaluationPageLogic() {
 
     evalCards.forEach(card => {
         card.addEventListener('click', () => {
-            modal.classList.remove('hidden');
+            evalModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                evalModalContent.classList.remove('scale-95', 'opacity-0');
+                evalModalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
         });
     });
 
     function closeEvalModal() {
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
+        evalModalContent.classList.remove('scale-100', 'opacity-100');
+        evalModalContent.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            evalModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
     }
 
     const closeBtn = document.getElementById('btnCloseEvalModal');
@@ -175,6 +284,81 @@ function initEvaluationPageLogic() {
             window.location.href = "{% url 'student_evaluation_form' %}";
         });
     }
+
+    // --- History Logic ---
+    const historySearch = document.getElementById('historySearch');
+    const historyCards = document.querySelectorAll('.js-history-card');
+    const noHistoryResults = document.getElementById('noHistoryResults');
+    
+    const historyModal = document.getElementById('historyModal');
+    const historyModalContent = document.getElementById('historyModalContent');
+
+    if (historySearch) {
+        historySearch.addEventListener('input', () => {
+            const query = historySearch.value.toLowerCase().trim();
+            let visibleCount = 0;
+            historyCards.forEach(card => {
+                const title = card.dataset.title.toLowerCase();
+                if (title.includes(query)) {
+                    card.style.display = "";
+                    visibleCount++;
+                } else {
+                    card.style.display = "none";
+                }
+            });
+            if (noHistoryResults) {
+                noHistoryResults.classList.toggle('hidden', visibleCount > 0);
+            }
+        });
+    }
+
+    historyCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const title = card.dataset.title;
+            const date = card.dataset.date;
+            const rating = parseFloat(card.dataset.rating) || 5.0;
+            const feedback = card.dataset.feedback || "No comments provided.";
+
+            document.getElementById('histModalTitle').innerText = title;
+            document.getElementById('histModalDate').innerText = "Submitted: " + date;
+            document.getElementById('histModalFeedback').innerText = `"${feedback}"`;
+            document.getElementById('histModalScore').innerText = rating.toFixed(1);
+            
+            // Build stars based on rating (supporting half stars)
+            let starsHtml = '';
+            for(let i=1; i<=5; i++){
+                if(i <= Math.floor(rating)) {
+                    starsHtml += '<i class="ph-fill ph-star"></i>';
+                } else if(i === Math.ceil(rating) && rating % 1 !== 0) {
+                    starsHtml += '<i class="ph-fill ph-star-half"></i>';
+                } else {
+                    starsHtml += '<i class="ph ph-star text-gray-300 dark:text-gray-700"></i>';
+                }
+            }
+            document.getElementById('histModalRating').innerHTML = starsHtml;
+
+            historyModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                historyModalContent.classList.remove('scale-95', 'opacity-0');
+                historyModalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        });
+    });
+
+    function closeHistoryModal() {
+        historyModalContent.classList.remove('scale-100', 'opacity-100');
+        historyModalContent.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            historyModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    }
+
+    ['btnCloseHistoryModal', 'historyModalBg'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', closeHistoryModal);
+    });
 }
 
 // Stability Wait for Vue
