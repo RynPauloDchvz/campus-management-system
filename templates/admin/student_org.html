@@ -19,7 +19,15 @@
     
     .user-cell { display: flex; align-items: center; gap: 12px; }
     .user-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
-    .user-name { font-weight: 700; color: var(--text-main); display: block; }
+    .user-name { 
+        font-weight: 700; 
+        color: var(--text-main); 
+        display: block; 
+        line-height: 1.2;
+        font-size: 0.9rem;
+        word-break: break-word;
+        max-width: 250px;
+    }
     .user-username { font-size: 0.75rem; color: var(--text-muted); }
 
     /* Modals Custom Styles */

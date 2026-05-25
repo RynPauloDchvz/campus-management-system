@@ -36,12 +36,9 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
     <style>
-        /* Siguradong itatago nito ang anumang may v-cloak hanggang mag-load ang Vue */
         [v-cloak] { display: none !important; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        body { font-family: 'Inter', sans-serif; }
-        
-        /* 🟢 Notification Shake Animation 🟢 */
         @keyframes notification-shake {
             0%, 80%, 100% { transform: rotate(0deg); }
             82% { transform: rotate(-10deg); }
@@ -50,25 +47,35 @@
             88% { transform: rotate(8deg); }
             90% { transform: rotate(-5deg); }
         }
-        .notify-shake {
-            animation: notification-shake 3s infinite ease-in-out;
-            transform-origin: center;
-        }
+        .notify-shake { animation: notification-shake 3s infinite ease-in-out; }
         
-        /* Hidden scrollbar for desktop org logos */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 🟢 Elevated Magic Box System 🟢 */
+        .indicator-box {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+        /* Angat logic */
+        .active-unit-elevated {
+            transform: translateY(-20px);
+        }
+        
+        .transition-all-custom { 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
     </style>
 </head>
 <body class="bg-[#f4f4f4] dark:bg-pup-darkbg text-gray-800 dark:text-gray-200 transition-colors duration-300 antialiased overflow-x-hidden max-w-[100vw]">
 
     <div id="app" v-cloak class="min-h-screen flex flex-col relative z-10 w-full overflow-x-hidden">
 
+        <!-- Header -->
         <nav class="sticky top-0 z-[1000] w-full flex justify-between items-center px-4 sm:px-6 md:px-10 py-4 bg-white/95 dark:bg-pup-darkcard/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
-            
             <a href="{% url 'index' %}" class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <img src="{% static 'images/PUPLogo.png' %}" class="h-9 sm:h-10 md:h-11 object-contain" alt="PUP Logo">
-                <span class="font-extrabold text-base sm:text-lg md:text-xl text-pup-maroon dark:text-pup-gold tracking-wide truncate">PUPUni-CAMS</span>
+                <span class="font-extrabold text-base sm:text-lg md:text-xl text-pup-maroon dark:text-pup-gold tracking-wide truncate uppercase">PUPUni-CAMS</span>
             </a>
 
             <div class="hidden md:flex items-center gap-8">
@@ -78,59 +85,98 @@
                 <a href="{% url 'student_evaluation' %}" class="font-bold uppercase text-sm transition-colors {% if request.resolver_match.url_name == 'student_evaluation' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Evaluation</a>
             </div>
 
-            <div class="hidden md:flex items-center gap-4">
-                
+            <div class="flex items-center gap-4">
                 <div class="relative" :class="{ 'notify-shake': hasNotification }">
-                    <a href="{% url 'student_profile' %}" class="w-10 h-10 rounded-full border-2 overflow-hidden transition-all flex items-center justify-center {% if request.resolver_match.url_name == 'student_profile' %}border-pup-maroon dark:border-pup-gold{% else %}border-transparent hover:border-pup-maroon dark:hover:border-pup-gold{% endif %}" title="My Profile">
+                    <button @click="handleHeaderProfileClick" class="w-10 h-10 rounded-full border-2 border-pup-maroon dark:border-pup-gold overflow-hidden shadow-md flex items-center justify-center transition-transform active:scale-90">
                         {% if request.user.student.profile_picture %}
                             <img src="{{ request.user.student.profile_picture.url }}" class="w-full h-full object-cover">
                         {% else %}
                             <img src="{% static 'images/student.jpg' %}" class="w-full h-full object-cover">
                         {% endif %}
-                    </a>
+                    </button>
                     <span v-if="hasNotification" class="absolute top-0 right-0 w-3 h-3 bg-red-600 border-2 border-white dark:border-pup-darkcard rounded-full animate-pulse shadow-sm"></span>
                 </div>
                 
-                <button @click="toggleTheme" class="text-2xl p-1 text-gray-600 dark:text-gray-400 hover:text-pup-gold hover:rotate-12 transition-all">
+                <button @click="toggleTheme" class="hidden md:block text-2xl p-1 text-gray-600 dark:text-gray-400 hover:text-pup-gold hover:rotate-12 transition-all">
                     <i :class="isDark ? 'ph-fill ph-sun text-pup-gold' : 'ph-fill ph-moon'"></i>
-                </button>
-            </div>
-
-            <div class="relative md:hidden shrink-0" :class="{ 'notify-shake': hasNotification && !isMobileMenuOpen }">
-                <button @click="toggleMobileMenu" class="text-3xl text-pup-maroon dark:text-pup-gold relative">
-                    <i :class="isMobileMenuOpen ? 'ph-bold ph-x' : 'ph-bold ph-list'"></i>
-                    <span v-if="hasNotification && !isMobileMenuOpen" class="absolute top-1 right-0 w-2.5 h-2.5 bg-red-600 border-2 border-white dark:border-pup-darkcard rounded-full animate-pulse"></span>
                 </button>
             </div>
         </nav>
 
-        <div v-if="isMobileMenuOpen" @click="isMobileMenuOpen = false" class="md:hidden fixed inset-0 top-[70px] bg-black/20 dark:bg-black/50 z-[998] backdrop-blur-sm transition-opacity"></div>
-
-        <div :class="isMobileMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'" class="md:hidden fixed top-[70px] left-0 right-0 w-full bg-white/95 dark:bg-pup-darkcard/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 p-5 px-4 sm:px-6 flex flex-col gap-4 transition-all duration-400 z-[999]">
-            <a href="{% url 'student_homepage' %}" class="text-lg font-bold p-2 border-b border-gray-200 dark:border-gray-700 transition-colors {% if request.resolver_match.url_name == 'student_homepage' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Home</a>
-            <a href="{% url 'student_school_events' %}" class="text-lg font-bold p-2 border-b border-gray-200 dark:border-gray-700 transition-colors {% if request.resolver_match.url_name == 'student_school_events' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">School Event</a>
-            <a href="{% url 'student_event_calendar' %}" class="text-lg font-bold p-2 border-b border-gray-200 dark:border-gray-700 transition-colors {% if request.resolver_match.url_name == 'student_event_calendar' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Event Calendar</a>
-            <a href="{% url 'student_evaluation' %}" class="text-lg font-bold p-2 border-b border-gray-200 dark:border-gray-700 transition-colors {% if request.resolver_match.url_name == 'student_evaluation' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Evaluation</a>
-            
-            <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+        <!-- 📱 Floating Bottom Navigation Bar (Mobile Only) 📱 -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 z-[1000] w-full px-4 pb-4 pointer-events-none">
+            <div class="relative w-full h-16 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex shadow-2xl pointer-events-auto transition-colors border border-white/5 overflow-visible">
                 
-                <a href="{% url 'student_profile' %}" class="flex items-center gap-2 px-4 py-2 border rounded-full font-bold text-sm transition-colors {% if request.resolver_match.url_name == 'student_profile' %}bg-pup-maroon/10 dark:bg-pup-gold/10 border-pup-maroon dark:border-pup-gold text-pup-maroon dark:text-pup-gold{% else %}border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800{% endif %}" :class="{ 'notify-shake': hasNotification }">
-                    <div class="relative w-8 h-8 rounded-full overflow-hidden border">
+                <!-- Magic Box Indicator (Unified Background) -->
+                <div 
+                    class="indicator-box absolute h-[70px] transition-all duration-400 ease-out flex justify-center items-center pointer-events-none z-10"
+                    :style="{ 
+                        left: indicatorOffset + 'px', 
+                        width: indicatorWidth + 'px', 
+                        opacity: (activeIndex >= 0 && activeIndex <= 3 && indicatorWidth > 0) ? 1 : 0, 
+                        top: '-20px' 
+                    }"
+                >
+                    <div class="w-full h-full bg-black dark:bg-white rounded-2xl shadow-2xl border-2 border-white/10 dark:border-black/5"></div>
+                </div>
+
+                <!-- Nav Items -->
+                <div 
+                    v-for="(item, index) in navItems" 
+                    :key="index"
+                    :ref="(el) => { if (el) setNavRef(index, el) }"
+                    @click="handleNavClick(item, index)"
+                    class="relative flex-1 h-full flex flex-col items-center justify-center cursor-pointer z-20 transition-all-custom"
+                    :class="{ 'active-unit-elevated': activeIndex === index && index !== 4 }"
+                >
+                    <div class="flex flex-col items-center justify-center gap-0.5">
+                        <div 
+                            class="transition-colors duration-300 flex justify-center items-center"
+                            :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'"
+                        >
+                            <i v-if="item.name === 'Theme'" :class="[isDark ? 'ph-fill ph-sun' : 'ph-bold ph-moon', 'text-2xl']"></i>
+                            <i v-else :class="[activeIndex === index ? item.iconActive : item.icon, 'text-2xl']"></i>
+                        </div>
+
+                        <span 
+                            class="text-[7px] font-black transition-colors duration-300 w-full text-center uppercase tracking-tighter"
+                            :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'"
+                        >
+                            [[ item.label ]]
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🫧 Profile Bubble Modal (Mobile Only) 🫧 -->
+        <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 translate-y-[-10px] scale-95" enter-to-class="opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 translate-y-[-10px] scale-95">
+            <div v-if="showProfileBubble" class="md:hidden fixed top-20 right-4 z-[2000] w-[280px] bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-white/10 font-sans">
+                <div class="h-20 w-full relative bg-pup-maroon">
+                    {% if request.user.student.cover_photo %}
+                        <img src="{{ request.user.student.cover_photo.url }}" class="w-full h-full object-cover opacity-80">
+                    {% else %}
+                        <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover opacity-80">
+                    {% endif %}
+                    <button @click="showProfileBubble = false" class="absolute top-2 right-2 text-white/80 hover:text-white"><i class="ph-bold ph-x text-lg"></i></button>
+                </div>
+                <div class="px-5 pb-5 pt-10 relative text-center">
+                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full border-4 border-white dark:border-pup-darkcard overflow-hidden bg-white shadow-md">
                         {% if request.user.student.profile_picture %}
                             <img src="{{ request.user.student.profile_picture.url }}" class="w-full h-full object-cover">
                         {% else %}
                             <img src="{% static 'images/student.jpg' %}" class="w-full h-full object-cover">
                         {% endif %}
-                        <span v-if="hasNotification" class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-600 rounded-full"></span>
                     </div>
-                    My Profile
-                </a>
-                
-                <button @click="toggleTheme" class="text-3xl p-1 text-gray-600 dark:text-gray-400 hover:text-pup-gold">
-                    <i :class="isDark ? 'ph-fill ph-sun text-pup-gold' : 'ph-fill ph-moon'"></i>
-                </button>
+                    <h3 class="font-black text-gray-900 dark:text-white text-lg leading-tight uppercase px-2 break-words text-center">{{ request.user.student.full_name }}</h3>
+                    <p class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold uppercase tracking-wider mb-4">{{ request.user.student.organization }} • {{ request.user.student.year_level }}</p>
+                    <a href="{% url 'student_profile' %}" class="block w-full py-3 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black text-center rounded-xl text-[10px] font-black tracking-widest transition-colors shadow-md uppercase">
+                        View Full Profile
+                    </a>
+                </div>
             </div>
-        </div>
+        </transition>
+        <div v-if="showProfileBubble" @click="showProfileBubble = false" class="md:hidden fixed inset-0 z-[1999] bg-black/20 dark:bg-black/40 backdrop-blur-[2px]"></div>
 
         <main class="flex-grow w-full">
             {% block content %}
@@ -139,7 +185,6 @@
 
         <footer class="bg-[#050505] text-white pt-10 pb-6 px-4 md:px-8 font-sans border-t-4 border-pup-maroon dark:border-pup-gold overflow-hidden mt-20">
             <div class="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between gap-8 md:gap-10">
-                
                 <div class="lg:w-1/3 flex flex-col items-center lg:items-start text-center lg:text-left">
                     <div class="flex items-center gap-3 mb-4">
                         <img src="{% static 'images/PUPLogo.png' %}" class="h-10 md:h-12 object-contain bg-white rounded-full p-0.5" alt="PUP Logo">
@@ -149,9 +194,7 @@
                         The official Campus Activities Management System of Polytechnic University of the Philippines - Unisan Quezon Campus.
                     </p>
                 </div>
-
                 <div class="lg:w-2/3 grid grid-cols-3 gap-2 md:gap-8 lg:pl-10 text-center lg:text-left mt-6 lg:mt-0">
-                    
                     <div>
                         <h3 class="text-pup-gold font-bold text-[11px] md:text-base mb-3 md:mb-4 tracking-wide">Quick Links</h3>
                         <ul class="flex flex-col gap-2 md:gap-3 text-[10px] md:text-sm text-gray-400">
@@ -160,7 +203,6 @@
                             <li><a href="{% url 'student_event_calendar' %}" class="hover:text-pup-gold transition-colors">Event Calendar</a></li>
                         </ul>
                     </div>
-
                     <div>
                         <h3 class="text-pup-gold font-bold text-[11px] md:text-base mb-3 md:mb-4 tracking-wide">My Activities</h3>
                         <ul class="flex flex-col gap-2 md:gap-3 text-[10px] md:text-sm text-gray-400">
@@ -169,7 +211,6 @@
                             <li><a href="{% url 'student_messages' %}" class="hover:text-pup-gold transition-colors">Notifications</a></li>
                         </ul>
                     </div>
-
                     <div>
                         <h3 class="text-pup-gold font-bold text-[11px] md:text-base mb-3 md:mb-4 tracking-wide">Account</h3>
                         <ul class="flex flex-col gap-2 md:gap-3 text-[10px] md:text-sm text-gray-400">
@@ -178,80 +219,16 @@
                             <li><a href="https://www.facebook.com/pupunisan" target="_blank" class="hover:text-pup-gold transition-colors">PUP Unisan FB</a></li>
                         </ul>
                     </div>
-
                 </div>
             </div>
-
-            <div class="max-w-7xl mx-auto">
-                <hr class="border-white/10 mt-10 md:mt-12 mb-8" />
-            </div>
-
-            <div class="w-full max-w-screen-xl mx-auto mb-10 overflow-x-auto no-scrollbar">
-                <div class="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8">
-                    
-                    <div class="flex justify-center gap-3 md:gap-8 shrink-0">
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/ITO.png' %}" alt="ITO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">ITO</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/ITS.png' %}" alt="ITS" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">ITS</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/YEO.png' %}" alt="YEO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">YEO</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/FTO.png' %}" alt="FTO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">FTO</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/PAS.png' %}" alt="PAS" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">PAS</span>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-center gap-3 md:gap-8 shrink-0">
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/CAO.png' %}" alt="CAO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">CAO</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/NEWSETTE.png' %}" alt="NEWSETTE" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">NEWS</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/PRIDE.png' %}" alt="PRIDE" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">PRIDE</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/ROTC.png' %}" alt="ROTC" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">ROTC</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/PUSO.jpg' %}" alt="PUSO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">PUSO</span>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-center gap-3 md:gap-8 shrink-0 mt-2 md:mt-0">
-                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
-                            <img src="{% static 'images/footer/SSC.png' %}" alt="SSC" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
-                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">SSC</span>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
             <div class="text-center text-gray-500 text-xs md:text-sm border-t border-white/10 pt-6 max-w-7xl mx-auto mt-4">
                 &copy; 2026 Polytechnic University of the Philippines. All rights reserved.
             </div>
         </footer>
 
+        <!-- Logout Modal -->
         <div v-cloak v-show="isLogoutModalOpen" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-            <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gray-200 dark:border-gray-800">
+            <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl p-6 w-full max-sm border border-gray-200 dark:border-gray-800">
                 <div class="text-center mb-6">
                     <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="ph-fill ph-sign-out text-3xl text-pup-maroon dark:text-red-500"></i>
@@ -268,57 +245,58 @@
 
     </div>
 
+    <!-- 🟢 VUE CONSOLIDATION LOGIC 🟢 -->
     <script>
-        const { createApp } = Vue;
+        window.VUE_APP_DATA = {};
+        window.VUE_APP_METHODS = {};
 
-        createApp({
+        const baseAppConfig = {
             delimiters: ['[[', ']]'],
             data() {
                 return {
                     isDark: false,
-                    isMobileMenuOpen: false,
                     isLogoutModalOpen: false,
-                    // 🟢 SYNCED NOTIFICATION LOGIC 🟢
+                    showProfileBubble: false,
                     hasNotification: false,
                     studentNum: "{{ request.user.username }}",
+                    currentUrl: "{{ request.resolver_match.url_name }}",
                     
-                    latestNews: [
-                        {
-                            id: 101,
-                            title: 'Research Colloquium 2025',
-                            date: 'DEC 12, 2025',
-                            location: 'PUP Unisan Quezon',
-                            image: 'research.jpg',
-                            description: 'Isang pagtitipon para sa pagpapakita at pagtalakay ng mga pinakabagong pananaliksik at pag-aaral ng mga iskolar ng bayan.'
-                        },
-                        {
-                            id: 102,
-                            title: 'Navigating the World of IT-Tech-Talk 1.0',
-                            date: 'NOV 21, 2025',
-                            location: 'Computer Laboratory',
-                            image: 'tech_talk.jpg',
-                            description: 'Seminar na nakatuon sa mga makabagong teknolohiya, programming trends, at mga oportunidad sa larangan ng Information Technology.'
-                        }
+                    // --- 📱 Bottom Nav Logic 📱 ---
+                    navRefs: [],
+                    indicatorOffset: 0,
+                    indicatorWidth: 0,
+                    activeIndex: -1,
+                    navItems: [
+                        { name: 'Home', label: 'Home', icon: 'ph ph-house', iconActive: 'ph-fill ph-house', url: "{% url 'student_homepage' %}" },
+                        { name: 'Events', label: 'Events', icon: 'ph ph-ticket', iconActive: 'ph-fill ph-ticket', url: "{% url 'student_school_events' %}" },
+                        { name: 'Calendar', label: 'Calendar', icon: 'ph ph-calendar-blank', iconActive: 'ph-fill ph-calendar-blank', url: "{% url 'student_event_calendar' %}" },
+                        { name: 'Evaluation', label: 'Evaluation', icon: 'ph ph-clipboard-text', iconActive: 'ph-fill ph-clipboard-text', url: "{% url 'student_evaluation' %}" },
+                        { name: 'Theme', label: 'Mode', icon: 'ph ph-moon', iconActive: 'ph-fill ph-sun', url: null }
                     ],
 
-                    upcomingEvents: [
-                        {
-                            id: 1,
-                            title: 'PUP General Assembly',
-                            date: 'FEB 14, 2026',
-                            location: 'PUP Main Campus Gym',
-                            image: 'background.jpg', 
-                            description: 'Ang taunang pagtitipon ng lahat ng Iskolar ng Bayan para sa mga anunsyo at pagpapakilala ng mga bagong proyekto ng unibersidad.'
-                        },
-                        {
-                            id: 2,
-                            title: 'Tech Summit 2026',
-                            date: 'MAR 05, 2026',
-                            location: 'Computer Lab 1 & 2',
-                            image: 'tech_talk.jpg',
-                            description: 'Isang summit na nakatuon sa pinakabagong teknolohiya, inobasyon, at mga workshop mula sa mga eksperto sa industriya.'
-                        }
-                    ]
+                    latestNews: [],
+                    upcomingEvents: [],
+                    selectedEvent: {},
+                    isEventModalOpen: false,
+                    allNotifs: [],
+                    readNotifs: [],
+                    filteredNotifs: [],
+                    isMsgModalOpen: false,
+                    currentMsg: {},
+                    ...window.VUE_APP_DATA
+                }
+            },
+            created() {
+                if (this.currentUrl === 'student_profile') {
+                    this.activeIndex = -1;
+                } else {
+                    const urlToIndex = {
+                        'student_homepage': 0,
+                        'student_school_events': 1,
+                        'student_event_calendar': 2,
+                        'student_evaluation': 3
+                    };
+                    this.activeIndex = urlToIndex[this.currentUrl] !== undefined ? urlToIndex[this.currentUrl] : 0;
                 }
             },
             mounted() {
@@ -328,42 +306,63 @@
                     document.documentElement.classList.add('dark');
                 }
 
-                // 🟢 CHECK UNREAD STATUS EVERY LOAD & 2 SECONDS 🟢
                 this.checkUnreadStatus();
-                setInterval(this.checkUnreadStatus, 2000);
+                setInterval(this.checkUnreadStatus, 3000);
 
-                window.addEventListener('scroll', () => {
-                    if (this.isMobileMenuOpen) {
-                        this.isMobileMenuOpen = false;
-                    }
-                }, { passive: true });
+                this.initIndicator();
+                window.addEventListener('resize', () => this.calculatePosition(this.activeIndex));
             },
             methods: {
-                checkUnreadStatus() {
-                    const notifKey = "welcome_read_" + this.studentNum;
-                    const isRead = localStorage.getItem(notifKey) === 'true';
-                    this.hasNotification = !isRead;
+                ...window.VUE_APP_METHODS,
+                setNavRef(index, el) {
+                    this.navRefs[index] = el;
+                },
+                initIndicator() {
+                    if (this.activeIndex === -1 || this.activeIndex === 4) return;
+                    this.$nextTick(() => {
+                        setTimeout(() => this.calculatePosition(this.activeIndex), 150);
+                        setTimeout(() => this.calculatePosition(this.activeIndex), 600);
+                    });
+                },
+                calculatePosition(index) {
+                    if (index === -1 || index === 4) {
+                        this.indicatorWidth = 0;
+                        return;
+                    }
+                    const el = this.navRefs[index];
+                    if (el) {
+                        const offsetLeft = el.offsetLeft;
+                        const width = el.offsetWidth;
+                        this.indicatorWidth = width - 10;
+                        this.indicatorOffset = offsetLeft + 5;
+                    }
                 },
                 toggleTheme() {
                     this.isDark = !this.isDark;
                     document.documentElement.classList.toggle('dark');
                     localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
                 },
-                toggleMobileMenu() {
-                    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+                handleHeaderProfileClick() {
+                    if (this.currentUrl === 'student_profile') return;
+                    this.showProfileBubble = !this.showProfileBubble;
                 },
-                openEventModal(eventData) {
-                    this.selectedEvent = eventData;
-                    this.isEventModalOpen = true;
-                    document.body.style.overflow = 'hidden'; 
+                handleNavClick(item, index) {
+                    if (item.name === 'Theme') {
+                        this.toggleTheme();
+                    } else {
+                        this.activeIndex = index;
+                        this.calculatePosition(index);
+                        if (item.url) {
+                            setTimeout(() => {
+                                window.location.href = item.url;
+                            }, 250);
+                        }
+                    }
                 },
-                closeModal() {
-                    this.isEventModalOpen = false;
-                    document.body.style.overflow = ''; 
-                },
-                viewEventDetails() {
-                    this.closeModal();
-                    window.location.href = "#"; 
+                checkUnreadStatus() {
+                    const notifKey = "welcome_read_" + this.studentNum;
+                    const isRead = localStorage.getItem(notifKey) === 'true';
+                    this.hasNotification = !isRead;
                 },
                 openLogoutModal() {
                     this.isLogoutModalOpen = true;
@@ -372,9 +371,36 @@
                 closeLogoutModal() {
                     this.isLogoutModalOpen = false;
                     document.body.style.overflow = '';
+                },
+                getStaticImageUrl(filename) {
+                    return "{% static 'images/' %}" + filename;
+                },
+                handleImageError(event) {
+                    event.target.src = "{% static 'images/PUPLogo.png' %}";
+                },
+                openEventModal(data) {
+                    this.selectedEvent = data;
+                    this.isEventModalOpen = true;
+                    document.body.style.overflow = 'hidden'; 
+                },
+                closeModal() {
+                    this.isEventModalOpen = false;
+                    this.isMsgModalOpen = false;
+                    document.body.style.overflow = ''; 
+                },
+                viewEventDetails() {
+                    this.closeModal();
+                    window.location.href = "{% url 'student_school_events' %}"; 
                 }
             }
-        }).mount('#app');
+        };
+
+        window.addEventListener('load', () => {
+            if (!window.VUE_APP_MOUNTED) {
+                Vue.createApp(baseAppConfig).mount('#app');
+                window.VUE_APP_MOUNTED = true;
+            }
+        });
     </script>
 </body>
 </html>

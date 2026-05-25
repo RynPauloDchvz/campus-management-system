@@ -3,11 +3,8 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/student_home.css' %}">
-<script src="{% static 'js/student_home.js' %}" defer></script>
 
 <style>
-    [v-cloak] { display: none; }
-    /* Tinanggal na ang :root var() para sa malinis na VS Code formatting */
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
 </style>
@@ -15,61 +12,54 @@
 <div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
     
     <div class="hero-container relative w-full h-[200px] sm:h-[250px] md:h-[300px] rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl mb-8 bg-gray-900">
-        
         <img src="{% static 'images/banner/banner.jpg' %}" alt="PUP Banner" class="absolute inset-0 w-full h-full object-cover z-0">
-        
         <div class="absolute inset-0 bg-black/30 z-0"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-pup-maroon/95 to-black/70 dark:from-black/95 dark:to-pup-darkbg/80 z-0"></div>
-        
         <div class="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
             <h1 class="font-extrabold text-2xl sm:text-4xl md:text-5xl text-pup-gold mb-2 drop-shadow-lg uppercase tracking-wide">Mabuhay, Iskolar ng Bayan!</h1>
             <p class="text-white/90 text-xs sm:text-sm md:text-lg font-medium tracking-wider md:tracking-widest uppercase text-shadow-md">Ang Iyong Sentro para sa mga Aktibidad at Buhay-Kampus</p>
         </div>
     </div>
 
+    <!-- Quick Actions -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-12">
-        
         <a href="{% url 'student_event_calendar' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
                 <i class="ph-fill ph-calendar-check text-2xl sm:text-3xl"></i>
             </div>
-            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Calendar Portal</h3>
-            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">View full schedules & activities.</p>
+            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10 uppercase">Calendar</h3>
+            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Schedules & activities.</p>
         </a>
 
         <a href="{% url 'student_school_events' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
                 <i class="ph-fill ph-scan text-2xl sm:text-3xl"></i>
             </div>
-            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Scan Attendance</h3>
-            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Face ID & GPS Log-in here.</p>
+            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10 uppercase">Scan ID</h3>
+            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Attendance Log-in.</p>
         </a>
 
-        <a href="{% url 'student_evaluation' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
+        <a href="{% url 'student_evaluation' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-200 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
                 <i class="ph-fill ph-clipboard-text text-2xl sm:text-3xl"></i>
             </div>
-            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Evaluation Forms</h3>
-            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Submit feedback for events.</p>
+            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10 uppercase">Evaluation</h3>
+            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Submit event feedback.</p>
         </a>
 
         <a href="{% url 'student_event_history' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
                 <i class="ph-fill ph-folders text-2xl sm:text-3xl"></i>
             </div>
-            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">My Records</h3>
-            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Track your past participations.</p>
+            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10 uppercase">My Records</h3>
+            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Track participations.</p>
         </a>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- News and Sidebar -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-24 md:pb-8">
         
         <div class="lg:col-span-2 flex flex-col gap-8">
-            
             <div>
                 <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
                     <i class="ph-bold ph-newspaper text-2xl text-pup-maroon dark:text-pup-gold"></i>
@@ -77,7 +67,7 @@
                 </div>
                 
                 <div class="flex sm:grid sm:grid-cols-2 gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-                    <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news)" class="min-w-[85%] sm:min-w-0 snap-center bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-200 dark:border-gray-800 transition-shadow cursor-pointer group">
+                    <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news)" class="min-w-[85%] sm:min-w-0 snap-center bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-200 dark:border-gray-800 transition-all cursor-pointer group">
                         <div class="overflow-hidden h-40">
                             <img :src="getStaticImageUrl(news.image)" :alt="news.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" @error="handleImageError">
                         </div>
@@ -96,7 +86,6 @@
                         <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Action Required</h2>
                     </div>
                 </div>
-
                 <div class="bg-white dark:bg-pup-darkcard rounded-2xl border border-red-200 dark:border-pup-gold/30 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group hover:shadow-md transition-shadow relative overflow-hidden">
                     <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 dark:bg-pup-gold"></div>
                     <div class="flex gap-4 items-center pl-2">
@@ -105,85 +94,48 @@
                         </div>
                         <div>
                             <h4 class="font-bold text-gray-900 dark:text-white text-lg">Research Colloquium 2025</h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Please submit your feedback to claim your E-Certificate.</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Submit feedback to claim E-Certificate.</p>
                         </div>
                     </div>
-                    <button onclick="window.location.href=URL_EVALUATION_FORM" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-pup-darkbg text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-colors">
-                        Evaluate Now
+                    <button onclick="window.location.href='{% url 'student_evaluation_form' %}'" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-pup-darkbg text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-colors uppercase tracking-widest">
+                        Evaluate
                     </button>
                 </div>
             </div>
-
         </div>
 
         <div class="lg:col-span-1 flex flex-col gap-8">
-            
             <div>
                 <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
                     <i class="ph-bold ph-calendar-star text-2xl text-pup-maroon dark:text-pup-gold"></i>
-                    <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Upcoming Events</h2>
+                    <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Upcoming</h2>
                 </div>
-                
                 <div class="grid grid-cols-1 gap-5">
                     <div v-for="event in upcomingEvents" :key="event.id" @click="openEventModal(event)" class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden group cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all hover:-translate-y-1">
                         <div class="flex items-center gap-4">
                             <div class="w-24 h-24 overflow-hidden flex-shrink-0">
                                 <img :src="getStaticImageUrl(event.image)" :alt="event.title" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                             </div>
-                            
                             <div class="p-3 pl-0">
                                 <div class="text-[0.7rem] text-pup-maroon dark:text-pup-gold font-bold mb-0.5 uppercase">[[ event.date ]]</div>
                                 <h4 class="font-bold text-gray-900 dark:text-white text-md leading-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">[[ event.title ]]</h4>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1"><i class="ph-fill ph-map-pin"></i> [[ event.location ]]</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
-                    <i class="ph-bold ph-clock-counter-clockwise text-2xl text-pup-maroon dark:text-pup-gold"></i>
-                    <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Recent Log</h2>
-                </div>
-                
-                <div class="bg-white dark:bg-pup-darkcard rounded-3xl p-6 shadow-sm border border-gray-200 dark:border-gray-800">
-                    <div onclick="openRecentLogModal()" class="event-item flex gap-4 p-3 -ml-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#111] cursor-pointer transition-colors relative group">
-                        <div class="timeline-dot flex-shrink-0 w-10 flex flex-col items-center">
-                            <div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 z-10">
-                                <i class="ph-bold ph-check"></i>
-                            </div>
-                        </div>
-                        <div class="pb-2">
-                            <h4 class="font-bold text-gray-900 dark:text-white text-md group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">Navigating the World of IT</h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 mb-2">Nov 21, 2025 • 08:15 AM</p>
-                            <div class="flex gap-2">
-                                <span class="status-badge flex items-center gap-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-[0.6rem] font-bold px-2 py-1 rounded border border-green-200 dark:border-green-800/50">
-                                    <i class="ph-fill ph-bounding-box"></i> Face ID
-                                </span>
-                                <span class="status-badge flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-[0.6rem] font-bold px-2 py-1 rounded border border-blue-200 dark:border-blue-800/50">
-                                    <i class="ph-fill ph-map-pin"></i> Location
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 </div>
 
-<transition name="modal">
-    <div v-if="isEventModalOpen" class="fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden" v-cloak>
+<!-- Modal News -->
+<transition enter-active-class="transition ease-out duration-300" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
+    <div v-if="isEventModalOpen" class="fixed inset-0 z-[3000] flex items-center justify-center p-4">
         <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" @click="closeModal"></div>
-        
-        <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-[90%] sm:w-[80%] md:w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] overflow-hidden transform transition-all border border-gray-200 dark:border-gray-700">
-            
-            <button @click="closeModal" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
+        <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
+            <button @click="closeModal" class="absolute top-4 right-4 z-[3010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
                 <i class="ph-bold ph-x"></i>
             </button>
-            
             <div class="overflow-y-auto hide-scrollbar w-full">
                 <div class="h-56 sm:h-72 w-full relative shrink-0">
                     <img :src="getStaticImageUrl(selectedEvent.image)" :alt="selectedEvent.title" class="w-full h-full object-cover">
@@ -193,8 +145,7 @@
                         <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">[[ selectedEvent.title ]]</h2>
                     </div>
                 </div>
-                
-                <div class="p-6 sm:p-8 shrink-0">
+                <div class="p-6 sm:p-8">
                     <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300 mb-6 bg-gray-50 dark:bg-black/20 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                         <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold"></i>
                         <div>
@@ -202,190 +153,61 @@
                             <div class="font-semibold text-gray-900 dark:text-white">[[ selectedEvent.location ]]</div>
                         </div>
                     </div>
-                    
                     <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-3">Overview</h3>
                     <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed mb-8">[[ selectedEvent.description ]]</p>
-                    
                     <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
-                        <button @click="closeModal" class="flex-grow sm:flex-grow-0 sm:px-8 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                            Close
-                        </button>
-                        <button @click="viewEventDetails" class="flex-grow bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-3 px-6 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                            <i class="ph-bold ph-arrow-square-out"></i> View All Details & Register
-                        </button>
+                        <button @click="closeModal" class="flex-grow sm:flex-grow-0 sm:px-8 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Close</button>
+                        <button @click="viewEventDetails" class="flex-grow bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-3 px-6 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md uppercase tracking-widest">View Details</button>
                     </div>
                 </div>
             </div>
-            
         </div>
     </div>
 </transition>
 
-<div id="recentLogModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6">
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeRecentLogModal()"></div>
-    
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10">
-        
-        <button onclick="closeRecentLogModal()" class="absolute top-4 right-4 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors z-[3010]">
-            <i class="ph-bold ph-x"></i>
-        </button>
-
-        <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-800 shrink-0">
-            <div class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold text-xs px-3 py-1 rounded-full uppercase mb-2 inline-flex items-center gap-1">
-                <i class="ph-fill ph-user-focus"></i> Attendance Record
-            </div>
-            <h2 class="text-2xl font-black text-gray-900 dark:text-white leading-tight">Navigating the World of IT</h2>
-        </div>
-
-        <div class="p-6 sm:p-8 overflow-y-auto hide-scrollbar flex-grow bg-gray-50 dark:bg-[#0a0a0a]">
-            
-            <div class="flex flex-col gap-3 mb-6">
-                <div class="font-bold text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2"><i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37] text-lg"></i> Nov 21, 2025 • 08:15 AM</div>
-                <div class="font-bold text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2"><i class="ph-fill ph-map-pin text-[#800000] dark:text-[#D4AF37] text-lg"></i> Computer Laboratory</div>
-            </div>
-
-            <div>
-                <h3 class="font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Proof of Attendance</h3>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm w-full sm:w-1/3">
-                        <div class="w-full aspect-square rounded-xl bg-gray-200 dark:bg-black flex items-center justify-center mb-2 overflow-hidden">
-                            <i class="ph-fill ph-user text-4xl text-gray-400"></i>
-                        </div>
-                        <div class="text-[0.65rem] font-bold uppercase text-gray-400">Face Capture ID</div>
-                        <div class="text-xs font-bold text-green-600 dark:text-green-400"><i class="ph-fill ph-check-circle"></i> Matched</div>
-                    </div>
-                    <div class="flex flex-col gap-3 w-full sm:w-2/3">
-                        <div class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
-                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Timestamp Log</div>
-                            <div class="font-bold text-gray-900 dark:text-white text-sm">Nov 21, 2025 at 08:15 AM</div>
-                        </div>
-                        <div class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm flex-grow">
-                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-2">Location Signature</div>
-                            <div class="flex items-start gap-2">
-                                <i class="ph-fill ph-map-pin text-2xl text-[#800000] dark:text-[#D4AF37] shrink-0"></i>
-                                <div class="text-sm font-bold text-gray-900 dark:text-white leading-snug">Verified inside PUP Campus Perimeter.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-
 <script>
-    // Setup Global URL Variables for safe injection into JS and Vue components
-    const STATIC_IMAGES_BASE = "{% static 'images/' %}";
-    const DEFAULT_LOGO = "{% static 'images/PUPLogo.png' %}";
-    
-    const URL_SCHOOL_EVENTS = "{% url 'student_school_events' %}";
-    const URL_EVALUATION_FORM = "{% url 'student_evaluation_form' %}";
-
-    const { createApp } = Vue;
-
-    createApp({
-        delimiters: ['[[', ']]'],
-        data() {
-            return {
-                isDark: false,
-                isMobileMenuOpen: false,
-                orgList: ['BPA', 'FTO', 'ITO', 'ITS', 'YEO', 'CAO', 'Newsette', 'SSC', 'PRIDE', 'ROTC'],
-                
-                isEventModalOpen: false,
-                selectedEvent: {}, 
-                
-                latestNews: [
-                    {
-                        id: 101,
-                        title: 'Research Colloquium 2025',
-                        date: 'DEC 12, 2025',
-                        location: 'PUP Unisan Quezon',
-                        image: 'research.jpg',
-                        description: 'Isang pagtitipon para sa pagpapakita at pagtalakay ng mga pinakabagong pananaliksik at pag-aaral ng mga iskolar ng bayan.'
-                    },
-                    {
-                        id: 102,
-                        title: 'Navigating the World of IT-Tech-Talk 1.0',
-                        date: 'NOV 21, 2025',
-                        location: 'Computer Laboratory',
-                        image: 'tech_talk.jpg',
-                        description: 'Seminar na nakatuon sa mga makabagong teknolohiya, programming trends, at mga oportunidad sa larangan ng Information Technology.'
-                    }
-                ],
-
-                upcomingEvents: [
-                    {
-                        id: 1,
-                        title: 'PUP General Assembly',
-                        date: 'FEB 14, 2026',
-                        location: 'PUP Main Campus Gym',
-                        image: 'background.jpg', 
-                        description: 'Ang taunang pagtitipon ng lahat ng Iskolar ng Bayan para sa mga anunsyo at pagpapakilala ng mga bagong proyekto ng unibersidad.'
-                    },
-                    {
-                        id: 2,
-                        title: 'Tech Summit 2026',
-                        date: 'MAR 05, 2026',
-                        location: 'Computer Lab 1 & 2',
-                        image: 'tech_talk.jpg',
-                        description: 'Isang summit na nakatuon sa pinakabagong teknolohiya, inobasyon, at mga workshop mula sa mga eksperto sa industriya.'
-                    }
-                ]
-            }
-        },
-        mounted() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                this.isDark = true;
-                document.documentElement.classList.add('dark');
-            }
-
-            window.addEventListener('scroll', () => {
-                if (this.isMobileMenuOpen) {
-                    this.isMobileMenuOpen = false;
+    // 🟢 Inject Homepage Data into VUE_APP_DATA 🟢
+    (function() {
+        window.VUE_APP_DATA = {
+            ...window.VUE_APP_DATA,
+            latestNews: [
+                {
+                    id: 101,
+                    title: 'Research Colloquium 2025',
+                    date: 'DEC 12, 2025',
+                    location: 'PUP Unisan Quezon',
+                    image: 'research.jpg',
+                    description: 'Isang pagtitipon para sa pagpapakita at pagtalakay ng mga pinakabagong pananaliksik at pag-aaral ng mga iskolar ng bayan.'
+                },
+                {
+                    id: 102,
+                    title: 'Navigating the World of IT-Tech-Talk 1.0',
+                    date: 'NOV 21, 2025',
+                    location: 'Computer Laboratory',
+                    image: 'tech_talk.jpg',
+                    description: 'Seminar na nakatuon sa mga makabagong teknolohiya, programming trends, at mga oportunidad sa larangan ng Information Technology.'
                 }
-            }, { passive: true });
-        },
-        methods: {
-            toggleTheme() {
-                this.isDark = !this.isDark;
-                document.documentElement.classList.toggle('dark');
-                localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
-            },
-            toggleMobileMenu() {
-                this.isMobileMenuOpen = !this.isMobileMenuOpen;
-            },
-            getStaticImageUrl(filename) {
-                return STATIC_IMAGES_BASE + filename;
-            },
-            handleImageError(event) {
-                event.target.src = DEFAULT_LOGO;
-            },
-            openEventModal(eventData) {
-                this.selectedEvent = eventData;
-                this.isEventModalOpen = true;
-                document.body.style.overflow = 'hidden'; 
-            },
-            closeModal() {
-                this.isEventModalOpen = false;
-                document.body.style.overflow = ''; 
-            },
-            viewEventDetails() {
-                this.closeModal();
-                window.location.href = URL_SCHOOL_EVENTS; 
-            }
-        }
-    }).mount('#app');
-
-    function openRecentLogModal() {
-        document.getElementById('recentLogModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeRecentLogModal() {
-        document.getElementById('recentLogModal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
+            ],
+            upcomingEvents: [
+                {
+                    id: 1,
+                    title: 'PUP General Assembly',
+                    date: 'FEB 14, 2026',
+                    location: 'PUP Main Campus Gym',
+                    image: 'background.jpg', 
+                    description: 'Ang taunang pagtitipon ng lahat ng Iskolar ng Bayan para sa mga anunsyo at pagpapakilala ng mga bagong proyekto ng unibersidad.'
+                },
+                {
+                    id: 2,
+                    title: 'Tech Summit 2026',
+                    date: 'MAR 05, 2026',
+                    location: 'Computer Lab 1 & 2',
+                    image: 'tech_talk.jpg',
+                    description: 'Isang summit na nakatuon sa pinakabagong teknolohiya, inobasyon, at mga workshop mula sa mga eksperto sa industriya.'
+                }
+            ]
+        };
+    })();
 </script>
 
 {% endblock content %}

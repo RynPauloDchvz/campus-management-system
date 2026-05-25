@@ -1,0 +1,137 @@
+html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floating Bottom Navigation Bar Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'pup-maroon': '#800000',
+                        'pup-gold': '#FFD700',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-800 flex items-center justify-center min-h-screen font-sans m-0 p-0 select-none">
+
+    <div id="app" class="w-full max-w-md h-[740px] bg-slate-100 rounded-[40px] shadow-2xl overflow-hidden flex flex-col justify-between border-8 border-slate-700 relative m-4">
+        
+        <div class="w-full px-6 pt-3 flex justify-between items-center text-xs font-semibold text-slate-500 z-30">
+            <span>11:56 AM</span>
+            <div class="flex gap-1 items-center">
+                <span>5G</span>
+                <div class="w-5 h-2.5 border border-slate-400 rounded-sm p-0.5 flex items-center">
+                    <div class="w-full h-full bg-slate-500 rounded-2xs"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 flex-1 flex flex-col items-center justify-center text-center transition-all duration-300">
+            <div class="w-20 h-20 bg-pup-gold/20 rounded-full flex items-center justify-center text-pup-maroon mb-4 shadow-sm animate-bounce">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" v-html="navItems[activeIndex].icon"></svg>
+            </div>
+            <h1 class="text-3xl font-extrabold text-slate-800 mb-2">
+                {{ navItems[activeIndex].name }}
+            </h1>
+            <p class="text-slate-500 text-sm max-w-xs px-4">
+                PUP Theme Test: Kasalukuyan mong tinitingnan ang {{ navItems[activeIndex].name }} section ng inyong mobile responsive layout.
+            </p>
+        </div>
+
+        <div class="relative w-full h-20 bg-pup-maroon rounded-t-[32px] flex justify-around items-center px-2 shadow-inner pb-2">
+            
+            <div 
+                class="absolute top-[-30px] w-20 h-20 rounded-full bg-slate-100 transition-all duration-300 ease-out flex justify-center items-center"
+                :style="{ transform: `translateX(${indicatorOffset}px)` }"
+                style="left: 0;"
+            >
+                <div class="w-14 h-14 bg-pup-gold rounded-full shadow-lg"></div>
+            </div>
+
+            <div 
+                v-for="(item, index) in navItems" 
+                :key="index"
+                :ref="(el) => { if (el) navRefs[index] = el }"
+                @click="setActive(index)"
+                class="relative z-10 w-16 h-full flex flex-col items-center justify-center cursor-pointer"
+            >
+                <div 
+                    class="transition-all duration-300 ease-out z-20 flex justify-center items-center absolute top-1/2 left-1/2 -translate-x-1/2"
+                    :class="activeIndex === index ? '-translate-y-[40px] text-black font-bold scale-110' : '-translate-y-1/2 text-slate-400 hover:text-slate-200'"
+                >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" v-html="item.icon"></svg>
+                </div>
+
+                <span 
+                    class="absolute bottom-1.5 text-[11px] font-bold transition-all duration-300 w-full text-center"
+                    :class="activeIndex === index ? 'opacity-100 text-white translate-y-0' : 'opacity-0 translate-y-4 text-slate-500'"
+                >
+                    {{ item.name }}
+                </span>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const activeIndex = ref(2);
+                const indicatorOffset = ref(0);
+                const navRefs = ref([]);
+
+                const navItems = [
+                    { name: 'Menu', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>' },
+                    { name: 'Search', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>' },
+                    { name: 'Home', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>' },
+                    { name: 'Settings', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>' },
+                    { name: 'Profile', icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>' }
+                ];
+
+                const calculatePosition = (index) => {
+                    const el = navRefs.value[index];
+                    if (el) {
+                        const offsetLeft = el.offsetLeft;
+                        const width = el.offsetWidth;
+                        indicatorOffset.value = offsetLeft + (width / 2) - 40;
+                    }
+                };
+
+                const setActive = (index) => {
+                    activeIndex.value = index;
+                    calculatePosition(index);
+                };
+
+                onMounted(() => {
+                    nextTick(() => {
+                        calculatePosition(activeIndex.value);
+                    });
+                    window.addEventListener('resize', () => calculatePosition(activeIndex.value));
+                });
+
+                return {
+                    activeIndex,
+                    indicatorOffset,
+                    navRefs,
+                    navItems,
+                    setActive
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+"""
+
+with open("magic-bottom-navigation.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+print("File successfully created.")

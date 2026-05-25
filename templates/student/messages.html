@@ -22,10 +22,6 @@
     }
 </style>
 
-<script id="django-notifs-data" type="application/json">
-    {{ notifications_json|safe }}
-</script>
-
 <div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300 pt-8">
     
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -43,30 +39,56 @@
             
             <div class="relative w-full sm:w-80 shrink-0">
                 <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                <input type="text" id="searchInput" onkeyup="filterNotifications()" placeholder="Search notifications..." class="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#151515] rounded-xl pl-10 pr-4 py-3 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition shadow-sm">
+                <input type="text" id="notifSearch" @input="filterNotifications($event)" placeholder="Search notifications..." class="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#151515] rounded-xl pl-10 pr-4 py-3 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition shadow-sm">
             </div>
         </div>
 
-        <div class="flex flex-col gap-4" id="notificationsContainer">
-            <!-- Notifications will be rendered here via JS -->
+        <div class="flex flex-col gap-4">
+            <div v-if="filteredNotifs.length === 0" class="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200 border-dashed dark:border-gray-800 p-12 text-center shadow-sm">
+                <i class="ph-fill ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-700 mb-3 block"></i>
+                <h3 class="font-bold text-gray-500 dark:text-gray-400 text-lg">No notifications found.</h3>
+            </div>
+
+            <div v-for="(notif, index) in filteredNotifs" :key="notif.id" @click="handleNotifAction(notif)" 
+                 class="notif-card-transition cursor-pointer border-l-[5px] rounded-2xl p-5 sm:p-6 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
+                 :class="[getNotifTypeClasses(notif.type), isRead(notif.id) ? 'opacity-60 bg-gray-50 dark:bg-[#111111] border-gray-300 dark:border-gray-800' : 'bg-white dark:bg-[#151515] shadow-sm hover:shadow-md border-gray-200 dark:border-gray-700']">
+                
+                <div class="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-xl shadow-inner" :class="getIconBg(notif.type)">
+                        <i class="ph-fill" :class="getIconClass(notif.type)"></i>
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-gray-900 dark:text-white text-base truncate mb-1">[[ notif.title ]]</h4>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                [[ notif.sender ]]
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                            [[ notif.message ]]
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="shrink-0 sm:text-right mt-2 sm:mt-0">
+                    <span class="text-xs font-bold text-pup-maroon dark:text-pup-gold block uppercase tracking-wider">[[ notif.date ]]</span>
+                </div>
+            </div>
         </div>
 
     </div>
 
     <!-- Message Detail Modal -->
-    <div id="messageModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
-        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeModal()"></div>
-        <div class="relative bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10 animate-in fade-in zoom-in duration-200">
-            
-            <div id="modalIconWrapper" class="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4">
-                <i id="modalIcon" class="ph-fill text-5xl"></i>
+    <div v-if="isMsgModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" @click="isMsgModalOpen = false"></div>
+        <div class="relative bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10">
+            <div class="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4" :class="getModalIconWrapperClass(currentMsg.type)">
+                <i class="ph-fill text-5xl" :class="getIconClass(currentMsg.type)"></i>
             </div>
-            
-            <h3 id="modalTitle" class="text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight"></h3>
-            
-            <p id="modalBody" class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-8 px-2 font-medium"></p>
-            
-            <button onclick="closeModal()" class="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-all text-base shadow-sm">
+            <h3 class="text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight" :class="getModalTitleClass(currentMsg.type)">[[ currentMsg.title ]]</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-8 px-2 font-medium">[[ currentMsg.message ]]</p>
+            <button @click="isMsgModalOpen = false" class="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-all text-base shadow-sm">
                 Close Message
             </button>
         </div>
@@ -75,148 +97,73 @@
 </div>
 
 <script>
-    let notifications = [];
-    let currentFiltered = [];
-    let readNotifs = JSON.parse(localStorage.getItem('student_read_notifs') || '[]');
+    (function() {
+        const notifData = {
+            allNotifs: {{ notifications_json|safe|default:"[]"|escapejs }},
+            readNotifs: JSON.parse(localStorage.getItem('student_read_notifs') || '[]'),
+            filteredNotifs: [],
+            isMsgModalOpen: false,
+            currentMsg: {}
+        };
+        notifData.filteredNotifs = notifData.allNotifs;
 
-    // Load Data from Django
-    try {
-        const rawData = document.getElementById('django-notifs-data').textContent;
-        if (rawData && rawData.trim() !== '') {
-            notifications = JSON.parse(rawData.trim());
-            currentFiltered = notifications;
+        if (window.VUE_APP_CONFIG) {
+            const originalData = window.VUE_APP_CONFIG.data;
+            window.VUE_APP_CONFIG.data = function() {
+                return {
+                    ...originalData.call(this),
+                    ...notifData
+                };
+            };
+
+            // Add Methods
+            Object.assign(window.VUE_APP_CONFIG.methods, {
+                isRead(id) {
+                    return this.readNotifs.includes(id);
+                },
+                getNotifTypeClasses(type) {
+                    if (type === 'event') return 'border-l-green-500';
+                    if (type === 'alert') return 'border-l-red-500';
+                    return 'border-l-blue-500';
+                },
+                getIconBg(type) {
+                    if (type === 'event') return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+                    if (type === 'alert') return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+                    return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+                },
+                getIconClass(type) {
+                    if (type === 'event') return 'ph-calendar-star';
+                    if (type === 'alert') return 'ph-warning-circle';
+                    return 'ph-megaphone';
+                },
+                getModalIconWrapperClass(type) {
+                    if (type === 'event') return 'border-green-100 bg-green-50 text-green-500 dark:border-green-900/30 dark:bg-green-900/20';
+                    if (type === 'alert') return 'border-red-100 bg-red-50 text-red-500 dark:border-red-900/30 dark:bg-red-900/20';
+                    return 'border-blue-100 bg-blue-50 text-blue-500 dark:border-blue-900/30 dark:bg-blue-900/20';
+                },
+                getModalTitleClass(type) {
+                    if (type === 'event') return 'text-green-600 dark:text-green-500';
+                    if (type === 'alert') return 'text-red-600 dark:text-red-500';
+                    return 'text-blue-600 dark:text-blue-500';
+                },
+                filterNotifications(event) {
+                    const query = event.target.value.toLowerCase().trim();
+                    this.filteredNotifs = this.allNotifs.filter(n => 
+                        (n.title || '').toLowerCase().includes(query) || 
+                        (n.sender || '').toLowerCase().includes(query) || 
+                        (n.message || '').toLowerCase().includes(query)
+                    );
+                },
+                handleNotifAction(notif) {
+                    if (!this.readNotifs.includes(notif.id)) {
+                        this.readNotifs.push(notif.id);
+                        localStorage.setItem('student_read_notifs', JSON.stringify(this.readNotifs));
+                    }
+                    this.currentMsg = notif;
+                    this.isMsgModalOpen = true;
+                }
+            });
         }
-    } catch (error) {
-        console.error("Error loading notifications:", error);
-    }
-
-    function renderNotifications(dataList) {
-        const container = document.getElementById('notificationsContainer');
-        
-        if (dataList.length === 0) {
-            container.innerHTML = `
-                <div class="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200 border-dashed dark:border-gray-800 p-12 text-center shadow-sm">
-                    <i class="ph-fill ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-700 mb-3 block"></i>
-                    <h3 class="font-bold text-gray-500 dark:text-gray-400 text-lg">No notifications found.</h3>
-                </div>
-            `;
-            return;
-        }
-
-        let htmlString = '';
-
-        dataList.forEach((notif, index) => {
-            const isRead = readNotifs.includes(notif.id);
-            
-            let borderClass = 'border-l-blue-500';
-            let iconBg = 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
-            let iconClass = 'ph-megaphone';
-
-            if (notif.type === 'event') {
-                borderClass = 'border-l-green-500';
-                iconBg = 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
-                iconClass = 'ph-calendar-star';
-            } else if (notif.type === 'alert') {
-                borderClass = 'border-l-red-500';
-                iconBg = 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
-                iconClass = 'ph-warning-circle';
-            }
-
-            const readClass = isRead 
-                ? 'opacity-60 bg-gray-50 dark:bg-[#111111] border-gray-300 dark:border-gray-800' 
-                : 'bg-white dark:bg-[#151515] shadow-sm hover:shadow-md border-gray-200 dark:border-gray-700';
-
-            htmlString += `
-                <div onclick="handleNotifClick(${index})" 
-                     class="notif-card-transition cursor-pointer border-l-[5px] rounded-2xl p-5 sm:p-6 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${borderClass} ${readClass}">
-                    
-                    <div class="flex items-start sm:items-center gap-4 flex-1 min-w-0">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-xl shadow-inner ${iconBg}">
-                            <i class="ph-fill ${iconClass}"></i>
-                        </div>
-                        
-                        <div class="flex-1 min-w-0">
-                            <h4 class="font-bold text-gray-900 dark:text-white text-base truncate mb-1">${notif.title}</h4>
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                    ${notif.sender}
-                                </span>
-                            </div>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                                ${notif.message}
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="shrink-0 sm:text-right mt-2 sm:mt-0">
-                        <span class="text-xs font-bold text-pup-maroon dark:text-pup-gold block uppercase tracking-wider">${notif.date}</span>
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = htmlString;
-    }
-
-    function filterNotifications() {
-        const query = document.getElementById('searchInput').value.toLowerCase().trim();
-        if (query === "") {
-            currentFiltered = notifications;
-            renderNotifications(currentFiltered);
-            return;
-        }
-        currentFiltered = notifications.filter(n => {
-            return (n.title || '').toLowerCase().includes(query) || 
-                   (n.sender || '').toLowerCase().includes(query) || 
-                   (n.message || '').toLowerCase().includes(query);
-        });
-        renderNotifications(currentFiltered);
-    }
-
-    function handleNotifClick(index) {
-        const notif = currentFiltered[index];
-        if (!readNotifs.includes(notif.id)) {
-            readNotifs.push(notif.id);
-            localStorage.setItem('student_read_notifs', JSON.stringify(readNotifs));
-            renderNotifications(currentFiltered);
-        }
-        openModal(notif);
-    }
-
-    function openModal(notif) {
-        const iconWrapper = document.getElementById('modalIconWrapper');
-        const icon = document.getElementById('modalIcon');
-        const titleEl = document.getElementById('modalTitle');
-        const bodyEl = document.getElementById('modalBody');
-
-        bodyEl.innerHTML = notif.message;
-        titleEl.innerText = notif.title;
-
-        if (notif.type === 'event') {
-            iconWrapper.className = "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4 border-green-100 bg-green-50 text-green-500 dark:border-green-900/30 dark:bg-green-900/20";
-            icon.className = "ph-fill ph-calendar-star";
-            titleEl.className = "text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight text-green-600 dark:text-green-500";
-        } else if (notif.type === 'alert') {
-            iconWrapper.className = "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4 border-red-100 bg-red-50 text-red-500 dark:border-red-900/30 dark:bg-red-900/20";
-            icon.className = "ph-fill ph-warning-circle";
-            titleEl.className = "text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight text-red-600 dark:text-red-500";
-        } else {
-            iconWrapper.className = "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4 border-blue-100 bg-blue-50 text-blue-500 dark:border-blue-900/30 dark:bg-blue-900/20";
-            icon.className = "ph-fill ph-megaphone";
-            titleEl.className = "text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight text-blue-600 dark:text-blue-500";
-        }
-
-        document.getElementById('messageModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal() {
-        document.getElementById('messageModal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        if(notifications.length > 0) renderNotifications(notifications);
-    });
+    })();
 </script>
 {% endblock %}

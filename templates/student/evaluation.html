@@ -2,352 +2,117 @@
 {% load static %}
 
 {% block content %}
-<script src="https://unpkg.com/@phosphor-icons/web"></script>
-
-<style>
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-</style>
-
-<script>
-    const APP_STATIC_URL = "{% static 'images/' %}";
-    const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
-</script>
-
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+<!-- Consistent Style with School Events -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
 
     <div class="text-center mb-8">
-        <h1 class="font-bold text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold mb-4 uppercase tracking-wide">Evaluation Hub</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Rate past events, evaluate speakers, and provide your valuable feedback.</p>
+        <h1 class="font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold mb-4 uppercase tracking-wide">Evaluation Center</h1>
         
         <div class="relative max-w-2xl mx-auto">
             <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
-            <input type="text" id="eventSearch" placeholder="Search events to evaluate..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full py-3.5 pl-12 pr-6 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm sm:text-base">
+            <input type="text" id="evalSearch" placeholder="Search events to evaluate..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full py-3.5 pl-12 pr-6 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm sm:text-base">
         </div>
     </div>
 
+    <!-- Category Filters (Consistent with Events) -->
     <div class="flex overflow-x-auto hide-scrollbar gap-3 justify-start lg:justify-center mb-8 px-2 sm:px-0 pb-2">
-        <button data-category="All" class="js-category-btn active whitespace-nowrap bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-pup-maroon dark:border-pup-gold border px-5 py-2 rounded-full font-bold text-sm transition-colors">All Events</button>
+        <button data-category="All" class="js-category-btn active whitespace-nowrap bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-pup-maroon dark:border-pup-gold border px-5 py-2 rounded-full font-bold text-sm transition-colors">All Pending</button>
         <button data-category="Academic" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Academic</button>
         <button data-category="Sports" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Sports</button>
         <button data-category="Cultural" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Cultural</button>
         <button data-category="Organization" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Organization</button>
-        <button data-category="Seminar" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Seminar</button>
-        <button data-category="Volunteer" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Volunteer</button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 pb-10 px-2 sm:px-0" id="eventsGrid">
+    <h2 class="text-xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight flex items-center gap-2">
+        <i class="ph-fill ph-clipboard-text text-pup-maroon dark:text-pup-gold"></i> Available Evaluations
+    </h2>
+
+    <!-- Grid matching School Events -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 pb-10 px-2 sm:px-0" id="evalGrid">
         
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Research Colloquium" data-category="Academic" data-date="MAY 12, 2026" data-time="08:00 AM" data-venue="Audio Visual Room" data-desc="Present and defend your capstone projects and research papers in front of university panels.">
+        <div class="js-eval-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Research Colloquium 2025" data-category="Academic" data-date="MAY 12, 2025" data-org="PUP UNISAN">
             <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                <div class="absolute top-2 right-2 bg-pup-gold text-black text-[8px] font-black px-2 py-0.5 rounded-full shadow-sm">PENDING</div>
             </div>
             <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">MAY 12, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Research Colloquium</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Audio Visual Room</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="IT Week Hackathon" data-category="Academic" data-date="JUN 05, 2026" data-time="07:00 AM" data-venue="Computer Lab 1" data-desc="A 24-hour coding challenge. Build innovative solutions for campus problems.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">JUN 05, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">IT Week Hackathon</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Computer Lab 1</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Quiz Bee Competition" data-category="Academic" data-date="JUL 20, 2026" data-time="01:00 PM" data-venue="Main Gym" data-desc="Test your general knowledge and win academic merits.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">JUL 20, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Quiz Bee Competition</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Main Gym</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="PUP Intramurals - Basketball" data-category="Sports" data-date="AUG 15, 2026" data-time="08:00 AM" data-venue="University Oval" data-desc="Support your department's basketball team as they clash for the championship.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/student_week.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">AUG 15, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Basketball Intrams</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">University Oval</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Volleyball Tryouts" data-category="Sports" data-date="AUG 18, 2026" data-time="03:00 PM" data-venue="PUP Gym" data-desc="Open for all students who want to join the varsity team.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">AUG 18, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Volleyball Tryouts</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">PUP Gym</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="E-Sports Tournament" data-category="Sports" data-date="SEP 05, 2026" data-time="09:00 AM" data-venue="ComLab 3" data-desc="Valorant and Mobile Legends tournament for PUPians.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">SEP 05, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">E-Sports Tournament</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">ComLab 3</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Buwan ng Wika Celebration" data-category="Cultural" data-date="AUG 28, 2026" data-time="08:00 AM" data-venue="PUP Plaza" data-desc="Sabayang pagbigkas, balagtasan, at iba pang patimpalak sa wikang Filipino.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">AUG 28, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Buwan ng Wika</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">PUP Plaza</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="PUP Got Talent" data-category="Cultural" data-date="OCT 15, 2026" data-time="04:00 PM" data-venue="Main Stage" data-desc="Showcase your singing, dancing, or unique talents to the whole campus.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/student_week.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">OCT 15, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">PUP Got Talent</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Main Stage</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Sining Exhibit" data-category="Cultural" data-date="NOV 10, 2026" data-time="10:00 AM" data-venue="Library Lobby" data-desc="An exhibition of artworks created by talented PUP students.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">NOV 10, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Sining Exhibit</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Library Lobby</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="SSC General Assembly" data-category="Organization" data-date="FEB 14, 2026" data-time="01:00 PM" data-venue="PUP Gym" data-desc="Annual gathering of all students with the Supreme Student Council.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">FEB 14, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">SSC Gen Assembly</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">PUP Gym</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="ITO Meet and Greet" data-category="Organization" data-date="MAR 01, 2026" data-time="10:00 AM" data-venue="Audio Visual Room" data-desc="Welcoming all IT freshies and familiarization of ITO officers.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">MAR 01, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">ITO Meet & Greet</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Audio Visual Room</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="RCY Orientation" data-category="Organization" data-date="MAR 20, 2026" data-time="09:00 AM" data-venue="Room 201" data-desc="Basic first aid seminar and orientation for new volunteers.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/community.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">MAR 20, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">RCY Orientation</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Room 201</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Leadership Seminar" data-category="Seminar" data-date="DEC 25, 2025" data-time="08:00 AM" data-venue="Conference Hall" data-desc="Training for upcoming student leaders and council members.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/leadership.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">DEC 25, 2025</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Leadership Seminar</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Conference Hall</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Tech Trends 2026" data-category="Seminar" data-date="MAY 02, 2026" data-time="08:00 AM" data-venue="Audio Visual Room" data-desc="Discussion on AI, Machine Learning, and Future Web Development.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">MAY 02, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Tech Trends 2026</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Audio Visual Room</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Mental Health Talk" data-category="Seminar" data-date="OCT 22, 2026" data-time="10:00 AM" data-venue="Main Gym" data-desc="Taking care of your well-being while balancing academics.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">OCT 22, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Mental Health Talk</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Main Gym</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Coastal Clean-up" data-category="Volunteer" data-date="NOV 08, 2026" data-time="06:00 AM" data-venue="Unisan Beachfront" data-desc="Join the NSTP and orgs in maintaining the cleanliness of our shores.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/community.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">NOV 08, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Coastal Clean-up</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Unisan Beachfront</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Blood Donation Drive" data-category="Volunteer" data-date="DEC 01, 2026" data-time="08:00 AM" data-venue="PUP Clinic" data-desc="Donate blood and save lives in partnership with the Red Cross.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">DEC 01, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Blood Donation</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">PUP Clinic</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
-                </div>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Tree Planting Activity" data-category="Volunteer" data-date="JAN 15, 2027" data-time="07:00 AM" data-venue="Mt. Unisan Reserve" data-desc="A green initiative to combat climate change.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">JAN 15, 2027</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Tree Planting</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Mt. Unisan Reserve</span></p>
-                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-auto">
-                    <span class="js-eval-badge text-xs font-bold uppercase text-gray-400">Evaluate</span><i class="js-eval-icon ph-bold ph-star text-pup-maroon dark:text-pup-gold text-lg"></i>
+                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate uppercase">MAY 12, 2025</div>
+                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Research Colloquium 2025</h3>
+                <p class="text-[0.65rem] md:text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate">
+                    <i class="ph-fill ph-users text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">By PUP UNISAN</span>
+                </p>
+                <div class="hidden md:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-4">
+                    <span class="text-xs font-bold uppercase text-gray-400">Evaluate Now</span>
+                    <i class="ph-bold ph-arrow-right text-pup-maroon dark:text-pup-gold text-lg"></i>
                 </div>
             </div>
         </div>
 
     </div>
     
-    <div id="noResults" class="hidden text-center py-10 w-full col-span-full">
-        <i class="ph-bold ph-star-half text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
-        <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">Event Not Found</h3>
-        <p class="text-gray-500 text-sm mt-1">Try searching with a different keyword.</p>
+    <div id="noResults" class="hidden text-center py-20 w-full col-span-full">
+        <i class="ph-bold ph-smiley-wink text-6xl text-gray-300 dark:text-gray-700 mb-4"></i>
+        <h3 class="font-bold text-xl text-gray-500 dark:text-gray-400">All caught up!</h3>
+        <p class="text-sm text-gray-400 mt-1">You have no pending evaluations at the moment.</p>
+    </div>
+
+    <!-- Evaluation History -->
+    <div class="mt-16 border-t border-gray-200 dark:border-gray-800 pt-10">
+        <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-6 flex items-center gap-3 uppercase tracking-tight">
+            <i class="ph-bold ph-clock-counter-clockwise text-pup-maroon dark:text-pup-gold"></i> Submission History
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-pup-darkcard p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm opacity-70">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="text-[10px] font-black uppercase tracking-widest text-gray-400">Completed</div>
+                    <div class="flex text-pup-gold text-xs">
+                        <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                    </div>
+                </div>
+                <h4 class="font-bold text-gray-900 dark:text-white mb-1 uppercase">Tech-Talk 1.0</h4>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Submitted: Nov 22, 2025</p>
+            </div>
+        </div>
     </div>
 
 </div>
 
-<div id="evaluationModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6">
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose"></div>
-    
-    <div class="relative bg-white dark:bg-[#111] rounded-3xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
-        
-        <button id="btnTopClose" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
-            <i class="ph-bold ph-x"></i>
-        </button>
-
-        <div class="flex flex-col w-full h-full overflow-y-auto hide-scrollbar">
-            <div class="h-56 sm:h-72 w-full relative shrink-0 bg-gray-900">
-                <img id="modalImg" src="" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                <div class="absolute bottom-6 left-6 right-6">
-                    <div id="modalCategory" class="bg-pup-gold inline-block text-black font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2">Category</div>
-                    <h2 id="modalTitle" class="text-3xl sm:text-4xl font-black text-white leading-tight">Event Title</h2>
-                </div>
-            </div>
-            
-            <div class="p-6 sm:p-10 shrink-0 flex-grow">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-gray-50 dark:bg-black/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
-                    <div>
-                        <div class="text-xs font-bold uppercase text-gray-400 mb-1">Date & Time</div>
-                        <div id="modalDateTime" class="font-bold text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> Date Time</div>
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold uppercase text-gray-400 mb-1">Venue</div>
-                        <div id="modalVenue" class="font-bold text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> Venue</div>
-                    </div>
-                </div>
-                
-                <h3 class="font-bold text-xl text-gray-900 dark:text-white mb-3">About the Event</h3>
-                <p id="modalDesc" class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-10">Evaluate the speakers, venue, and overall experience.</p>
-                
-                <button id="btnStartEvalRedirect" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-4 px-6 rounded-xl text-lg flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md transform hover:-translate-y-0.5">
-                    <i class="ph-bold ph-star text-xl"></i> START EVALUATION
-                </button>
-            </div>
+<!-- Start Evaluation Modal (Consistent Style) -->
+<div id="evalStartModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
+    <div id="evalModalBg" class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10 font-sans">
+        <div class="w-24 h-24 mx-auto bg-pup-maroon/10 dark:bg-pup-gold/10 rounded-full flex items-center justify-center mb-6 text-pup-maroon dark:text-pup-gold text-5xl shadow-inner">
+            <i class="ph-fill ph-info"></i>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-4 uppercase tracking-tight">Begin Evaluation?</h2>
+        <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-10 px-2 font-medium">Your answers will remain anonymous and will be used to improve future university events.</p>
+        <div class="flex flex-col gap-3">
+            <button id="btnConfirmEval" class="w-full py-4 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black rounded-2xl text-sm transition-all shadow-md hover:scale-[1.02] active:scale-95 uppercase tracking-widest">
+                Continue to Form
+            </button>
+            <button id="btnCloseEvalModal" class="w-full py-3 text-gray-500 font-bold text-sm hover:text-gray-900 dark:hover:text-white transition-colors uppercase tracking-widest">
+                Maybe Later
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('eventSearch');
+function initEvaluationPageLogic() {
+    const searchInput = document.getElementById('evalSearch');
     const filterBtns = document.querySelectorAll('.js-category-btn');
-    const eventCards = document.querySelectorAll('.js-event-card');
+    const evalCards = document.querySelectorAll('.js-eval-card');
     const noResults = document.getElementById('noResults');
+    const modal = document.getElementById('evalStartModal');
 
-    // 1. Check Completed Evaluations from LocalStorage
-    const evaluatedEvents = JSON.parse(localStorage.getItem('evaluatedEvents') || '{}');
-
-    function filterEvents() {
+    function filterEvals() {
         if (!searchInput || !noResults) return;
         const query = searchInput.value.toLowerCase().trim();
         const activeBtn = document.querySelector('.js-category-btn.active');
         const activeFilter = activeBtn ? activeBtn.dataset.category : 'All';
         
         let visibleCount = 0;
-        eventCards.forEach(card => {
+        evalCards.forEach(card => {
             const title = card.dataset.title.toLowerCase();
             const category = card.dataset.category;
             const matchesSearch = title.includes(query);
@@ -355,17 +120,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (matchesSearch && matchesCategory) {
                 card.style.display = ""; 
-                card.classList.remove('hidden');
                 visibleCount++;
             } else {
-                card.classList.add('hidden');
                 card.style.display = "none";
             }
         });
-        noResults.classList.toggle('hidden', visibleCount > 0);
+        
+        const grid = document.getElementById('evalGrid');
+        if (visibleCount === 0) {
+            noResults.classList.remove('hidden');
+            if(grid) grid.classList.add('hidden');
+        } else {
+            noResults.classList.add('hidden');
+            if(grid) grid.classList.remove('hidden');
+        }
     }
 
-    if (searchInput) searchInput.addEventListener('input', filterEvents);
+    if (searchInput) searchInput.addEventListener('input', filterEvals);
     
     filterBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -373,69 +144,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 b.classList.remove('active', 'bg-pup-maroon', 'text-white', 'dark:bg-pup-gold', 'dark:text-black', 'border-pup-maroon', 'dark:border-pup-gold');
                 b.classList.add('bg-white', 'dark:bg-pup-darkcard', 'text-gray-600', 'dark:text-gray-300');
             });
-            const target = e.target;
+            const target = e.currentTarget;
             target.classList.remove('bg-white', 'dark:bg-pup-darkcard', 'text-gray-600', 'dark:text-gray-300');
             target.classList.add('active', 'bg-pup-maroon', 'text-white', 'dark:bg-pup-gold', 'dark:text-black', 'border-pup-maroon', 'dark:border-pup-gold');
-            filterEvents();
+            filterEvals();
         });
     });
 
-    // 2. Click Logic & Disable State
-    const evalModal = document.getElementById('evaluationModal');
-    
-    eventCards.forEach(card => {
-        const title = card.dataset.title;
-
-        if (evaluatedEvents[title]) {
-            // Already evaluated state (Gray out and disable click)
-            card.classList.add('opacity-50', 'pointer-events-none', 'grayscale');
-            const badge = card.querySelector('.js-eval-badge');
-            const icon = card.querySelector('.js-eval-icon');
-            if(badge) {
-                badge.innerText = "Evaluated";
-                badge.classList.replace('text-gray-400', 'text-green-600');
-                badge.classList.add('dark:text-green-400');
-            }
-            if(icon) {
-                icon.classList.replace('ph-star', 'ph-check-circle');
-                icon.classList.replace('text-pup-maroon', 'text-green-600');
-                icon.classList.replace('dark:text-pup-gold', 'dark:text-green-400');
-            }
-        } else {
-            // Not evaluated -> Open preview modal first
-            card.addEventListener('click', () => {
-                document.getElementById('modalTitle').innerText = title;
-                document.getElementById('modalCategory').innerText = card.dataset.category;
-                document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${card.dataset.date} • ${card.dataset.time}`;
-                document.getElementById('modalVenue').innerHTML = `<i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> ${card.dataset.venue}`;
-                document.getElementById('modalDesc').innerText = card.dataset.desc;
-                
-                const imgSrc = card.querySelector('img').src;
-                document.getElementById('modalImg').src = imgSrc;
-
-                // Save data to sessionStorage for the form page
-                sessionStorage.setItem('currentEvalTitle', title);
-                sessionStorage.setItem('currentEvalCategory', card.dataset.category);
-                sessionStorage.setItem('currentEvalImg', imgSrc);
-
-                evalModal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            });
-        }
+    evalCards.forEach(card => {
+        card.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
     });
 
-    // Modal Closers
-    function closeModal() {
-        evalModal.classList.add('hidden');
+    function closeEvalModal() {
+        modal.classList.add('hidden');
         document.body.style.overflow = '';
     }
-    document.getElementById('btnTopClose').addEventListener('click', closeModal);
-    document.getElementById('bgOverlayClose').addEventListener('click', closeModal);
 
-    // Redirect to Form Page
-    document.getElementById('btnStartEvalRedirect').addEventListener('click', () => {
-        window.location.href = "{% url 'student_evaluation_form' %}";
-    });
+    const closeBtn = document.getElementById('btnCloseEvalModal');
+    if(closeBtn) closeBtn.addEventListener('click', closeEvalModal);
+    
+    const bgOverlay = document.getElementById('evalModalBg');
+    if(bgOverlay) bgOverlay.addEventListener('click', closeEvalModal);
+
+    const confirmBtn = document.getElementById('btnConfirmEval');
+    if(confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            window.location.href = "{% url 'student_evaluation_form' %}";
+        });
+    }
+}
+
+// Stability Wait for Vue
+window.addEventListener('load', () => {
+    const checkInterval = setInterval(() => {
+        if (window.VUE_APP_MOUNTED) {
+            clearInterval(checkInterval);
+            initEvaluationPageLogic();
+        }
+    }, 100);
 });
 </script>
 {% endblock content %}

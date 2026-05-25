@@ -18,7 +18,15 @@
     
     .user-cell { display: flex; align-items: center; gap: 12px; }
     .user-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
-    .user-name { font-weight: 700; color: var(--text-main); display: block; }
+    .user-name { 
+        font-weight: 700; 
+        color: var(--text-main); 
+        display: block; 
+        line-height: 1.2;
+        font-size: 0.9rem;
+        word-break: break-word;
+        max-width: 250px;
+    }
     .user-username { font-size: 0.75rem; color: var(--text-muted); }
 
     /* 🟢 EXACT MATCH PROFILE VIEW MODAL 🟢 */
@@ -32,6 +40,7 @@
     .profile-avatar-container img { width: 110px; height: 110px; border-radius: 50%; border: 5px solid #ffffff; background: #ffffff; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     
     .profile-name { font-size: 1.7rem; font-weight: 900; color: #111827; margin: 0; line-height: 1.2; font-family: 'Inter', sans-serif; letter-spacing: -0.5px; }
+    .profile-id { font-size: 0.95rem; font-weight: 800; color: #800000; margin-top: 5px; margin-bottom: 25px; font-family: 'Inter', sans-serif; }
     .profile-id { font-size: 0.95rem; font-weight: 800; color: #800000; margin-top: 5px; margin-bottom: 25px; font-family: 'Inter', sans-serif; }
     .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     .profile-card-stat { border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px; text-align: center; background: #ffffff; }

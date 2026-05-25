@@ -61,7 +61,7 @@
 
                 <div class="pb-1 sm:pb-3 flex-grow w-full min-w-0">
                     <div class="mb-2">
-                        <h1 class="text-2xl sm:text-4xl font-black text-[#800000] dark:text-[#D4AF37] leading-tight truncate transition-colors uppercase tracking-wide bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md px-4 py-1.5 rounded-xl border border-gray-200/50 dark:border-gray-800/50 shadow-sm inline-block max-w-full" id="profileFullNameDisplay">
+                        <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-[#800000] dark:text-[#D4AF37] leading-tight transition-colors uppercase tracking-wide bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md px-4 py-1.5 rounded-xl border border-gray-200/50 dark:border-gray-800/50 shadow-sm inline-block max-w-full break-words" id="profileFullNameDisplay">
                             {{ full_name }}
                         </h1>
                     </div>
@@ -315,7 +315,7 @@
 
 <div id="settingsModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 font-sans">
     <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeSettingsModal()"></div>
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-md p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 transition-colors">
         <button onclick="closeSettingsModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
             <i class="ph-bold ph-x text-lg"></i>
         </button>
@@ -347,7 +347,7 @@
 
 <div id="logoutModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeLogoutModal()"></div>
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-sm p-8 text-center border border-gray-200 dark:border-gray-800 z-10 transition-colors">
         <div class="w-20 h-20 mx-auto bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4 border border-red-100 dark:border-red-900/30">
             <i class="ph-fill ph-sign-out text-4xl text-red-500"></i>
         </div>

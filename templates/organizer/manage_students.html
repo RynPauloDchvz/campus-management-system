@@ -72,10 +72,10 @@
                  onclick="handleRowClick(this)">
                 
                 <div class="col-span-5 flex items-center gap-3">
-                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 rounded-full object-cover">
-                    <div>
-                        <p class="font-bold text-gray-900 dark:text-white">{{ student.full_name }}</p>
-                        <p class="text-xs text-gray-500">{{ student.email_address }}</p>
+                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 rounded-full object-cover shrink-0">
+                    <div class="min-w-0">
+                        <p class="font-bold text-gray-900 dark:text-white leading-tight break-words text-sm sm:text-base">{{ student.full_name }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ student.email_address }}</p>
                     </div>
                 </div>
                 <div class="col-span-3 text-sm font-bold text-pup-maroon dark:text-pup-gold">{{ student.student_number }}</div>
@@ -118,10 +118,10 @@
                  onclick="handleRowClick(this)">
                 
                 <div class="col-span-5 flex items-center gap-3">
-                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 rounded-full object-cover">
-                    <div>
-                        <p class="font-bold text-gray-900 dark:text-white">{{ student.full_name }}</p>
-                        <p class="text-xs text-gray-500">{{ student.email_address }}</p>
+                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 rounded-full object-cover shrink-0">
+                    <div class="min-w-0">
+                        <p class="font-bold text-gray-900 dark:text-white leading-tight break-words text-sm sm:text-base">{{ student.full_name }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ student.email_address }}</p>
                     </div>
                 </div>
                 <div class="col-span-3 text-sm font-bold text-gray-600 dark:text-gray-400">{{ student.student_number }}</div>
@@ -161,7 +161,7 @@
                 </div>
                 
                 <div class="text-center sm:text-left">
-                    <h2 id="rawNameText" class="text-2xl font-black text-gray-900 dark:text-white font-sans leading-tight mb-1">Name</h2>
+                    <h2 id="rawNameText" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white font-sans leading-tight mb-1 break-words">Name</h2>
                     <p id="rawNumberText" class="text-sm font-bold text-pup-maroon dark:text-pup-gold mb-6 tracking-wide">Number</p>
                 </div>
 

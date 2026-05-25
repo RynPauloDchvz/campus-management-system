@@ -6,232 +6,112 @@
 
 <link rel="stylesheet" href="{% static 'css/calendar.css' %}">
 
-<script>
-    const APP_STATIC_URL = "{% static 'images/' %}";
-    const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
-</script>
-
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-
-    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div class="text-center md:text-left w-full">
-            <h1 class="font-bold text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide flex items-center justify-center md:justify-start gap-3">
-                Event Calendar
-            </h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your schedules, activities, and academic reminders.</p>
-        </div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+    <div class="text-center mb-8">
+        <h1 class="font-bold text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">University Calendar</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-2">Track university-wide schedules and your organization's events.</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10">
-        
-        <div class="lg:col-span-2 bg-white dark:bg-pup-darkcard p-3 sm:p-6 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden w-full">
-            <div id="calendar" class="w-full"></div>
-        </div>
-
-        <div class="lg:col-span-1 flex flex-col gap-6">
-            
-            <div class="bg-gradient-to-br from-pup-maroon to-red-900 dark:from-pup-gold dark:to-yellow-600 p-6 rounded-3xl shadow-md text-white dark:text-black">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="font-bold text-lg">This Month</h3>
-                    <i class="ph-fill ph-chart-bar text-2xl opacity-80"></i>
-                </div>
-                <div class="text-4xl font-black mb-1">18<span class="text-lg font-normal opacity-80"> Events</span></div>
-                <p class="text-sm opacity-80">Be sure to register early for limited slots.</p>
-            </div>
-
-            <div class="bg-white dark:bg-pup-darkcard p-6 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 relative">
-                <h3 class="font-orbitron font-bold text-gray-900 dark:text-white mb-4 border-b-2 border-pup-maroon dark:border-pup-gold inline-block pb-1">Filter Events</h3>
-                
-                <div class="relative">
-                    <select id="calendarCategoryFilter" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors font-bold text-sm cursor-pointer appearance-none">
-                        <option value="All">All Categories</option>
-                        <option value="Academic">Academic</option>
-                        <option value="Sports">Sports</option>
-                        <option value="Cultural">Cultural</option>
-                        <option value="Organization">Organization</option>
-                        <option value="Seminar">Seminar</option>
-                        <option value="Volunteer">Volunteer</option>
-                    </select>
-                    <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"></i>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-pup-darkcard p-6 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 flex-grow flex flex-col">
-                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3 mb-5">
-                    <h3 class="font-orbitron font-bold text-gray-900 dark:text-white text-lg">Upcoming Next</h3>
-                </div>
-                
-                <div id="upcomingEventsSidebar" class="flex flex-col gap-3">
-                    </div>
-                
-                <div class="mt-auto pt-6">
-                    <a href="{% url 'student_school_events' %}" class="block w-full py-3.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-bold text-center text-gray-600 dark:text-gray-300 hover:text-pup-maroon dark:hover:text-pup-gold hover:border-pup-maroon dark:hover:border-pup-gold transition-all shadow-sm">
-                        View Event Masterlist
-                    </a>
-                </div>
-            </div>
-
-        </div>
+    <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-8 overflow-hidden transition-colors">
+        <div id="calendar" class="min-h-[500px] sm:min-h-[700px]"></div>
     </div>
 </div>
 
-<div id="calendarModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" id="calendarModalBg"></div>
-
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
-        
-        <button id="closeCalModalBtn" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
-            <i class="ph-bold ph-x"></i>
+<!-- Calendar Modal -->
+<div id="calendarModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
+    <div id="calendarModalBg" class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-md p-8 border border-gray-100 dark:border-gray-800 z-10 font-sans">
+        <button id="closeCalModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+            <i class="ph-bold ph-x text-2xl"></i>
         </button>
-
-        <div class="flex flex-col w-full h-full overflow-y-auto hide-scrollbar">
-            <div class="h-56 sm:h-72 w-full relative shrink-0 bg-gray-900">
-                <img id="modalImg" src="" class="w-full h-full object-cover" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-4');">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                <div class="absolute bottom-6 left-6 right-6">
-                    <div id="modalCategory" class="bg-pup-gold inline-block text-black font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2">Category</div>
-                    <h2 id="modalTitle" class="text-3xl sm:text-4xl font-black text-white leading-tight">Event Title</h2>
-                </div>
-            </div>
-            
-            <div class="p-6 sm:p-10 shrink-0 flex-grow">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-gray-50 dark:bg-black/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
-                    <div>
-                        <div class="text-xs font-bold uppercase text-gray-400 mb-1">Date & Time</div>
-                        <div id="modalDateTime" class="font-bold text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> Date Time</div>
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold uppercase text-gray-400 mb-1">Venue</div>
-                        <div id="modalVenue" class="font-bold text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> Venue</div>
-                    </div>
-                </div>
-                
-                <h3 class="font-bold text-xl text-gray-900 dark:text-white mb-3">About the Event</h3>
-                <p id="modalDesc" class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-10">Description goes here.</p>
-                
-                <a href="{% url 'student_school_events' %}" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-4 px-6 rounded-xl text-lg flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md transform hover:-translate-y-0.5">
-                    <i class="ph-bold ph-arrow-square-out text-xl"></i> Proceed to Masterlist
-                </a>
+        
+        <div class="flex items-center gap-3 mb-6">
+            <div id="modalCategoryBadge" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-pup-maroon text-white dark:bg-pup-gold dark:text-black">
+                CATEGORY
             </div>
         </div>
+        
+        <h2 id="calModalTitle" class="text-2xl font-black text-gray-900 dark:text-white mb-4 leading-tight">Event Title</h2>
+        
+        <div class="space-y-4 mb-8">
+            <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300">
+                <i class="ph-fill ph-calendar text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                <div>
+                    <div class="text-[10px] font-bold uppercase text-gray-400">Date & Time</div>
+                    <div id="calModalDateTime" class="font-bold">--</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300">
+                <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                <div>
+                    <div class="text-[10px] font-bold uppercase text-gray-400">Venue</div>
+                    <div id="calModalVenue" class="font-bold">--</div>
+                </div>
+            </div>
+        </div>
+
+        <button id="btnViewOnEvents" class="w-full py-4 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black rounded-2xl text-sm transition-all shadow-md hover:scale-[1.02] active:scale-95 uppercase tracking-widest">
+            View in Hub
+        </button>
     </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // 18 Sample Events (Same dataset as School Events for consistency)
-    const eventList = [
-        { id: '1', title: 'Research Colloquium', start: '2026-05-12T08:00:00', color: '#800000', extendedProps: { category: 'Academic', venue: 'Audio Visual Room', desc: 'Present and defend your capstone projects.', img: 'research.jpg' } },
-        { id: '2', title: 'IT Week Hackathon', start: '2026-06-05T07:00:00', color: '#800000', extendedProps: { category: 'Academic', venue: 'Computer Lab 1', desc: 'A 24-hour coding challenge.', img: 'tech_talk.jpg' } },
-        { id: '3', title: 'Quiz Bee Competition', start: '2026-07-20T13:00:00', color: '#800000', extendedProps: { category: 'Academic', venue: 'Main Gym', desc: 'Test your general knowledge.', img: 'background.jpg' } },
-        { id: '4', title: 'Basketball Intrams', start: '2026-08-15T08:00:00', color: '#ea580c', extendedProps: { category: 'Sports', venue: 'University Oval', desc: 'Support your department\'s team.', img: 'student_week.jpg' } },
-        { id: '5', title: 'Volleyball Tryouts', start: '2026-08-18T15:00:00', color: '#ea580c', extendedProps: { category: 'Sports', venue: 'PUP Gym', desc: 'Open for all aspiring varsity players.', img: 'PUP1.jpg' } },
-        { id: '6', title: 'E-Sports Tournament', start: '2026-09-05T09:00:00', color: '#ea580c', extendedProps: { category: 'Sports', venue: 'ComLab 3', desc: 'Valorant & ML Tournament.', img: 'tech_talk.jpg' } },
-        { id: '7', title: 'Buwan ng Wika', start: '2026-08-28T08:00:00', color: '#9333ea', extendedProps: { category: 'Cultural', venue: 'PUP Plaza', desc: 'Sabayang pagbigkas at balagtasan.', img: 'background.jpg' } },
-        { id: '8', title: 'PUP Got Talent', start: '2026-10-15T16:00:00', color: '#9333ea', extendedProps: { category: 'Cultural', venue: 'Main Stage', desc: 'Showcase your talents to the campus.', img: 'student_week.jpg' } },
-        { id: '9', title: 'Sining Exhibit', start: '2026-11-10T10:00:00', color: '#9333ea', extendedProps: { category: 'Cultural', venue: 'Library Lobby', desc: 'Art exhibition by talented students.', img: 'PUP1.jpg' } },
-        { id: '10', title: 'SSC Gen Assembly', start: '2026-02-14T13:00:00', color: '#2563eb', extendedProps: { category: 'Organization', venue: 'PUP Gym', desc: 'Annual gathering with the SSC.', img: 'background.jpg' } },
-        { id: '11', title: 'ITO Meet & Greet', start: '2026-03-01T10:00:00', color: '#2563eb', extendedProps: { category: 'Organization', venue: 'Audio Visual Room', desc: 'Welcoming IT freshies.', img: 'tech_talk.jpg' } },
-        { id: '12', title: 'RCY Orientation', start: '2026-03-20T09:00:00', color: '#2563eb', extendedProps: { category: 'Organization', venue: 'Room 201', desc: 'First aid basics and orientation.', img: 'community.jpg' } },
-        { id: '13', title: 'Financial Literacy', start: '2026-04-05T13:00:00', color: '#059669', extendedProps: { category: 'Seminar', venue: 'Conference Hall', desc: 'Manage your allowance wisely.', img: 'leadership.jpg' } },
-        { id: '14', title: 'Tech Trends 2026', start: '2026-05-02T08:00:00', color: '#059669', extendedProps: { category: 'Seminar', venue: 'Audio Visual Room', desc: 'AI and Web Development Seminar.', img: 'tech_talk.jpg' } },
-        { id: '15', title: 'Mental Health Talk', start: '2026-10-22T10:00:00', color: '#059669', extendedProps: { category: 'Seminar', venue: 'Main Gym', desc: 'Balancing well-being and academics.', img: 'PUP1.jpg' } },
-        { id: '16', title: 'Coastal Clean-up', start: '2026-11-08T06:00:00', color: '#0284c7', extendedProps: { category: 'Volunteer', venue: 'Unisan Beachfront', desc: 'Maintain the cleanliness of our shores.', img: 'community.jpg' } },
-        { id: '17', title: 'Blood Donation', start: '2026-12-01T08:00:00', color: '#0284c7', extendedProps: { category: 'Volunteer', venue: 'PUP Clinic', desc: 'Donate blood and save lives.', img: 'research.jpg' } },
-        { id: '18', title: 'Tree Planting', start: '2027-01-15T07:00:00', color: '#0284c7', extendedProps: { category: 'Volunteer', venue: 'Mt. Unisan Reserve', desc: 'A green initiative for climate change.', img: 'background.jpg' } }
-    ];
-
-    // --- GLOBAL MODAL FUNCTION ---
-    window.openEventModal = function(eventId) {
-        const evt = eventList.find(e => e.id === eventId);
-        if(!evt) return;
-
-        const d = new Date(evt.start);
-        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase();
-        const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-
-        document.getElementById('modalTitle').innerText = evt.title;
-        document.getElementById('modalCategory').innerText = evt.extendedProps.category;
-        document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${dateStr} • ${timeStr}`;
-        document.getElementById('modalVenue').innerHTML = `<i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> ${evt.extendedProps.venue}`;
-        document.getElementById('modalDesc').innerText = evt.extendedProps.desc;
-        
-        // Piliting i-load ang image. Babagsak ito sa DEFAULT_IMG kapag nag-error dahil sa <img onerror="..."> natin sa itaas.
-        const imgUrl = APP_STATIC_URL + evt.extendedProps.img;
-        document.getElementById('modalImg').src = imgUrl;
-
-        document.getElementById('calendarModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-
-    // --- 1. RENDER FULLCALENDAR ---
+function initCalendarLogic() {
     const calendarEl = document.getElementById('calendar');
-    
-    const isMobile = window.innerWidth < 640;
-    
+    if (!calendarEl) return;
+
     const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: isMobile ? 'listMonth' : 'dayGridMonth',
+        initialView: 'dayGridMonth',
         headerToolbar: {
-            left: isMobile ? 'prev,next' : 'prev,next today',
+            left: 'prev,next today',
             center: 'title',
-            right: isMobile ? 'dayGridMonth,listMonth' : 'dayGridMonth,timeGridWeek,listMonth'
+            right: 'dayGridMonth,timeGridWeek'
         },
-        height: 'auto',
-        contentHeight: 'auto',
-        events: eventList,
+        themeSystem: 'standard',
+        events: [
+            { title: 'Research Colloquium', start: '2026-05-12', extendedProps: { category: 'Academic', venue: 'Audio Visual Room', time: '08:00 AM' }, backgroundColor: '#800000', borderColor: '#800000' },
+            { title: 'IT Week Hackathon', start: '2026-06-05', extendedProps: { category: 'Academic', venue: 'Computer Lab 1', time: '07:00 AM' }, backgroundColor: '#800000', borderColor: '#800000' },
+            { title: 'PUP Intramurals', start: '2026-08-15', end: '2026-08-20', extendedProps: { category: 'Sports', venue: 'University Oval', time: '08:00 AM' }, backgroundColor: '#D4AF37', borderColor: '#D4AF37', textColor: '#000' }
+        ],
         eventClick: function(info) {
-            window.openEventModal(info.event.id);
+            const event = info.event;
+            document.getElementById('calModalTitle').innerText = event.title;
+            document.getElementById('modalCategoryBadge').innerText = event.extendedProps.category;
+            document.getElementById('calModalDateTime').innerText = event.start.toLocaleDateString('en-US', { dateStyle: 'long' }) + ' • ' + event.extendedProps.time;
+            document.getElementById('calModalVenue').innerText = event.extendedProps.venue;
+            
+            const modal = document.getElementById('calendarModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         }
     });
     calendar.render();
 
-    // --- 2. DROPDOWN FILTER LOGIC ---
-    const filterSelect = document.getElementById('calendarCategoryFilter');
-    filterSelect.addEventListener('change', function(e) {
-        const category = e.target.value;
-        calendar.removeAllEvents(); 
-        
-        if (category === 'All') {
-            calendar.addEventSource(eventList); 
-        } else {
-            const filtered = eventList.filter(evt => evt.extendedProps.category === category);
-            calendar.addEventSource(filtered);
-        }
-    });
-
-    // --- 3. POPULATE SIDEBAR ---
-    const sidebarContainer = document.getElementById('upcomingEventsSidebar');
-    const sortedEvents = [...eventList].sort((a, b) => new Date(a.start) - new Date(b.start));
-    const upcoming = sortedEvents.slice(0, 4);
-    
-    upcoming.forEach(evt => {
-        const d = new Date(evt.start);
-        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase();
-        const imgUrl = APP_STATIC_URL + evt.extendedProps.img;
-
-        const cardHTML = `
-            <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-3 flex gap-4 items-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-colors shadow-sm" onclick="openEventModal('${evt.id}')">
-                <div class="w-16 h-16 shrink-0 relative rounded-xl overflow-hidden bg-gray-200 dark:bg-black">
-                    <img src="${imgUrl}" class="w-full h-full object-cover" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-1');">
-                </div>
-                <div class="flex flex-col min-w-0">
-                    <div class="text-pup-maroon dark:text-pup-gold font-bold text-xs mb-0.5 truncate">${dateStr}</div>
-                    <div class="text-gray-900 dark:text-white font-bold text-sm leading-tight mb-1 truncate">${evt.title}</div>
-                    <div class="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">${evt.extendedProps.venue}</span></div>
-                </div>
-            </div>
-        `;
-        sidebarContainer.insertAdjacentHTML('beforeend', cardHTML);
-    });
-
-    // --- 4. MODAL CLOSERS ---
     function closeCalModal() {
         document.getElementById('calendarModal').classList.add('hidden');
         document.body.style.overflow = '';
     }
-    document.getElementById('closeCalModalBtn').addEventListener('click', closeCalModal);
-    document.getElementById('calendarModalBg').addEventListener('click', closeCalModal);
+
+    const closeBtn = document.getElementById('closeCalModalBtn');
+    if(closeBtn) closeBtn.addEventListener('click', closeCalModal);
+    
+    const bgOverlay = document.getElementById('calendarModalBg');
+    if(bgOverlay) bgOverlay.addEventListener('click', closeCalModal);
+    
+    const viewBtn = document.getElementById('btnViewOnEvents');
+    if(viewBtn) viewBtn.addEventListener('click', () => {
+        window.location.href = "{% url 'student_school_events' %}";
+    });
+}
+
+window.addEventListener('load', () => {
+    const checkInterval = setInterval(() => {
+        if (window.VUE_APP_MOUNTED) {
+            clearInterval(checkInterval);
+            initCalendarLogic();
+        }
+    }, 100);
 });
 </script>
 {% endblock content %}
