@@ -1,7 +1,7 @@
 {% extends 'organizer_base.html' %}
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <style>
     /* Malambot na transition para sa Hover Effects */
     .notif-card-transition { 
@@ -21,7 +21,10 @@
         overflow: hidden;
     }
 </style>
+{% endblock extra_head %}
 
+{% block content %}
+<div v-pre>
 <script id="django-notifs-data" type="application/json">
     {{ notifications_json|safe }}
 </script>
@@ -76,7 +79,10 @@
     </div>
 
 </div>
+</div>
+{% endblock content %}
 
+{% block extra_js %}
 <script>
     let notifications = [];
     let currentFiltered = [];
@@ -96,6 +102,7 @@
     // Pang-display ng mga notifications sa HTML
     function renderNotifications(dataList) {
         const container = document.getElementById('notificationsContainer');
+        if (!container) return;
         
         // Kapag walang nahanap sa search o walang data
         if (dataList.length === 0) {
@@ -261,4 +268,4 @@
         }
     });
 </script>
-{% endblock %}
+{% endblock extra_js %}

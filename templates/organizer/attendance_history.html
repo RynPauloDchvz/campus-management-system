@@ -1,15 +1,12 @@
 {% extends 'organizer_base.html' %}
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/event_history.css' %}">
-<script src="https://unpkg.com/@phosphor-icons/web"></script>
+{% endblock extra_head %}
 
-<script>
-    const APP_STATIC_URL = "{% static 'images/' %}";
-    const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
-</script>
-
+{% block content %}
+<div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
@@ -91,6 +88,80 @@
         </div>
     </div>
 </div>
-
-<script src="{% static 'js/organizer.js' %}" defer></script>
+</div>
 {% endblock content %}
+
+{% block extra_js %}
+<script>
+    const APP_STATIC_URL = "{% static 'images/' %}";
+    const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
+
+    const historyData = [
+        { id: 1, title: "Research Colloquium", date: "May 12, 2026", time: "08:15 AM", venue: "Audio Visual Room", type: "Attendance", img: "research.jpg" },
+        { id: 2, title: "IT Week Hackathon", date: "Jun 05, 2026", time: "07:30 AM", venue: "Computer Lab 1", type: "Attendance", img: "tech_talk.jpg" },
+        { id: 3, title: "Quiz Bee Competition", date: "Jul 20, 2026", time: "01:00 PM", venue: "Main Gym", type: "Attendance", img: "background.jpg" }
+    ];
+
+    function renderHistory() {
+        const grid = document.getElementById('historyGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        const query = document.getElementById('historySearch').value.toLowerCase();
+        
+        const filtered = historyData.filter(item => item.title.toLowerCase().includes(query));
+
+        if (filtered.length === 0) {
+            document.getElementById('noResults').classList.remove('hidden');
+        } else {
+            document.getElementById('noResults').classList.add('hidden');
+        }
+
+        filtered.forEach(item => {
+            const html = `
+                <div class="bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" onclick="openHistoryModal(${item.id})">
+                    <div class="w-24 sm:w-full h-24 sm:h-32 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] border-r sm:border-r-0 sm:border-b border-gray-200 dark:border-gray-800">
+                        <img src="${APP_STATIC_URL}${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                        <div class="absolute top-2 right-2 hidden sm:block">
+                            <span class="text-[0.65rem] font-bold px-2 py-1 rounded-md uppercase bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shadow-sm"><i class="ph-fill ph-user-focus"></i> ${item.type}</span>
+                        </div>
+                    </div>
+                    <div class="p-3 sm:p-4 flex flex-col justify-center flex-grow min-w-0">
+                        <div class="flex justify-between items-start mb-1">
+                            <div class="text-[0.65rem] font-bold text-pup-maroon dark:text-pup-gold truncate">${item.date}</div>
+                        </div>
+                        <h3 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white leading-tight mb-1 truncate">${item.title}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">${item.venue}</span></p>
+                    </div>
+                </div>
+            `;
+            grid.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    function openHistoryModal(id) {
+        const item = historyData.find(i => i.id === id);
+        if(!item) return;
+
+        document.getElementById('modalTitle').innerText = item.title;
+        document.getElementById('modalType').innerText = item.type + " Record";
+        document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${item.date} • ${item.time}`;
+        document.getElementById('modalVenue').innerHTML = `<i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> ${item.venue}`;
+        document.getElementById('proofTime').innerText = item.date + " at " + item.time;
+        document.getElementById('viewAttendanceProof').classList.remove('hidden');
+
+        document.getElementById('historyModal').classList.remove('hidden');
+        document.getElementById('historyModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeHistoryModal() {
+        document.getElementById('historyModal').classList.add('hidden');
+        document.getElementById('historyModal').classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    const searchInput = document.getElementById('historySearch');
+    if (searchInput) searchInput.addEventListener('input', renderHistory);
+    document.addEventListener('DOMContentLoaded', renderHistory);
+</script>
+{% endblock extra_js %}

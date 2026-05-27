@@ -55,6 +55,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
+    {% block extra_head %}{% endblock extra_head %}
 </head>
 <body class="bg-[#f4f4f4] dark:bg-pup-darkbg text-gray-800 dark:text-gray-200 transition-colors duration-300 antialiased overflow-x-hidden max-w-[100vw]">
 
@@ -288,6 +289,7 @@
         window.STATIC_IMAGES_BASE = "{% static 'images/' %}";
         window.DEFAULT_LOGO = "{% static 'images/PUPLogo.png' %}";
     </script>
-    <script src="{% static 'js/organizer.js' %}"></script>
+    <script src="{% static 'js/organizer.js' %}?v={% now 'U' %}"></script>
+    {% block extra_js %}{% endblock extra_js %}
 </body>
 </html>

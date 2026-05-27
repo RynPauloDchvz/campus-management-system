@@ -1,17 +1,12 @@
 {% extends 'organizer_base.html' %}
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock extra_head %}
 
-<link rel="stylesheet" href="{% static 'css/school_event.css' %}">
-
-<script>
-    const APP_STATIC_URL = "{% static 'images/' %}";
-    const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
-</script>
-
+{% block content %}
+<div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">
 
     <div class="text-center mb-8">
@@ -419,6 +414,157 @@
 
     </div>
 </div>
-
-<script src="{% static 'js/organizer.js' %}"></script>
+</div>
 {% endblock content %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const APP_STATIC_URL = "{% static 'images/' %}";
+    const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
+
+// Logic wrap to re-init after Vue mount
+function initSchoolEventsLogic() {
+    let stream = null;
+    let map = null;
+    let userLat = null;
+    let userLng = null;
+    let currentEventTitle = ""; 
+    let detectedAddress = "";
+    let scanAttempts = 0; 
+
+    const searchInput = document.getElementById('eventSearch');
+    const filterBtns = document.querySelectorAll('.js-category-btn');
+    const eventCards = document.querySelectorAll('.js-event-card');
+    const noResults = document.getElementById('noResults');
+
+    function filterEvents() {
+        if (!searchInput || !noResults) return;
+        const query = searchInput.value.toLowerCase().trim();
+        const activeBtn = document.querySelector('.js-category-btn.active');
+        const activeFilter = activeBtn ? activeBtn.dataset.category : 'All';
+        
+        let visibleCount = 0;
+        eventCards.forEach(card => {
+            const title = card.dataset.title.toLowerCase();
+            const category = card.dataset.category;
+            const matchesSearch = title.includes(query);
+            const matchesCategory = activeFilter === 'All' || category === activeFilter;
+
+            if (matchesSearch && matchesCategory) {
+                card.style.display = ""; 
+                visibleCount++;
+            } else {
+                card.style.display = "none";
+            }
+        });
+        noResults.style.display = visibleCount > 0 ? 'none' : 'block';
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterEvents);
+    
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            filterBtns.forEach(b => {
+                b.classList.remove('active', 'bg-pup-maroon', 'text-white', 'dark:bg-pup-gold', 'dark:text-black', 'border-pup-maroon', 'dark:border-pup-gold');
+                b.classList.add('bg-white', 'dark:bg-pup-darkcard', 'text-gray-600', 'dark:text-gray-300');
+            });
+            const target = e.currentTarget;
+            target.classList.remove('bg-white', 'dark:bg-pup-darkcard', 'text-gray-600', 'dark:text-gray-300');
+            target.classList.add('active', 'bg-pup-maroon', 'text-white', 'dark:bg-pup-gold', 'dark:text-black', 'border-pup-maroon', 'dark:border-pup-gold');
+            filterEvents();
+        });
+    });
+
+    function switchView(viewId) {
+        ['viewDetails', 'viewPermissions', 'viewScanner', 'viewSuccess'].forEach(v => {
+            const el = document.getElementById(v);
+            if (el) el.style.display = 'none';
+        });
+        const target = document.getElementById(viewId);
+        if (target) {
+            target.style.display = 'flex';
+            if (viewId === 'viewScanner' || viewId === 'viewPermissions' || viewId === 'viewSuccess') {
+                target.classList.add('m-auto');
+            }
+        }
+    }
+
+    function closeParticipationModal() {
+        const modal = document.getElementById('participationModal');
+        if (modal) modal.style.display = 'none';
+        document.body.style.overflow = '';
+        if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    }
+
+    eventCards.forEach(card => {
+        card.addEventListener('click', () => {
+            currentEventTitle = card.dataset.title;
+            document.getElementById('modalImg').src = card.querySelector('img').src;
+            document.getElementById('modalCategory').innerText = card.dataset.category;
+            document.getElementById('modalTitle').innerText = currentEventTitle;
+            document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${card.dataset.date} • ${card.dataset.time}`;
+            document.getElementById('modalVenue').innerHTML = `<i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> ${card.dataset.venue}`;
+            document.getElementById('modalDesc').innerText = card.dataset.desc;
+
+            const modal = document.getElementById('participationModal');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            switchView('viewDetails');
+        });
+    });
+
+    // Button Listeners
+    ['btnTopClose', 'bgOverlayClose', 'btnCancelPermission', 'btnSuccessClose'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', closeParticipationModal);
+    });
+
+    const participateBtn = document.getElementById('btnParticipateNow');
+    if (participateBtn) participateBtn.addEventListener('click', () => switchView('viewPermissions'));
+
+    const grantBtn = document.getElementById('btnGrantPermission');
+    if (grantBtn) grantBtn.addEventListener('click', function() {
+        this.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Initializing...';
+        switchView('viewScanner');
+        
+        // Camera Init
+        const video = document.getElementById('videoFeed');
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(s => { stream = s; video.srcObject = stream; })
+                .catch(err => alert("Camera access denied."));
+        }
+
+        // Map Init
+        if (!map) {
+            map = L.map('locationMap', {zoomControl: false}).setView([13.8392, 121.9861], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        }
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                userLat = pos.coords.latitude;
+                userLng = pos.coords.longitude;
+                map.setView([userLat, userLng], 17);
+                L.marker([userLat, userLng]).addTo(map);
+                document.getElementById('locStatus').innerHTML = "Location Secured!";
+            });
+        }
+    });
+
+    const submitBtn = document.getElementById('btnSubmitScan');
+    if (submitBtn) submitBtn.addEventListener('click', () => {
+        submitBtn.innerHTML = "Verifying...";
+        submitBtn.disabled = true;
+        setTimeout(() => {
+            switchView('viewSuccess');
+        }, 1500);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initSchoolEventsLogic, 100);
+});
+</script>
+{% endblock extra_js %}

@@ -1,12 +1,12 @@
 {% extends 'organizer_base.html' %} 
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+{% endblock extra_head %}
 
-<link rel="stylesheet" href="{% static 'css/manage_attendance.css' %}">
-
+{% block content %}
+<div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">
     
     <div class="mb-8 border-b border-gray-200 dark:border-gray-800 pb-6 text-center sm:text-left">
@@ -166,6 +166,116 @@
         </div>
     </div>
 </div>
-
-<script src="{% static 'js/organizer.js' %}?v={% now 'U' %}"></script>
+</div>
 {% endblock content %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    // Dummy Data for Demonstration (Connect to your real DB later)
+    const attendanceData = [
+        { id: 1, name: "De Chavez, Ryan Paulo S.", number: "2023-00001-UQ-0", program: "BSIT", year: "3", time: "08:15 AM", status: "Verified", date: "May 27, 2026", venue: "Audio Visual Room", event: "Research Colloquium", lat: 13.8392, lng: 121.9861, img: "/static/images/student.jpg" },
+        { id: 2, name: "Santos, Maria Clara L.", number: "2023-00045-UQ-0", program: "BSIT", year: "3", time: "08:30 AM", status: "Verified", date: "May 27, 2026", venue: "Audio Visual Room", event: "Research Colloquium", lat: 13.8402, lng: 121.9871, img: "/static/images/student.jpg" },
+        { id: 3, name: "Rizal, Jose P.", number: "2022-00012-UQ-0", program: "DIT", year: "2", time: "09:00 AM", status: "Issue", date: "May 27, 2026", venue: "Audio Visual Room", event: "Research Colloquium", lat: 13.8300, lng: 121.9800, img: "/static/images/student.jpg" },
+        { id: 4, name: "Mabini, Apolinario M.", number: "2024-00123-UQ-0", program: "DOMT", year: "1", time: "08:10 AM", status: "Verified", date: "May 27, 2026", venue: "Audio Visual Room", event: "Research Colloquium", lat: 13.8395, lng: 121.9865, img: "/static/images/student.jpg" }
+    ];
+
+    let attendanceMap = null;
+
+    function renderAttendanceTable(data) {
+        const tbody = document.getElementById('tableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-gray-500 font-bold">No students found.</td></tr>';
+            document.getElementById('studentCount').innerText = "0";
+            return;
+        }
+
+        data.forEach(item => {
+            const statusClass = item.status === 'Verified' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+            const row = `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer" onclick="openProofModal(${item.id})">
+                    <td class="p-4 pl-6 font-bold text-gray-900 dark:text-white">${item.name}</td>
+                    <td class="p-4 text-sm text-pup-maroon dark:text-pup-gold font-bold">${item.number}</td>
+                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400">${item.program} - Year ${item.year}</td>
+                    <td class="p-4 text-sm font-medium text-gray-500">${item.time}</td>
+                    <td class="p-4 pr-6">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusClass}">${item.status}</span>
+                    </td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', row);
+        });
+        document.getElementById('studentCount').innerText = data.length;
+    }
+
+    function filterData() {
+        const year = document.getElementById('yearSelect').value;
+        const program = document.getElementById('programSelect').value;
+        
+        const filtered = attendanceData.filter(item => {
+            const matchYear = year === 'all' || item.year === year;
+            const matchProgram = program === 'all' || item.program === program;
+            return matchYear && matchProgram;
+        });
+        renderAttendanceTable(filtered);
+    }
+
+    function searchStudent() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = attendanceData.filter(item => 
+            item.name.toLowerCase().includes(query) || item.number.toLowerCase().includes(query)
+        );
+        renderAttendanceTable(filtered);
+    }
+
+    function openProofModal(id) {
+        const item = attendanceData.find(i => i.id === id);
+        if (!item) return;
+
+        document.getElementById('modalEventTitle').innerText = item.event;
+        document.getElementById('modalDateInfo').innerText = item.date + " • " + item.time;
+        document.getElementById('modalName').innerText = item.name;
+        document.getElementById('modalId').innerText = item.number;
+        document.getElementById('geoTime').innerText = item.date + " at " + item.time;
+        document.getElementById('proofFaceImg').src = item.img;
+        
+        const badge = document.getElementById('modalStatusBadge');
+        badge.innerText = item.status;
+        badge.className = item.status === 'Verified' ? 'mt-2 text-xs font-bold px-2.5 py-1 rounded-full inline-block border border-green-200 bg-green-50 text-green-700' : 'mt-2 text-xs font-bold px-2.5 py-1 rounded-full inline-block border border-red-200 bg-red-50 text-red-700';
+
+        document.getElementById('proofModal').classList.remove('hidden');
+        document.getElementById('proofModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+
+        // Init Map
+        setTimeout(() => {
+            if (attendanceMap) attendanceMap.remove();
+            attendanceMap = L.map('realMap', {zoomControl: false}).setView([item.lat, item.lng], 16);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(attendanceMap);
+            L.marker([item.lat, item.lng]).addTo(attendanceMap);
+        }, 200);
+    }
+
+    function closeProofModal() {
+        document.getElementById('proofModal').classList.add('hidden');
+        document.getElementById('proofModal').classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderAttendanceTable(attendanceData);
+        // Toggle program filter if special org
+        const org = document.getElementById('currentOrgAcronym').value;
+        if (org === 'ITS' || org === 'SSC') {
+            const group = document.getElementById('programFilterGroup');
+            if (group) {
+                group.classList.remove('hidden');
+                group.classList.add('flex');
+            }
+        }
+    });
+</script>
+{% endblock extra_js %}

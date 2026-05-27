@@ -1,9 +1,116 @@
 {% extends 'organizer_base.html' %} 
 {% load static %}
 
-{% block content %}
+{% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Theme logic for charts (para bumagay sa Dark/Light mode)
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#9ca3af' : '#6b7280';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
 
+    document.addEventListener('DOMContentLoaded', () => {
+        // 🟢 BAR CHART: Ratings Per Question 🟢
+        const canvasBar = document.getElementById('questionsBarChart');
+        if (canvasBar) {
+            const ctxBar = canvasBar.getContext('2d');
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'Relevance of Topic', 
+                        'Speaker Knowledge', 
+                        'Time Management', 
+                        'Venue & Facilities', 
+                        'Overall Experience'
+                    ],
+                    datasets: [{
+                        label: 'Average Score',
+                        data: [4.9, 4.8, 4.2, 3.8, 4.7], // Example Data
+                        backgroundColor: [
+                            'rgba(37, 99, 235, 0.8)', // Blue
+                            'rgba(37, 99, 235, 0.8)', 
+                            'rgba(245, 158, 11, 0.8)', // Orange (medyo mababa)
+                            'rgba(239, 68, 68, 0.8)',  // Red (mababa)
+                            'rgba(16, 185, 129, 0.8)'  // Green
+                        ],
+                        borderRadius: 6,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y', // Ginawang horizontal para madaling basahin ang tanong
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                            titleFont: { family: 'Inter', size: 12 },
+                            bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
+                            padding: 12,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            max: 5.0,
+                            grid: { color: gridColor },
+                            ticks: { color: textColor, font: { family: 'Inter', weight: 'bold' } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: textColor, font: { family: 'Inter', weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 🟢 DOUGHNUT CHART: Year Level Demographics 🟢
+        const canvasPie = document.getElementById('yearLevelChart');
+        if (canvasPie) {
+            const ctxPie = canvasPie.getContext('2d');
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
+                    datasets: [{
+                        data: [45, 30, 25, 20], // Example Data (Total: 120)
+                        backgroundColor: [
+                            '#3b82f6', // Blue
+                            '#10b981', // Green
+                            '#f59e0b', // Yellow
+                            '#800000'  // PUP Maroon
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '600' }, padding: 15 }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                            bodyFont: { family: 'Inter', size: 13, weight: 'bold' },
+                            padding: 10
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock extra_js %}
+
+{% block content %}
+<div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">
     
     <div class="mb-8">
@@ -146,101 +253,5 @@
     </div>
 
 </div>
-
-<script>
-    // Theme logic for charts (para bumagay sa Dark/Light mode)
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.classList.contains('dark');
-    const textColor = isDark ? '#9ca3af' : '#6b7280';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
-
-    // 🟢 BAR CHART: Ratings Per Question 🟢
-    const ctxBar = document.getElementById('questionsBarChart').getContext('2d');
-    new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-            labels: [
-                'Relevance of Topic', 
-                'Speaker Knowledge', 
-                'Time Management', 
-                'Venue & Facilities', 
-                'Overall Experience'
-            ],
-            datasets: [{
-                label: 'Average Score',
-                data: [4.9, 4.8, 4.2, 3.8, 4.7], // Example Data
-                backgroundColor: [
-                    'rgba(37, 99, 235, 0.8)', // Blue
-                    'rgba(37, 99, 235, 0.8)', 
-                    'rgba(245, 158, 11, 0.8)', // Orange (medyo mababa)
-                    'rgba(239, 68, 68, 0.8)',  // Red (mababa)
-                    'rgba(16, 185, 129, 0.8)'  // Green
-                ],
-                borderRadius: 6,
-                barPercentage: 0.6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y', // Ginawang horizontal para madaling basahin ang tanong
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
-                    titleFont: { family: 'Inter', size: 12 },
-                    bodyFont: { family: 'Inter', size: 14, weight: 'bold' },
-                    padding: 12,
-                    displayColors: false
-                }
-            },
-            scales: {
-                x: {
-                    max: 5.0,
-                    grid: { color: gridColor },
-                    ticks: { color: textColor, font: { family: 'Inter', weight: 'bold' } }
-                },
-                y: {
-                    grid: { display: false },
-                    ticks: { color: textColor, font: { family: 'Inter', weight: '600' } }
-                }
-            }
-        }
-    });
-
-    // 🟢 DOUGHNUT CHART: Year Level Demographics 🟢
-    const ctxPie = document.getElementById('yearLevelChart').getContext('2d');
-    new Chart(ctxPie, {
-        type: 'doughnut',
-        data: {
-            labels: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
-            datasets: [{
-                data: [45, 30, 25, 20], // Example Data (Total: 120)
-                backgroundColor: [
-                    '#3b82f6', // Blue
-                    '#10b981', // Green
-                    '#f59e0b', // Yellow
-                    '#800000'  // PUP Maroon
-                ],
-                borderWidth: 0,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '600' }, padding: 15 }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
-                    bodyFont: { family: 'Inter', size: 13, weight: 'bold' },
-                    padding: 10
-                }
-            }
-        }
-    });
-</script>
+</div>
 {% endblock content %}

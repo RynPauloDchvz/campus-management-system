@@ -1,18 +1,73 @@
 {% extends 'organizer_base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<style>
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .doc-card { transition: all 0.2s ease-in-out; }
+    .doc-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+
+    /* 🟢 Legit Timeline Styling with Green Bar 🟢 */
+    .timeline-step::before {
+        content: '';
+        position: absolute;
+        left: 0.7rem; 
+        top: 1.5rem;
+        bottom: 0;
+        width: 2px;
+        background-color: #e5e7eb;
+        z-index: 0;
+    }
+    .dark .timeline-step::before {
+        background-color: #374151;
+    }
+    .timeline-step.completed::before {
+        background-color: #10b981; /* Green Bar */
+    }
+    .timeline-step:last-child::before {
+        display: none;
+    }
+    .timeline-step.completed .step-icon {
+        border-color: #10b981;
+        background-color: #10b981;
+        color: white;
+    }
+    .timeline-step.current .step-icon {
+        border-color: #f59e0b;
+        color: #f59e0b;
+        animation: pulse-amber 2s infinite;
+    }
+    .timeline-step.rejected .step-icon {
+        border-color: #ef4444;
+        background-color: #ef4444;
+        color: white;
+    }
+
+    @keyframes pulse-amber {
+        0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+
+    /* Map Popup Customization */
+    .leaflet-popup-content-wrapper {
+        border-radius: 12px;
+        padding: 0;
+        overflow: hidden;
+    }
+    .leaflet-popup-content {
+        margin: 12px;
+        font-family: 'Inter', sans-serif;
+    }
+</style>
+{% endblock extra_head %}
+
 {% block content %}
 <div v-pre>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <style>
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .doc-card { transition: all 0.2s ease-in-out; }
-        .doc-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-    </style>
-
     <textarea id="django-docs-data" style="display: none;">{{ documents_json|safe }}</textarea>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans min-h-screen">
@@ -50,7 +105,8 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pb-10" id="trackingGrid">
-            </div>
+            <!-- Dynamically Rendered -->
+        </div>
         
         <div id="noResults" class="hidden text-center py-16 w-full col-span-full bg-white dark:bg-[#151515] rounded-3xl border border-gray-200 border-dashed dark:border-gray-800">
             <i class="ph-fill ph-files text-5xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
@@ -60,11 +116,13 @@
 
     </div>
 
+    <!-- Tracking Modal -->
     <div id="trackingModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6 font-sans">
         <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose" onclick="closeTrackingModal()"></div>
         
         <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors animate-in fade-in zoom-in duration-200">
             
+            <!-- Modal Header -->
             <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-800 shrink-0 bg-gray-50 dark:bg-[#0a0a0a]">
                 <div class="flex items-center gap-2 mb-3">
                     <span id="modalOrgName" class="bg-gray-200 dark:bg-[#111] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-[0.65rem] px-3 py-1 rounded-full uppercase tracking-widest">ORG</span>
@@ -74,31 +132,45 @@
                 <p id="modalDocType" class="text-sm font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1"><i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold"></i> Official Event Proposal Document</p>
             </div>
 
-            <div class="p-6 sm:p-8 overflow-y-auto flex-grow" style="-ms-overflow-style: none; scrollbar-width: none;">
+            <!-- Modal Body -->
+            <div class="p-6 sm:p-8 overflow-y-auto flex-grow hide-scrollbar">
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-8">
                     
+                    <!-- Left: Detailed Timeline -->
                     <div class="md:col-span-2 flex flex-col">
-                        <h3 class="text-xs font-bold uppercase text-gray-400 mb-4 tracking-wider">Approval Progress</h3>
-                        <div id="timelineContainer" class="timeline space-y-0">
-                            </div>
+                        <h3 class="text-xs font-bold uppercase text-gray-400 mb-6 tracking-wider flex items-center gap-2">
+                            <i class="ph-bold ph-list-checks"></i> Approval Progress
+                        </h3>
+                        <div id="timelineContainer" class="space-y-0">
+                            <!-- Dynamically Rendered Timeline Steps -->
+                        </div>
                     </div>
 
+                    <!-- Right: Legit Location Map -->
                     <div class="md:col-span-3 flex flex-col">
-                        <h3 class="text-xs font-bold uppercase text-gray-400 mb-4 tracking-wider">Current Physical Location</h3>
-                        <div class="bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-gray-800 flex flex-col flex-grow">
-                            <div class="flex items-start gap-2 mb-3">
-                                <i class="ph-fill ph-map-pin text-xl text-pup-maroon dark:text-pup-gold animate-bounce shrink-0"></i>
-                                <strong id="modalCurrentLoc" class="text-gray-900 dark:text-white text-sm sm:text-base leading-tight">Office Name with Full Address</strong>
+                        <h3 class="text-xs font-bold uppercase text-gray-400 mb-6 tracking-wider flex items-center gap-2">
+                            <i class="ph-bold ph-map-trifold"></i> Current Physical Location
+                        </h3>
+                        <div class="bg-gray-50 dark:bg-[#111] p-4 rounded-3xl border border-gray-200 dark:border-gray-800 flex flex-col flex-grow">
+                            <div class="flex items-start gap-3 mb-4 bg-white dark:bg-[#151515] p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                                <div class="w-10 h-10 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-map-pin text-xl text-pup-maroon dark:text-pup-gold animate-bounce"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[0.65rem] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Current Office</span>
+                                    <strong id="modalCurrentLoc" class="text-gray-900 dark:text-white text-sm sm:text-base leading-tight">Office Name with Full Address</strong>
+                                </div>
                             </div>
-                            <div id="docMap" class="w-full h-48 sm:h-full min-h-[250px] rounded-xl border border-gray-300 dark:border-gray-700 shadow-inner z-10 overflow-hidden relative"></div>
+                            <div id="docMap" class="w-full h-64 md:h-full min-h-[300px] rounded-2xl border border-gray-300 dark:border-gray-700 shadow-inner z-10 overflow-hidden relative"></div>
                         </div>
                     </div>
 
                 </div>
             </div>
 
+            <!-- Modal Footer -->
             <div id="modalFooter" class="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a] shrink-0">
-                <button onclick="closeTrackingModal()" class="w-full py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
+                <button onclick="closeTrackingModal()" class="w-full py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-sm flex items-center justify-center gap-2 shadow-sm">
                     Close Tracker
                 </button>
             </div>
@@ -107,6 +179,221 @@
     </div>
 </div>
 
-<script src="{% static 'js/organizer.js' %}"></script>
+<script>
+    let allDocuments = [];
+    let map = null;
 
+    // 🟢 WAIT FOR VUE & DOM TO BE FULLY READY 🟢
+    window.addEventListener('load', () => {
+        const dataEl = document.getElementById('django-docs-data');
+        if (!dataEl) return;
+        const rawData = dataEl.value;
+        try {
+            allDocuments = JSON.parse(rawData);
+            renderTrackingDocs(allDocuments);
+        } catch (e) {
+            console.error("Error parsing documents data:", e);
+        }
+    });
+
+    function renderTrackingDocs(docs) {
+        const grid = document.getElementById('trackingGrid');
+        const noResults = document.getElementById('noResults');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        if (!docs || docs.length === 0) {
+            noResults.classList.remove('hidden');
+            return;
+        } else {
+            noResults.classList.add('hidden');
+        }
+
+        docs.forEach(doc => {
+            const statusColor = getStatusColor(doc.status);
+            const card = document.createElement('div');
+            card.className = 'doc-card bg-white dark:bg-[#151515] p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer relative overflow-hidden group';
+            card.setAttribute('data-id', doc.id);
+            card.onclick = () => openTrackingModal(doc); // Standard Click Handler (Fixes Bug)
+            
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <span class="text-[0.65rem] font-bold uppercase tracking-widest text-gray-400 px-3 py-1 bg-gray-100 dark:bg-[#111] rounded-full border border-gray-200 dark:border-gray-800 group-hover:bg-white dark:group-hover:bg-gray-800 transition-colors">${doc.orgName}</span>
+                    <span class="text-[0.65rem] font-bold uppercase tracking-widest px-3 py-1 rounded-full border ${statusColor.border} ${statusColor.bg} ${statusColor.text}">${doc.status}</span>
+                </div>
+                <h3 class="font-black text-gray-900 dark:text-white text-lg leading-tight mb-2 line-clamp-2 uppercase tracking-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">${doc.eventName}</h3>
+                <p class="text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mb-5"><i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold"></i> Activity Proposal Document</p>
+                
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                    <div class="flex flex-col">
+                        <span class="text-[0.6rem] uppercase font-bold text-gray-400 tracking-wider mb-0.5">Physical Location</span>
+                        <span class="text-[0.7rem] font-bold text-gray-700 dark:text-gray-300 truncate max-w-[160px] flex items-center gap-1">
+                            <i class="ph-bold ph-map-pin text-pup-maroon dark:text-pup-gold"></i> ${doc.currentLoc}
+                        </span>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-gray-50 dark:bg-[#0a0a0a] flex items-center justify-center text-gray-300 dark:text-gray-700 group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all">
+                        <i class="ph-bold ph-arrow-right"></i>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function getStatusColor(status) {
+        switch(status) {
+            case 'Approved': return { bg: 'bg-green-100 dark:bg-green-900/20', text: 'text-green-600 dark:text-green-400', border: 'border-green-200 dark:border-green-800' };
+            case 'Rejected': return { bg: 'bg-red-100 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', border: 'border-red-200 dark:border-red-800' };
+            case 'Admin Approved': return { bg: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' };
+            default: return { bg: 'bg-amber-100 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800' };
+        }
+    }
+
+    function filterTrackingDocs() {
+        const searchTerm = document.getElementById('trackSearch').value.toLowerCase();
+        const statusFilter = document.getElementById('trackStatusFilter').value;
+
+        const filtered = allDocuments.filter(doc => {
+            const matchesSearch = doc.eventName.toLowerCase().includes(searchTerm);
+            const matchesStatus = statusFilter === 'All' || 
+                                 (statusFilter === 'Pending' && !['Approved', 'Rejected'].includes(doc.status)) ||
+                                 doc.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+
+        renderTrackingDocs(filtered);
+    }
+
+    function openTrackingModal(doc) {
+        document.getElementById('modalEventTitle').innerText = doc.eventName;
+        document.getElementById('modalOrgName').innerText = doc.orgName;
+        document.getElementById('modalCurrentLoc').innerText = doc.currentLoc;
+        
+        const statusBadge = document.getElementById('modalStatusBadge');
+        const color = getStatusColor(doc.status);
+        statusBadge.innerText = doc.status;
+        statusBadge.className = `font-bold text-[0.65rem] px-3 py-1 rounded-full uppercase tracking-widest border ${color.bg} ${color.text} ${color.border}`;
+
+        renderTimeline(doc);
+        
+        document.getElementById('trackingModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(() => initTrackingMap(doc.coords, doc.currentLoc), 150);
+    }
+
+    function closeTrackingModal() {
+        document.getElementById('trackingModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        if (map) {
+            map.remove();
+            map = null;
+        }
+    }
+
+    function renderTimeline(doc) {
+        const container = document.getElementById('timelineContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const steps = [
+            { name: "Adviser Review", desc: "Faculty oversight & initial check" },
+            { name: "Admin Clearance", desc: "Initial clearance from Admin Office" },
+            { name: "Signature Gathering", desc: "Printing & Manual signature process" },
+            { name: "Permit Verification", desc: "Adviser verification of uploaded files" },
+            { name: "Final Approval", desc: "Admin final record verification" },
+            { name: "System Published", desc: "Event is live in the Portal" }
+        ];
+
+        steps.forEach((step, index) => {
+            const stepNum = index + 1;
+            let statusClass = '';
+            let iconClass = 'ph-bold ph-circle';
+
+            if (doc.progress > stepNum) {
+                statusClass = 'completed';
+                iconClass = 'ph-bold ph-check-circle';
+            } else if (doc.progress === stepNum) {
+                if (doc.status === 'Rejected') {
+                    statusClass = 'rejected';
+                    iconClass = 'ph-bold ph-x-circle';
+                } else if (doc.status === 'Approved') {
+                    statusClass = 'completed';
+                    iconClass = 'ph-bold ph-check-circle';
+                } else {
+                    statusClass = 'current';
+                    iconClass = 'ph-bold ph-clock';
+                }
+            }
+
+            const stepEl = document.createElement('div');
+            stepEl.className = `timeline-step flex items-start gap-4 pb-10 relative last:pb-0 ${statusClass}`;
+            stepEl.innerHTML = `
+                <div class="step-icon relative z-10 flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-[#151515] border-2 transition-all duration-300">
+                    <i class="${iconClass} text-xs"></i>
+                </div>
+                <div class="flex flex-col -mt-0.5">
+                    <span class="text-xs font-bold uppercase tracking-tight text-gray-900 dark:text-white">${step.name}</span>
+                    <span class="text-[0.65rem] text-gray-500 dark:text-gray-400 font-medium">${getStatusText(statusClass, doc.status)}</span>
+                </div>
+            `;
+            container.appendChild(stepEl);
+        });
+    }
+
+    function getStatusText(statusClass, status) {
+        if (statusClass === 'completed') return 'Completed and Verified';
+        if (statusClass === 'current') return 'In Progress / Action Needed';
+        if (statusClass === 'rejected') return 'Rejected / Returned to Org';
+        return 'Pending Previous Steps';
+    }
+
+    function initTrackingMap(coords, locName) {
+        if (typeof L === 'undefined') {
+            console.error('Leaflet is not loaded');
+            return;
+        }
+        if (map) map.remove();
+        
+        map = L.map('docMap', {
+            zoomControl: true,
+            attributionControl: false,
+            scrollWheelZoom: false
+        }).setView(coords, 18);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const customIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color: #800000; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px rgba(128,0,0,0.6); animation: pulse-red 2s infinite;"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+
+        // Pulse animation via CSS injection if not present
+        if (!document.getElementById('map-styles')) {
+            const style = document.createElement('style');
+            style.id = 'map-styles';
+            style.innerHTML = `
+                @keyframes pulse-red {
+                    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(128, 0, 0, 0.7); }
+                    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(128, 0, 0, 0); }
+                    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(128, 0, 0, 0); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        L.marker(coords, { icon: customIcon }).addTo(map)
+            .bindPopup(`<div class="text-center p-1">
+                <div class="font-black text-pup-maroon dark:text-pup-gold text-[11px] uppercase tracking-tighter mb-1">${locName}</div>
+                <div class="text-[9px] text-gray-500 font-bold leading-tight border-t border-gray-100 dark:border-gray-800 pt-1 mt-1">
+                    <i class="ph-bold ph-map-pin"></i> Barangay Kalilayan Ibaba<br>Unisan, Quezon
+                </div>
+            </div>`, { closeButton: false, className: 'custom-popup' })
+            .openPopup();
+            
+        setTimeout(() => map.invalidateSize(), 250);
+    }
+</script>
 {% endblock content %}

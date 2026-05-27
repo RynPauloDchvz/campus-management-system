@@ -1,14 +1,15 @@
 {% extends 'student_base.html' %}
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/student_home.css' %}">
-
 <style>
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
 </style>
+{% endblock extra_head %}
 
+{% block content %}
 <div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
     
     <div class="hero-container relative w-full h-[200px] sm:h-[250px] md:h-[300px] rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl mb-8 bg-gray-900">
@@ -164,7 +165,9 @@
         </div>
     </div>
 </transition>
+{% endblock content %}
 
+{% block extra_js %}
 <script>
     // 🟢 Inject Homepage Data into VUE_APP_DATA 🟢
     (function() {
@@ -209,5 +212,4 @@
         };
     })();
 </script>
-
-{% endblock content %}
+{% endblock extra_js %}

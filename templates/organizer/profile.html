@@ -1,10 +1,8 @@
 {% extends 'organizer_base.html' %}
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/organizer_profile.css' %}">
-<script src="https://unpkg.com/@phosphor-icons/web"></script>
-
 <style>
     .editable-field-active {
         background-color: rgba(0, 0, 0, 0.04) !important;
@@ -29,7 +27,10 @@
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
+{% endblock extra_head %}
 
+{% block content %}
+<div v-pre>
 <div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300">
     
     <div class="h-32 sm:h-64 w-full bg-gray-200 relative group transition-colors" id="coverPhotoWrapper">
@@ -364,7 +365,10 @@
         </div>
     </div>
 </div>
+</div>
+{% endblock content %}
 
+{% block extra_js %}
 <script>
     window.DEFAULT_LOGO = "{% static 'images/PUPLogo.png' %}";
 
@@ -389,12 +393,15 @@
         });
 
         const bell = document.getElementById('notifBellIcon');
-        document.getElementById('notifToggle').checked = notifSettingEnabled;
+        if (bell) {
+            const toggle = document.getElementById('notifToggle');
+            if (toggle) toggle.checked = notifSettingEnabled;
 
-        if (unreadCount > 0 && notifSettingEnabled) {
-            bell.classList.add('animate-bounce', 'text-[#800000]', 'dark:text-[#D4AF37]');
-        } else {
-            bell.classList.remove('animate-bounce', 'text-[#800000]', 'dark:text-[#D4AF37]');
+            if (unreadCount > 0 && notifSettingEnabled) {
+                bell.classList.add('animate-bounce', 'text-[#800000]', 'dark:text-[#D4AF37]');
+            } else {
+                bell.classList.remove('animate-bounce', 'text-[#800000]', 'dark:text-[#D4AF37]');
+            }
         }
     }
 
@@ -482,12 +489,15 @@
     }
 
     function toggleNotifSetting() {
-        notifSettingEnabled = document.getElementById('notifToggle').checked;
-        localStorage.setItem('notif_enabled', notifSettingEnabled);
-        initNotifications();
+        const toggle = document.getElementById('notifToggle');
+        if (toggle) {
+            notifSettingEnabled = toggle.checked;
+            localStorage.setItem('notif_enabled', notifSettingEnabled);
+            initNotifications();
+        }
     }
 
-    window.onload = initNotifications;
+    window.addEventListener('load', initNotifications);
 
     function closeEventMessage() {
         document.getElementById('eventMessageModal').classList.add('hidden');
@@ -563,4 +573,4 @@
     function openSettingsModal() { document.getElementById('settingsModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
     function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); document.body.style.overflow = ''; }
 </script>
-{% endblock content %}
+{% endblock extra_js %}

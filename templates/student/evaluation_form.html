@@ -1,9 +1,230 @@
 {% extends 'student_base.html' %}
 {% load static %}
 
-{% block content %}
+{% block extra_js %}
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. Fetch Event Details from SessionStorage
+    const currentTitle = sessionStorage.getItem('currentEvalTitle') || "General Event Evaluation";
+    const currentCategory = sessionStorage.getItem('currentEvalCategory') || "Feedback";
+    const currentImg = sessionStorage.getItem('currentEvalImg') || "{% static 'images/background.jpg' %}";
 
+    const headerTitle = document.getElementById('headerTitle');
+    const headerCategory = document.getElementById('headerCategory');
+    const headerImg = document.getElementById('headerImg');
+
+    if(headerTitle) headerTitle.innerText = currentTitle;
+    if(headerCategory) headerCategory.innerText = currentCategory;
+    if(headerImg) headerImg.src = currentImg;
+
+    // 2. Generate 25 Questions (5 Categories)
+    const evaluationData = [
+        {
+            category: "Venue & Facilities",
+            questions: [
+                "Cleanliness of the venue?",
+                "Comfort of the seating arrangements?",
+                "Quality of audio/visual equipment?",
+                "Accessibility of the location?",
+                "Adequacy of space for all participants?"
+            ]
+        },
+        {
+            category: "Speaker / Facilitator",
+            questions: [
+                "Knowledge and expertise of the speaker?",
+                "Clarity of the presentation?",
+                "Ability to engage the audience effectively?",
+                "Responsiveness to questions and clarifications?",
+                "Time management during the session?"
+            ]
+        },
+        {
+            category: "Content & Relevance",
+            questions: [
+                "Relevance of the topic to your field/course?",
+                "Clarity of the event's overall objectives?",
+                "Usefulness of the learning materials provided?",
+                "Depth of the subject matter covered?",
+                "Applicability of knowledge gained in real life?"
+            ]
+        },
+        {
+            category: "Organization & Logistics",
+            questions: [
+                "Efficiency of the registration process?",
+                "Punctuality of the event schedule?",
+                "Clarity of prior announcements and communications?",
+                "Quality of food/refreshments (if applicable)?",
+                "Helpfulness and approachability of the event staff?"
+            ]
+        },
+        {
+            category: "Overall Experience",
+            questions: [
+                "Your overall satisfaction with the event?",
+                "Value for the time you invested?",
+                "Likelihood of attending similar events in the future?",
+                "Likelihood of recommending this event to others?",
+                "Did the event meet your initial expectations?"
+            ]
+        }
+    ];
+    
+    const emojis = ['😐', '😡', '😟', '😐', '🙂', '🤩']; 
+
+    const container = document.getElementById('questionsContainer');
+    let globalQIndex = 1;
+
+    if(container) {
+        evaluationData.forEach((section) => {
+            // Category Header
+            const headerHTML = `
+                <div class="mt-6 mb-2">
+                    <h3 class="text-sm sm:text-base font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest border-b border-gray-300 dark:border-gray-800 pb-2 flex items-center gap-2">
+                        <i class="ph-fill ph-check-square-offset"></i> ${section.category}
+                    </h3>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', headerHTML);
+
+            // Category Questions
+            section.questions.forEach((q) => {
+                const html = `
+                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors">
+                        <p class="text-sm font-bold text-gray-700 dark:text-gray-300 sm:w-2/3 leading-snug">${globalQIndex}. ${q}</p>
+                        <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-1/3">
+                            <div class="flex items-center gap-1 sm:gap-2 star-group" data-q="${globalQIndex}" data-value="0">
+                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="1"></i>
+                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="2"></i>
+                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="3"></i>
+                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="4"></i>
+                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="5"></i>
+                            </div>
+                            <div class="text-3xl" id="emoji-${globalQIndex}">😐</div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+                globalQIndex++;
+            });
+        });
+
+        // 3. Star Click Logic
+        document.querySelectorAll('.star-group').forEach(group => {
+            const stars = group.querySelectorAll('.star-btn');
+            const qId = group.getAttribute('data-q');
+            const emojiDisplay = document.getElementById(`emoji-${qId}`);
+
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = parseInt(this.getAttribute('data-val'));
+                    group.setAttribute('data-value', rating);
+                    
+                    stars.forEach((s, idx) => {
+                        if(idx < rating) {
+                            s.classList.remove('text-gray-300', 'dark:text-gray-700');
+                            s.classList.add('star-active');
+                        } else {
+                            s.classList.add('text-gray-300', 'dark:text-gray-700');
+                            s.classList.remove('star-active');
+                        }
+                    });
+
+                    emojiDisplay.innerText = emojis[rating];
+                    emojiDisplay.classList.add('animate-bounce');
+                    setTimeout(() => emojiDisplay.classList.remove('animate-bounce'), 500);
+                });
+            });
+        });
+    }
+
+    // 4. Submit & Validation Logic
+    const btnSubmit = document.getElementById('btnSubmitEval');
+    const modal = document.getElementById('successModal');
+    const modalBox = document.getElementById('successBox');
+
+    if(btnSubmit) {
+        btnSubmit.addEventListener('click', async function() {
+            // Requirement: Must answer ALL 25 questions
+            let allAnswered = true;
+            let totalRating = 0;
+            document.querySelectorAll('.star-group').forEach(g => {
+                const val = parseInt(g.getAttribute('data-value'));
+                if(val === 0) allAnswered = false;
+                totalRating += val;
+            });
+
+            if(!allAnswered) {
+                alert("Please provide a rating for ALL 25 questions before submitting.");
+                return;
+            }
+
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-2xl"></i> ANALYZING...';
+            this.disabled = true;
+
+            const formData = new FormData();
+            formData.append('event_title', currentTitle);
+            formData.append('rating', (totalRating / 25).toFixed(1));
+            formData.append('comments', document.getElementById('evalComments').value);
+
+            try {
+                const response = await fetch("{% url 'submit_evaluation' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const evaluatedEvents = JSON.parse(localStorage.getItem('evaluatedEvents') || '{}');
+                    evaluatedEvents[currentTitle] = true;
+                    localStorage.setItem('evaluatedEvents', JSON.stringify(evaluatedEvents));
+
+                    const finalRating = (totalRating / 25);
+                    document.getElementById('successRating').innerText = finalRating.toFixed(1);
+                    
+                    let starsHtml = '';
+                    for(let i=1; i<=5; i++){
+                        if(i <= Math.floor(finalRating)) {
+                            starsHtml += '<i class="ph-fill ph-star"></i>';
+                        } else if(i === Math.ceil(finalRating) && finalRating % 1 !== 0) {
+                            starsHtml += '<i class="ph-fill ph-star-half"></i>';
+                        } else {
+                            starsHtml += '<i class="ph ph-star text-gray-300 dark:text-gray-700"></i>';
+                        }
+                    }
+                    document.getElementById('successStars').innerHTML = starsHtml;
+
+                    modal.classList.remove('hidden');
+                    setTimeout(() => modalBox.classList.remove('scale-95'), 10);
+                } else {
+                    alert("Error: " + data.message);
+                }
+            } catch (error) {
+                alert("Connection error.");
+            } finally {
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        });
+    }
+
+    // Close Modal -> Redirect to Masterlist
+    ['btnCloseModal', 'btnReceiptDone'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('click', () => {
+            window.location.href = "{% url 'student_evaluation' %}";
+        });
+    });
+});
+</script>
+{% endblock extra_js %}
+
+{% block extra_head %}
 <style>
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -11,7 +232,10 @@
     .star-btn:hover { transform: scale(1.2); }
     .star-active { color: #D4AF37 !important; } 
 </style>
+{% endblock extra_head %}
 
+{% block content %}
+<div v-pre>
 <div class="w-full bg-gray-900 relative h-48 sm:h-64 flex items-end">
     <img id="headerImg" src="{% static 'images/background.jpg' %}" class="absolute inset-0 w-full h-full object-cover opacity-50">
     <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
@@ -101,218 +325,5 @@
         
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. Fetch Event Details from SessionStorage
-    const currentTitle = sessionStorage.getItem('currentEvalTitle') || "General Event Evaluation";
-    const currentCategory = sessionStorage.getItem('currentEvalCategory') || "Feedback";
-    const currentImg = sessionStorage.getItem('currentEvalImg') || "{% static 'images/background.jpg' %}";
-
-    document.getElementById('headerTitle').innerText = currentTitle;
-    document.getElementById('headerCategory').innerText = currentCategory;
-    document.getElementById('headerImg').src = currentImg;
-
-    // 2. Generate 25 Questions (5 Categories)
-    const evaluationData = [
-        {
-            category: "Venue & Facilities",
-            questions: [
-                "Cleanliness of the venue?",
-                "Comfort of the seating arrangements?",
-                "Quality of audio/visual equipment?",
-                "Accessibility of the location?",
-                "Adequacy of space for all participants?"
-            ]
-        },
-        {
-            category: "Speaker / Facilitator",
-            questions: [
-                "Knowledge and expertise of the speaker?",
-                "Clarity of the presentation?",
-                "Ability to engage the audience effectively?",
-                "Responsiveness to questions and clarifications?",
-                "Time management during the session?"
-            ]
-        },
-        {
-            category: "Content & Relevance",
-            questions: [
-                "Relevance of the topic to your field/course?",
-                "Clarity of the event's overall objectives?",
-                "Usefulness of the learning materials provided?",
-                "Depth of the subject matter covered?",
-                "Applicability of knowledge gained in real life?"
-            ]
-        },
-        {
-            category: "Organization & Logistics",
-            questions: [
-                "Efficiency of the registration process?",
-                "Punctuality of the event schedule?",
-                "Clarity of prior announcements and communications?",
-                "Quality of food/refreshments (if applicable)?",
-                "Helpfulness and approachability of the event staff?"
-            ]
-        },
-        {
-            category: "Overall Experience",
-            questions: [
-                "Your overall satisfaction with the event?",
-                "Value for the time you invested?",
-                "Likelihood of attending similar events in the future?",
-                "Likelihood of recommending this event to others?",
-                "Did the event meet your initial expectations?"
-            ]
-        }
-    ];
-    
-    const emojis = ['😐', '😡', '😟', '😐', '🙂', '🤩']; 
-
-    const container = document.getElementById('questionsContainer');
-    let globalQIndex = 1;
-
-    evaluationData.forEach((section) => {
-        // Category Header
-        const headerHTML = `
-            <div class="mt-6 mb-2">
-                <h3 class="text-sm sm:text-base font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest border-b border-gray-300 dark:border-gray-800 pb-2 flex items-center gap-2">
-                    <i class="ph-fill ph-check-square-offset"></i> ${section.category}
-                </h3>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', headerHTML);
-
-        // Category Questions
-        section.questions.forEach((q) => {
-            const html = `
-                <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors">
-                    <p class="text-sm font-bold text-gray-700 dark:text-gray-300 sm:w-2/3 leading-snug">${globalQIndex}. ${q}</p>
-                    <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-1/3">
-                        <div class="flex items-center gap-1 sm:gap-2 star-group" data-q="${globalQIndex}" data-value="0">
-                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="1"></i>
-                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="2"></i>
-                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="3"></i>
-                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="4"></i>
-                            <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="5"></i>
-                        </div>
-                        <div class="text-3xl" id="emoji-${globalQIndex}">😐</div>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', html);
-            globalQIndex++;
-        });
-    });
-
-    // 3. Star Click Logic
-    document.querySelectorAll('.star-group').forEach(group => {
-        const stars = group.querySelectorAll('.star-btn');
-        const qId = group.getAttribute('data-q');
-        const emojiDisplay = document.getElementById(`emoji-${qId}`);
-
-        stars.forEach(star => {
-            star.addEventListener('click', function() {
-                const rating = parseInt(this.getAttribute('data-val'));
-                group.setAttribute('data-value', rating);
-                
-                stars.forEach((s, idx) => {
-                    if(idx < rating) {
-                        s.classList.remove('text-gray-300', 'dark:text-gray-700');
-                        s.classList.add('star-active');
-                    } else {
-                        s.classList.add('text-gray-300', 'dark:text-gray-700');
-                        s.classList.remove('star-active');
-                    }
-                });
-
-                emojiDisplay.innerText = emojis[rating];
-                emojiDisplay.classList.add('animate-bounce');
-                setTimeout(() => emojiDisplay.classList.remove('animate-bounce'), 500);
-            });
-        });
-    });
-
-    // 4. Submit & Validation Logic
-    const btnSubmit = document.getElementById('btnSubmitEval');
-    const modal = document.getElementById('successModal');
-    const modalBox = document.getElementById('successBox');
-
-    btnSubmit.addEventListener('click', async function() {
-        // Requirement: Must answer ALL 25 questions
-        let allAnswered = true;
-        let totalRating = 0;
-        document.querySelectorAll('.star-group').forEach(g => {
-            const val = parseInt(g.getAttribute('data-value'));
-            if(val === 0) allAnswered = false;
-            totalRating += val;
-        });
-
-        if(!allAnswered) {
-            alert("Please provide a rating for ALL 25 questions before submitting.");
-            return;
-        }
-
-        const originalText = this.innerHTML;
-        this.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-2xl"></i> ANALYZING SENTIMENT...';
-        this.disabled = true;
-
-        const formData = new FormData();
-        formData.append('event_title', currentTitle);
-        formData.append('rating', (totalRating / 25).toFixed(1));
-        formData.append('comments', document.getElementById('evalComments').value);
-
-        try {
-            const response = await fetch("{% url 'submit_evaluation' %}", {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                body: formData
-            });
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                // Save to LocalStorage as Completed
-                const evaluatedEvents = JSON.parse(localStorage.getItem('evaluatedEvents') || '{}');
-                evaluatedEvents[currentTitle] = true;
-                localStorage.setItem('evaluatedEvents', JSON.stringify(evaluatedEvents));
-
-                // Populate Success Modal Data
-                const finalRating = (totalRating / 25);
-                document.getElementById('successRating').innerText = finalRating.toFixed(1);
-                
-                let starsHtml = '';
-                for(let i=1; i<=5; i++){
-                    if(i <= Math.floor(finalRating)) {
-                        starsHtml += '<i class="ph-fill ph-star"></i>';
-                    } else if(i === Math.ceil(finalRating) && finalRating % 1 !== 0) {
-                        starsHtml += '<i class="ph-fill ph-star-half"></i>';
-                    } else {
-                        starsHtml += '<i class="ph ph-star text-gray-300 dark:text-gray-700"></i>';
-                    }
-                }
-                document.getElementById('successStars').innerHTML = starsHtml;
-
-                // Show Success Modal
-                modal.classList.remove('hidden');
-                setTimeout(() => modalBox.classList.remove('scale-95'), 10);
-            } else {
-                alert("Error: " + data.message);
-            }
-        } catch (error) {
-            alert("Connection error while submitting evaluation.");
-        } finally {
-            this.innerHTML = originalText;
-            this.disabled = false;
-        }
-    });
-
-    // Close Modal -> Redirect to Masterlist
-    ['btnCloseModal', 'btnReceiptDone'].forEach(id => {
-        document.getElementById(id).addEventListener('click', () => {
-            window.location.href = "{% url 'student_evaluation' %}";
-        });
-    });
-});
-</script>
+</div>
 {% endblock content %}

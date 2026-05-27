@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block content %}
+<div v-pre>
 <div class="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
 
     <div class="text-center mb-8">
@@ -195,7 +196,10 @@
         </div>
     </div>
 </div>
+</div>
+{% endblock content %}
 
+{% block extra_js %}
 <script>
 function initEvaluationPageLogic() {
     // --- Pending Evaluations Logic ---
@@ -371,4 +375,4 @@ window.addEventListener('load', () => {
     }, 100);
 });
 </script>
-{% endblock content %}
+{% endblock extra_js %}

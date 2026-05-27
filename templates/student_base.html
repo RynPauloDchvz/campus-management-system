@@ -65,11 +65,159 @@
         .transition-all-custom { 
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+
+        /* 🟢 Shimmer Effect (Skeleton Loading) 🟢 */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .skeleton-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        .dark .skeleton-shimmer {
+            background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+            background-size: 1000px 100%;
+        }
     </style>
+    {% block extra_head %}{% endblock extra_head %}
 </head>
 <body class="bg-[#f4f4f4] dark:bg-pup-darkbg text-gray-800 dark:text-gray-200 transition-colors duration-300 antialiased overflow-x-hidden max-w-[100vw]">
 
     <div id="app" v-cloak class="min-h-screen flex flex-col relative z-10 w-full overflow-x-hidden">
+        
+        <!-- Skeleton Loading Overlay (Buong Coverage) -->
+        <div v-if="isLoading" class="fixed inset-0 z-[9999] bg-[#f4f4f4] dark:bg-pup-darkbg flex flex-col overflow-hidden">
+            <!-- Header Skeleton -->
+            <div class="w-full flex justify-between items-center px-4 sm:px-6 md:px-10 py-4 bg-white dark:bg-pup-darkcard border-b border-gray-200 dark:border-white/10 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full skeleton-shimmer"></div>
+                    <div class="w-32 h-6 rounded skeleton-shimmer"></div>
+                </div>
+                <div class="hidden md:flex gap-8">
+                    <div v-for="i in 4" :key="i" class="w-16 h-4 rounded skeleton-shimmer"></div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-full skeleton-shimmer"></div>
+                    <div class="w-10 h-10 rounded-lg skeleton-shimmer"></div>
+                </div>
+            </div>
+            
+            <!-- Dynamic Content Skeletons -->
+            <div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full flex-grow overflow-y-auto hide-scrollbar">
+                
+                <!-- 1. Homepage Skeleton -->
+                <div v-if="currentUrl === 'student_homepage'" class="space-y-8 animate-pulse">
+                    <div class="w-full h-[200px] sm:h-[300px] rounded-3xl skeleton-shimmer mb-8"></div>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div v-for="i in 4" :key="i" class="h-32 rounded-3xl skeleton-shimmer"></div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-8">
+                            <div class="w-48 h-8 rounded skeleton-shimmer mb-6"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div v-for="i in 2" :key="i" class="h-56 rounded-2xl skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-1">
+                            <div class="w-48 h-8 rounded skeleton-shimmer mb-6"></div>
+                            <div class="space-y-4">
+                                <div v-for="i in 3" :key="i" class="h-24 rounded-2xl skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Participation Hub / Events Grid Skeleton -->
+                <div v-else-if="currentUrl === 'student_school_events' || currentUrl === 'student_event_history'" class="space-y-8">
+                    <div class="flex flex-col items-center mb-10">
+                        <div class="w-64 h-10 rounded-lg skeleton-shimmer mb-4"></div>
+                        <div class="w-full max-w-2xl h-12 rounded-full skeleton-shimmer"></div>
+                    </div>
+                    <div class="flex gap-3 justify-center mb-8 overflow-hidden">
+                        <div v-for="i in 5" :key="i" class="w-24 h-10 rounded-full skeleton-shimmer shrink-0"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div v-for="i in 6" :key="i" class="h-64 rounded-2xl skeleton-shimmer"></div>
+                    </div>
+                </div>
+
+                <!-- 3. Calendar Skeleton -->
+                <div v-else-if="currentUrl === 'student_event_calendar'" class="space-y-8">
+                    <div class="flex flex-col items-center mb-8">
+                        <div class="w-64 h-10 rounded-lg skeleton-shimmer mb-2"></div>
+                        <div class="w-80 h-4 rounded skeleton-shimmer"></div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 h-[600px] rounded-3xl skeleton-shimmer"></div>
+                        <div class="space-y-6">
+                            <div class="h-32 rounded-3xl skeleton-shimmer"></div>
+                            <div class="h-10 rounded-xl skeleton-shimmer"></div>
+                            <div v-for="i in 3" :key="i" class="h-24 rounded-2xl skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Profile Skeleton -->
+                <div v-else-if="currentUrl === 'student_profile'" class="space-y-8 -mt-8">
+                    <div class="h-48 sm:h-64 w-full rounded-b-3xl skeleton-shimmer"></div>
+                    <div class="flex flex-col sm:flex-row items-center sm:items-end gap-6 -mt-16 sm:-mt-20 px-4">
+                        <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-full skeleton-shimmer border-4 border-white dark:border-pup-darkcard"></div>
+                        <div class="flex-grow space-y-3 pb-2">
+                            <div class="w-64 h-8 rounded skeleton-shimmer"></div>
+                            <div class="flex gap-2">
+                                <div class="w-32 h-6 rounded-full skeleton-shimmer"></div>
+                                <div class="w-32 h-6 rounded-full skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
+                        <div class="lg:col-span-2 space-y-6">
+                            <div v-for="i in 2" :key="i" class="h-48 rounded-2xl skeleton-shimmer"></div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="h-64 rounded-2xl skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Evaluation Skeleton -->
+                <div v-else-if="currentUrl === 'student_evaluation'" class="space-y-8">
+                    <div class="flex flex-col items-center mb-8">
+                        <div class="w-64 h-10 rounded-lg skeleton-shimmer mb-2"></div>
+                        <div class="w-80 h-4 rounded skeleton-shimmer"></div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="w-full h-12 rounded-full skeleton-shimmer mb-4"></div>
+                            <div class="flex gap-3 mb-6">
+                                <div v-for="i in 4" :key="i" class="w-24 h-10 rounded-full skeleton-shimmer"></div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div v-for="i in 4" :key="i" class="h-48 rounded-2xl skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="w-48 h-8 rounded skeleton-shimmer"></div>
+                            <div class="w-full h-12 rounded-xl skeleton-shimmer"></div>
+                            <div class="space-y-4">
+                                <div v-for="i in 4" :key="i" class="h-24 rounded-2xl skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Default Skeleton -->
+                <div v-else class="space-y-8">
+                    <div class="w-64 h-10 rounded-lg skeleton-shimmer mb-6"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div v-for="i in 6" :key="i" class="h-48 rounded-2xl skeleton-shimmer"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
 
         <!-- Header -->
         <nav class="sticky top-0 z-[1000] w-full flex justify-between items-center px-4 sm:px-6 md:px-10 py-4 bg-white/95 dark:bg-pup-darkcard/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
@@ -384,6 +532,7 @@
                     filteredNotifs: [],
                     isMsgModalOpen: false,
                     currentMsg: {},
+                    isLoading: true, // 🟢 Start with loading state
                     ...window.VUE_APP_DATA
                 }
             },
@@ -401,6 +550,11 @@
                 }
             },
             mounted() {
+                // 🟢 Simulate loading delay for modern feel 🟢
+                setTimeout(() => {
+                    this.isLoading = false;
+                }, 800);
+
                 const savedTheme = localStorage.getItem('theme');
                 if (savedTheme === 'dark') {
                     this.isDark = true;
@@ -550,5 +704,6 @@
             }
         });
     </script>
+    {% block extra_js %}{% endblock extra_js %}
 </body>
 </html>

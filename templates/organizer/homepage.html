@@ -1,24 +1,25 @@
 {% extends 'organizer_base.html' %} 
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/organizer_home.css' %}">
 
 <style>
-    [v-cloak] { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
 </style>
+{% endblock extra_head %}
 
+{% block content %}
 <div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
-    
+
     <div class="hero-container relative w-full h-[200px] sm:h-[250px] md:h-[300px] rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl mb-8 bg-gray-900">
-        
+
         <img src="{% static 'images/banner/banner.jpg' %}" alt="PUP Banner" class="absolute inset-0 w-full h-full object-cover z-0">
 
-        <div class="absolute inset-0 bg-black/30 z-0"></div> 
+        <div class="absolute inset-0 bg-black/30 z-0"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-pup-maroon/95 via-pup-maroon/60 to-black/80 dark:from-black/95 dark:via-pup-darkcard/80 dark:to-pup-darkbg/90 z-0"></div>
-        
+
         <div class="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
             <h1 class="font-extrabold text-2xl sm:text-4xl md:text-5xl text-pup-gold mb-2 drop-shadow-lg uppercase tracking-wide">Mabuhay, Organizer!</h1>
             <p class="text-white/95 text-xs sm:text-sm md:text-lg font-medium tracking-wider md:tracking-widest uppercase text-shadow-md">Ang Iyong Sentro sa Pag-oorganisa ng mga Aktibidad</p>
@@ -27,7 +28,7 @@
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-12">
         <a href="{% url 'organizer_create_events' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>        
             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
                 <i class="ph-fill ph-calendar-plus text-2xl sm:text-3xl"></i>
             </div>
@@ -36,7 +37,7 @@
         </a>
 
         <a href="{% url 'organizer_document_tracking' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>        
             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
                 <i class="ph-fill ph-folder-open text-2xl sm:text-3xl"></i>
             </div>
@@ -45,7 +46,7 @@
         </a>
 
         <a href="{% url 'organizer_manage_attendance' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>        
             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
                 <i class="ph-fill ph-users-three text-2xl sm:text-3xl"></i>
             </div>
@@ -53,8 +54,8 @@
             <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Monitor real-time participation logs.</p>
         </a>
 
-        <a href="{% url 'organizer_analytics' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>
+        <a href="{% url 'organizer_analytics' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">  
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>        
             <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
                 <i class="ph-fill ph-chart-pie-slice text-2xl sm:text-3xl"></i>
             </div>
@@ -64,11 +65,11 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         <div class="lg:col-span-2 flex flex-col gap-8">
-            
+
             <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
+                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">    
                     <i class="ph-bold ph-newspaper text-2xl text-pup-maroon dark:text-pup-gold"></i>
                     <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">University News</h2>
                 </div>
@@ -112,9 +113,9 @@
         </div>
 
         <div class="lg:col-span-1 flex flex-col gap-8">
-            
+
             <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
+                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">    
                     <i class="ph-bold ph-calendar-star text-2xl text-pup-maroon dark:text-pup-gold"></i>
                     <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Managed Events</h2>
                 </div>
@@ -137,14 +138,14 @@
             </div>
 
             <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
-                    <i class="ph-bold ph-clock-counter-clockwise text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">    
+                    <i class="ph-bold ph-clock-counter-clockwise text-2xl text-pup-maroon dark:text-pup-gold"></i> 
                     <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Recent Logs</h2>
                 </div>
                 <div class="bg-white dark:bg-pup-darkcard rounded-3xl p-6 shadow-sm border border-gray-200 dark:border-gray-800">
                     <div onclick="openLogModal('eval')" class="event-item flex gap-4 p-3 -ml-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#111] cursor-pointer transition-colors relative group">
                         <div class="timeline-dot flex-shrink-0 w-10 flex flex-col items-center relative">
-                            <div class="absolute top-8 bottom-[-20px] w-[2px] bg-gray-200 dark:bg-gray-800"></div>
+                            <div class="absolute top-8 bottom-[-20px] w-[2px] bg-gray-200 dark:bg-gray-800"></div> 
                             <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 z-10">
                                 <i class="ph-bold ph-clipboard-text"></i>
                             </div>
@@ -206,9 +207,9 @@
     </div>
 </transition>
 
-<div id="managedEventModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6">
+<div id="managedEventModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6">     
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeManagedEventModal()"></div>
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10">
+    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors">
         <button onclick="closeManagedEventModal()" class="absolute top-4 right-4 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors z-[3010]">
             <i class="ph-bold ph-x"></i>
         </button>
@@ -226,12 +227,12 @@
             </p>
             <div class="grid grid-cols-2 gap-4">
                 <div class="bg-white dark:bg-[#151515] p-4 rounded-xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
-                    <i class="ph-fill ph-users-three text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>
+                    <i class="ph-fill ph-users-three text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>        
                     <h4 class="font-bold text-gray-900 dark:text-white text-lg">150</h4>
                     <p class="text-[0.65rem] uppercase font-bold text-gray-500">Registered</p>
                 </div>
                 <div class="bg-white dark:bg-[#151515] p-4 rounded-xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
-                    <i class="ph-fill ph-clipboard-text text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>
+                    <i class="ph-fill ph-clipboard-text text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>     
                     <h4 class="font-bold text-gray-900 dark:text-white text-lg">Ready</h4>
                     <p class="text-[0.65rem] uppercase font-bold text-gray-500">Evaluation Form</p>
                 </div>
@@ -240,7 +241,7 @@
     </div>
 </div>
 
-<div id="recentLogModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6">
+<div id="recentLogModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6">        
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeLogModal()"></div>
     <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 text-center p-8">
         <button onclick="closeLogModal()" class="absolute top-4 right-4 bg-gray-100 dark:bg-[#111] hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
@@ -249,13 +250,62 @@
         <div id="logModalIcon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2"></div>
         <h2 id="logModalTitle" class="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">Log Action</h2>
         <p id="logModalDate" class="text-[0.7rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-6">Date</p>
-        <div class="bg-gray-50 dark:bg-[#0a0a0a] p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+        <div class="bg-gray-50 dark:bg-[#0a0a0a] p-4 rounded-xl border border-gray-200 dark:border-gray-800">      
             <p id="logModalDesc" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">Description goes here.</p>
         </div>
     </div>
 </div>
+{% endblock content %}
 
+{% block extra_js %}
 <script>
+    function openManagedEventModal() {
+        const modal = document.getElementById('managedEventModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeManagedEventModal() {
+        const modal = document.getElementById('managedEventModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    function openLogModal(type) {
+        const modal = document.getElementById('recentLogModal');
+        const iconDiv = document.getElementById('logModalIcon');
+        const title = document.getElementById('logModalTitle');
+        const date = document.getElementById('logModalDate');
+        const desc = document.getElementById('logModalDesc');
+
+        if(type === 'eval') {
+            iconDiv.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2 bg-blue-100 text-blue-600";
+            iconDiv.innerHTML = '<i class="ph-fill ph-clipboard-text text-4xl"></i>';
+            title.innerText = "Evaluation Form Drafted";
+            date.innerText = "Dec 10, 2025 • 02:30 PM";
+            desc.innerText = "You have successfully drafted the evaluation template for the upcoming 'Research Colloquium' event. It is now ready for deployment.";
+        } else {
+            iconDiv.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2 bg-green-100 text-green-600";
+            iconDiv.innerHTML = '<i class="ph-fill ph-plus-circle text-4xl"></i>';
+            title.innerText = "New Event Proposal";
+            date.innerText = "Nov 28, 2025 • 09:15 AM";
+            desc.innerText = "Submitted 'Tech Summit 2026' proposal to the Office of Student Affairs. Status is currently Pending Adviser Review.";
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLogModal() {
+        const modal = document.getElementById('recentLogModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
     function generateTerminalReport() {
         const content = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -265,9 +315,9 @@
             </head>
             <body style="font-family: Arial, sans-serif; padding: 20px;">
                 <h1 style="text-align: center; color: #800000; margin-bottom: 0;">TERMINAL REPORT</h1>
-                <h3 style="text-align: center; color: #555; margin-top: 5px;">PUP Unisan Quezon Campus</h3>
+                <h3 style="text-align: center; color: #555; margin-top: 5px;">PUP Unisan Quezon Campus</h3>        
                 <hr style="border: 1px solid #ccc; margin: 20px 0;">
-                
+
                 <h2>I. Event Details</h2>
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                     <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Event Name:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">Tech Trends 2026</td></tr>
@@ -296,11 +346,10 @@
         const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = 'Tech_Trends_2026_Terminal_Report.doc'; 
+        link.download = 'Tech_Trends_2026_Terminal_Report.doc';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
 </script>
-
-{% endblock content %}
+{% endblock extra_js %}

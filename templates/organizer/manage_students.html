@@ -1,9 +1,12 @@
 {% extends 'organizer_base.html' %} 
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/manage_students.css' %}">
+{% endblock extra_head %}
 
+{% block content %}
+<div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
     
     {% if messages %}
@@ -205,7 +208,10 @@
         </form>
     </div>
 </div>
+</div>
+{% endblock content %}
 
+{% block extra_js %}
 <script>
     let currentId = null;
 
@@ -280,5 +286,4 @@
         });
     }
 </script>
-
-{% endblock content %}
+{% endblock extra_js %}

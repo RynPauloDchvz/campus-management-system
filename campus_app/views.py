@@ -891,38 +891,51 @@ def organizer_document_tracking(request):
     events = Event.objects.filter(org_id=org_acronym).order_by('-created_at')
     docs_data = []
     
+    # 📍 Campus Landmarks for PUP Unisan (Kalilayan Ibaba) - Wider Spread
+    HUB_COORDS = [13.84545, 121.96885]    # Student Center (SW)
+    ADVISER_COORDS = [13.84575, 121.96915] # Faculty Lounge (Middle)
+    ADMIN_COORDS = [13.84615, 121.96955]   # Academic Bldg (NE)
+
     for e in events:
         if e.event_status == 'Pending Adviser':
             loc = "Office of the Org Adviser (Initial Review)"
-            coords = [13.8402, 121.9958] 
+            coords = ADVISER_COORDS
             progress = 1 
         elif e.event_status == 'Pending Admin':
-            loc = "Admin Office (Initial Request Clearance)"
-            coords = [13.8406, 121.9963] 
+            loc = "Office of the Admin (Initial Clearance)"
+            coords = ADMIN_COORDS
             progress = 2 
         elif e.event_status == 'Admin Approved':
-            loc = "With Student Org (For Printing & Manual Signatures)"
-            coords = [13.8408, 121.9965] 
+            loc = "Student Organization Office (Gathering Signatures)"
+            coords = HUB_COORDS
             progress = 3 
         elif e.event_status == 'Permit Verification':
             loc = "Office of the Org Adviser (Signature Verification)"
-            coords = [13.8402, 121.9958] 
+            coords = ADVISER_COORDS
             progress = 4 
         elif e.event_status == 'Final Admin Review':
-            loc = "Admin Office (Final Clearance for Publication)"
-            coords = [13.8406, 121.9963] 
+            loc = "Office of the Admin (Final Clearance)"
+            coords = ADMIN_COORDS
             progress = 5 
         elif e.event_status == 'Approved':
-            loc = "System Published (Live in Portal)"
-            coords = [13.8408, 121.9965] 
+            loc = "Live in Portal (PUP Unisan Student Org Hub)"
+            coords = HUB_COORDS
             progress = 6 
         elif e.event_status == 'Rejected':
-            loc = "Returned to Organizer"
-            coords = [13.8400, 121.9955]
-            progress = -1
+            loc = "Returned to Organizer (Correction Required)"
+            coords = HUB_COORDS
+            
+            # Deduce step index for rejection timeline display
+            curr_loc = str(e.current_location).lower()
+            if "adviser" in curr_loc:
+                progress = 4 if ("verify" in curr_loc or "signature" in curr_loc) else 1
+            elif "admin" in curr_loc:
+                progress = 5 if ("final" in curr_loc or "clearance" in curr_loc) else 2
+            else:
+                progress = 1
         else:
-            loc = "Unknown Location"
-            coords = [13.8405, 121.9960]
+            loc = "PUP Unisan, Kalilayan Ibaba, Unisan, Quezon"
+            coords = ADVISER_COORDS
             progress = 0
 
         docs_data.append({

@@ -1,7 +1,7 @@
 {% extends 'student_base.html' %}
 {% load static %}
 
-{% block content %}
+{% block extra_head %}
 <style>
     /* Malambot na transition para sa Hover Effects */
     .notif-card-transition { 
@@ -21,7 +21,9 @@
         overflow: hidden;
     }
 </style>
+{% endblock extra_head %}
 
+{% block content %}
 <div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300 pt-8">
     
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,7 +82,9 @@
     </div>
 
 </div>
+{% endblock content %}
 
+{% block extra_js %}
     <script id="django-notifs-data" type="application/json">
         {{ notifications_json|safe }}
     </script>
@@ -118,4 +122,4 @@
         });
     })();
     </script>
-{% endblock %}
+{% endblock extra_js %}
