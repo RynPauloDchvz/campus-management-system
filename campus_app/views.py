@@ -969,19 +969,36 @@ def organizer_event_vault(request):
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
     
-    ready_events = Event.objects.filter(org_id=org_acronym, event_status='Admin Approved')
-    vault_data = []
-    
-    for e in ready_events:
-        vault_data.append({
+    pending_events = Event.objects.filter(org_id=org_acronym, event_status='Admin Approved').order_by('-id')
+    pending_data = []
+    for e in pending_events:
+        pending_data.append({
             'id': e.id,
             'eventName': e.event_title,
             'orgName': e.org_id
         })
 
+    vault_events = Event.objects.filter(org_id=org_acronym, event_status__in=['Permit Verification', 'Final Admin Review', 'Approved']).order_by('-id')
+    vault_data = []
+    for e in vault_events:
+        docs = []
+        if e.letter_image: docs.append({'title': '1. Request Letter', 'preview': e.letter_image.url})
+        if e.permit_image: docs.append({'title': '2. Event Permit', 'preview': e.permit_image.url})
+        if e.equipment_image: docs.append({'title': '3. Equipment Form', 'preview': e.equipment_image.url})
+        if e.other_attachments: docs.append({'title': '4. Other Attachments', 'preview': e.other_attachments.url})
+
+        vault_data.append({
+            'id': e.id,
+            'eventName': e.event_title,
+            'date': e.created_at.strftime("%b %d, %Y") if e.created_at else "",
+            'mode': str(e.requirement_mode) if e.requirement_mode else str(len(docs)),
+            'docs': docs
+        })
+
     context = {
         'org_acronym': org_acronym,
         'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
+        'pending_json': json.dumps(pending_data),
         'vault_json': json.dumps(vault_data)
     }
     return render(request, 'organizer/event_documents.html', context)
@@ -991,6 +1008,7 @@ def organizer_event_vault(request):
 def upload_signed_permit(request):
     if request.method == 'POST':
         event_id = request.POST.get('event_id')
+        requirement_mode = request.POST.get('requirement_mode')
         try:
             org_profile = OrgProfile.objects.get(user=request.user)
             org_acronym = org_profile.organization.strip()
@@ -998,12 +1016,17 @@ def upload_signed_permit(request):
             event = Event.objects.get(id=event_id, org_id=org_acronym)
             event.event_status = 'Permit Verification' 
             
+            if requirement_mode:
+                event.requirement_mode = int(requirement_mode)
+            
             if request.FILES.get('letter_image'):
                 event.letter_image = request.FILES.get('letter_image')
             if request.FILES.get('permit_image'):
                 event.permit_image = request.FILES.get('permit_image')
             if request.FILES.get('equipment_image'):
                 event.equipment_image = request.FILES.get('equipment_image')
+            if request.FILES.get('other_attachments'):
+                event.other_attachments = request.FILES.get('other_attachments')
                 
             event.save()
             

@@ -15,7 +15,20 @@ SECRET_KEY = 'django-insecure-4i^o6dlokz8$qjj*)hzy3-n2kdw5wm4e2s*@n3gevmez6ek^0k
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['CHEESEC4KE.pythonanywhere.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://0.0.0.0:8000',
+    'https://CHEESEC4KE.pythonanywhere.com',
+]
+
+# Development Overrides for Easier Local Testing
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 
 # Application definition

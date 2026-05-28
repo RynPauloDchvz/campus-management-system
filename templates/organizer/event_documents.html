@@ -2,233 +2,465 @@
 {% load static %}
 
 {% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-    .doc-vault-card { transition: all 0.2s ease-in-out; }
-    .doc-vault-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .custom-scroll { overflow-y: auto; }
+
+    /* Custom Transitions */
+    .modal-backdrop { transition: opacity 0.3s ease-in-out; }
+    .modal-content { transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
 </style>
 {% endblock extra_head %}
 
 {% block content %}
-<div v-pre>
-<textarea id="vault-data" style="display: none;">{{ vault_json|safe }}</textarea>
+<div class="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300 relative">
+    <!-- Main Content Layout -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 p-4 md:p-8">
+        
+        <!-- LEFT PANEL: EVENT DOCUMENTS -->
+        <div class="flex flex-col bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800">
+            <div class="sticky top-0 bg-white dark:bg-gray-900 z-10 pb-6">
+                <a href="{% url 'organizer_profile' %}" class="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#800000] dark:hover:text-[#D4AF37] transition uppercase tracking-widest mb-6">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Profile
+                </a>
+                <h1 class="text-2xl md:text-3xl font-black text-[#800000] dark:text-[#D4AF37] uppercase tracking-tight mb-1">
+                    Event Documents
+                </h1>
+                <p class="text-gray-500 dark:text-gray-400 text-xs font-medium mb-6">
+                    Manage and upload physical activity verification documents.
+                </p>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="ph-bold ph-magnifying-glass text-gray-400 group-focus-within:text-[#800000] dark:group-focus-within:text-[#D4AF37] transition-colors"></i>
+                    </div>
+                    <input id="search-pending" type="text" 
+                        class="block w-full pl-11 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#800000] dark:focus:ring-[#D4AF37] transition text-sm font-semibold" 
+                        placeholder="Search pending events...">
+                </div>
+            </div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans min-h-screen">
-
-    <div class="flex flex-col gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
-        <div>
-            <a href="{% url 'organizer_profile' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">
-                <i class="ph-bold ph-arrow-left"></i> Back to Profile
-            </a>
-        </div>
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-                <h1 class="font-black text-2xl sm:text-3xl lg:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Document Vault</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base max-w-md">Upload your signed physical documents (Request Letter, Permit, and Equipment Form) to finalize event publication.</p>
+            <div id="pending-events-list" class="flex-1 overflow-y-auto custom-scroll max-h-[70vh] pr-2 space-y-4">
+                <!-- Dynamically Injected Cards -->
+            </div>
+            <div id="pending-empty-state" class="hidden text-center text-gray-500 py-12">
+                <i class="ph-bold ph-files text-4xl mb-3 block opacity-20"></i>
+                <p class="text-xs font-bold uppercase tracking-widest">No matching pending events.</p>
             </div>
         </div>
-    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="vaultGrid">
-    </div>
+        <!-- RIGHT PANEL: DOCUMENT VAULT -->
+        <div class="flex flex-col bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-inner">
+            <div class="mb-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="ph-fill ph-archive-box text-[#800000] dark:text-[#D4AF37] text-2xl"></i>
+                    <h2 class="text-2xl font-black text-[#800000] dark:text-[#D4AF37] uppercase tracking-tight">Document Vault</h2>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400 text-xs font-medium mb-6">History of previously uploaded document softcopies.</p>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="ph-bold ph-funnel text-gray-400 group-focus-within:text-[#800000] dark:group-focus-within:text-[#D4AF37] transition-colors"></i>
+                    </div>
+                    <input id="search-vault" type="text" 
+                        class="block w-full pl-11 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#800000] dark:focus:ring-[#D4AF37] transition text-sm font-semibold" 
+                        placeholder="Filter archived documents...">
+                </div>
+            </div>
 
-    <div id="noVaultResults" class="hidden text-center py-20 bg-white dark:bg-[#151515] rounded-3xl border border-gray-200 border-dashed dark:border-gray-800">
-        <i class="ph-fill ph-folder-open text-6xl text-gray-300 dark:text-gray-700 mb-4 block"></i>
-        <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">No events ready for upload</h3>
-        <p class="text-gray-500 text-sm mt-1">Events that have passed initial Admin approval will appear here.</p>
+            <div id="vault-events-list" class="flex-1 overflow-y-auto custom-scroll max-h-[70vh] pr-2 space-y-4">
+                <!-- Dynamically Injected Vault Records -->
+            </div>
+            <div id="vault-empty-state" class="hidden text-center text-gray-500 py-12">
+                <i class="ph-bold ph-magnifying-glass text-4xl mb-3 block opacity-20"></i>
+                <p class="text-xs font-bold uppercase tracking-widest italic">Event not found.</p>
+            </div>
+        </div>
     </div>
 </div>
 
-<div id="uploadModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 sm:p-6">       
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeUploadModal()"></div>
-
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] border border-gray-200 dark:border-gray-700 z-10 animate-in fade-in zoom-in duration-200">
-
-        <div class="p-6 sm:p-8 border-b border-gray-100 dark:border-gray-800 shrink-0">
-            <h2 id="modalVaultTitle" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-1 leading-tight">Event Title</h2>
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Attach Signed Documents</p>   
+<!-- MODAL: UPLOADER SETUP -->
+<div id="upload-modal" class="hidden fixed inset-0 bg-black/70 z-[50] flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
+    <div class="absolute inset-0 z-0 backdrop-click-area"></div>
+    <div class="relative z-10 bg-white dark:bg-gray-900 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh] border border-gray-200 dark:border-gray-800 overflow-hidden modal-content">
+        
+        <!-- Modal Header -->
+        <div class="shrink-0 p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+            <div class="min-w-0 pr-4">
+                <span class="text-[10px] font-black text-[#800000] dark:text-[#D4AF37] uppercase tracking-widest block mb-1">Uploader Setup</span>
+                <h2 id="modal-event-title" class="text-xl font-black text-gray-900 dark:text-gray-100 uppercase truncate">Event Title</h2>
+            </div>
+            <button onclick="hideModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-gray-700 text-gray-400 hover:text-red-600 transition shadow-sm border dark:border-gray-600">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
         </div>
 
-        <div class="p-6 sm:p-8 overflow-y-auto flex-grow hide-scrollbar">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-
-                <div>
-                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 text-center">1. Signed Request Letter</p>
-                    <div onclick="document.getElementById('letterFileInput').click()" class="w-full aspect-[3/4] bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-800 flex flex-col items-center justify-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-colors overflow-hidden group relative">
-                        <img id="letterPreview" class="hidden w-full h-full object-cover absolute inset-0 z-10">
-                        <div id="letterPlaceholder" class="text-center p-4 relative z-0">
-                            <i class="ph-bold ph-file-text text-3xl text-gray-400 group-hover:text-pup-maroon dark:group-hover:text-pup-gold"></i>
-                            <p class="mt-2 text-xs font-bold text-gray-500">Tap to upload</p>
-                        </div>
+        <!-- Modal Body -->
+        <div class="flex-1 overflow-y-auto custom-scroll p-6 md:p-8">
+            <div class="mb-8 max-w-sm">
+                <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-widest">Requirement Mode</label>
+                <div class="relative">
+                    <select id="requirement-mode" class="w-full border border-gray-300 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 text-xs font-black focus:outline-none focus:ring-1 focus:ring-[#800000] dark:focus:ring-[#D4AF37] transition cursor-pointer appearance-none shadow-inner">
+                        <option value="4">4 Documents (Complete Attachments)</option>
+                        <option value="2">2 Documents (Reschedule Request)</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                        <i class="ph-bold ph-caret-down"></i>
                     </div>
-                    <input type="file" id="letterFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'letterPreview', 'letterPlaceholder')">
                 </div>
-
-                <div>
-                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 text-center">2. Permit to Conduct Activity</p>
-                    <div onclick="document.getElementById('permitFileInput').click()" class="w-full aspect-[3/4] bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-800 flex flex-col items-center justify-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-colors overflow-hidden group relative">
-                        <img id="permitPreview" class="hidden w-full h-full object-cover absolute inset-0 z-10">
-                        <div id="permitPlaceholder" class="text-center p-4 relative z-0">
-                            <i class="ph-bold ph-certificate text-3xl text-gray-400 group-hover:text-pup-maroon dark:group-hover:text-pup-gold"></i>
-                            <p class="mt-2 text-xs font-bold text-gray-500">Tap to upload</p>
-                        </div>
-                    </div>
-                    <input type="file" id="permitFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'permitPreview', 'permitPlaceholder')">
-                </div>
-
-                <div>
-                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 text-center">3. Equipment Form</p>
-                    <div onclick="document.getElementById('equipmentFileInput').click()" class="w-full aspect-[3/4] bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-800 flex flex-col items-center justify-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-colors overflow-hidden group relative">
-                        <img id="equipmentPreview" class="hidden w-full h-full object-cover absolute inset-0 z-10">
-                        <div id="equipmentPlaceholder" class="text-center p-4 relative z-0">
-                            <i class="ph-bold ph-toolbox text-3xl text-gray-400 group-hover:text-pup-maroon dark:group-hover:text-pup-gold"></i>
-                            <p class="mt-2 text-xs font-bold text-gray-500">Tap to upload</p>
-                        </div>
-                    </div>
-                    <input type="file" id="equipmentFileInput" accept="image/*" class="hidden" onchange="previewImage(event, 'equipmentPreview', 'equipmentPlaceholder')">
-                </div>
-
             </div>
-
-            <div class="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-200 dark:border-blue-900/30 flex items-start gap-3">
-                <i class="ph-fill ph-info text-blue-600 dark:text-blue-400 text-xl shrink-0 mt-0.5"></i>       
-                <p class="text-xs text-blue-800 dark:text-blue-300 leading-relaxed font-medium">Please ensure that <strong>all three documents</strong> have complete manual signatures before submitting to the Adviser.</p>     
+            <div id="upload-slots-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
+                <!-- Slots Injected via JS -->
             </div>
         </div>
 
-        <div class="p-4 sm:p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a] shrink-0">
-            <div class="flex gap-3">
-                <button onclick="closeUploadModal()" class="flex-1 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
-                <button onclick="submitDocuments()" id="btnSubmitVault" class="flex-1 py-3.5 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors text-sm shadow-lg flex items-center justify-center gap-2">
-                    <i class="ph-bold ph-paper-plane-tilt"></i> Submit Documents
-                </button>
-            </div>
+        <!-- Modal Footer -->
+        <div class="shrink-0 p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800 flex flex-row gap-4">
+            <button onclick="hideModal()" class="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition">Cancel</button>
+            <button id="submit-upload-btn" class="flex-1 py-4 text-xs font-black uppercase tracking-widest bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black rounded-xl hover:opacity-90 transition shadow-lg flex items-center justify-center gap-2">
+                Submit & Save to Vault
+            </button>
         </div>
-
     </div>
 </div>
+
+<!-- IMAGE PREVIEW LIGHTBOX (EXTREME Z-INDEX) -->
+<div id="image-preview-modal" class="hidden fixed inset-0 bg-black/95 z-[99999] flex items-center justify-center p-4 md:p-12 backdrop-blur-md">
+    <button id="close-preview-btn" class="sm:hidden absolute top-4 right-4 z-[999999] bg-white text-black rounded-full w-10 h-10 flex items-center justify-center font-black shadow-2xl">
+        <i class="ph-bold ph-x"></i>
+    </button>
+    <div class="relative w-full h-full flex items-center justify-center pointer-events-none">
+        <img id="preview-image-element" src="" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl pointer-events-auto animate-in fade-in zoom-in duration-300" />
+    </div>
 </div>
+
+<!-- SUCCESS TOAST NOTIFICATION -->
+<div id="success-toast" class="fixed bottom-6 right-6 z-[99999] transform translate-y-20 opacity-0 transition-all duration-500 ease-out bg-emerald-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-emerald-400/30">
+    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+        <i class="ph-bold ph-check text-xl"></i>
+    </div>
+    <div class="flex flex-col">
+        <p class="text-sm font-black uppercase tracking-widest leading-none">Success!</p>
+        <p class="text-xs font-medium opacity-90 mt-1 text-gray-100">Documents successfully uploaded!</p>
+    </div>
+</div>
+
 {% endblock content %}
 
 {% block extra_js %}
+<!-- Data Injected from Django Context -->
+<script type="application/json" id="pendingData">{{ pending_json|default:"[]"|safe }}</script>
+<script type="application/json" id="vaultData">{{ vault_json|default:"[]"|safe }}</script>
+
 <script>
-    let vaultData = [];
-    let currentEventId = null;
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. DATA INITIALIZATION
+    let pendingEvents = [];
+    let vaultRecords = [];
+    try {
+        const pd = document.getElementById('pendingData').textContent;
+        const vd = document.getElementById('vaultData').textContent;
+        if (pd.trim() !== '') pendingEvents = JSON.parse(pd);
+        if (vd.trim() !== '') {
+            vaultRecords = JSON.parse(vd);
+            vaultRecords.sort((a,b) => b.id - a.id);
+        }
+    } catch(e) { console.error("JSON Error:", e); }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        try {
-            const raw = document.getElementById('vault-data').value;
-            if (raw.trim() !== '') vaultData = JSON.parse(raw);
-            renderVault();
-        } catch(e) { console.error(e); }
-    });
+    // 2. DOM ELEMENTS
+    const pendingList = document.getElementById('pending-events-list');
+    const vaultList = document.getElementById('vault-events-list');
+    const pendingEmpty = document.getElementById('pending-empty-state');
+    const vaultEmpty = document.getElementById('vault-empty-state');
+    
+    const searchPending = document.getElementById('search-pending');
+    const searchVault = document.getElementById('search-vault');
+    
+    const uploaderModal = document.getElementById('upload-modal');
+    const reqMode = document.getElementById('requirement-mode');
+    const slotsContainer = document.getElementById('upload-slots-container');
+    const submitBtn = document.getElementById('submit-upload-btn');
+    const toast = document.getElementById('success-toast');
+    
+    const previewModal = document.getElementById('image-preview-modal');
+    const previewImg = document.getElementById('preview-image-element');
+    const closePreviewBtn = document.getElementById('close-preview-btn');
 
-    function renderVault() {
-        const grid = document.getElementById('vaultGrid');
-        const empty = document.getElementById('noVaultResults');
-        if (!grid || !empty) return;
-        
-        if(vaultData.length === 0) { grid.innerHTML = ''; empty.classList.remove('hidden'); return; }
-        empty.classList.add('hidden');
+    let activeEventId = null;
+    let selectedFiles = {};
 
-        grid.innerHTML = vaultData.map(doc => `
-            <div class="doc-vault-card bg-white dark:bg-[#151515] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+    // 3. RENDER PENDING EVENTS
+    function renderPending() {
+        if (pendingEvents.length === 0) {
+            pendingList.innerHTML = `<div class="text-center py-20 text-gray-400 uppercase font-black text-[10px] italic">No pending items</div>`;
+            return;
+        }
+        pendingList.innerHTML = pendingEvents.map(e => `
+            <div class="bg-white dark:bg-black border border-gray-100 dark:border-gray-800 p-6 rounded-2xl shadow-sm hover:border-[#800000] dark:hover:border-[#D4AF37] transition group" data-event-name="${e.eventName.toLowerCase()}">
                 <div class="flex justify-between items-start mb-4">
-                    <span class="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 text-[10px] font-black px-2.5 py-1 rounded uppercase">Initial Approval Granted</span>
-                    <i class="ph-fill ph-folder-lock text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                    <span class="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-amber-200 dark:border-amber-800/50">PENDING DOCUMENTS</span>
+                    <span class="text-[10px] font-bold text-gray-300">#${e.id}</span>
                 </div>
-                <h3 class="font-black text-gray-900 dark:text-white text-lg leading-tight mb-1 truncate">${doc.eventName}</h3>
-                <p class="text-xs font-bold text-gray-500 mb-6 uppercase tracking-wider">${doc.orgName}</p>    
+                <h3 class="text-lg font-black text-gray-900 dark:text-gray-100 uppercase leading-tight line-clamp-2 mb-1 group-hover:text-[#800000] dark:group-hover:text-[#D4AF37] transition-colors">${e.eventName}</h3>
+                <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-6 italic">${e.orgName}</p>
+                <button class="w-full bg-[#800000] hover:bg-red-900 text-white text-[10px] font-black tracking-widest uppercase py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95" 
+                    onclick="showModal(${e.id}, '${e.eventName.replace(/'/g, "\\'")}')">
+                    <i class="ph-bold ph-upload-simple"></i> UPLOAD SIGNED DOCUMENTS
+                </button>
+            </div>
+        `).join('');
+    }
 
-                <div class="space-y-3">
-                    <button onclick="openUploadModal(${doc.id}, '${doc.eventName}')" class="w-full py-3 rounded-lg bg-pup-maroon dark:bg-pup-gold text-white dark:text-black text-xs font-black hover:opacity-90 transition-all flex items-center justify-center gap-2">
-                        <i class="ph-bold ph-upload-simple"></i> Upload Signed Documents
-                    </button>
+    // 4. RENDER DOCUMENT VAULT (RESPONSIVE HEADER FIX)
+    function renderVault() {
+        if (vaultRecords.length === 0) {
+            vaultList.innerHTML = `<div class="text-center py-20 text-gray-400 uppercase font-black text-[10px] italic">Archive is empty</div>`;
+            return;
+        }
+        vaultList.innerHTML = vaultRecords.map(r => `
+            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6 rounded-2xl shadow-sm hover:border-[#D4AF37] transition" data-vault-name="${(r.eventName || r.title || '').toLowerCase()}">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-2 overflow-hidden mb-4">
+                    <div class="w-full sm:w-auto overflow-hidden">
+                        <h3 class="truncate font-black text-lg text-gray-900 dark:text-gray-100 uppercase min-w-0 pr-2">${r.eventName || r.title}</h3>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-start sm:justify-end mt-2 sm:mt-0">
+                        <button class="download-records-btn border border-[#800000] text-[#800000] hover:bg-[#800000] hover:text-white dark:border-[#D4AF37] dark:text-[#D4AF37] dark:hover:bg-[#D4AF37] dark:hover:text-black px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors" 
+                            onclick="handleVaultDownload(this)">
+                            <i class="ph-bold ph-download-simple"></i> Download Records
+                        </button>
+                        <span class="border border-red-500 dark:border-red-400 text-red-700 dark:text-red-400 text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest bg-red-50 dark:bg-red-950/20 whitespace-nowrap">${r.docs.length} FILES</span>
+                    </div>
+                </div>
+                <p class="text-green-600 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-2 mb-6 uppercase tracking-widest">
+                    <i class="ph-bold ph-check-circle"></i> Uploaded: ${r.date}
+                </p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 vault-files-grid">
+                    ${r.docs.map(doc => `
+                        <div class="group/doc cell-container" data-img-src="${doc.preview}">
+                            <div class="relative aspect-square bg-gray-50 dark:bg-black rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800 transition shadow-sm">
+                                <img src="${doc.preview}" class="w-full h-full object-cover opacity-60 group-hover/doc:opacity-100 transition-opacity" />
+                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover/doc:opacity-100 bg-black/40 transition-opacity">
+                                    <button class="view-image-btn bg-white dark:bg-gray-800 text-black dark:text-white p-3 rounded-full shadow-xl hover:scale-110 active:scale-95 transition" onclick="openPreview('${doc.preview}')">
+                                        <i class="ph-bold ph-eye text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <span class="block text-[8px] font-black text-gray-500 dark:text-gray-400 uppercase text-center mt-2 leading-tight px-1 truncate">${doc.title}</span>
+                        </div>
+                    `).join('')}
                 </div>
             </div>
         `).join('');
     }
 
-    function openUploadModal(id, title) {
-        currentEventId = id;
-        document.getElementById('modalVaultTitle').innerText = title;
-        document.getElementById('uploadModal').classList.remove('hidden');
+    // 5. MODAL LOGIC
+    window.showModal = (id, title) => {
+        activeEventId = id;
+        document.getElementById('modal-event-title').textContent = title;
+        reqMode.value = "4";
+        renderSlots("4");
+        uploaderModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-    }
+    };
 
-    function closeUploadModal() {
-        document.getElementById('uploadModal').classList.add('hidden');
+    window.hideModal = () => {
+        uploaderModal.classList.add('hidden');
         document.body.style.overflow = '';
+        selectedFiles = {};
+    };
 
-        // Reset image previews for all 3
-        document.getElementById('letterPreview').classList.add('hidden');
-        document.getElementById('letterPlaceholder').classList.remove('hidden');
-        document.getElementById('letterFileInput').value = '';
+    const slotConfigs = {
+        "4": [
+            { id: "letter_image", label: "1. Letter of Approval" },
+            { id: "permit_image", label: "2. Permit to Conduct Activity" },
+            { id: "equipment_image", label: "3. Excuse Letter & Equipment" },
+            { id: "other_attachments", label: "4. Event Cover Photo" }
+        ],
+        "2": [
+            { id: "letter_image", label: "1. Letter of Reschedule" },
+            { id: "other_attachments", label: "2. Event Reschedule Cover Photo" }
+        ]
+    };
 
-        document.getElementById('permitPreview').classList.add('hidden');
-        document.getElementById('permitPlaceholder').classList.remove('hidden');
-        document.getElementById('permitFileInput').value = '';
-
-        document.getElementById('equipmentPreview').classList.add('hidden');
-        document.getElementById('equipmentPlaceholder').classList.remove('hidden');
-        document.getElementById('equipmentFileInput').value = '';
+    function renderSlots(mode) {
+        selectedFiles = {};
+        const items = slotConfigs[mode];
+        slotsContainer.innerHTML = items.map(slot => `
+            <div class="flex flex-col p-5 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-black relative transition-all hover:border-[#800000] dark:hover:border-[#D4AF37] group">
+                <div id="pv-cnt-${slot.id}" class="hidden absolute inset-0 z-20 bg-black rounded-2xl overflow-hidden shadow-2xl">
+                    <img id="pv-img-${slot.id}" class="w-full h-full object-cover opacity-70" />
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/40">
+                         <button type="button" class="bg-red-600 text-white text-[10px] font-black uppercase px-4 py-2 rounded-xl shadow-lg hover:bg-red-700 transition" onclick="removeFile('${slot.id}')">Remove File</button>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="w-12 h-12 shrink-0 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover:text-[#800000] dark:group-hover:text-[#D4AF37] transition-colors">
+                        <i class="ph-bold ph-file-arrow-up text-2xl"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[11px] font-black text-gray-800 dark:text-gray-100 uppercase leading-tight truncate tracking-tight">${slot.label}</p>
+                        <p id="st-${slot.id}" class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">Status: Pending</p>
+                    </div>
+                </div>
+                <label class="w-full cursor-pointer bg-gray-100 dark:bg-gray-800 hover:bg-[#800000] dark:hover:bg-[#D4AF37] hover:text-white dark:hover:text-black text-gray-600 dark:text-gray-300 text-[10px] font-black uppercase tracking-widest py-3.5 rounded-xl text-center transition-all shadow-sm active:scale-95">
+                    Select File
+                    <input type="file" id="in-${slot.id}" accept="image/*" class="hidden" onchange="handleFile(event, '${slot.id}')">
+                </label>
+            </div>
+        `).join('');
     }
 
-    function previewImage(event, previewId, placeholderId) {
-        const file = event.target.files[0];
-        if(!file) return;
+    reqMode.addEventListener('change', (e) => renderSlots(e.target.value));
+
+    window.handleFile = (e, id) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        selectedFiles[id] = file;
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = document.getElementById(previewId);
-            img.src = e.target.result;
-            img.classList.remove('hidden');
-            document.getElementById(placeholderId).classList.add('hidden');
-        }
+        reader.onload = (ev) => {
+            document.getElementById(`pv-img-${id}`).src = ev.target.result;
+            document.getElementById(`pv-cnt-${id}`).classList.remove('hidden');
+            const st = document.getElementById(`st-${id}`);
+            st.textContent = 'Status: Selected';
+            st.classList.replace('text-gray-400', 'text-emerald-500');
+        };
         reader.readAsDataURL(file);
-    }
+    };
 
-    function submitDocuments() {
-        const letterInput = document.getElementById('letterFileInput');
-        const permitInput = document.getElementById('permitFileInput');
-        const equipmentInput = document.getElementById('equipmentFileInput');
+    window.removeFile = (id) => {
+        delete selectedFiles[id];
+        document.getElementById(`in-${id}`).value = "";
+        document.getElementById(`pv-cnt-${id}`).classList.add('hidden');
+        const st = document.getElementById(`st-${id}`);
+        st.textContent = 'Status: Pending';
+        st.classList.replace('text-emerald-500', 'text-gray-400');
+    };
 
-        if(!letterInput.files[0] || !permitInput.files[0] || !equipmentInput.files[0]) {
-            alert("Please attach ALL THREE documents: Signed Request Letter, Permit to Conduct Activity, and Equipment Form.");
+    // 6. SEARCH LOGIC (WITH EMPTY STATES)
+    searchPending.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        let count = 0;
+        [...pendingList.children].forEach(card => {
+            const name = card.getAttribute('data-event-name') || '';
+            const match = name.includes(query);
+            card.classList.toggle('hidden', !match);
+            if(match) count++;
+        });
+        pendingEmpty.classList.toggle('hidden', count > 0 || query === '');
+    });
+
+    searchVault.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        let count = 0;
+        [...vaultList.children].forEach(card => {
+            const name = card.getAttribute('data-vault-name') || '';
+            const match = name.includes(query);
+            card.classList.toggle('hidden', !match);
+            if(match) count++;
+        });
+        vaultEmpty.classList.toggle('hidden', count > 0 || query === '');
+    });
+
+    // 7. REAL HISTORY DOWNLOAD LOGIC
+    window.handleVaultDownload = (btn) => {
+        const card = btn.closest('[data-vault-name]');
+        const cells = card.querySelectorAll('.cell-container');
+        cells.forEach((cell, index) => {
+            const src = cell.getAttribute('data-img-src');
+            const title = cell.querySelector('span').textContent;
+            if(src) {
+                const a = document.createElement('a');
+                a.href = src;
+                a.download = `Document_${index + 1}_${title.replace(/\s+/g, '_')}`;
+                document.body.appendChild(a);
+                // Use timeout to prevent browser from blocking multiple triggers
+                setTimeout(() => {
+                    a.click();
+                    document.body.removeChild(a);
+                }, index * 200);
+            }
+        });
+    };
+
+    // 8. LIGHTBOX LOGIC (CLICK BACKDROP TO CLOSE)
+    window.openPreview = (url) => {
+        previewImg.src = url;
+        previewModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closePreview = () => {
+        previewModal.classList.add('hidden');
+        if (uploaderModal.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+    };
+
+    closePreviewBtn.addEventListener('click', closePreview);
+    previewModal.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closePreview();
+    });
+
+    // 9. CLICK OUTSIDE MODAL TO CLOSE
+    uploaderModal.addEventListener('click', (e) => {
+        if (e.target.classList.contains('backdrop-click-area')) hideModal();
+    });
+
+    // 10. SUBMISSION & TOAST
+    submitBtn.addEventListener('click', () => {
+        const mode = reqMode.value;
+        const expected = slotConfigs[mode].map(s => s.id);
+        const missing = expected.filter(id => !selectedFiles[id]);
+        
+        if (missing.length > 0) {
+            alert("⚠️ Please provide all required documents.");
             return;
         }
 
-        const btn = document.getElementById('btnSubmitVault');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Submitting...';
-
         const formData = new FormData();
-        formData.append('event_id', currentEventId);
-        formData.append('letter_image', letterInput.files[0]);
-        formData.append('permit_image', permitInput.files[0]);
-        formData.append('equipment_image', equipmentInput.files[0]);
+        formData.append('event_id', activeEventId);
+        formData.append('requirement_mode', mode);
         formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        Object.keys(selectedFiles).forEach(key => formData.append(key, selectedFiles[key]));
 
-        fetch("{% url 'upload_signed_permit' %}", {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
+
+        fetch("{% url 'upload_signed_permit' %}", { method: 'POST', body: formData })
+        .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                alert("Documents successfully uploaded! Sent to Adviser for verification.");
-                location.reload();
+                hideModal();
+                showToast();
+                setTimeout(() => location.reload(), 2000);
             } else {
-                alert("Error: " + data.message);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Submit Documents';
+                alert("Upload failed: " + data.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Submit & Save to Vault';
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("System error. Please try again.");
-            btn.disabled = false;
-            btn.innerHTML = '<i class="ph-bold ph-paper-plane-tilt"></i> Submit Documents';
+        .catch(err => {
+            alert("Error communicating with server.");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Submit & Save to Vault';
         });
+    });
+
+    function showToast() {
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+        setTimeout(() => {
+            toast.classList.add('translate-y-20', 'opacity-0');
+            toast.classList.remove('translate-y-0', 'opacity-100');
+        }, 3000);
     }
+
+    // INITIAL RENDER
+    renderPending();
+    renderVault();
+});
 </script>
 {% endblock extra_js %}

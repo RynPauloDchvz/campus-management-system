@@ -46,6 +46,8 @@ class Event(models.Model):
     letter_image = models.ImageField(upload_to='event_documents/', null=True, blank=True)
     permit_image = models.ImageField(upload_to='event_documents/', null=True, blank=True)
     equipment_image = models.ImageField(upload_to='event_documents/', null=True, blank=True) 
+    other_attachments = models.ImageField(upload_to='event_documents/', null=True, blank=True)
+    requirement_mode = models.IntegerField(null=True, blank=True, choices=[(2, '2 Documents'), (4, '4 Documents')]) 
 
     # Geofencing
     target_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
