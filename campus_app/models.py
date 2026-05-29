@@ -6,6 +6,8 @@ from django.contrib.auth.hashers import make_password
 class OrgProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     organization = models.CharField(max_length=50) 
+    profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
+    cover_photo = models.ImageField(upload_to='covers/', null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.organization}"

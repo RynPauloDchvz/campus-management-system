@@ -766,6 +766,7 @@ def organizer_profile(request):
         org_acronym = org_profile.organization.strip()
     except OrgProfile.DoesNotExist:
         org_acronym = 'UNKNOWN'
+        org_profile = None
 
     full_name = request.user.first_name if request.user.first_name else request.user.username
     
@@ -774,6 +775,7 @@ def organizer_profile(request):
     pending_students = Student.objects.filter(organization__iexact=org_acronym, is_verified=False).order_by('-created_at')
 
     context = {
+        'org_profile': org_profile,
         'full_name': full_name,
         'student_number': request.user.username,
         'org_acronym': org_acronym,
@@ -856,13 +858,20 @@ def organizer_message_history(request):
 def update_organizer_profile(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            new_name = data.get('full_name')
+            org_profile = OrgProfile.objects.get(user=request.user)
             
-            if new_name:
-                request.user.first_name = new_name
+            full_name = request.POST.get('full_name')
+            if full_name:
+                request.user.first_name = full_name
                 request.user.save()
-                return JsonResponse({"status": "success", "message": "Profile updated successfully!"})
+            
+            if 'profile_picture' in request.FILES:
+                org_profile.profile_picture = request.FILES['profile_picture']
+            if 'cover_photo' in request.FILES:
+                org_profile.cover_photo = request.FILES['cover_photo']
+            
+            org_profile.save()
+            return JsonResponse({"status": "success", "message": "Profile updated successfully!"})
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
             
@@ -1025,8 +1034,16 @@ def upload_signed_permit(request):
                 event.permit_image = request.FILES.get('permit_image')
             if request.FILES.get('equipment_image'):
                 event.equipment_image = request.FILES.get('equipment_image')
-            if request.FILES.get('other_attachments'):
-                event.other_attachments = request.FILES.get('other_attachments')
+            
+            # Catch event_cover_photo (fallback to other_attachments for compatibility)
+            if request.FILES.get('event_cover_photo'):
+                event.event_cover_photo = request.FILES.get('event_cover_photo')
+            elif request.FILES.get('other_attachments'):
+                event.event_cover_photo = request.FILES.get('other_attachments')
+
+            # Catch reschedule_cover_photo for 2-file system
+            if request.FILES.get('reschedule_cover_photo'):
+                event.reschedule_cover_photo = request.FILES.get('reschedule_cover_photo')
                 
             event.save()
             

@@ -239,7 +239,9 @@
                         {% if request.user.student.profile_picture %}
                             <img src="{{ request.user.student.profile_picture.url }}" class="w-full h-full object-cover">
                         {% else %}
-                            <img src="{% static 'images/student.jpg' %}" class="w-full h-full object-cover">
+                            <div class="w-full h-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black flex items-center justify-center text-sm font-bold">
+                                {{ request.user.student.full_name|slice:":2"|upper }}
+                            </div>
                         {% endif %}
                     </button>
                     <span v-if="hasNotification" class="absolute top-0 right-0 w-3 h-3 bg-red-600 border-2 border-white dark:border-pup-darkcard rounded-full animate-pulse shadow-sm"></span>

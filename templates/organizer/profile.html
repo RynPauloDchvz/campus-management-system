@@ -34,7 +34,11 @@
 <div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300">
     
     <div class="h-32 sm:h-64 w-full bg-gray-200 relative group transition-colors" id="coverPhotoWrapper">
-        <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover opacity-90" id="coverImage" onerror="this.src=window.DEFAULT_LOGO">
+        {% if org_profile.cover_photo %}
+            <img src="{{ org_profile.cover_photo.url }}" class="w-full h-full object-cover opacity-90" id="coverImage">
+        {% else %}
+            <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover opacity-90" id="coverImage" onerror="this.src=window.DEFAULT_LOGO">
+        {% endif %}
         
         <div id="coverEditOverlay" class="absolute inset-0 z-10 bg-black/40 items-center justify-center cursor-pointer transition-colors" style="display: none;" onclick="document.getElementById('coverFileInput').click()">
             <div class="bg-black/60 p-3 sm:p-4 rounded-full shadow-md backdrop-blur-sm hover:bg-[#800000] dark:hover:bg-[#D4AF37] transition-colors group-hover/cover">
@@ -51,7 +55,11 @@
             <div class="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-6 w-full min-w-0">
                 <div class="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 z-30 mx-auto sm:mx-0" id="avatarWrapper">
                     <div class="w-full h-full rounded-full border-4 sm:border-[6px] border-[#800000] dark:border-[#D4AF37] overflow-hidden bg-white shadow-md relative transition-colors">
-                        <img src="https://ui-avatars.com/api/?name={{ full_name|urlencode }}&background=800000&color=fff" class="w-full h-full object-cover" id="profileImage" alt="Profile">
+                        {% if org_profile.profile_picture %}
+                            <img src="{{ org_profile.profile_picture.url }}" class="w-full h-full object-cover" id="profileImage" alt="Profile">
+                        {% else %}
+                            <img src="https://ui-avatars.com/api/?name={{ full_name|urlencode }}&background=800000&color=fff" class="w-full h-full object-cover" id="profileImage" alt="Profile">
+                        {% endif %}
                         
                         <div id="profileEditOverlay" class="absolute inset-0 z-20 hidden bg-black/50 items-center justify-center cursor-pointer hover:bg-black/70 transition-colors" style="display: none;" onclick="document.getElementById('profileFileInput').click()">
                             <i class="ph-bold ph-camera-plus text-2xl sm:text-4xl text-white"></i>
@@ -499,6 +507,17 @@
 
     window.addEventListener('load', initNotifications);
 
+    function previewImage(event, imgId) {
+        const file = event.target.files[0];
+        if (file) {
+            const img = document.getElementById(imgId);
+            img.src = URL.createObjectURL(file);
+            img.classList.remove('hidden');
+            const initials = document.getElementById('profileInitials');
+            if (initials && imgId === 'profileImage') initials.classList.add('hidden');
+        }
+    }
+
     function closeEventMessage() {
         document.getElementById('eventMessageModal').classList.add('hidden');
         document.body.style.overflow = '';
@@ -534,13 +553,20 @@
             btnText.innerText = "Saving...";
             btn.disabled = true;
 
-            const payload = { full_name: inputEditName.value };
+            const formData = new FormData();
+            formData.append('full_name', inputEditName.value);
+            
+            const profileFile = document.getElementById('profileFileInput').files[0];
+            const coverFile = document.getElementById('coverFileInput').files[0];
+            
+            if (profileFile) formData.append('profile_picture', profileFile);
+            if (coverFile) formData.append('cover_photo', coverFile);
 
             try {
                 const response = await fetch("{% url 'update_organizer_profile' %}", {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                    body: JSON.stringify(payload)
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: formData
                 });
                 const data = await response.json();
 
@@ -559,6 +585,7 @@
                     profileOverlay.style.display = 'none';
                     coverOverlay.style.display = 'none';
                     alert("Profile successfully updated!");
+                    location.reload(); // Reload to update header and images everywhere
                 } else { alert("Error saving profile: " + data.message); }
             } catch (error) { alert("Something went wrong connecting to the server."); } 
             finally {
