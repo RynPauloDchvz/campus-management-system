@@ -12,28 +12,47 @@ from django.core.serializers import serialize
 from django.template.loader import render_to_string 
 from django.utils.html import strip_tags           
 from django.utils import timezone
+from django.utils.timezone import localtime
 from datetime import timedelta, datetime
 import json 
 import string 
 import random 
 import os 
 from docxtpl import DocxTemplate 
-from .models import OrgProfile, Student, Attendance, Event, LoginLockout
+from .models import OrgProfile, Student, Attendance, Event, LoginLockout, AuditLog
+from .utils import log_audit_event
+from .middleware import get_current_request
 
 # ==========================================
 # 🟢 4 STRICT RBAC GUARDS (PAM-BLOCK SA MALING URL ACCESS) 🟢
 # ==========================================
 def is_admin_strictly(user):
-    return user.is_authenticated and user.is_superuser
+    is_auth = user.is_authenticated and user.is_superuser
+    if user.is_authenticated and not user.is_superuser:
+        request = get_current_request()
+        log_audit_event(request, 'UNAUTHORIZED', status='Denied', changes={'attempted_role': 'Admin', 'user_role': 'Other'})
+    return is_auth
 
 def is_adviser_strictly(user):
-    return user.is_authenticated and user.is_staff and not user.is_superuser
+    is_auth = user.is_authenticated and user.is_staff and not user.is_superuser
+    if user.is_authenticated and (user.is_superuser or not user.is_staff):
+        request = get_current_request()
+        log_audit_event(request, 'UNAUTHORIZED', status='Denied', changes={'attempted_role': 'Adviser'})
+    return is_auth
 
 def is_organizer_strictly(user):
-    return user.is_authenticated and OrgProfile.objects.filter(user=user).exists()
+    is_auth = user.is_authenticated and OrgProfile.objects.filter(user=user).exists()
+    if user.is_authenticated and not is_auth:
+        request = get_current_request()
+        log_audit_event(request, 'UNAUTHORIZED', status='Denied', changes={'attempted_role': 'Organizer'})
+    return is_auth
 
 def is_student_strictly(user):
-    return user.is_authenticated and Student.objects.filter(user=user).exists()
+    is_auth = user.is_authenticated and Student.objects.filter(user=user).exists()
+    if user.is_authenticated and not is_auth:
+        request = get_current_request()
+        log_audit_event(request, 'UNAUTHORIZED', status='Denied', changes={'attempted_role': 'Student'})
+    return is_auth
 
 ORG_FULL_NAMES = {
     "ITO": "ITO - INFORMATION TECHNOLOGY ORGANIZATION",
@@ -88,6 +107,36 @@ def index(request):
     is_locked, remaining = check_lockout(request, type='portal')
     return render(request, 'index.html', {'is_locked': is_locked, 'remaining': remaining})
 
+def staff_logout_view(request):
+    if request.user.is_authenticated:
+        # 🟢 Calculate Session Duration
+        last_login = AuditLog.objects.filter(actor=request.user, action='LOGIN_SUCCESS').first()
+        duration_str = "Unknown"
+        if last_login:
+            duration = timezone.now() - last_login.timestamp
+            hours, remainder = divmod(int(duration.total_seconds()), 3600)
+            minutes, seconds = divmod(remainder, 60)
+            duration_str = f"{hours}h {minutes}m"
+
+        log_audit_event(request, 'LOGOUT', status='Success', changes={'session_duration': duration_str})
+    logout(request)
+    return redirect('/admin/login/')
+
+def portal_logout_view(request):
+    if request.user.is_authenticated:
+        # 🟢 Calculate Session Duration
+        last_login = AuditLog.objects.filter(actor=request.user, action='LOGIN_SUCCESS').first()
+        duration_str = "Unknown"
+        if last_login:
+            duration = timezone.now() - last_login.timestamp
+            hours, remainder = divmod(int(duration.total_seconds()), 3600)
+            minutes, seconds = divmod(remainder, 60)
+            duration_str = f"{hours}h {minutes}m"
+
+        log_audit_event(request, 'LOGOUT', status='Success', changes={'session_duration': duration_str})
+    logout(request)
+    return redirect('/')
+
 # ==========================================
 # 🟢 PINAG-ISANG MAIN PORTAL LOGIN (STUDENT & ORGANIZER) 🟢
 # ==========================================
@@ -110,6 +159,7 @@ def portal_login_view(request):
         if user is not None:
             # Check if this is a Staff/Admin trying to login here (RBAC strict separation)
             if user.is_superuser or (user.is_staff and not OrgProfile.objects.filter(user=user).exists()):
+                log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Staff/Admin attempting Portal Login', 'username': student_number})
                 return JsonResponse({"status": "error", "message": "Admin/Adviser accounts must login through the Staff Portal (/admin/login/)."})
 
             # Success - reset attempts
@@ -119,19 +169,25 @@ def portal_login_view(request):
 
             if OrgProfile.objects.filter(user=user).exists():
                 login(request, user)
+                log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': 'Organizer'}, actor=user)
                 return JsonResponse({"status": "success", "redirect_url": "/organizer/homepage"})
             elif Student.objects.filter(user=user).exists():
                 student = Student.objects.get(user=user)
                 if not student.is_verified:
+                    log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Unverified Student Account', 'username': student_number}, actor=user)
                     return JsonResponse({"status": "error", "message": "Account is still pending approval. Please wait for your Organizer."})
                 else:
                     login(request, user)
+                    log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': 'Student'}, actor=user)
                     return JsonResponse({"status": "success", "redirect_url": "/student/dashboard"})
             else:
+                log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Account role not identified', 'username': student_number})
                 return JsonResponse({"status": "error", "message": "Account is neither a registered Student nor an Organizer."})
         else:
             # Failed attempt logic
             is_locked_now, lock_time, total_attempts = record_failed_attempt(student_number)
+            
+            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'username': student_number, 'attempt_count': total_attempts})
 
             if is_locked_now:
                 request.session['lockout_until_portal'] = (timezone.now() + timedelta(seconds=lock_time)).isoformat()
@@ -318,6 +374,9 @@ def student_register(request):
 
             if 'generated_password' in request.session:
                 del request.session['generated_password']
+
+            # 🟢 LOG REGISTRATION
+            log_audit_event(request, 'REGISTRATION', status='Success', changes={'student_number': student_number})
 
             return JsonResponse({"status": "success", "message": "Registration Successful! Please wait for your Organizer to approve your account."})
         except Exception as e:
@@ -676,6 +735,9 @@ def approve_individual_student(request):
             
             # 🟢 SEND HTML WELCOME EMAIL
             send_student_email(student, 'welcome', {})
+
+            # 🟢 LOG VERIFICATION
+            log_audit_event(request, 'VERIFICATION', status='Success', changes={'student': student.full_name})
 
             messages.success(request, f"Successfully assigned {student.full_name} to {student.organization}!")
         except Student.DoesNotExist:
@@ -1141,6 +1203,14 @@ def record_attendance(request):
                 longitude=lng
             )
             
+            # 🟢 GRANULAR AUDIT LOGGING FOR ATTENDANCE
+            log_audit_event(request, 'ATTENDANCE', target_model='Event', target_id=event.id, status='Success', changes={
+                'event': event_title,
+                'student': student.full_name,
+                'face_match': face_matched,
+                'location': is_valid_location
+            })
+            
             # 🟢 TRIGGER EMAIL IF ISSUES
             if not face_matched or not is_valid_location:
                 face_status = "✅ Matched" if face_matched else "❌ Failed"
@@ -1164,14 +1234,14 @@ def submit_evaluation(request):
         try:
             student = Student.objects.get(user=request.user)
             event_title = request.POST.get('event_title')
-            # Mocking evaluation save for now as there's no model for it yet
-            # But we trigger the "Issue" email if something is missing
             
             rating = request.POST.get('rating')
             if not rating:
                 send_student_email(student, 'evaluation', {'event_title': event_title})
                 return JsonResponse({'status': 'error', 'message': 'Rating required'})
 
+            # 🟢 LOG EVALUATION ACTION
+            log_audit_event(request, 'EVALUATION', status='Success', changes={'event': event_title, 'rating': rating})
             return JsonResponse({'status': 'success', 'message': 'Evaluation saved!'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
@@ -1452,18 +1522,37 @@ def adviser_api_action(request):
     return JsonResponse({"status": "error", "message": "Invalid request"})
 
 # ==========================================
-# DEBUG & AUTH VIEWS
+# 🟢 ADMIN AUDIT LOGS (WITH LOCAL TIME FIX) 🟢
 # ==========================================
-def debug_database_view(request):
-    students = Student.objects.all()
-    org_profiles = OrgProfile.objects.all()
-    return JsonResponse({
-        "status": "success",
-        "database_records": {
-            "Students": json.loads(serialize('json', students)),
-            "Organizers": json.loads(serialize('json', org_profiles))
-        }
-    }, safe=False, json_dumps_params={'indent': 4})
+@user_passes_test(is_admin_strictly, login_url='/admin/login/')
+def admin_audit_logs(request):
+    """
+    Dashboard for the Admin to monitor system activity.
+    Fetches all logs and passes them as JSON for Vue.js rendering.
+    """
+    logs = AuditLog.objects.all().order_by('-timestamp')
+    
+    logs_data = []
+    for log in logs:
+        # 🟢 Convert UTC to Local Time (Asia/Manila) before displaying
+        local_time = localtime(log.timestamp)
+        
+        logs_data.append({
+            'id': log.id,
+            'actor': log.actor.username if log.actor else 'Anonymous',
+            'action': log.action,
+            'target': log.target_model or 'System',
+            'status': log.status,
+            'ip': log.ip_address,
+            'ua': log.user_agent,
+            # 🟢 12-hour format with AM/PM for accuracy and readability
+            'timestamp': local_time.strftime('%Y-%m-%d %I:%M:%S %p'),
+            'changes': log.changes if isinstance(log.changes, dict) else (json.loads(log.changes) if log.changes else {})
+        })
+        
+    return render(request, 'admin/audit_logs.html', {
+        'logs_json': json.dumps(logs_data)
+    })
 
 def staff_login_view(request):
     if request.method == 'POST':
@@ -1484,6 +1573,7 @@ def staff_login_view(request):
         if user is not None:
             # Check if this is a Student/Organizer trying to login here (RBAC strict separation)
             if not user.is_staff and not user.is_superuser:
+                log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Student/Organizer attempting Staff Login', 'username': u})
                 return JsonResponse({"status": "error", "message": "Student/Organizer accounts must login through the Student Portal (/)."})
 
             if user.is_staff or user.is_superuser:
@@ -1493,12 +1583,18 @@ def staff_login_view(request):
                 
                 login(request, user)
                 
+                role = 'Admin' if user.is_superuser else 'Adviser'
+                log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': role})
+
                 redirect_url = '/admin/' if user.is_superuser else '/adviser/dashboard/'
                 return JsonResponse({"status": "success", "redirect_url": redirect_url})
             else:
+                log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'No staff privileges', 'username': u})
                 return JsonResponse({"status": "error", "message": "Access Denied. You do not have staff privileges."})
         else:
             is_locked_now, lock_time, total_attempts = record_failed_attempt(u)
+            
+            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'username': u, 'attempt_count': total_attempts})
             
             if is_locked_now:
                 request.session['lockout_until_staff'] = (timezone.now() + timedelta(seconds=lock_time)).isoformat()
@@ -1512,3 +1608,14 @@ def staff_login_view(request):
             
     is_locked, remaining = check_lockout(request, type='staff')
     return render(request, 'admin/login.html', {'is_locked': is_locked, 'remaining': remaining})
+
+def debug_database_view(request):
+    students = Student.objects.all()
+    org_profiles = OrgProfile.objects.all()
+    return JsonResponse({
+        "status": "success",
+        "database_records": {
+            "Students": json.loads(serialize('json', students)),
+            "Organizers": json.loads(serialize('json', org_profiles))
+        }
+    }, safe=False, json_dumps_params={'indent': 4})

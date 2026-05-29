@@ -41,47 +41,59 @@
 {% endblock %}
 
 {% block content %}
-<div class="control-bar">
-    <div class="filter-group">
-        <span style="font-weight: 800; text-transform: uppercase; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 1px;">Monitoring:</span>
-        <span id="currentOrgDisplay" class="badge badge-approved" style="font-size: 1.1rem; padding: 8px 15px;">All Organizations</span>
+<!-- 🟢 SKELETON LOADING STATE 🟢 -->
+<div id="skeleton-loader" class="fade-in">
+    <div class="control-bar"><div class="w-48 h-10 skeleton-shimmer rounded-lg"></div><div class="w-64 h-10 skeleton-shimmer rounded-lg"></div></div>
+    <div class="stats-grid">
+        <div v-for="i in 4" :key="i" class="stat-card"><div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div><div class="w-16 h-8 skeleton-shimmer rounded"></div></div>
     </div>
-    <div class="search-box">
-        <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-        <input type="text" id="searchEvent" class="search-input" placeholder="Search event title..." onkeyup="filterMonitor()">
-    </div>
+    <div class="table-section"><div class="space-y-6 p-4"><div v-for="i in 5" :key="i" class="flex gap-4"><div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div><div class="grow"><div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div><div class="w-1/2 h-4 skeleton-shimmer rounded"></div></div></div></div></div>
 </div>
 
-<div class="stats-grid">
-    <div class="stat-card">
-        <span class="stat-label">Total Events</span>
-        <span class="stat-value" id="statTotalEvents">0</span>
-        <i class="ph-fill ph-calendar-check stat-icon" style="color: #3b82f6;"></i>
-    </div>
-    <div class="stat-card">
-        <span class="stat-label">Total Attendees</span>
-        <span class="stat-value" id="statTotalAttendees">0</span>
-        <i class="ph-fill ph-users stat-icon" style="color: #10b981;"></i>
-    </div>
-    <div class="stat-card">
-        <span class="stat-label">Avg Rating</span>
-        <span class="stat-value" id="statAvgRating">0.0</span>
-        <i class="ph-fill ph-star stat-icon" style="color: #f59e0b;"></i>
-    </div>
-    <div class="stat-card">
-        <span class="stat-label">Avg Sentiment</span>
-        <span class="stat-value" id="statAvgSentiment">0%</span>
-        <i class="ph-fill ph-smiley stat-icon" style="color: #ef4444;"></i>
-    </div>
-</div>
-
-<div class="table-section">
-    <div class="table-header">
-        <h2 class="table-title">Event Performance Records</h2>
-    </div>
-    
-    <div id="monitorListContainer" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+<!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
+<div id="main-content-area" style="display: none;" class="fade-in">
+    <div class="control-bar">
+        <div class="filter-group">
+            <span style="font-weight: 800; text-transform: uppercase; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 1px;">Monitoring:</span>
+            <span id="currentOrgDisplay" class="badge badge-approved" style="font-size: 1.1rem; padding: 8px 15px;">All Organizations</span>
         </div>
+        <div class="search-box">
+            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="searchEvent" class="search-input" placeholder="Search event title..." onkeyup="filterMonitor()">
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Total Events</span>
+            <span class="stat-value" id="statTotalEvents">0</span>
+            <i class="ph-fill ph-calendar-check stat-icon" style="color: #3b82f6;"></i>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Total Attendees</span>
+            <span class="stat-value" id="statTotalAttendees">0</span>
+            <i class="ph-fill ph-users stat-icon" style="color: #10b981;"></i>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Avg Rating</span>
+            <span class="stat-value" id="statAvgRating">0.0</span>
+            <i class="ph-fill ph-star stat-icon" style="color: #f59e0b;"></i>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Avg Sentiment</span>
+            <span class="stat-value" id="statAvgSentiment">0%</span>
+            <i class="ph-fill ph-smiley stat-icon" style="color: #ef4444;"></i>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <div class="table-header">
+            <h2 class="table-title">Event Performance Records</h2>
+        </div>
+        
+        <div id="monitorListContainer" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+            </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -295,6 +307,12 @@
         });
     }
 
-    window.addEventListener('load', filterMonitor);
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('skeleton-loader').style.display = 'none';
+            document.getElementById('main-content-area').style.display = 'block';
+            filterMonitor();
+        }, 800);
+    });
 </script>
 {% endblock %}

@@ -7,88 +7,102 @@
 {% block page_subtitle %}Welcome back, Administrator.{% endblock %}
 
 {% block content %}
-<div class="stats-grid">
-    <div class="stat-card">
-        <span class="stat-label">Total Events</span>
-        <span class="stat-value">48</span>
-        <i class="ph-bold ph-calendar-check stat-icon"></i>
+<!-- 🟢 SKELETON LOADING STATE 🟢 -->
+<div id="skeleton-loader" class="fade-in">
+    <div class="stats-grid">
+        <div v-for="i in 4" :key="i" class="stat-card"><div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div><div class="w-16 h-8 skeleton-shimmer rounded"></div></div>
     </div>
-    <div class="stat-card" style="--accent: var(--warning);">
-        <span class="stat-label">Pending Approval</span>
-        <span class="stat-value">5</span>
-        <i class="ph-bold ph-clock-countdown stat-icon"></i>
+    <div class="charts-container">
+        <div v-for="i in 3" :key="i" class="chart-box"><div class="w-32 h-6 skeleton-shimmer rounded mb-4"></div><div class="h-48 skeleton-shimmer rounded-xl"></div></div>
     </div>
-    <div class="stat-card" style="--accent: #17a2b8;">
-        <span class="stat-label">Active Orgs</span>
-        <span class="stat-value">5</span>
-        <i class="ph-bold ph-buildings stat-icon"></i>
-    </div>
-    <div class="stat-card" style="--accent: var(--success);">
-        <span class="stat-label">Engaged Students</span>
-        <span class="stat-value">1,240</span>
-        <i class="ph-bold ph-student stat-icon"></i>
-    </div>
+    <div class="table-section"><div class="h-64 skeleton-shimmer rounded-xl"></div></div>
 </div>
 
-<div class="charts-container">
-    <div class="chart-box">
-        <h3 class="chart-title">Ratings Overview</h3>
-        <div class="chart-wrapper"><canvas id="ratingChart"></canvas></div>
+<!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
+<div id="main-content-area" style="display: none;" class="fade-in">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-label">Total Events</span>
+            <span class="stat-value">48</span>
+            <i class="ph-bold ph-calendar-check stat-icon"></i>
+        </div>
+        <div class="stat-card" style="--accent: var(--warning);">
+            <span class="stat-label">Pending Approval</span>
+            <span class="stat-value">5</span>
+            <i class="ph-bold ph-clock-countdown stat-icon"></i>
+        </div>
+        <div class="stat-card" style="--accent: #17a2b8;">
+            <span class="stat-label">Active Orgs</span>
+            <span class="stat-value">5</span>
+            <i class="ph-bold ph-buildings stat-icon"></i>
+        </div>
+        <div class="stat-card" style="--accent: var(--success);">
+            <span class="stat-label">Engaged Students</span>
+            <span class="stat-value">1,240</span>
+            <i class="ph-bold ph-student stat-icon"></i>
+        </div>
     </div>
-    <div class="chart-box">
-        <h3 class="chart-title">Comments Sentiment</h3>
-        <div class="chart-wrapper"><canvas id="sentimentChart"></canvas></div>
-    </div>
-    <div class="chart-box">
-        <h3 class="chart-title">Event Frequency</h3>
-        <div class="chart-wrapper"><canvas id="eventChart"></canvas></div>
-    </div>
-</div>
 
-<div class="table-section">
-    <div class="table-header">
-        <h3 class="table-title">Recent Event Requests</h3>
-        <a href="/admin/event-approvals/" class="view-all-btn" style="text-decoration:none; color:var(--accent);">View All <i class="ph-bold ph-arrow-right"></i></a>
+    <div class="charts-container">
+        <div class="chart-box">
+            <h3 class="chart-title">Ratings Overview</h3>
+            <div class="chart-wrapper"><canvas id="ratingChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <h3 class="chart-title">Comments Sentiment</h3>
+            <div class="chart-wrapper"><canvas id="sentimentChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <h3 class="chart-title">Event Frequency</h3>
+            <div class="chart-wrapper"><canvas id="eventChart"></canvas></div>
+        </div>
     </div>
-    <div style="overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Organization</th>
-                    <th>Event Title</th>
-                    <th>Target Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="font-weight: 700; color: var(--accent);">ITO</td>
-                    <td>Tech Summit 2026</td>
-                    <td>March 28, 2026</td>
-                    <td><span class="badge badge-pending">Pending</span></td>
-                    <td><button class="btn-action-small" onclick="openReviewModal('ITO', 'Tech Summit 2026', 'Good day! We are respectfully requesting approval for the IT Tech Summit 2026. Attached herewith are the Letter of Request, Event Proposal, and proposed Budget Breakdown for your review.')">Review</button></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 700; color: var(--accent);">BPA</td>
-                    <td>Leadership Seminar</td>
-                    <td>April 05, 2026</td>
-                    <td><span class="badge badge-approved">Approved</span></td>
-                    <td>
-                        <a href="/admin/event-approvals/">
-                            <button class="btn-action-small">View Details</button>
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 700; color: var(--accent);">FTO</td>
-                    <td>Teaching Methodologies</td>
-                    <td>April 12, 2026</td>
-                    <td><span class="badge badge-pending">Pending</span></td>
-                    <td><button class="btn-action-small" onclick="openReviewModal('FTO', 'Teaching Methodologies', 'We would like to submit our proposal for the upcoming Teaching Methodologies Workshop aimed at all Education students. Kindly check the attached documents.')">Review</button></td>
-                </tr>
-            </tbody>
-        </table>
+
+    <div class="table-section">
+        <div class="table-header">
+            <h3 class="table-title">Recent Event Requests</h3>
+            <a href="/admin/event-approvals/" class="view-all-btn" style="text-decoration:none; color:var(--accent);">View All <i class="ph-bold ph-arrow-right"></i></a>
+        </div>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Organization</th>
+                        <th>Event Title</th>
+                        <th>Target Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight: 700; color: var(--accent);">ITO</td>
+                        <td>Tech Summit 2026</td>
+                        <td>March 28, 2026</td>
+                        <td><span class="badge badge-pending">Pending</span></td>
+                        <td><button class="btn-action-small" onclick="openReviewModal('ITO', 'Tech Summit 2026', 'Good day! We are respectfully requesting approval for the IT Tech Summit 2026. Attached herewith are the Letter of Request, Event Proposal, and proposed Budget Breakdown for your review.')">Review</button></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 700; color: var(--accent);">BPA</td>
+                        <td>Leadership Seminar</td>
+                        <td>April 05, 2026</td>
+                        <td><span class="badge badge-approved">Approved</span></td>
+                        <td>
+                            <a href="/admin/event-approvals/">
+                                <button class="btn-action-small">View Details</button>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 700; color: var(--accent);">FTO</td>
+                        <td>Teaching Methodologies</td>
+                        <td>April 12, 2026</td>
+                        <td><span class="badge badge-pending">Pending</span></td>
+                        <td><button class="btn-action-small" onclick="openReviewModal('FTO', 'Teaching Methodologies', 'We would like to submit our proposal for the upcoming Teaching Methodologies Workshop aimed at all Education students. Kindly check the attached documents.')">Review</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -236,7 +250,14 @@
         sentimentChart.update();
     }
 
-    window.addEventListener('load', renderCharts);
+    window.addEventListener('load', () => {
+        // Delay to show skeleton
+        setTimeout(() => {
+            document.getElementById('skeleton-loader').style.display = 'none';
+            document.getElementById('main-content-area').style.display = 'block';
+            renderCharts();
+        }, 1000);
+    });
 
     document.querySelectorAll('.theme-toggle').forEach(btn => {
         btn.addEventListener('click', () => {

@@ -12,10 +12,11 @@ urlpatterns = [
     # ADMIN & ADVISER URLS
     # ==========================================
     path('admin/login/', views.staff_login_view, name='staff_login'),
-    path('admin/logout/', auth_views.LogoutView.as_view(next_page='/admin/login/'), name='admin_logout'),
+    path('admin/logout/', views.staff_logout_view, name='admin_logout'),
     
     path('admin/manage-accounts/', views.manage_accounts_view, name='manage_accounts'),
     path('admin/manage-organizers/', views.manage_organizers_view, name='manage_organizers'),
+    path('admin/audit-logs/', views.admin_audit_logs, name='admin_audit_logs'),
     
     # 🟢 LINKS PARA SA HISTORY AT ORG MONITOR NG ADMIN 🟢
     path('admin/account-history/', views.account_history_view, name='account_history'),
@@ -43,6 +44,7 @@ urlpatterns = [
     # ==========================================
     path('', views.index, name='index'),
     path('portal/login/', views.portal_login_view, name='portal_login'),
+    path('portal/logout/', views.portal_logout_view, name='portal_logout'),
     path('forgot-password/', views.forgot_password_view, name='forgot_password'),
     path('api/verify-reset-code/', views.verify_reset_code, name='verify_reset_code'),
     path('api/complete-password-reset/', views.complete_password_reset, name='complete_password_reset'),

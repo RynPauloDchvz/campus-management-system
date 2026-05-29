@@ -15,92 +15,75 @@
         to { opacity: 1; transform: translateY(0); }
     }
     [v-cloak] { display: none !important; }
-    
-    /* Custom Scrollbar for Modal */
-    .modal-scroll::-webkit-scrollbar {
-        width: 6px;
-    }
-    .modal-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .modal-scroll::-webkit-scrollbar-thumb {
-        background: #800000;
-        border-radius: 10px;
-    }
-    .dark .modal-scroll::-webkit-scrollbar-thumb {
-        background: #D4AF37;
-    }
 </style>
 
-<div id="app" v-cloak>
-    <!-- Filter & Search Bar -->
-    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col lg:flex-row justify-between items-center gap-4 mb-6 transition-colors duration-300">
-        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <span class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1"><i class="ph-bold ph-funnel"></i> Filters:</span>
-            
-            <div class="relative w-full sm:w-auto">
-                <select v-model="statusFilter" class="w-full sm:min-w-[180px] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold bg-gray-50 dark:bg-[#111] cursor-pointer appearance-none transition-all">
-                    <option value="All">All Event Records</option>
-                    <option value="Approved">Fully Published</option>
-                    <option value="In Progress">Under Process</option>
-                    <option value="Rejected">Rejected Proposals</option>
-                </select>
-                <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-            </div>
-        </div>
-
-        <div class="relative w-full lg:w-96">
-            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search event title, org, or venue..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-12 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
+<!-- Filter & Search Bar -->
+<div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col lg:flex-row justify-between items-center gap-4 mb-6 transition-colors duration-300">
+    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+        <span class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1"><i class="ph-bold ph-funnel"></i> Filters:</span>
+        
+        <div class="relative w-full sm:w-auto">
+            <select v-model="statusFilter" class="w-full sm:min-w-[180px] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold bg-gray-50 dark:bg-[#111] cursor-pointer appearance-none transition-all">
+                <option value="All">All Event Records</option>
+                <option value="Approved">Fully Published</option>
+                <option value="In Progress">Under Process</option>
+                <option value="Rejected">Rejected Proposals</option>
+            </select>
+            <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
         </div>
     </div>
 
-    <!-- Main Table Container -->
-    <div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[800px]" v-if="filteredEvents.length > 0">
-                <thead>
-                    <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/20">
-                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Organization</th>
-                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Event Title</th>
-                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Event Date</th>
-                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Status</th>
-                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
-                    <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50/80 dark:hover:bg-[#151515] transition-colors cursor-pointer group" @click="openModal(event)">
-                        <td class="py-4 px-6 font-black text-pup-maroon dark:text-pup-gold text-xs tracking-tight">[[ event.org ]]</td>
-                        <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
-                        <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400">[[ event.date ]]</td>
-                        <td class="py-4 px-6">
-                            <span v-if="event.status === 'APPROVED'" class="px-3 py-1.5 rounded-lg border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
-                                <i class="ph-fill ph-check-circle text-xs"></i> Published
-                            </span>
-                            <span v-else-if="event.status === 'REJECTED'" class="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
-                                <i class="ph-fill ph-x-circle text-xs"></i> Rejected
-                            </span>
-                            <span v-else class="px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
-                                <i class="ph-fill ph-clock-counter-clockwise text-xs"></i> In Progress
-                            </span>
-                        </td>
-                        <td class="py-4 px-6 text-center" @click.stop>
-                            <button @click="openModal(event)" class="bg-gray-100 hover:bg-pup-maroon dark:bg-gray-800 dark:hover:bg-pup-gold text-gray-700 hover:text-white dark:text-gray-300 dark:hover:text-black font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg transition-all inline-flex items-center gap-2 border border-gray-200 dark:border-gray-700 shadow-sm group-hover:scale-105 active:scale-95">
-                                <i class="ph-bold ph-eye text-sm"></i> Details
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="relative w-full lg:w-96">
+        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+        <input type="text" v-model="searchQuery" placeholder="Search event title, org, or venue..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-12 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
+    </div>
+</div>
 
-            <div v-else class="py-24 text-center">
-                <div class="relative inline-block mb-4">
-                    <i class="ph-fill ph-folder-open text-7xl text-gray-200 dark:text-gray-800"></i>
-                    <i class="ph-bold ph-magnifying-glass absolute -bottom-2 -right-2 text-3xl text-gray-400 dark:text-gray-600"></i>
-                </div>
-                <h3 class="text-lg font-black text-gray-500 dark:text-gray-400 tracking-tight uppercase">No records found</h3>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 font-bold uppercase tracking-widest">Refine your search or check filters.</p>
+<!-- Main Table Container -->
+<div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[800px]" v-if="filteredEvents.length > 0">
+            <thead>
+                <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/20">
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Organization</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Event Title</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Event Date</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Status</th>
+                    <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+                <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50/80 dark:hover:bg-[#151515] transition-colors cursor-pointer group" @click="openModal(event)">
+                    <td class="py-4 px-6 font-black text-pup-maroon dark:text-pup-gold text-xs tracking-tight">[[ event.org ]]</td>
+                    <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
+                    <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400">[[ event.date ]]</td>
+                    <td class="py-4 px-6">
+                        <span v-if="event.status === 'APPROVED'" class="px-3 py-1.5 rounded-lg border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
+                            <i class="ph-fill ph-check-circle text-xs"></i> Published
+                        </span>
+                        <span v-else-if="event.status === 'REJECTED'" class="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
+                            <i class="ph-fill ph-x-circle text-xs"></i> Rejected
+                        </span>
+                        <span v-else class="px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
+                            <i class="ph-fill ph-clock-counter-clockwise text-xs"></i> In Progress
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-center" @click.stop>
+                        <button @click="openModal(event)" class="bg-gray-100 hover:bg-pup-maroon dark:bg-gray-800 dark:hover:bg-pup-gold text-gray-700 hover:text-white dark:text-gray-300 dark:hover:text-black font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg transition-all inline-flex items-center gap-2 border border-gray-200 dark:border-gray-700 shadow-sm group-hover:scale-105 active:scale-95">
+                            <i class="ph-bold ph-eye text-sm"></i> Details
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div v-else class="py-24 text-center">
+            <div class="relative inline-block mb-4">
+                <i class="ph-fill ph-folder-open text-7xl text-gray-200 dark:text-gray-800"></i>
+                <i class="ph-bold ph-magnifying-glass absolute -bottom-2 -right-2 text-3xl text-gray-400 dark:text-gray-600"></i>
             </div>
+            <h3 class="text-lg font-black text-gray-500 dark:text-gray-400 tracking-tight uppercase">No records found</h3>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 font-bold uppercase tracking-widest">Refine your search or check filters.</p>
         </div>
     </div>
 </div>
@@ -294,11 +277,12 @@
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const { createApp, ref, computed } = Vue;
+        const { createApp, ref, computed, onMounted } = Vue;
 
         createApp({
             delimiters: ['[[', ']]'],
             setup() {
+                const isLoading = ref(true);
                 const searchQuery = ref('');
                 const statusFilter = ref('All');
                 const isModalOpen = ref(false);
@@ -319,6 +303,12 @@
                 }
                 
                 const historyEvents = ref(parsedData);
+
+                onMounted(() => {
+                    setTimeout(() => {
+                        isLoading.value = false;
+                    }, 800);
+                });
 
                 const filteredEvents = computed(() => {
                     return historyEvents.value.filter(event => {
@@ -369,35 +359,6 @@
                     }
                 });
 
-                const parsedDescription = computed(() => {
-                    if (!selectedEvent.value) return null;
-                    let desc = selectedEvent.value.description || "";
-
-                    if (desc.includes("[RESCHEDULE REQUEST]")) {
-                        let reasonStr = "";
-                        let origDescStr = "";
-                        let parts = desc.split("|");
-                        parts.forEach(part => {
-                            if(part.includes("Reason:")) reasonStr = part.replace("[RESCHEDULE REQUEST]", "").replace("Reason:", "").trim();
-                            if(part.includes("Original Desc:")) origDescStr = part.replace("Original Desc:", "").trim();
-                        });
-                        return { type: 'reschedule', reason: reasonStr, originalDesc: origDescStr };
-                    }
-                    else if (desc.includes("[EXCUSE & EQUIPMENT REQUEST]")) {
-                        let targetStr = "";
-                        let equipStr = "";
-                        let origDescStr = "";
-                        let parts = desc.split("|");
-                        parts.forEach(part => {
-                            if(part.includes("Target:")) targetStr = part.replace("[EXCUSE & EQUIPMENT REQUEST]", "").replace("Target:", "").trim();
-                            if(part.includes("Equipment:")) equipStr = part.replace("Equipment:", "").trim();
-                            if(part.includes("Desc:")) origDescStr = part.replace("Desc:", "").trim();
-                        });
-                        return { type: 'excuse', target: targetStr, equipment: equipStr, originalDesc: origDescStr }; 
-                    }
-                    return { type: 'standard', originalDesc: desc };
-                });
-
                 const openModal = (event) => {
                     selectedEvent.value = event;
                     isModalOpen.value = true;
@@ -421,10 +382,10 @@
                 };
 
                 return {
-                    searchQuery, statusFilter, filteredEvents,
+                    isLoading, searchQuery, statusFilter, filteredEvents,
                     isModalOpen, selectedEvent, openModal, closeModal,
                     isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
-                    currentDocCount, activeDocs, parsedDescription
+                    currentDocCount, activeDocs
                 }
             }
         }).mount('#app');

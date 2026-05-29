@@ -34,6 +34,7 @@
     </script>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
 
     <style>
         [v-cloak] { display: none !important; }
@@ -130,8 +131,23 @@
         </div>
 
         <main class="flex-grow w-full">
-            {% block content %}
-            {% endblock content %}
+            <!-- 🟢 SKELETON LOADING UI (DASHBOARD-LIKE) 🟢 -->
+            <div v-if="isLoading" class="p-6 md:p-10 max-w-7xl mx-auto w-full space-y-10">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="flex-1 h-64 skeleton-shimmer rounded-3xl"></div>
+                    <div class="w-full md:w-80 h-64 skeleton-shimmer rounded-3xl"></div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div v-for="i in 4" :key="i" class="h-32 skeleton-shimmer rounded-2xl"></div>
+                </div>
+                <div class="h-96 skeleton-shimmer rounded-3xl"></div>
+            </div>
+
+            <!-- 🟢 ACTUAL PAGE CONTENT 🟢 -->
+            <div v-else class="animate-fade-in">
+                {% block content %}
+                {% endblock content %}
+            </div>
         </main>
 
         <footer class="bg-[#050505] text-white pt-10 pb-6 px-4 md:px-8 font-sans border-t-4 border-pup-maroon dark:border-pup-gold overflow-hidden mt-20">
@@ -262,7 +278,10 @@
             </div>
             <div class="flex gap-3 w-full">
                 <button type="button" onclick="closeLogout()" class="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-semibold transition-colors">Cancel</button>
-                <a href="{% url 'index' %}" class="flex-1 py-2.5 px-4 bg-pup-maroon hover:bg-red-800 text-white rounded-lg font-semibold transition-colors text-center flex items-center justify-center">Yes, Log Out</a>
+                <form action="{% url 'portal_logout' %}" method="post" class="flex-1 m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full py-2.5 px-4 bg-pup-maroon hover:bg-red-800 text-white rounded-lg font-semibold transition-colors text-center flex items-center justify-center border-none cursor-pointer">Yes, Log Out</button>
+                </form>
             </div>
         </div>
     </div>

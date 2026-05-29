@@ -65,126 +65,137 @@
 {% block content %}
 <div id="vue-admin-app" v-cloak>
     
-    <div class="control-bar">
-        <div class="filter-group">
-            <span style="font-weight:800; color:var(--text-main); display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">
-                <i class="ph-bold ph-shield-warning" style="color: var(--pup-maroon); font-size: 1.2rem;"></i> Pending Approvals
-            </span>
-        </div>
-        <div class="search-box">
-            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-            <input type="text" v-model="searchPending" class="search-input" placeholder="Search pending event or org...">
-        </div>
+    <!-- 🟢 SKELETON LOADING STATE 🟢 -->
+    <div v-if="isLoading" class="fade-in">
+        <div class="control-bar"><div class="w-48 h-6 skeleton-shimmer rounded"></div><div class="w-64 h-10 skeleton-shimmer rounded-lg"></div></div>
+        <div class="table-section"><div class="space-y-4 p-4"><div v-for="i in 5" :key="i" class="h-10 skeleton-shimmer rounded"></div></div></div>
+        <div class="control-bar" style="margin-top:40px;"><div class="w-64 h-6 skeleton-shimmer rounded"></div><div class="w-64 h-10 skeleton-shimmer rounded-lg"></div></div>
+        <div class="table-section"><div class="space-y-4 p-4"><div v-for="i in 5" :key="i" class="h-10 skeleton-shimmer rounded"></div></div></div>
     </div>
 
-    <div class="table-section">
-        <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Organization</th>
-                        <th>Event Title</th>
-                        <th>Target Date</th>
-                        <th>Status / Stage</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-if="filteredPending.length === 0">
-                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                            <i class="ph-fill ph-check-circle" style="font-size: 3rem; color: var(--success); opacity: 0.5; display: block; margin-bottom: 10px;"></i>
-                            No pending approvals at the moment. You're all caught up!
-                        </td>
-                    </tr>
-                    <tr v-for="event in filteredPending" :key="event.id">
-                        <td style="font-weight: 800; color: var(--pup-maroon);">[[ event.org ]]</td>
-                        <td style="font-weight: 700; color: var(--text-main);">[[ event.title ]]</td>
-                        <td style="color: var(--text-muted); font-weight: 500;">[[ event.date ]]</td>
-                        <td>
-                            <span v-if="event.status === 'PENDING ADMIN'" class="badge badge-pending"><i class="ph-bold ph-file-text"></i> Initial Clearance</span>
-                            <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review"><i class="ph-bold ph-certificate"></i> Final Publication</span>
-                        </td>
-                        <td>
-                            <button @click="openModal(event, false)" class="action-btn" style="background: var(--pup-maroon); color: white;">
-                                [[ event.status === 'FINAL ADMIN REVIEW' ? 'Final Approval' : 'Initial Review' ]]
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <!-- 🟢 ACTUAL CONTENT 🟢 -->
+    <div v-else class="fade-in">
+        <div class="control-bar">
+            <div class="filter-group">
+                <span style="font-weight:800; color:var(--text-main); display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">
+                    <i class="ph-bold ph-shield-warning" style="color: var(--pup-maroon); font-size: 1.2rem;"></i> Pending Approvals
+                </span>
+            </div>
+            <div class="search-box">
+                <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+                <input type="text" v-model="searchPending" class="search-input" placeholder="Search pending event or org...">
+            </div>
         </div>
-    </div>
 
-    <div class="control-bar" style="margin-top: 40px;">
-        <div class="filter-group">
-            <span style="font-weight:800; color:var(--text-main); display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; margin-right: 15px;">
-                <i class="ph-bold ph-clock-counter-clockwise" style="color: var(--pup-maroon); font-size: 1.2rem;"></i> History Log
-            </span>
-            
-            <select v-model="histOrg" class="custom-select">
-                <option value="All">All Organizations</option>
-                <option value="ITO">ITO</option>
-                <option value="ITS">ITS</option>
-                <option value="YEO">YEO</option>
-                <option value="FTO">FTO</option>
-                <option value="PAS">PAS</option>
-                <option value="CAO">CAO</option>
-                <option value="NEWSETTE">NEWSETTE</option>
-                <option value="PRIDEVerse">PRIDEVerse</option>
-                <option value="ROTC">ROTC</option>
-                <option value="PUSO">PUSO</option>
-                <option value="SSC">SSC</option>
-            </select>
-
-            <select v-model="histStatus" class="custom-select">
-                <option value="All">All Results</option>
-                <option value="APPROVED">Published (Approved)</option>
-                <option value="REJECTED">Rejected</option>
-            </select>
-
-            <input type="month" v-model="histMonth" class="custom-select" title="Filter by Month/Year">
+        <div class="table-section">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Organization</th>
+                            <th>Event Title</th>
+                            <th>Target Date</th>
+                            <th>Status / Stage</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="filteredPending.length === 0">
+                            <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                <i class="ph-fill ph-check-circle" style="font-size: 3rem; color: var(--success); opacity: 0.5; display: block; margin-bottom: 10px;"></i>
+                                No pending approvals at the moment. You're all caught up!
+                            </td>
+                        </tr>
+                        <tr v-for="event in filteredPending" :key="event.id">
+                            <td style="font-weight: 800; color: var(--pup-maroon);">[[ event.org ]]</td>
+                            <td style="font-weight: 700; color: var(--text-main);">[[ event.title ]]</td>
+                            <td style="color: var(--text-muted); font-weight: 500;">[[ event.date ]]</td>
+                            <td>
+                                <span v-if="event.status === 'PENDING ADMIN'" class="badge badge-pending"><i class="ph-bold ph-file-text"></i> Initial Clearance</span>
+                                <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review"><i class="ph-bold ph-certificate"></i> Final Publication</span>
+                            </td>
+                            <td>
+                                <button @click="openModal(event, false)" class="action-btn" style="background: var(--pup-maroon); color: white;">
+                                    [[ event.status === 'FINAL ADMIN REVIEW' ? 'Final Approval' : 'Initial Review' ]]
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="search-box">
-            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-            <input type="text" v-model="searchHistory" class="search-input" placeholder="Search history records...">
-        </div>
-    </div>
 
-    <div class="table-section">
-        <div style="overflow-x: auto; max-height: 50vh;">
-            <table>
-                <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
-                    <tr>
-                        <th>Organization</th>
-                        <th>Event Title</th>
-                        <th>Target Date</th>
-                        <th>Final Result</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-if="filteredHistory.length === 0">
-                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                            <i class="ph-fill ph-folder-open" style="font-size: 3rem; opacity: 0.5; display: block; margin-bottom: 10px;"></i>
-                            No history records found based on your filters.
-                        </td>
-                    </tr>
-                    <tr v-for="event in filteredHistory" :key="event.id">
-                        <td style="font-weight: 800; color: var(--pup-maroon);">[[ event.org ]]</td>
-                        <td style="font-weight: 700; color: var(--text-main);">[[ event.title ]]</td>
-                        <td style="color: var(--text-muted); font-weight: 500;">[[ event.date ]]</td>
-                        <td>
-                            <span v-if="event.status === 'APPROVED'" class="badge badge-approved"><i class="ph-bold ph-check-circle"></i> Published</span>
-                            <span v-else class="badge badge-rejected"><i class="ph-bold ph-x-circle"></i> Rejected</span>
-                        </td>
-                        <td>
-                            <button @click="openModal(event, true)" class="action-btn">
-                                <i class="ph-bold ph-eye"></i> View Record
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="control-bar" style="margin-top: 40px;">
+            <div class="filter-group">
+                <span style="font-weight:800; color:var(--text-main); display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; margin-right: 15px;">
+                    <i class="ph-bold ph-clock-counter-clockwise" style="color: var(--pup-maroon); font-size: 1.2rem;"></i> History Log
+                </span>
+                
+                <select v-model="histOrg" class="custom-select">
+                    <option value="All">All Organizations</option>
+                    <option value="ITO">ITO</option>
+                    <option value="ITS">ITS</option>
+                    <option value="YEO">YEO</option>
+                    <option value="FTO">FTO</option>
+                    <option value="PAS">PAS</option>
+                    <option value="CAO">CAO</option>
+                    <option value="NEWSETTE">NEWSETTE</option>
+                    <option value="PRIDEVerse">PRIDEVerse</option>
+                    <option value="ROTC">ROTC</option>
+                    <option value="PUSO">PUSO</option>
+                    <option value="SSC">SSC</option>
+                </select>
+
+                <select v-model="histStatus" class="custom-select">
+                    <option value="All">All Results</option>
+                    <option value="APPROVED">Published (Approved)</option>
+                    <option value="REJECTED">Rejected</option>
+                </select>
+
+                <input type="month" v-model="histMonth" class="custom-select" title="Filter by Month/Year">
+            </div>
+            <div class="search-box">
+                <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+                <input type="text" v-model="searchHistory" class="search-input" placeholder="Search history records...">
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div style="overflow-x: auto; max-height: 50vh;">
+                <table>
+                    <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
+                        <tr>
+                            <th>Organization</th>
+                            <th>Event Title</th>
+                            <th>Target Date</th>
+                            <th>Final Result</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="filteredHistory.length === 0">
+                            <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                <i class="ph-fill ph-folder-open" style="font-size: 3rem; opacity: 0.5; display: block; margin-bottom: 10px;"></i>
+                                No history records found based on your filters.
+                            </td>
+                        </tr>
+                        <tr v-for="event in filteredHistory" :key="event.id">
+                            <td style="font-weight: 800; color: var(--pup-maroon);">[[ event.org ]]</td>
+                            <td style="font-weight: 700; color: var(--text-main);">[[ event.title ]]</td>
+                            <td style="color: var(--text-muted); font-weight: 500;">[[ event.date ]]</td>
+                            <td>
+                                <span v-if="event.status === 'APPROVED'" class="badge badge-approved"><i class="ph-bold ph-check-circle"></i> Published</span>
+                                <span v-else class="badge badge-rejected"><i class="ph-bold ph-x-circle"></i> Rejected</span>
+                            </td>
+                            <td>
+                                <button @click="openModal(event, true)" class="action-btn">
+                                    <i class="ph-bold ph-eye"></i> View Record
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -375,10 +386,11 @@
 {% block extra_js %}
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script>
-    const { createApp, ref, computed } = Vue;
+    const { createApp, ref, computed, onMounted } = Vue;
     createApp({
         delimiters: ['[[', ']]'],
         setup() {
+            const isLoading = ref(true);
             const isModalOpen = ref(false);
             const isHistoryMode = ref(false);
             const selectedEvent = ref(null);
@@ -412,6 +424,12 @@
             
             const pendingEvents = ref(pendingArr);
             const historyEvents = ref(historyArr);
+
+            onMounted(() => {
+                setTimeout(() => {
+                    isLoading.value = false;
+                }, 800);
+            });
 
             const filteredPending = computed(() => {
                 if (!pendingEvents.value) return [];
@@ -538,6 +556,7 @@
             };
 
             return { 
+                isLoading,
                 pendingEvents, filteredPending, searchPending,
                 historyEvents, filteredHistory, searchHistory, histOrg, histStatus, histMonth,
                 isModalOpen, isHistoryMode, selectedEvent, actionLoading, 

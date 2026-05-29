@@ -33,62 +33,71 @@
 {% endblock %}
 
 {% block content %}
-<div class="control-bar" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
-    <div class="filter-group">
-        <select id="typeFilter" class="custom-select" onchange="filterHistory()">
-            <option value="all">All Accounts</option>
-            <option value="Student">Students Only</option>
-            <option value="Student Org">Student Orgs Only</option>
-        </select>
-        <select id="orgFilter" class="custom-select" onchange="filterHistory()">
-            <option value="all">All Organizations</option>
-            <option value="ITO">ITO</option>
-            <option value="ITS">ITS</option>
-            <option value="YEO">YEO</option>
-            <option value="FTO">FTO</option>
-            <option value="PAS">PAS</option>
-            <option value="CAO">CAO</option>
-            <option value="NEWS">NEWS</option>
-            <option value="PRIDE">PRIDE</option>
-            <option value="ROTC">ROTC</option>
-            <option value="PUSO">PUSO</option>
-            <option value="SSC">SSC</option>
-        </select>
-        <select id="yearFilter" class="custom-select" onchange="filterHistory()">
-            <option value="all">All Year Levels</option>
-            <option value="1st Year">1st Year</option>
-            <option value="2nd Year">2nd Year</option>
-            <option value="3rd Year">3rd Year</option>
-            <option value="4th Year">4th Year</option>
-        </select>
-        <div class="search-box">
-            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search name or ID..." onkeyup="filterHistory()">
-        </div>
-    </div>
-    
-    <a href="{% url 'manage_accounts' %}" class="btn-cancel" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
-        <i class="ph-bold ph-arrow-left"></i> Back to Active
-    </a>
+<!-- 🟢 SKELETON LOADING STATE 🟢 -->
+<div id="skeleton-loader" class="fade-in">
+    <div class="control-bar"><div class="w-64 h-10 skeleton-shimmer rounded-lg"></div><div class="w-48 h-10 skeleton-shimmer rounded-lg"></div></div>
+    <div class="table-section"><div class="space-y-4 p-4"><div v-for="i in 10" :key="i" class="h-12 skeleton-shimmer rounded"></div></div></div>
 </div>
 
-<div class="table-section">
-    <div style="overflow-x: auto; max-height: 65vh;">
-        <table id="historyTable">
-            <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
-                <tr>
-                    <th>Account Name</th>
-                    <th>Account Type</th>
-                    <th>Organization</th>
-                    <th>Year Level</th>
-                    <th>Status</th>
-                    <th style="text-align: center;">Action</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- Populated by JS -->
-            </tbody>
-        </table>
+<!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
+<div id="main-content-area" style="display: none;" class="fade-in">
+    <div class="control-bar" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+        <div class="filter-group">
+            <select id="typeFilter" class="custom-select" onchange="filterHistory()">
+                <option value="all">All Accounts</option>
+                <option value="Student">Students Only</option>
+                <option value="Student Org">Student Orgs Only</option>
+            </select>
+            <select id="orgFilter" class="custom-select" onchange="filterHistory()">
+                <option value="all">All Organizations</option>
+                <option value="ITO">ITO</option>
+                <option value="ITS">ITS</option>
+                <option value="YEO">YEO</option>
+                <option value="FTO">FTO</option>
+                <option value="PAS">PAS</option>
+                <option value="CAO">CAO</option>
+                <option value="NEWS">NEWS</option>
+                <option value="PRIDE">PRIDE</option>
+                <option value="ROTC">ROTC</option>
+                <option value="PUSO">PUSO</option>
+                <option value="SSC">SSC</option>
+            </select>
+            <select id="yearFilter" class="custom-select" onchange="filterHistory()">
+                <option value="all">All Year Levels</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+            </select>
+            <div class="search-box">
+                <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search name or ID..." onkeyup="filterHistory()">
+            </div>
+        </div>
+        
+        <a href="{% url 'manage_accounts' %}" class="btn-cancel" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+            <i class="ph-bold ph-arrow-left"></i> Back to Active
+        </a>
+    </div>
+
+    <div class="table-section">
+        <div style="overflow-x: auto; max-height: 65vh;">
+            <table id="historyTable">
+                <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
+                    <tr>
+                        <th>Account Name</th>
+                        <th>Account Type</th>
+                        <th>Organization</th>
+                        <th>Year Level</th>
+                        <th>Status</th>
+                        <th style="text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -206,6 +215,12 @@
         openModal('profileModal');
     }
 
-    window.addEventListener('load', () => renderTable(historyData));
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('skeleton-loader').style.display = 'none';
+            document.getElementById('main-content-area').style.display = 'block';
+            renderTable(historyData);
+        }, 800);
+    });
 </script>
 {% endblock %}

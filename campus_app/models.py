@@ -141,3 +141,51 @@ class LoginLockout(models.Model):
 
     def __str__(self):
         return f"{self.identifier} - {self.failed_attempts} attempts"
+
+# 6. AUDIT LOG MODEL (WATCHDOG)
+class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ('CREATE', 'Create'),
+        ('UPDATE', 'Update'),
+        ('DELETE', 'Delete'),
+        ('LOGIN_SUCCESS', 'Successful Login'),
+        ('LOGIN_FAILED', 'Failed Login'),
+        ('LOGOUT', 'Logout'),
+        ('UNAUTHORIZED', 'Unauthorized Access Attempt'),
+        ('SYSTEM_ERROR', 'System Error'),
+        ('FILE_UPLOAD', 'File Uploaded'),
+        ('STATUS_CHANGE', 'Approval Status Change'),
+        ('ATTENDANCE', 'Attendance Recorded'),
+        ('EVALUATION', 'Evaluation Submitted'),
+        ('REGISTRATION', 'Account Registered'),
+        ('VERIFICATION', 'Account Verified'),
+    ]
+
+    STATUS_CHOICES = [
+        ('Success', 'Success'),
+        ('Failed', 'Failed'),
+        ('Denied', 'Denied'),
+        ('Warning', 'Warning'),
+    ]
+
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    target_model = models.CharField(max_length=100, null=True, blank=True)
+    target_id = models.CharField(max_length=100, null=True, blank=True) # ID of the object being acted upon
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Success')
+    
+    # Context Details
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+    
+    # State Tracking (Old vs New)
+    changes = models.JSONField(null=True, blank=True) 
+    
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        actor_name = self.actor.username if self.actor else "Anonymous"
+        return f"[{self.timestamp.strftime('%Y-%m-%d %H:%M')}] {actor_name} -> {self.action} ({self.status})"

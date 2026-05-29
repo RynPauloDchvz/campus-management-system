@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{% static 'css/skeleton.css' %}">
     
     <style>
         :root {
@@ -269,6 +270,11 @@
             <span class="nav-text">Event Approvals</span>
         </a>
 
+        <a href="/admin/audit-logs/" data-title="Audit Logs" class="nav-link {% if request.path == '/admin/audit-logs/' %}active{% endif %}">
+            <i class="ph-bold ph-shield-check"></i>
+            <span class="nav-text">Audit Logs</span>
+        </a>
+
         <div class="nav-item-dropdown" id="orgMonitorDropdown">
             <a href="javascript:void(0)" onclick="document.getElementById('orgMonitorDropdown').classList.toggle('open')" data-title="Org Monitors" class="nav-link {% if 'org-monitor' in request.path %}active{% endif %}">
                 <i class="ph-bold ph-buildings"></i>
@@ -367,9 +373,8 @@
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeModal('logoutModal')">Cancel</button>
                 
-                <form action="{% url 'admin:logout' %}" method="post" style="margin: 0; padding: 0;">
+                <form action="{% url 'admin_logout' %}" method="post" style="margin: 0; padding: 0;">
                     {% csrf_token %}
-                    <input type="hidden" name="next" value="/admin/login/">
                     <button type="submit" class="btn-primary" style="background: var(--danger); display: flex; align-items: center; justify-content: center; min-width: 120px; width: 100%;">Yes, Logout</button>
                 </form>
             </div>
