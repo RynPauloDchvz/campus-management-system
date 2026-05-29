@@ -15,74 +15,93 @@
         to { opacity: 1; transform: translateY(0); }
     }
     [v-cloak] { display: none !important; }
+    
+    /* Custom Scrollbar for Modal */
+    .modal-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .modal-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .modal-scroll::-webkit-scrollbar-thumb {
+        background: #800000;
+        border-radius: 10px;
+    }
+    .dark .modal-scroll::-webkit-scrollbar-thumb {
+        background: #D4AF37;
+    }
 </style>
 
-<div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 mb-6 transition-colors duration-300">
-    
-    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-        <span class="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2"><i class="ph-bold ph-funnel"></i> Filters:</span>
-        
-        <div class="relative">
-            <select v-model="statusFilter" class="border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg pl-4 pr-8 py-2 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold bg-white dark:bg-[#111] min-w-[150px] cursor-pointer appearance-none transition-colors">
-                <option value="All">All Status</option>
-                <option value="Approved">Fully Published</option>
-                <option value="In Progress">In Progress (Pending/Awaiting)</option>
-                <option value="Rejected">Rejected</option>
-            </select>
-            <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+<div id="app" v-cloak>
+    <!-- Filter & Search Bar -->
+    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col lg:flex-row justify-between items-center gap-4 mb-6 transition-colors duration-300">
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <span class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1"><i class="ph-bold ph-funnel"></i> Filters:</span>
+            
+            <div class="relative w-full sm:w-auto">
+                <select v-model="statusFilter" class="w-full sm:min-w-[180px] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold bg-gray-50 dark:bg-[#111] cursor-pointer appearance-none transition-all">
+                    <option value="All">All Event Records</option>
+                    <option value="Approved">Fully Published</option>
+                    <option value="In Progress">Under Process</option>
+                    <option value="Rejected">Rejected Proposals</option>
+                </select>
+                <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
+        </div>
+
+        <div class="relative w-full lg:w-96">
+            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input type="text" v-model="searchQuery" placeholder="Search event title, org, or venue..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-12 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
         </div>
     </div>
 
-    <div class="relative w-full md:w-80 shrink-0">
-        <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-        <input type="text" v-model="searchQuery" placeholder="Search event title or venue..." class="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#111] rounded-lg pl-10 pr-4 py-2 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
-    </div>
-</div>
+    <!-- Main Table Container -->
+    <div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[800px]" v-if="filteredEvents.length > 0">
+                <thead>
+                    <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/20">
+                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Organization</th>
+                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Event Title</th>
+                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Event Date</th>
+                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Status</th>
+                        <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+                    <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50/80 dark:hover:bg-[#151515] transition-colors cursor-pointer group" @click="openModal(event)">
+                        <td class="py-4 px-6 font-black text-pup-maroon dark:text-pup-gold text-xs tracking-tight">[[ event.org ]]</td>
+                        <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
+                        <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400">[[ event.date ]]</td>
+                        <td class="py-4 px-6">
+                            <span v-if="event.status === 'APPROVED'" class="px-3 py-1.5 rounded-lg border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
+                                <i class="ph-fill ph-check-circle text-xs"></i> Published
+                            </span>
+                            <span v-else-if="event.status === 'REJECTED'" class="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
+                                <i class="ph-fill ph-x-circle text-xs"></i> Rejected
+                            </span>
+                            <span v-else class="px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
+                                <i class="ph-fill ph-clock-counter-clockwise text-xs"></i> In Progress
+                            </span>
+                        </td>
+                        <td class="py-4 px-6 text-center" @click.stop>
+                            <button @click="openModal(event)" class="bg-gray-100 hover:bg-pup-maroon dark:bg-gray-800 dark:hover:bg-pup-gold text-gray-700 hover:text-white dark:text-gray-300 dark:hover:text-black font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg transition-all inline-flex items-center gap-2 border border-gray-200 dark:border-gray-700 shadow-sm group-hover:scale-105 active:scale-95">
+                                <i class="ph-bold ph-eye text-sm"></i> Details
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
 
-<div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
-    <table class="w-full text-left border-collapse" v-if="filteredEvents.length > 0">
-        <thead>
-            <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/20">
-                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Event Title</th>
-                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Event Date</th>
-                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Tracking Status</th>
-                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase text-center">Action</th>
-            </tr>
-        </thead>
-        <tbody class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
-            <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors cursor-pointer" @click="openModal(event)">
-                <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
-                <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400">[[ event.date ]]</td>
-                <td class="py-4 px-6">
-                    <span v-if="event.status === 'APPROVED'" class="px-3 py-1 rounded-md border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 w-max">
-                        <i class="ph-fill ph-check-circle"></i> Published
-                    </span>
-                    <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="px-3 py-1 rounded-md border border-teal-200 dark:border-teal-900/50 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-500 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 w-max">
-                        <i class="ph-fill ph-shield-check"></i> Verified
-                    </span>
-                    <span v-else-if="event.status === 'ADMIN APPROVED'" class="px-3 py-1 rounded-md border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-500 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 w-max">
-                        <i class="ph-fill ph-upload-simple"></i> Awaiting Upload
-                    </span>
-                    <span v-else-if="event.status === 'PENDING ADMIN'" class="px-3 py-1 rounded-md border border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-500 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 w-max">
-                        <i class="ph-fill ph-clock"></i> Admin Review
-                    </span>
-                    <span v-else-if="event.status === 'REJECTED'" class="px-3 py-1 rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-500 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1 w-max">
-                        <i class="ph-fill ph-x-circle"></i> Rejected
-                    </span>
-                </td>
-                <td class="py-4 px-6 text-center" @click.stop>
-                    <button @click="openModal(event)" class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-[11px] px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 border border-gray-200 dark:border-gray-700 shadow-sm">
-                        <i class="ph-bold ph-eye text-sm"></i> View Details
-                    </button>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div v-else class="py-20 text-center">
-        <i class="ph-fill ph-folder-open text-6xl text-gray-300 dark:text-gray-700 mb-4 inline-block"></i>
-        <h3 class="text-xl font-bold text-gray-500 dark:text-gray-400 tracking-tight">No match found</h3>
-        <p class="text-sm text-gray-400 dark:text-gray-500 mt-1 font-medium">Try different keywords or check your filter settings.</p>
+            <div v-else class="py-24 text-center">
+                <div class="relative inline-block mb-4">
+                    <i class="ph-fill ph-folder-open text-7xl text-gray-200 dark:text-gray-800"></i>
+                    <i class="ph-bold ph-magnifying-glass absolute -bottom-2 -right-2 text-3xl text-gray-400 dark:text-gray-600"></i>
+                </div>
+                <h3 class="text-lg font-black text-gray-500 dark:text-gray-400 tracking-tight uppercase">No records found</h3>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 font-bold uppercase tracking-widest">Refine your search or check filters.</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -92,52 +111,95 @@
 {% endblock %}
 
 {% block modals %}
-<div v-if="isModalOpen" v-cloak class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm transition-opacity" @click="closeModal">
-    <div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in duration-200" @click.stop>
+<!-- Event Details Modal -->
+<div v-if="isModalOpen" v-cloak class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity" @click="closeModal">
+    <div class="bg-gray-100 dark:bg-[#151515] rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-in fade-in zoom-in duration-200 max-h-[95vh]" @click.stop>
         
-        <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-[#111]">
-            <h3 class="text-lg font-extrabold text-gray-900 dark:text-white tracking-tight">Event Details Record</h3>
-            <button @click="closeModal" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition bg-white dark:bg-[#151515] hover:bg-red-50 dark:hover:bg-red-900/20 w-8 h-8 rounded-full flex items-center justify-center shadow-sm border border-transparent hover:border-red-200 dark:hover:border-red-900/30">
-                <i class="ph-bold ph-x text-lg"></i>
+        <!-- Modal Header -->
+        <div class="p-5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#111] shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center">
+                    <i class="ph-fill ph-archive text-pup-maroon dark:text-pup-gold text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-gray-900 dark:text-white tracking-tight uppercase leading-none">Event History Log</h3>
+                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">Reference ID: #[[ selectedEvent.id ]]</p>
+                </div>
+            </div>
+            <button @click="closeModal" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition bg-gray-50 dark:bg-[#1a1a1a] hover:bg-red-50 dark:hover:bg-red-900/20 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border border-transparent hover:border-red-200">
+                <i class="ph-bold ph-x text-xl"></i>
             </button>
         </div>
 
-        <div class="p-6 flex flex-col gap-6 overflow-y-auto max-h-[75vh]" v-if="selectedEvent">
-            <div>
-                <h2 class="text-2xl font-black text-gray-900 dark:text-white leading-tight">[[ selectedEvent.title ]]</h2>
-                <div class="flex gap-2 mt-2">
-                    <span class="inline-block px-3 py-0.5 rounded-md border border-pup-maroon text-pup-maroon dark:border-pup-gold dark:text-pup-gold text-[10px] font-extrabold tracking-widest uppercase shadow-sm bg-gray-50 dark:bg-[#111]">[[ selectedEvent.org ]]</span>
+        <!-- Modal Body (SCROLLABLE HERE) -->
+        <div class="p-6 md:p-8 flex flex-col gap-8 overflow-y-auto modal-scroll grow" v-if="selectedEvent">
+            
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
+                <div class="max-w-2xl">
+                    <span class="inline-block px-3 py-1 rounded-md bg-pup-maroon/10 text-pup-maroon dark:bg-pup-gold/10 dark:text-pup-gold text-[10px] font-black tracking-widest uppercase mb-3 border border-pup-maroon/20 dark:border-pup-gold/20">[[ selectedEvent.org ]]</span>
+                    <h2 class="text-2xl md:text-3xl font-black text-gray-900 dark:text-white leading-tight uppercase">[[ selectedEvent.title ]]</h2>
                 </div>
-            </div>
-
-            <div v-if="selectedEvent.status === 'FINAL ADMIN REVIEW' || selectedEvent.status === 'APPROVED'" class="bg-blue-50 dark:bg-blue-900/10 p-5 rounded-xl border border-blue-200 dark:border-blue-900/40">
-                <h4 class="text-sm font-black text-blue-800 dark:text-blue-300 mb-3 uppercase tracking-wide flex items-center gap-2">
-                    <i class="ph-bold ph-folder-open text-lg"></i> Uploaded Softcopies
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div @click="viewActualDoc('Signed Request Letter', 'letter')" class="bg-white dark:bg-[#151515] p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group">
-                        <i class="ph-fill ph-file-text text-4xl text-gray-300 group-hover:text-blue-500 mb-2 transition-colors"></i>
-                        <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase">Signed Request Letter</span>
-                        <span class="text-[9px] text-blue-500 mt-1 block">Click to view image</span>
+                <div class="flex flex-col items-start md:items-end">
+                    <span class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Current Tracker</span>
+                    <div v-if="selectedEvent.status === 'APPROVED'" class="bg-green-500 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg shadow-green-500/20">
+                        OFFICIALLY PUBLISHED
                     </div>
-                    <div @click="viewActualDoc('Signed Permit', 'permit')" class="bg-white dark:bg-[#151515] p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group">
-                        <i class="ph-fill ph-certificate text-4xl text-gray-300 group-hover:text-blue-500 mb-2 transition-colors"></i>
-                        <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase">Signed Permit</span>
-                        <span class="text-[9px] text-blue-500 mt-1 block">Click to view image</span>
+                    <div v-else-if="selectedEvent.status === 'REJECTED'" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg shadow-red-600/20">
+                        REJECTED BY OFFICE
                     </div>
-                    <div @click="viewActualDoc('Equipment Form', 'equipment')" class="bg-white dark:bg-[#151515] p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group">
-                        <i class="ph-fill ph-toolbox text-4xl text-gray-300 group-hover:text-blue-500 mb-2 transition-colors"></i>
-                        <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase">Equipment Form</span>
-                        <span class="text-[9px] text-blue-500 mt-1 block">Click to view image</span>
+                    <div v-else class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">
+                        UNDER VERIFICATION
                     </div>
                 </div>
             </div>
 
-            <div v-if="selectedEvent.status === 'REJECTED'" class="bg-red-50 dark:bg-red-900/10 p-4 rounded-lg border border-red-200 dark:border-red-900/40">
-                <label class="block text-[10px] font-extrabold text-red-500 uppercase tracking-widest mb-1.5"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection</label>
-                <p class="text-sm text-red-700 dark:text-red-400 font-medium">[[ selectedEvent.remarks || 'No reason provided.' ]]</p>
+            <!-- Documents Section (Dashboard Layout) -->
+            <div v-if="selectedEvent.status !== 'REJECTED'" class="bg-white dark:bg-gray-800/40 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm animate-fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h4 class="text-xs font-black text-gray-900 dark:text-[#D4AF37] uppercase tracking-widest flex items-center gap-2">
+                        <i class="ph-bold ph-folder-open text-xl text-pup-maroon dark:text-pup-gold"></i> Processed Document Records
+                    </h4>
+                    <span class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-gray-200 dark:border-gray-700">
+                        [[ currentDocCount ]] FILES ATTACHED
+                    </span>
+                </div>
+                
+                <!-- Dynamic Grid based on 4 or 2 mode -->
+                <div :class="['grid gap-4', currentDocCount === 4 ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-2']">
+                    <div v-for="doc in activeDocs" :key="doc.label" 
+                         @click="viewActualDoc(doc.label, doc.url)"
+                         class="bg-gray-50 dark:bg-[#1a1a1a] p-5 rounded-xl border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-xl transition-all flex flex-col items-center justify-center group relative overflow-hidden">
+                        
+                        <div class="absolute inset-0 bg-pup-maroon dark:bg-pup-gold opacity-0 group-hover:opacity-[0.03] transition-opacity"></div>
+                        
+                        <div class="relative w-14 h-14 flex items-center justify-center mb-3">    
+                            <i :class="['ph-fill', doc.icon, 'text-5xl text-gray-300 dark:text-gray-600 transition-all group-hover:scale-110 group-hover:rotate-3']"></i>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <i class="ph-bold ph-eye text-5xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-pup-maroon dark:text-pup-gold/80"></i>
+                            </div>
+                        </div>
+                        <span class="block text-[10px] font-black text-gray-700 dark:text-gray-300 uppercase leading-tight px-2">[[ doc.label ]]</span>
+                        <div class="mt-2 h-1 w-8 bg-gray-200 dark:bg-gray-700 rounded-full group-hover:w-16 group-hover:bg-pup-maroon dark:group-hover:bg-pup-gold transition-all duration-500"></div>
+                        <span class="text-[9px] text-blue-500 dark:text-pup-gold mt-3 font-bold uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">View Record</span>
+                    </div>
+                </div>
             </div>
 
+            <!-- Rejection Remarks -->
+            <div v-if="selectedEvent.status === 'REJECTED'" class="bg-red-50 dark:bg-red-900/10 p-6 rounded-2xl border border-red-200 dark:border-red-900/40 animate-fade-in shadow-sm shadow-red-500/5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
+                        <i class="ph-bold ph-warning-circle text-xl"></i>
+                    </div>
+                    <label class="block text-[11px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">Office Rejection Remarks</label>
+                </div>
+                <p class="text-sm text-red-800 dark:text-red-300 font-bold leading-relaxed bg-white/50 dark:bg-black/20 p-4 rounded-xl border border-red-100 dark:border-red-900/20">
+                    [[ selectedEvent.remarks || 'No detailed remarks provided for this rejection.' ]]
+                </p>
+            </div>
+
+            <!-- Formal Letter Preview -->
             <div class="bg-white text-black text-sm sm:text-base leading-relaxed p-8 sm:p-12 border border-gray-300 shadow-sm rounded-lg" style="color: #000 !important; font-family: Arial, sans-serif !important;">
                 <p class="mb-6 font-bold">[[ selectedEvent.date ]]</p>
                 
@@ -184,31 +246,45 @@
                     <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
                 </div>
             </div>
-
+            
+            <div class="h-4"></div>
         </div>
-        <div class="h-6"></div>
+
+        <!-- Modal Footer -->
+        <div class="p-5 bg-white dark:bg-[#111] border-t border-gray-200 dark:border-gray-800 shrink-0 flex justify-center">
+            <button @click="closeModal" class="w-full md:w-auto px-10 py-3 bg-gray-900 dark:bg-pup-gold text-white dark:text-black font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-all shadow-lg active:scale-95">
+                Close Record View
+            </button>
+        </div>
     </div>
 </div>
 
-<div v-if="isDocViewerOpen" v-cloak class="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm transition-opacity" @click="closeDocViewer">
-    <div class="bg-gray-100 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl h-[85vh] overflow-hidden flex flex-col border border-gray-300 dark:border-gray-700" @click.stop>
-        <div class="p-4 border-b border-gray-300 dark:border-gray-700 flex justify-between items-center bg-gray-200 dark:bg-[#111] shrink-0">
-            <h3 class="text-sm font-extrabold text-gray-800 dark:text-gray-300 tracking-widest uppercase"><i class="ph-bold ph-magnifying-glass-plus text-blue-500"></i> [[ viewedDocTitle ]]</h3>
-            <button @click="closeDocViewer" class="text-gray-500 hover:text-red-500 transition"><i class="ph-bold ph-x-circle text-2xl"></i></button>
-        </div>
+<!-- Lightbox Viewer (Image Zoom) -->
+<div v-if="isDocViewerOpen" v-cloak class="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md transition-opacity" @click="closeDocViewer">
+    <div class="relative w-full max-w-5xl h-full flex flex-col items-center justify-center" @click.stop>
         
-        <div class="p-6 flex flex-col items-center justify-center flex-grow overflow-y-auto text-center bg-white dark:bg-[#0a0a0a]">
+        <!-- Controls -->
+        <div class="absolute top-4 right-0 flex items-center gap-4 z-[6001]">
+            <a v-if="viewedDocUrl" :href="viewedDocUrl" download class="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all backdrop-blur-md border border-white/20" title="Download Document">
+                <i class="ph-bold ph-download-simple text-xl"></i>
+            </a>
+            <button @click="closeDocViewer" class="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all shadow-xl active:scale-90" title="Close Viewer">
+                <i class="ph-bold ph-x text-2xl"></i>
+            </button>
+        </div>
+
+        <div class="p-2 md:p-6 w-full h-full flex items-center justify-center">
             <template v-if="viewedDocUrl">
-                <img :src="viewedDocUrl" alt="Scanned Document" class="max-w-full h-auto object-contain rounded-lg border border-gray-200 dark:border-gray-800 shadow-md mb-4" style="max-height: 60vh;">
-                <span class="bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase flex items-center gap-2 mt-auto">
-                    <i class="ph-bold ph-check-circle text-lg"></i> Image Loaded Successfully
-                </span>
+                <img :src="viewedDocUrl" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10 animate-in zoom-in duration-300">
+                <div class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md border border-white/20 px-6 py-2 rounded-full text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <i class="ph-bold ph-eye"></i> Viewing: [[ viewedDocTitle ]]
+                </div>
             </template>
-            <template v-else>
-                <i class="ph-fill ph-image-broken text-8xl text-red-500/50 mb-4"></i>
-                <h2 class="text-xl font-black text-gray-800 dark:text-white mb-2 uppercase tracking-wide">Image Not Found</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md">The student organization did not upload a valid image file or the file is missing from the server database.</p>
-            </template>
+            <div v-else class="text-center bg-gray-900 p-12 rounded-3xl border border-gray-800">
+                <i class="ph-fill ph-image-broken text-8xl text-red-500/50 mb-4 block"></i>
+                <h2 class="text-2xl font-black text-white mb-2 uppercase tracking-wide">Image Not Found</h2>
+                <p class="text-sm text-gray-400 max-w-sm mx-auto font-medium">The document image is either missing from the server or was not uploaded properly by the organization.</p>
+            </div>
         </div>
     </div>
 </div>
@@ -222,7 +298,6 @@
 
         createApp({
             delimiters: ['[[', ']]'],
-            text: 'Inter',
             setup() {
                 const searchQuery = ref('');
                 const statusFilter = ref('All');
@@ -249,7 +324,8 @@
                     return historyEvents.value.filter(event => {
                         const sQuery = searchQuery.value.toLowerCase();
                         const matchSearch = event.title.toLowerCase().includes(sQuery) || 
-                                            event.venue.toLowerCase().includes(sQuery);
+                                            event.org.toLowerCase().includes(sQuery) ||
+                                            (event.venue && event.venue.toLowerCase().includes(sQuery));
                                             
                         let checkStatus = event.status;
                         let mappedStatus = 'In Progress';
@@ -266,6 +342,62 @@
                     });
                 });
 
+                // Compute requirement mode (4 or 2)
+                const currentDocCount = computed(() => {
+                    if (!selectedEvent.value) return 0;
+                    return selectedEvent.value.requirement_mode ? parseInt(selectedEvent.value.requirement_mode) : 4;
+                });
+
+                // Compute active documents to display in grid
+                const activeDocs = computed(() => {
+                    if (!selectedEvent.value) return [];
+                    const e = selectedEvent.value;
+                    const mode = currentDocCount.value;
+
+                    if (mode === 2) {
+                        return [
+                            { label: 'Letter of Reschedule', icon: 'ph-file-text', url: e.letter_of_reschedule || e.letter_url },
+                            { label: 'Reschedule Cover Photo', icon: 'ph-image', url: e.reschedule_cover_photo || e.event_cover_photo }
+                        ];
+                    } else {
+                        return [
+                            { label: 'Letter of Approval', icon: 'ph-file-text', url: e.letter_url }, 
+                            { label: 'Signed Permit', icon: 'ph-certificate', url: e.permit_url },
+                            { label: 'Excuse Letter & Equip', icon: 'ph-toolbox', url: e.equipment_url },
+                            { label: 'Event Cover Photo', icon: 'ph-image', url: e.event_cover_photo }
+                        ];
+                    }
+                });
+
+                const parsedDescription = computed(() => {
+                    if (!selectedEvent.value) return null;
+                    let desc = selectedEvent.value.description || "";
+
+                    if (desc.includes("[RESCHEDULE REQUEST]")) {
+                        let reasonStr = "";
+                        let origDescStr = "";
+                        let parts = desc.split("|");
+                        parts.forEach(part => {
+                            if(part.includes("Reason:")) reasonStr = part.replace("[RESCHEDULE REQUEST]", "").replace("Reason:", "").trim();
+                            if(part.includes("Original Desc:")) origDescStr = part.replace("Original Desc:", "").trim();
+                        });
+                        return { type: 'reschedule', reason: reasonStr, originalDesc: origDescStr };
+                    }
+                    else if (desc.includes("[EXCUSE & EQUIPMENT REQUEST]")) {
+                        let targetStr = "";
+                        let equipStr = "";
+                        let origDescStr = "";
+                        let parts = desc.split("|");
+                        parts.forEach(part => {
+                            if(part.includes("Target:")) targetStr = part.replace("[EXCUSE & EQUIPMENT REQUEST]", "").replace("Target:", "").trim();
+                            if(part.includes("Equipment:")) equipStr = part.replace("Equipment:", "").trim();
+                            if(part.includes("Desc:")) origDescStr = part.replace("Desc:", "").trim();
+                        });
+                        return { type: 'excuse', target: targetStr, equipment: equipStr, originalDesc: origDescStr }; 
+                    }
+                    return { type: 'standard', originalDesc: desc };
+                });
+
                 const openModal = (event) => {
                     selectedEvent.value = event;
                     isModalOpen.value = true;
@@ -278,16 +410,9 @@
                     setTimeout(() => { selectedEvent.value = null; }, 300);
                 };
 
-                // 🟢 IN-UPDATE PARA SALUHIN ANG 3 DOC TYPES KASAMA ANG EQUIPMENT 🟢
-                const viewActualDoc = (title, docType) => {
+                const viewActualDoc = (title, url) => {
                     viewedDocTitle.value = title;
-                    if (docType === 'letter') {
-                        viewedDocUrl.value = selectedEvent.value.letter_url || '';
-                    } else if (docType === 'permit') {
-                        viewedDocUrl.value = selectedEvent.value.permit_url || '';
-                    } else if (docType === 'equipment') {
-                        viewedDocUrl.value = selectedEvent.value.equipment_url || ''; // Sasaluhin sa database update mamaya
-                    }
+                    viewedDocUrl.value = url || '';
                     isDocViewerOpen.value = true;
                 };
 
@@ -298,7 +423,8 @@
                 return {
                     searchQuery, statusFilter, filteredEvents,
                     isModalOpen, selectedEvent, openModal, closeModal,
-                    isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer
+                    isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
+                    currentDocCount, activeDocs, parsedDescription
                 }
             }
         }).mount('#app');

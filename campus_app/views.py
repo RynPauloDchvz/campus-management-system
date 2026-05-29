@@ -991,10 +991,19 @@ def organizer_event_vault(request):
     vault_data = []
     for e in vault_events:
         docs = []
-        if e.letter_image: docs.append({'title': '1. Request Letter', 'preview': e.letter_image.url})
-        if e.permit_image: docs.append({'title': '2. Event Permit', 'preview': e.permit_image.url})
-        if e.equipment_image: docs.append({'title': '3. Equipment Form', 'preview': e.equipment_image.url})
-        if e.other_attachments: docs.append({'title': '4. Other Attachments', 'preview': e.other_attachments.url})
+        mode = e.requirement_mode if getattr(e, 'requirement_mode', None) else 4
+
+        if mode == 2:
+            if e.letter_image: docs.append({'title': '1. Letter of Reschedule', 'preview': e.letter_image.url})
+            if getattr(e, 'event_cover_photo', None): docs.append({'title': '2. Event Reschedule Cover Photo', 'preview': e.event_cover_photo.url})
+            elif getattr(e, 'reschedule_cover_photo', None): docs.append({'title': '2. Event Reschedule Cover Photo', 'preview': e.reschedule_cover_photo.url})
+            elif e.other_attachments: docs.append({'title': '2. Event Reschedule Cover Photo', 'preview': e.other_attachments.url})
+        else:
+            if e.letter_image: docs.append({'title': '1. Request Letter', 'preview': e.letter_image.url})
+            if e.permit_image: docs.append({'title': '2. Event Permit', 'preview': e.permit_image.url})
+            if e.equipment_image: docs.append({'title': '3. Equipment Form', 'preview': e.equipment_image.url})
+            if getattr(e, 'event_cover_photo', None): docs.append({'title': '4. Event Cover Photo', 'preview': e.event_cover_photo.url})
+            elif e.other_attachments: docs.append({'title': '4. Event Cover Photo', 'preview': e.other_attachments.url})
 
         vault_data.append({
             'id': e.id,
@@ -1400,9 +1409,13 @@ def adviser_history(request):
             'venue': e.venue or '', 'description': e.description or '',
             'equipment': getattr(e, 'equipment_needed', '') or '', 'status': e.event_status.upper() if e.event_status else '',
             'remarks': e.remarks if e.remarks else '',
-            'letter_url': e.letter_image.url if getattr(e, 'letter_image', None) and hasattr(e.letter_image, 'url') else '',
-            'permit_url': e.permit_image.url if getattr(e, 'permit_image', None) and hasattr(e.permit_image, 'url') else '',
-            'equipment_url': e.equipment_image.url if getattr(e, 'equipment_image', None) and hasattr(e.equipment_image, 'url') else ''
+            'letter_url': e.letter_of_approval.url if getattr(e, 'letter_of_approval', None) else (e.letter_image.url if getattr(e, 'letter_image', None) else ''),
+            'permit_url': e.permit_to_conduct.url if getattr(e, 'permit_to_conduct', None) else (e.permit_image.url if getattr(e, 'permit_image', None) else ''),
+            'equipment_url': e.excuse_letter_equipment.url if getattr(e, 'excuse_letter_equipment', None) else (e.equipment_image.url if getattr(e, 'equipment_image', None) else ''),
+            'event_cover_photo': e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) else (e.cover_photo.url if getattr(e, 'cover_photo', None) else ''),
+            'letter_of_reschedule': e.letter_of_reschedule.url if getattr(e, 'letter_of_reschedule', None) else '',
+            'reschedule_cover_photo': e.reschedule_cover_photo.url if getattr(e, 'reschedule_cover_photo', None) else (getattr(e, 'reschedule_cover_photo_legacy', None).url if getattr(e, 'reschedule_cover_photo_legacy', None) else ''),
+            'requirement_mode': e.requirement_mode
         })
     return render(request, 'organization adviser/history.html', {'events_json': json.dumps(events_data)})
 
