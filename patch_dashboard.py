@@ -1,77 +1,23 @@
-{% extends 'adviser_base.html' %}
-{% load static %}
+import codecs
+import sys
 
-{% block title %}Event Approvals | PUPUni-CAMS{% endblock %}
-{% block page_title %}Event Approvals{% endblock %}
-{% block page_subtitle %}Review incoming proposals and verify permits from Student Organizations.{% endblock %}
+file_path = r'templates/organization adviser/dashboard.html'
 
-{% block content %}
-<style>
-    .animate-fade-in {
-        animation: fadeIn 0.3s ease-in-out;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    [v-cloak] { display: none !important; }
-</style>
+try:
+    with codecs.open(file_path, 'r', 'utf-8') as f:
+        content = f.read()
+except Exception as e:
+    print(f"Error reading file: {e}")
+    sys.exit(1)
 
-<div id="app" v-cloak>
-    
-    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center mb-6 transition-colors duration-300">
-        <div class="flex items-center gap-3">
-            <span class="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2 uppercase tracking-widest"><i class="ph-bold ph-clock"></i> Action Required</span>
-        </div>
-        <div class="relative w-full sm:w-80 mt-3 sm:mt-0">
-            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search event or org..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
-        </div>
-    </div>
+marker = '<div v-if="isModalOpen"'
+idx = content.find(marker)
 
-    <div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse min-w-[600px]">
-                <thead>
-                    <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#111]">
-                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Organization</th>
-                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Event Title</th>
-                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Target Date</th>
-                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Status</th>
-                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
-                    <tr v-if="filteredEvents.length === 0">
-                        <td colspan="5" class="py-12 text-center text-gray-500 font-medium">
-                            <i class="ph-fill ph-check-circle text-4xl text-green-500 mb-2 opacity-50 block"></i>
-                            No pending proposals at the moment. You're all caught up!
-                        </td>
-                    </tr>
-                    <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
-                        <td class="py-4 px-6 font-extrabold text-pup-maroon dark:text-pup-gold">[[ event.org ]]</td>
-                        <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
-                        <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400">[[ event.date ]]</td>
-                        <td class="py-4 px-6">
-                            <span v-if="event.status === 'PENDING ADVISER'" class="px-3 py-1 rounded border border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-500 text-[10px] font-extrabold uppercase tracking-wide">
-                                Initial Review
-                            </span>
-                            <span v-else-if="event.status === 'PERMIT VERIFICATION'" class="px-3 py-1 rounded border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-500 text-[10px] font-extrabold uppercase tracking-wide">
-                                Verify Signatures
-                            </span>
-                        </td>
-                        <td class="py-4 px-6">
-                            <button @click="openModal(event)" class="bg-pup-maroon hover:bg-red-900 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-black text-white font-bold text-[11px] px-4 py-2 rounded-lg transition-colors shadow-sm">
-                                [[ event.status === 'PERMIT VERIFICATION' ? 'Check Documents' : 'Review Proposal' ]]
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+if idx == -1:
+    print("Marker not found in the original file!")
+    sys.exit(1)
 
-        <div v-if="isModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+new_tail = """    <div v-if="isModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
         <div class="bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
             
             <div class="p-4 border-b border-gray-300 dark:border-gray-800 flex justify-between items-center bg-gray-100 dark:bg-[#111] shrink-0">
@@ -82,7 +28,7 @@
                 <button @click="closeModal" class="text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
             </div>
 
-            <div class="p-6 sm:p-8 flex flex-col gap-6 overflow-y-auto grow" v-if="selectedEvent">
+            <div class="p-6 sm:p-8 flex flex-col gap-6 overflow-y-auto max-h-[75vh]" v-if="selectedEvent">
                 
                 <div v-if="selectedEvent.status === 'PERMIT VERIFICATION'" class="bg-blue-50 dark:bg-gray-800 p-5 rounded-xl border border-blue-200 dark:border-[#D4AF37] animate-fade-in shrink-0">
                     <div class="flex justify-between items-center mb-4">
@@ -96,7 +42,7 @@
                     </div>
                 </div>
 
-                <div v-if="selectedEvent.status !== 'PERMIT VERIFICATION'" class="bg-white text-black text-sm sm:text-base leading-relaxed p-8 sm:p-12 border border-gray-300 shadow-sm rounded-lg" style="color: #000 !important; font-family: Arial, sans-serif !important;">
+                <div class="bg-white text-black text-sm sm:text-base leading-relaxed p-8 sm:p-12 border border-gray-300 shadow-sm rounded-lg mt-6 overflow-y-auto max-h-[30vh] sm:max-h-[40vh]" style="color: #000 !important; font-family: Arial, sans-serif !important;">
                     <p class="mb-6 font-bold">[[ selectedEvent.date ]]</p>
                     
                     <p class="mb-6 leading-tight">
@@ -339,8 +285,8 @@
                     const fileCountBadge = document.getElementById('file-count-badge');
 
                     if(verificationFilesGrid && selectedEvent.value.status === 'PERMIT VERIFICATION') {
+                         const count = selectedEvent.value.description && selectedEvent.value.description.includes('[RESCHEDULE REQUEST]') ? '2' : '4';
                          const eventData = selectedEvent.value;
-                         const count = eventData.requirement_mode ? eventData.requirement_mode.toString() : (eventData.description && eventData.description.includes('[RESCHEDULE REQUEST]') ? '2' : '4');
 
                          verificationFilesGrid.innerHTML = '';
 
@@ -476,3 +422,7 @@
     }).mount('#app');
 </script>
 {% endblock %}
+"""
+
+with codecs.open(file_path, 'w', 'utf-8') as f:
+    f.write(content[:idx] + new_tail)

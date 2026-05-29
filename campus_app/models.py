@@ -47,7 +47,22 @@ class Event(models.Model):
     permit_image = models.ImageField(upload_to='event_documents/', null=True, blank=True)
     equipment_image = models.ImageField(upload_to='event_documents/', null=True, blank=True) 
     other_attachments = models.ImageField(upload_to='event_documents/', null=True, blank=True)
-    requirement_mode = models.IntegerField(null=True, blank=True, choices=[(2, '2 Documents'), (4, '4 Documents')]) 
+    
+    # 🟢 4-File System Fields
+    letter_of_approval = models.ImageField(upload_to='event_documents/', null=True, blank=True)
+    permit_to_conduct = models.ImageField(upload_to='event_documents/', null=True, blank=True)
+    excuse_letter_equipment = models.ImageField(upload_to='event_documents/', null=True, blank=True)
+    event_cover_photo = models.ImageField(upload_to='event_documents/', null=True, blank=True)
+
+    # 🟢 2-File System Fields (Reschedule)
+    letter_of_reschedule = models.ImageField(upload_to='event_documents/', null=True, blank=True)
+    reschedule_cover_photo = models.ImageField(upload_to='event_documents/', null=True, blank=True)
+    
+    # Keep legacy fields for backward compatibility during migration if needed
+    cover_photo = models.ImageField(upload_to='event_documents/', null=True, blank=True)
+    reschedule_cover_photo_legacy = models.ImageField(upload_to='event_documents/', null=True, blank=True)
+    
+    requirement_mode = models.IntegerField(null=True, blank=True, choices=[(2, '2 Documents'), (4, '4 Documents')])
 
     # Geofencing
     target_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
