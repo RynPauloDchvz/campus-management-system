@@ -1160,7 +1160,7 @@ def event_approvals_view(request):
     history = Event.objects.filter(event_status__in=['Approved', 'Rejected']).order_by('-created_at')
     history_data = []
     for e in history:
-        # 🟢 Idinagdag ang equipment_url pati 12-hour format sa History 🟢
+        # 🟢 Idinagdag ang lahat ng fields para sa History consistency 🟢
         history_data.append({
             'id': e.id, 'org': e.org_id, 'title': e.event_title or '',
             'date': e.event_date.strftime('%B %d, %Y') if e.event_date else '',
@@ -1171,9 +1171,13 @@ def event_approvals_view(request):
             'venue': e.venue or '', 'description': e.description or '',
             'equipment': getattr(e, 'equipment_needed', '') or '', 'status': e.event_status.upper() if e.event_status else '',
             'remarks': e.remarks if e.remarks else '',
-            'letter_url': e.letter_image.url if getattr(e, 'letter_image', None) and hasattr(e.letter_image, 'url') else '',
-            'permit_url': e.permit_image.url if getattr(e, 'permit_image', None) and hasattr(e.permit_image, 'url') else '',
-            'equipment_url': e.equipment_image.url if getattr(e, 'equipment_image', None) and hasattr(e.equipment_image, 'url') else ''
+            'letter_url': e.letter_of_approval.url if getattr(e, 'letter_of_approval', None) else (e.letter_image.url if getattr(e, 'letter_image', None) else ''),
+            'permit_url': e.permit_to_conduct.url if getattr(e, 'permit_to_conduct', None) else (e.permit_image.url if getattr(e, 'permit_image', None) else ''),
+            'equipment_url': e.excuse_letter_equipment.url if getattr(e, 'excuse_letter_equipment', None) else (e.equipment_image.url if getattr(e, 'equipment_image', None) else ''),
+            'event_cover_photo': e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) else (e.cover_photo.url if getattr(e, 'cover_photo', None) else ''),
+            'letter_of_reschedule': e.letter_of_reschedule.url if getattr(e, 'letter_of_reschedule', None) else '',
+            'reschedule_cover_photo': e.reschedule_cover_photo.url if getattr(e, 'reschedule_cover_photo', None) else (getattr(e, 'reschedule_cover_photo_legacy', None).url if getattr(e, 'reschedule_cover_photo_legacy', None) else ''),
+            'requirement_mode': e.requirement_mode
         })
         
     return render(request, 'admin/event_approvals.html', {
@@ -1297,6 +1301,8 @@ def admin_api_action(request):
             elif data.get('action') == 'reschedule':
                 event.event_date = data.get('event_date')
                 event.start_time = data.get('event_time')
+                if data.get('event_end_time'):
+                    event.end_time = data.get('event_end_time')
                 event.remarks = f"Event was rescheduled by Admin to {event.event_date} at {event.start_time}."
                 event.save()
                 return JsonResponse({"status": "success", "message": "Event successfully rescheduled."})

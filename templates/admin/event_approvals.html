@@ -10,55 +10,291 @@
 <style>
     [v-cloak] { display: none !important; }
 
-    .control-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 20px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 25px; flex-wrap: wrap; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-    .filter-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;}
-    .search-box { display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 0 15px; width: 300px; }
-    .search-input { background: transparent; border: none; color: var(--text-main); padding: 10px; font-family: 'Inter'; width: 100%; outline: none; }
+    /* 📱 Mobile First & General Layout 📱 */
+    .control-bar { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        background: var(--card-bg); 
+        padding: 20px; 
+        border-radius: 16px; 
+        border: 1px solid var(--border); 
+        margin-bottom: 25px; 
+        flex-wrap: wrap; 
+        gap: 15px; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02); 
+    }
     
-    .custom-select { background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main); padding: 10px 15px; border-radius: 8px; font-family: 'Inter'; outline: none; font-size: 0.85rem;}
+    .filter-group { 
+        display: flex; 
+        gap: 10px; 
+        align-items: center; 
+        flex-wrap: wrap; 
+    }
+    
+    .search-box { 
+        display: flex; 
+        align-items: center; 
+        background: var(--input-bg); 
+        border: 1px solid var(--border); 
+        border-radius: 8px; 
+        padding: 0 15px; 
+        width: 100%; 
+        max-width: 300px; 
+    }
+    
+    .search-input { 
+        background: transparent; 
+        border: none; 
+        color: var(--text-main); 
+        padding: 10px; 
+        font-family: 'Inter'; 
+        width: 100%; 
+        outline: none; 
+    }
+    
+    .custom-select { 
+        background: var(--input-bg); 
+        border: 1px solid var(--border); 
+        color: var(--text-main); 
+        padding: 10px 15px; 
+        border-radius: 8px; 
+        font-family: 'Inter'; 
+        outline: none; 
+        font-size: 0.85rem;
+        min-width: 140px;
+    }
 
-    .table-section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 30px;}
+    .table-section { 
+        background: var(--card-bg); 
+        border: 1px solid var(--border); 
+        border-radius: 16px; 
+        padding: 25px; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02); 
+        overflow: hidden; 
+        margin-bottom: 30px;
+    }
     
-    table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    th { text-align: left; padding: 15px 10px; color: var(--text-muted); border-bottom: 2px solid var(--border); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;}
-    td { padding: 15px 10px; border-bottom: 1px solid var(--border); font-size: 0.95rem; font-weight: 500;}
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
+    th { text-align: left; padding: 15px 10px; color: var(--text-muted); border-bottom: 2px solid var(--border); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;}
+    td { padding: 15px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: 600;}
     
-    .badge { padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px;}
-    .badge-pending { background: rgba(23, 162, 184, 0.1); color: var(--info); border: 1px solid rgba(23, 162, 184, 0.3); } 
+    .badge { padding: 6px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; letter-spacing: 0.5px;}
+    .badge-pending { background: rgba(23, 162, 184, 0.1); color: #17a2b8; border: 1px solid rgba(23, 162, 184, 0.3); } 
     .badge-review { background: rgba(0, 123, 255, 0.1); color: #007bff; border: 1px solid rgba(0, 123, 255, 0.3); } 
-    .badge-approved { background: rgba(40, 167, 69, 0.1); color: var(--success); border: 1px solid rgba(40, 167, 69, 0.3); } 
-    .badge-rejected { background: rgba(220, 53, 69, 0.1); color: var(--danger); border: 1px solid rgba(220, 53, 69, 0.3); } 
+    .badge-approved { background: rgba(40, 167, 69, 0.1); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); } 
+    .badge-rejected { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3); } 
     
-    .action-btn { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; background: var(--hover-bg); color: var(--text-main); transition: 0.2s; font-size: 0.85rem;}
-    .action-btn:hover { background: var(--accent); color: var(--bg-body); }
+    .action-btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 800; background: var(--hover-bg); color: var(--text-main); transition: 0.3s; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;}
+    .action-btn:hover { background: var(--accent); color: var(--bg-body); transform: translateY(-2px); }
     .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     
-    .av-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 5000; backdrop-filter: blur(4px); }
-    .av-modal-box { background: var(--card-bg); border-radius: 16px; width: 100%; max-width: 800px; border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-    .av-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); background: var(--input-bg); }
-    .av-modal-title { font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px; }
-    .av-btn-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
-    .av-btn-close:hover { color: var(--danger); transform: scale(1.1); }
-    .av-modal-body { padding: 25px; display: flex; flex-direction: column; gap: 20px; max-height: 75vh; overflow-y: auto; text-align: left;}
+    /* 🏛️ Modal Refactor 🏛️ */
+    .av-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 5000; backdrop-filter: blur(8px); padding: 20px; }
+    .av-modal-box { 
+        background: var(--card-bg); 
+        border-radius: 20px; 
+        width: 100%; 
+        max-width: 900px; 
+        max-height: 95vh;
+        border: 1px solid var(--border); 
+        overflow: hidden; 
+        display: flex; 
+        flex-direction: column; 
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
+        animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalSlide { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    
+    .av-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid var(--border); background: var(--input-bg); flex-shrink: 0; }
+    .av-modal-title { font-size: 1.1rem; font-weight: 900; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .av-btn-close { background: var(--hover-bg); border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: 0.3s; }
+    .av-btn-close:hover { color: var(--danger); background: rgba(220, 53, 69, 0.1); border-color: var(--danger); transform: rotate(90deg); }
+    
+    /* 📜 SCROLL ON MODAL BODY 📜 */
+    .av-modal-body { 
+        padding: 30px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 25px; 
+        overflow-y: auto; 
+        flex-grow: 1;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+    }
+    .av-modal-body::-webkit-scrollbar { width: 6px; }
+    .av-modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     
     .form-group { margin-bottom: 0; }
-    .form-label { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;}
-    .form-input { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); font-family: 'Inter'; font-size: 0.95rem; outline: none;}
-    .readonly-box { background: var(--input-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+    .form-label { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: 800; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;}
+    .form-input { width: 100%; padding: 12px 15px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text-main); font-family: 'Inter'; font-size: 0.9rem; outline: none; transition: 0.3s;}
+    .form-input:focus { border-color: var(--pup-maroon); box-shadow: 0 0 0 4px rgba(128,0,0,0.1); }
     
-    .av-modal-footer { display: flex; gap: 10px; padding: 20px; border-top: 1px solid var(--border); background: var(--input-bg); }
-    .btn-large { flex: 1; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; border: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;}
-    .btn-reject { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
-    .btn-reject:hover { background: rgba(220, 53, 69, 0.1); }
-    .btn-approve { background: var(--success); color: white; }
-    .btn-approve:hover { background: #218838; }
+    .av-modal-footer { display: flex; gap: 12px; padding: 20px 25px; border-top: 1px solid var(--border); background: var(--input-bg); flex-shrink: 0; flex-wrap: wrap;}
+    .btn-large { flex: 1; min-width: 150px; padding: 14px; border-radius: 12px; font-weight: 800; font-size: 0.85rem; cursor: pointer; border: none; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px;}
+    .btn-reject { background: transparent; border: 2px solid var(--danger); color: var(--danger); }
+    .btn-reject:hover:not(:disabled) { background: var(--danger); color: white; box-shadow: 0 8px 15px rgba(220, 53, 69, 0.2); }
+    .btn-approve { background: #28a745; color: white; border: none; }
+    .btn-approve:hover:not(:disabled) { background: #218838; box-shadow: 0 8px 15px rgba(40, 167, 69, 0.2); transform: translateY(-2px); }
 
-    .reschedule-box { background: rgba(23, 162, 184, 0.05); border: 2px dashed #17a2b8; border-radius: 12px; padding: 20px; }
+    /* 📂 ADVISER-STYLE DOCUMENT GRID 📂 */
+    .doc-grid { display: grid; gap: 15px; width: 100%; }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
     
-    .fade-in { animation: fadeIn 0.3s ease-in-out; }
+    .doc-card { 
+        background: var(--card-bg); 
+        padding: 20px 15px; 
+        border-radius: 15px; 
+        border: 1.5px solid var(--border); 
+        text-align: center; 
+        cursor: pointer; 
+        transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .doc-card::before { content: ''; position: absolute; inset: 0; background: var(--pup-maroon); opacity: 0; transition: 0.3s; z-index: 0; }
+    .doc-card:hover { border-color: var(--pup-maroon); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
+    .doc-card:hover::before { opacity: 0.03; }
+    
+    .doc-icon-wrapper { position: relative; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; z-index: 1; }
+    .doc-icon-bg { font-size: 2.5rem; color: var(--text-muted); opacity: 0.2; transition: 0.3s; }
+    .doc-icon-eye { position: absolute; font-size: 2.5rem; color: var(--pup-maroon); opacity: 0; transition: 0.3s; }
+    .doc-card:hover .doc-icon-bg { opacity: 0.1; transform: scale(0.8); }
+    .doc-card:hover .doc-icon-eye { opacity: 1; transform: scale(1.1); }
+    
+    .doc-label { display: block; font-size: 0.65rem; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; z-index: 1; line-height: 1.3; }
+    .doc-status { font-size: 0.6rem; color: #007bff; margin-top: 8px; display: block; font-weight: 800; text-transform: uppercase; z-index: 1; opacity: 0.7; }
+    .doc-card:hover .doc-status { opacity: 1; }
+
+    .reschedule-box { background: rgba(23, 162, 184, 0.03); border: 2px dashed #17a2b8; border-radius: 15px; padding: 25px; }
+    
+    .letter-preview { 
+        background: #ffffff; 
+        color: #000000; 
+        padding: 50px; 
+        border-radius: 12px; 
+        border: 1px solid #ddd; 
+        font-family: 'Times New Roman', serif; 
+        font-size: 15px; 
+        line-height: 1.6; 
+        text-align: left; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        width: 100%;
+        position: relative;
+    }
+
+    /* 🔍 FULLSCREEN LIGHTBOX STYLES 🔍 */
+    .lightbox-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.95);
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+        cursor: zoom-out;
+    }
+    .lightbox-content {
+        position: relative;
+        max-width: 95vw;
+        max-height: 95vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: default;
+    }
+    .lightbox-image {
+        max-width: 100%;
+        max-height: 95vh;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    }
+    .lightbox-header {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        display: flex;
+        gap: 15px;
+        z-index: 10001;
+        pointer-events: auto;
+    }
+    .lightbox-btn {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.3s;
+        text-decoration: none;
+    }
+    .lightbox-btn:hover {
+        background: rgba(255,255,255,0.3);
+        transform: scale(1.1);
+    }
+    .lightbox-btn.close-btn:hover {
+        background: var(--danger);
+        border-color: var(--danger);
+        transform: rotate(90deg);
+    }
+
+    /* 📱 RESPONSIVE ADJUSTMENTS 📱 */
+    @media (min-width: 1025px) {
+        .history-control-bar {
+            flex-wrap: nowrap;
+        }
+        .history-control-bar .search-box {
+            min-width: 250px;
+            flex-shrink: 0;
+        }
+    }
+    @media (max-width: 1024px) {
+        .filter-group { flex-wrap: wrap; }
+    }
+    
+    @media (max-width: 768px) {
+        .control-bar { padding: 15px; }
+        .search-box { max-width: 100%; }
+        .grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
+        .av-modal { padding: 10px; }
+        .av-modal-body { padding: 20px; gap: 20px; }
+        .letter-preview { padding: 30px 20px; font-size: 13px; }
+        .btn-large { font-size: 0.75rem; padding: 12px; }
+        .custom-select { min-width: 100%; }
+        .lightbox-header { right: 15px; top: 15px; gap: 10px; }
+    }
+
+    .fade-in { animation: fadeIn 0.3s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     .spin { animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* Success Message State */
+    .success-overlay {
+        position: absolute;
+        inset: 0;
+        background: var(--card-bg);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 40px;
+        animation: fadeIn 0.4s ease-out;
+    }
 </style>
 {% endblock %}
 
@@ -75,10 +311,11 @@
 
     <!-- 🟢 ACTUAL CONTENT 🟢 -->
     <div v-else class="fade-in">
+        <!-- 🎯 PENDING APPROVALS SECTION 🎯 -->
         <div class="control-bar">
             <div class="filter-group">
-                <span style="font-weight:800; color:var(--text-main); display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem;">
-                    <i class="ph-bold ph-shield-warning" style="color: var(--pup-maroon); font-size: 1.2rem;"></i> Pending Approvals
+                <span style="font-weight:900; color:var(--text-main); display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem;">
+                    <i class="ph-bold ph-shield-warning" style="color: var(--pup-maroon); font-size: 1.4rem;"></i> Pending Approvals
                 </span>
             </div>
             <div class="search-box">
@@ -96,26 +333,26 @@
                             <th>Event Title</th>
                             <th>Target Date</th>
                             <th>Status / Stage</th>
-                            <th>Action</th>
+                            <th style="text-align: center;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="filteredPending.length === 0">
-                            <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                <i class="ph-fill ph-check-circle" style="font-size: 3rem; color: var(--success); opacity: 0.5; display: block; margin-bottom: 10px;"></i>
-                                No pending approvals at the moment. You're all caught up!
+                            <td colspan="5" style="text-align: center; padding: 60px; color: var(--text-muted);">
+                                <i class="ph-fill ph-check-circle" style="font-size: 4rem; color: #28a745; opacity: 0.3; display: block; margin-bottom: 15px;"></i>
+                                <span style="font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">No pending approvals!</span>
                             </td>
                         </tr>
-                        <tr v-for="event in filteredPending" :key="event.id">
-                            <td style="font-weight: 800; color: var(--pup-maroon);">[[ event.org ]]</td>
-                            <td style="font-weight: 700; color: var(--text-main);">[[ event.title ]]</td>
-                            <td style="color: var(--text-muted); font-weight: 500;">[[ event.date ]]</td>
+                        <tr v-for="event in filteredPending" :key="event.id" class="fade-in">
+                            <td style="font-weight: 900; color: var(--pup-maroon);">[[ event.org ]]</td>
+                            <td style="font-weight: 800; color: var(--text-main);">[[ event.title ]]</td>
+                            <td style="color: var(--text-muted); font-weight: 700;">[[ event.date ]]</td>
                             <td>
                                 <span v-if="event.status === 'PENDING ADMIN'" class="badge badge-pending"><i class="ph-bold ph-file-text"></i> Initial Clearance</span>
                                 <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review"><i class="ph-bold ph-certificate"></i> Final Publication</span>
                             </td>
-                            <td>
-                                <button @click="openModal(event, false)" class="action-btn" style="background: var(--pup-maroon); color: white;">
+                            <td style="text-align: center;">
+                                <button @click="openModal(event, false)" class="action-btn" style="background: var(--pup-maroon); color: white; padding: 10px 20px;">
                                     [[ event.status === 'FINAL ADMIN REVIEW' ? 'Final Approval' : 'Initial Review' ]]
                                 </button>
                             </td>
@@ -125,10 +362,11 @@
             </div>
         </div>
 
-        <div class="control-bar" style="margin-top: 40px;">
-            <div class="filter-group">
-                <span style="font-weight:800; color:var(--text-main); display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; margin-right: 15px;">
-                    <i class="ph-bold ph-clock-counter-clockwise" style="color: var(--pup-maroon); font-size: 1.2rem;"></i> History Log
+        <!-- 🎯 HISTORY LOG SECTION 🎯 -->
+        <div class="control-bar history-control-bar" style="margin-top: 40px;">
+            <div class="filter-group" style="flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                <span style="font-weight:900; color:var(--text-main); display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem; margin-right: 15px; white-space: nowrap;">
+                    <i class="ph-bold ph-clock-counter-clockwise" style="color: var(--pup-maroon); font-size: 1.4rem;"></i> Event Records
                 </span>
                 
                 <select v-model="histOrg" class="custom-select">
@@ -161,7 +399,7 @@
         </div>
 
         <div class="table-section">
-            <div style="overflow-x: auto; max-height: 50vh;">
+            <div style="overflow-x: auto; max-height: 60vh;">
                 <table>
                     <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
                         <tr>
@@ -169,26 +407,26 @@
                             <th>Event Title</th>
                             <th>Target Date</th>
                             <th>Final Result</th>
-                            <th>Details</th>
+                            <th style="text-align: center;">Details</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="filteredHistory.length === 0">
-                            <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                <i class="ph-fill ph-folder-open" style="font-size: 3rem; opacity: 0.5; display: block; margin-bottom: 10px;"></i>
-                                No history records found based on your filters.
+                            <td colspan="5" style="text-align: center; padding: 60px; color: var(--text-muted);">
+                                <i class="ph-fill ph-folder-open" style="font-size: 4rem; opacity: 0.2; display: block; margin-bottom: 15px;"></i>
+                                <span style="font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">No records found.</span>
                             </td>
                         </tr>
-                        <tr v-for="event in filteredHistory" :key="event.id">
-                            <td style="font-weight: 800; color: var(--pup-maroon);">[[ event.org ]]</td>
-                            <td style="font-weight: 700; color: var(--text-main);">[[ event.title ]]</td>
-                            <td style="color: var(--text-muted); font-weight: 500;">[[ event.date ]]</td>
+                        <tr v-for="event in filteredHistory" :key="event.id" class="fade-in">
+                            <td style="font-weight: 900; color: var(--pup-maroon);">[[ event.org ]]</td>
+                            <td style="font-weight: 800; color: var(--text-main);">[[ event.title ]]</td>
+                            <td style="color: var(--text-muted); font-weight: 700;">[[ event.date ]]</td>
                             <td>
                                 <span v-if="event.status === 'APPROVED'" class="badge badge-approved"><i class="ph-bold ph-check-circle"></i> Published</span>
                                 <span v-else class="badge badge-rejected"><i class="ph-bold ph-x-circle"></i> Rejected</span>
                             </td>
-                            <td>
-                                <button @click="openModal(event, true)" class="action-btn">
+                            <td style="text-align: center;">
+                                <button @click="openModal(event, true)" class="action-btn" style="padding: 10px 15px;">
                                     <i class="ph-bold ph-eye"></i> View Record
                                 </button>
                             </td>
@@ -199,6 +437,7 @@
         </div>
     </div>
 
+    <!-- 🏛️ MAIN APPROVAL/RECORD MODAL 🏛️ -->
     <div class="av-modal" v-if="isModalOpen" @click="closeModal">
         <div class="av-modal-box" @click.stop>
             
@@ -213,124 +452,165 @@
             </div>
             
             <div class="av-modal-body" v-if="selectedEvent">
-                <div style="display:flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 1.3rem; font-weight: 800; color: var(--text-main);">[[ selectedEvent.title ]]</span>
-                    <span class="badge" style="background: rgba(128,0,0,0.1); color: var(--pup-maroon); border: 1px solid rgba(128,0,0,0.3);">[[ selectedEvent.org ]]</span>
+                
+                <!-- 🟢 SUCCESS STATE OVERLAY 🟢 -->
+                <div v-if="showSuccessMsg" class="success-overlay">
+                    <i class="ph-fill ph-check-circle" style="font-size: 6rem; color: #28a745; margin-bottom: 20px;"></i>
+                    <h2 style="font-size: 2rem; font-weight: 900; color: var(--text-main); margin-bottom: 10px; text-transform: uppercase;">Action Successful!</h2>
+                    <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 400px; line-height: 1.6;">[[ statusMessage ]]</p>
                 </div>
 
-                <div v-if="selectedEvent.status === 'FINAL ADMIN REVIEW' || selectedEvent.status === 'APPROVED'" class="fade-in" style="background: rgba(0, 123, 255, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0, 123, 255, 0.2);">
-                    <h4 style="font-size: 0.8rem; font-weight: 800; color: #007bff; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        <i class="ph-bold ph-folder-open"></i> Uploaded Documents Verification
-                    </h4>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                        <div @click="viewActualDoc('Signed Request Letter', 'letter')" style="background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); text-align: center; cursor: pointer; transition: 0.2s;" onmouseover="this.style.borderColor='#007bff'" onmouseout="this.style.borderColor='var(--border)'">
-                            <i class="ph-fill ph-file-text" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 5px;"></i>
-                            <span style="display: block; font-size: 0.7rem; font-weight: 800; color: var(--text-main); text-transform: uppercase;">Signed Request Letter</span>
-                            <span style="font-size: 0.6rem; color: #007bff; margin-top: 5px; display: block;">Click to view</span>
-                        </div>
-                        <div @click="viewActualDoc('Signed Permit', 'permit')" style="background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); text-align: center; cursor: pointer; transition: 0.2s;" onmouseover="this.style.borderColor='#007bff'" onmouseout="this.style.borderColor='var(--border)'">
-                            <i class="ph-fill ph-certificate" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 5px;"></i>
-                            <span style="display: block; font-size: 0.7rem; font-weight: 800; color: var(--text-main); text-transform: uppercase;">Signed Permit</span>
-                            <span style="font-size: 0.6rem; color: #007bff; margin-top: 5px; display: block;">Click to view</span>
-                        </div>
-                        <div @click="viewActualDoc('Equipment Form', 'equipment')" style="background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); text-align: center; cursor: pointer; transition: 0.2s;" onmouseover="this.style.borderColor='#007bff'" onmouseout="this.style.borderColor='var(--border)'">
-                            <i class="ph-fill ph-toolbox" style="font-size: 2rem; color: var(--text-muted); margin-bottom: 5px;"></i>
-                            <span style="display: block; font-size: 0.7rem; font-weight: 800; color: var(--text-main); text-transform: uppercase;">Equipment Form</span>
-                            <span style="font-size: 0.6rem; color: #007bff; margin-top: 5px; display: block;">Click to view</span>
+                <!-- Header Info -->
+                <div style="display:flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 5px;">
+                    <div style="flex: 1;">
+                        <span style="display: block; font-size: 0.65rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px;">Event Activity Title</span>
+                        <span style="font-size: 1.4rem; font-weight: 900; color: var(--text-main); line-height: 1.2;">[[ selectedEvent.title ]]</span>
+                    </div>
+                    <span class="badge" style="background: rgba(128,0,0,0.1); color: var(--pup-maroon); border: 2.5px solid rgba(128,0,0,0.3); font-size: 0.9rem; padding: 8px 15px;">[[ selectedEvent.org ]]</span>
+                </div>
+
+                <!-- 📂 DYNAMIC DOCUMENT GRID (MATCHES ADVISER DASHBOARD) 📂 -->
+                <div v-if="selectedEvent.status === 'FINAL ADMIN REVIEW' || selectedEvent.status === 'APPROVED' || (isHistoryMode && selectedEvent.status !== 'REJECTED')" 
+                     class="fade-in" 
+                     style="background: rgba(0, 123, 255, 0.03); padding: 25px; border-radius: 20px; border: 1.5px solid rgba(0, 123, 255, 0.15);">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h4 style="font-size: 0.8rem; font-weight: 900; color: #007bff; margin: 0; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+                            <i class="ph-bold ph-folder-open" style="font-size: 1.2rem;"></i> Uploaded Document Records
+                        </h4>
+                        <span style="font-size: 0.65rem; font-weight: 900; background: #007bff; color: white; padding: 4px 10px; border-radius: 6px;">[[ currentDocCount ]] FILES ATTACHED</span>
+                    </div>
+
+                    <div :class="['doc-grid', currentDocCount === 4 ? 'grid-cols-4' : 'grid-cols-2']">
+                        <div v-for="doc in activeDocs" :key="doc.label" 
+                             @click="viewActualDoc(doc.label, doc.url)"
+                             class="doc-card">
+                            <div class="doc-icon-wrapper">
+                                <i :class="['ph-fill', doc.icon, 'doc-icon-bg']"></i>
+                                <i class="ph-bold ph-eye doc-icon-eye"></i>
+                            </div>
+                            <span class="doc-label">[[ doc.label ]]</span>
+                            <span class="doc-status">View Image</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- Reschedule Form (Only for Approved Events in History) -->
                 <div v-if="isRescheduling && isHistoryMode && selectedEvent.status === 'APPROVED'" class="fade-in reschedule-box">
-                    <h4 style="font-size: 0.9rem; font-weight: 800; color: #17a2b8; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
-                        <i class="ph-bold ph-calendar-blank" style="font-size: 1.2rem;"></i> Reschedule Event
+                    <h4 style="font-size: 0.95rem; font-weight: 900; color: #17a2b8; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; text-transform: uppercase;">
+                        <i class="ph-bold ph-calendar-blank" style="font-size: 1.3rem;"></i> Reschedule Event Session
                     </h4>
-                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">Set the new date and time for this event due to conflict/disaster.</p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 20px; font-weight: 600;">Update the official schedule for this event due to administrative conflicts.</p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
                         <div class="form-group">
-                            <label class="form-label">New Event Date</label>
+                            <label class="form-label">New Proposed Date</label>
                             <input type="date" v-model="rescheduleDate" class="form-input" style="border-color: #17a2b8;">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">New Event Time</label>
+                            <label class="form-label">New Starting Time</label>
                             <input type="time" v-model="rescheduleTime" class="form-input" style="border-color: #17a2b8;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New End Time</label>
+                            <input type="time" v-model="rescheduleEndTime" class="form-input" style="border-color: #17a2b8;">
                         </div>
                     </div>
                 </div>
 
-                <div style="background: #ffffff; color: #000000; padding: 40px; border-radius: 8px; border: 1px solid #ccc; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <p style="margin-bottom: 24px; font-weight: bold;">[[ selectedEvent.date ]]</p>
+                <!-- 📜 OFFICIAL LETTER PREVIEW (FULL WIDTH, NO INTERNAL SCROLL) 📜 -->
+                <div class="letter-preview">
+                    <p style="margin-bottom: 30px; font-weight: bold; font-size: 16px;">[[ selectedEvent.date ]]</p>
                     
-                    <p style="margin-bottom: 24px; line-height: 1.2;">
+                    <p style="margin-bottom: 30px; line-height: 1.3;">
                         <strong>Dr. EDWIN G. MALABUYOC</strong><br>
                         Director<br>
-                        This Campus
+                        PUP Unisan Campus
                     </p>
 
-                    <p style="margin-bottom: 24px; line-height: 1.2;">
+                    <p style="margin-bottom: 30px; line-height: 1.3;">
                         Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
                         &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
-                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
+                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;PUP Unisan Campus
                     </p>
 
-                    <p style="margin-bottom: 24px;">
+                    <p style="margin-bottom: 30px;">
                         Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
                     </p>
 
-                    <p style="margin-bottom: 16px;">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                    <p style="margin-bottom: 20px;">Dear <strong>Dr. Malabuyoc</strong>:</p>
 
-                    <p style="margin-bottom: 16px;">Greetings!</p>
+                    <p style="margin-bottom: 20px;">Greetings!</p>
 
-                    <p style="margin-bottom: 16px; text-align: justify; text-indent: 40px;">
-                        To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.org ]]</strong> will be conducting a seminar entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ selectedEvent.description ]]
+                    <p style="margin-bottom: 20px; text-align: justify; text-indent: 50px;">
+                        To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ selectedEvent.description ]]
                     </p>
 
-                    <p style="margin-bottom: 32px; text-align: justify; text-indent: 40px;">
-                        The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                    <p style="margin-bottom: 40px; text-align: justify; text-indent: 50px;">
+                        The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, from <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
                     </p>
 
-                    <p style="margin-bottom: 48px;">Thank you for your kind consideration and usual support.</p>
+                    <p style="margin-bottom: 50px;">Thank you for your kind consideration and usual support.</p>
 
-                    <p style="margin-bottom: 32px;">Respectfully yours,</p>
+                    <p style="margin-bottom: 40px;">Respectfully yours,</p>
 
-                    <div style="margin-bottom: 32px;">
-                        <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
-                        <p style="margin: 0;">[[ selectedEvent.org ]] President</p>
+                    <div style="margin-bottom: 40px;">
+                        <p style="margin: 0; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; display: inline-block;">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+                        <p style="margin: 5px 0 0 0;">[[ selectedEvent.org ]] President</p>
                     </div>
 
                     <div>
-                        <p style="margin-bottom: 24px;">Noted by:</p>
-                        <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
-                        <p style="margin: 0;">[[ selectedEvent.org ]] Adviser</p>
+                        <p style="margin-bottom: 20px;">Noted by:</p>
+                        <p style="margin: 0; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; display: inline-block;">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+                        <p style="margin: 5px 0 0 0;">[[ selectedEvent.org ]] Adviser</p>
                     </div>
                 </div>
 
-                <div v-if="selectedEvent.status === 'REJECTED'" class="readonly-box" style="border-color: rgba(220, 53, 69, 0.5); background: rgba(220, 53, 69, 0.05);">
-                    <span class="form-label" style="color: var(--danger);"><i class="ph-bold ph-warning-circle"></i> Remarks / Reason</span>
-                    <p style="color: var(--danger); font-size: 0.9rem; margin: 0; font-weight: 600;">[[ selectedEvent.remarks || 'No reason provided' ]]</p>
+                <!-- Remarks for Rejected Events -->
+                <div v-if="selectedEvent.status === 'REJECTED'" class="readonly-box" style="border: 2px solid rgba(220, 53, 69, 0.3); background: rgba(220, 53, 69, 0.03); padding: 25px; border-radius: 15px;">
+                    <span class="form-label" style="color: var(--danger); font-size: 0.8rem;"><i class="ph-bold ph-warning-circle"></i> Admin Rejection Remarks</span>
+                    <p style="color: var(--danger); font-size: 1rem; margin: 10px 0 0 0; font-weight: 800; line-height: 1.5;">[[ selectedEvent.remarks || 'No detailed reason provided.' ]]</p>
                 </div>
 
-                <div v-if="isRejecting && !isHistoryMode" class="fade-in" style="background: rgba(220, 53, 69, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(220, 53, 69, 0.3);">
-                    <label class="form-label" style="color: var(--danger);"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection (Required)</label>
-                    <textarea v-model="rejectReason" rows="3" class="form-input" placeholder="State the administrative reason for rejecting this event..." style="resize: none; border-color: rgba(220, 53, 69, 0.5);"></textarea>
+                <!-- Rejection Form -->
+                <div v-if="isRejecting && !isHistoryMode" class="fade-in" style="background: rgba(220, 53, 69, 0.05); padding: 25px; border-radius: 15px; border: 2px solid rgba(220, 53, 69, 0.2);">
+                    <label class="form-label" style="color: var(--danger);"><i class="ph-bold ph-warning-circle"></i> Official Reason for Rejection (Required)</label>
+                    <textarea v-model="rejectReason" rows="4" class="form-input" placeholder="State the administrative or technical reason why this proposal cannot proceed..." style="resize: none; border-color: rgba(220, 53, 69, 0.3);"></textarea>
                 </div>
 
-                <div v-if="actionLoading" style="text-align: center; color: var(--pup-maroon); font-weight: bold; font-size: 0.9rem;">
-                    <i class="ph-bold ph-spinner spin"></i> Processing data...
-                </div>
             </div>
 
+            <!-- MODAL FOOTERS -->
             <div class="av-modal-footer" v-if="!isHistoryMode">
                 <template v-if="!isRejecting">
-                    <button class="btn-large btn-reject" @click="initiateReject" :disabled="actionLoading">Reject</button>
+                    <button class="btn-large btn-reject" @click="initiateReject" :disabled="actionLoading">
+                        <template v-if="!actionLoading">Reject Proposal</template>
+                        <template v-else><i class="ph-bold ph-spinner spin"></i> Wait...</template>
+                    </button>
                     
-                    <button v-if="selectedEvent.status === 'PENDING ADMIN'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">Grant Initial Clearance</button>
-                    <button v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading"><i class="ph-bold ph-rocket-launch"></i> Publish & Lock Event</button>
+                    <button v-if="selectedEvent.status === 'PENDING ADMIN'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
+                        <template v-if="!actionLoading">Grant Initial Clearance</template>
+                        <template v-else><i class="ph-bold ph-spinner spin"></i> Processing...</template>
+                    </button>
+                    <button v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
+                        <template v-if="!actionLoading">
+                            <i class="ph-bold ph-rocket-launch"></i> Fully Approve & Publish
+                        </template>
+                        <template v-else>
+                            <i class="ph-bold ph-spinner spin"></i> Publishing Live...
+                        </template>
+                    </button>
                 </template>
                 
                 <template v-else-if="isRejecting">
-                    <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="cancelReject" :disabled="actionLoading">Cancel</button>
-                    <button class="btn-large" style="background: var(--danger); color: white; border: none;" @click="confirmReject" :disabled="actionLoading"><i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection</button>
+                    <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="cancelReject" :disabled="actionLoading">Go Back</button>
+                    <button class="btn-large" style="background: var(--danger); color: white; border: none;" @click="confirmReject" :disabled="actionLoading">
+                        <template v-if="!actionLoading">
+                            <i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection
+                        </template>
+                        <template v-else>
+                            <i class="ph-bold ph-spinner spin"></i> Sending...
+                        </template>
+                    </button>
                 </template>
             </div>
 
@@ -342,9 +622,14 @@
                     </button>
                 </template>
                 <template v-else>
-                    <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="cancelReschedule" :disabled="actionLoading">Cancel Reschedule</button>
+                    <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="cancelReschedule" :disabled="actionLoading">Cancel</button>
                     <button class="btn-large" style="background: #17a2b8; color: white; border: none;" @click="confirmReschedule" :disabled="actionLoading">
-                        <i class="ph-bold ph-floppy-disk"></i> Update & Save
+                        <template v-if="!actionLoading">
+                            <i class="ph-bold ph-floppy-disk"></i> Save New Schedule
+                        </template>
+                        <template v-else>
+                            <i class="ph-bold ph-spinner spin"></i> Saving...
+                        </template>
                     </button>
                 </template>
             </div>
@@ -352,28 +637,27 @@
         </div>
     </div>
 
-    <div v-if="isDocViewerOpen" class="av-modal fade-in" style="z-index: 9999; background: rgba(0,0,0,0.6);" @click="closeDocViewer">
-        <div class="av-modal-box" style="max-width: 900px; max-height: 90vh; background: var(--card-bg); overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--border); box-shadow: 0 15px 30px rgba(0,0,0,0.15);" @click.stop>
-            
-            <div class="av-modal-header" style="background: var(--input-bg); padding: 15px 20px; flex-shrink: 0; border-bottom: 1px solid var(--border);">
-                <h3 class="av-modal-title" style="font-size: 1rem; color: var(--text-main);"><i class="ph-bold ph-scan" style="color: #007bff;"></i> SECURE DOCUMENT VIEWER</h3>
-                <button class="av-btn-close" @click="closeDocViewer" style="color: var(--text-muted);"><i class="ph-bold ph-x-circle"></i></button>
-            </div>
-            
-            <div style="padding: 20px; flex-grow: 1; overflow-y: auto; text-align: center; background: var(--bg-body); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <template v-if="viewedDocUrl">
-                    <img :src="viewedDocUrl" alt="Scanned Document" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; background: white; padding: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                    <span style="background: rgba(40, 167, 69, 0.1); border: 1px solid rgba(40, 167, 69, 0.3); color: #28a745; padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 5px;">
-                        <i class="ph-bold ph-check-circle" style="font-size: 1.2rem;"></i> Image Loaded Successfully
-                    </span>
-                </template>
-                <template v-else>
-                    <i class="ph-fill ph-image-broken" style="font-size: 6rem; color: rgba(220, 53, 69, 0.5); margin-bottom: 20px;"></i>
-                    <h2 style="font-size: 1.5rem; font-weight: 900; color: var(--text-main); margin-bottom: 10px; text-transform: uppercase;">Image Not Found</h2>
-                    <p style="font-size: 0.9rem; color: var(--text-muted); max-width: 400px; line-height: 1.6;">The student organization did not upload a valid image file or the file is missing from the server database.</p>
-                </template>
-            </div>
-            
+    <!-- 🔍 TRUE FULLSCREEN LIGHTBOX VIEWER 🔍 -->
+    <div v-if="isDocViewerOpen" class="lightbox-overlay fade-in" @click="closeDocViewer">
+        <div class="lightbox-header">
+            <a v-if="viewedDocUrl" :href="viewedDocUrl" download class="lightbox-btn" title="Download Image">
+                <i class="ph-bold ph-download-simple" style="font-size: 1.5rem;"></i>
+            </a>
+            <button class="lightbox-btn close-btn" @click.stop="closeDocViewer" title="Close Viewer">
+                <i class="ph-bold ph-x" style="font-size: 1.5rem;"></i>
+            </button>
+        </div>
+        
+        <div class="lightbox-content" @click.stop>
+            <template v-if="viewedDocUrl">
+                <img :src="viewedDocUrl" :alt="viewedDocTitle" class="lightbox-image">
+            </template>
+            <template v-else>
+                <div style="text-align: center; color: white;">
+                    <i class="ph-fill ph-image-broken" style="font-size: 6rem; color: #dc3545; opacity: 0.5; margin-bottom: 20px;"></i>
+                    <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase;">Image Not Found</h2>
+                </div>
+            </template>
         </div>
     </div>
 
@@ -396,6 +680,9 @@
             const selectedEvent = ref(null);
             const actionLoading = ref(false);
             
+            const showSuccessMsg = ref(false);
+            const statusMessage = ref('');
+
             const searchPending = ref('');
             const searchHistory = ref('');
             const histOrg = ref('All');
@@ -408,6 +695,7 @@
             const isRescheduling = ref(false);
             const rescheduleDate = ref('');
             const rescheduleTime = ref('');
+            const rescheduleEndTime = ref('');
 
             const isDocViewerOpen = ref(false);
             const viewedDocTitle = ref('');
@@ -420,15 +708,13 @@
                 const histNode = document.getElementById('history-data');
                 if(pendNode) pendingArr = JSON.parse(JSON.parse(pendNode.textContent));
                 if(histNode) historyArr = JSON.parse(JSON.parse(histNode.textContent));
-            } catch(e) {}
+            } catch(e) { console.error("Data Parse Error", e); }
             
             const pendingEvents = ref(pendingArr);
             const historyEvents = ref(historyArr);
 
             onMounted(() => {
-                setTimeout(() => {
-                    isLoading.value = false;
-                }, 800);
+                setTimeout(() => { isLoading.value = false; }, 800);
             });
 
             const filteredPending = computed(() => {
@@ -452,12 +738,41 @@
                 });
             });
 
+            // 📂 DYNAMIC DOCUMENT LOGIC 📂
+            const currentDocCount = computed(() => {
+                if (!selectedEvent.value) return 0;
+                return selectedEvent.value.requirement_mode ? parseInt(selectedEvent.value.requirement_mode) : 4;
+            });
+
+            const activeDocs = computed(() => {
+                if (!selectedEvent.value) return [];
+                const e = selectedEvent.value;
+                const mode = currentDocCount.value;
+
+                if (mode === 2) {
+                    return [
+                        { label: 'Letter of Reschedule', icon: 'ph-file-text', url: e.letter_of_reschedule || e.letter_url },
+                        { label: 'Reschedule Cover Photo', icon: 'ph-image', url: e.reschedule_cover_photo || e.event_cover_photo }
+                    ];
+                } else {
+                    return [
+                        { label: 'Signed Request Letter', icon: 'ph-file-text', url: e.letter_url }, 
+                        { label: 'Signed Permit', icon: 'ph-certificate', url: e.permit_url },
+                        { label: 'Equipment Form', icon: 'ph-toolbox', url: e.equipment_url },
+                        { label: 'Event Cover Photo', icon: 'ph-image', url: e.event_cover_photo }
+                    ];
+                }
+            });
+
             const openModal = (event, historyMode) => { 
                 selectedEvent.value = event; 
                 isHistoryMode.value = historyMode;
                 isRejecting.value = false;
                 rejectReason.value = '';
                 isRescheduling.value = false;
+                showSuccessMsg.value = false;
+                statusMessage.value = '';
+                actionLoading.value = false;
                 isModalOpen.value = true; 
                 document.body.style.overflow = 'hidden';
             };
@@ -465,19 +780,15 @@
             const closeModal = () => { 
                 isModalOpen.value = false; 
                 document.body.style.overflow = '';
-                setTimeout(() => { selectedEvent.value = null; }, 300); 
+                setTimeout(() => { 
+                    selectedEvent.value = null; 
+                    showSuccessMsg.value = false;
+                }, 300); 
             };
 
-            // 🟢 TOTOONG FUNCTION PARA SA 3 UPLOADED IMAGES 🟢
-            const viewActualDoc = (title, docType) => {
+            const viewActualDoc = (title, url) => {
                 viewedDocTitle.value = title;
-                if (docType === 'letter') {
-                    viewedDocUrl.value = selectedEvent.value.letter_url || '';
-                } else if (docType === 'permit') {
-                    viewedDocUrl.value = selectedEvent.value.permit_url || '';
-                } else if (docType === 'equipment') {
-                    viewedDocUrl.value = selectedEvent.value.equipment_url || ''; // Sasaluhin kapag nai-connect mo na sa backend ang equipment_image mamaya
-                }
+                viewedDocUrl.value = url || '';
                 isDocViewerOpen.value = true;
             };
             const closeDocViewer = () => { isDocViewerOpen.value = false; };
@@ -508,31 +819,41 @@
                     const data = await response.json();
                     
                     if(data.status === 'success') {
+                        statusMessage.value = data.message;
+                        showSuccessMsg.value = true;
+
                         if(status === 'reschedule') {
-                            alert("Event successfully rescheduled!");
                             let ev = historyEvents.value.find(e => e.id === selectedEvent.value.id);
                             if(ev) {
                                 ev.date = payloadData.event_date;
                                 ev.time = payloadData.event_time;
                             }
-                            closeModal();
-                            actionLoading.value = false;
-                            return;
+                        } else {
+                            let updatedEvent = { ...selectedEvent.value };
+                            if(status === 'approve' && selectedEvent.value.status === 'FINAL ADMIN REVIEW') {
+                                updatedEvent.status = 'APPROVED';
+                                historyEvents.value.unshift(updatedEvent);
+                            } else if(status === 'reject') {
+                                updatedEvent.status = 'REJECTED';
+                                historyEvents.value.unshift(updatedEvent);
+                            }
+                            pendingEvents.value = pendingEvents.value.filter(e => e.id !== selectedEvent.value.id);
                         }
+                        
+                        // Auto-close after 2 seconds
+                        setTimeout(() => {
+                            if(isModalOpen.value) closeModal();
+                            actionLoading.value = false; // Reset loading state here so you can use modal again
+                        }, 2000);
 
-                        let updatedEvent = { ...selectedEvent.value };
-                        if(status === 'approve' && selectedEvent.value.status === 'FINAL ADMIN REVIEW') {
-                            updatedEvent.status = 'APPROVED';
-                            historyEvents.value.unshift(updatedEvent);
-                        } else if(status === 'reject') {
-                            updatedEvent.status = 'REJECTED';
-                            historyEvents.value.unshift(updatedEvent);
-                        }
-                        pendingEvents.value = pendingEvents.value.filter(e => e.id !== selectedEvent.value.id);
-                        closeModal();
-                    } else { alert(data.message); }
-                } catch(err) { alert('Error connecting to server.'); }
-                actionLoading.value = false;
+                    } else { 
+                        alert(data.message); 
+                        actionLoading.value = false;
+                    }
+                } catch(err) { 
+                    alert('Error connecting to server.'); 
+                    actionLoading.value = false;
+                }
             };
 
             const approveEvent = () => updateEventStatus('approve');
@@ -541,11 +862,16 @@
                 isRescheduling.value = true;
                 rescheduleDate.value = '';
                 rescheduleTime.value = '';
+                rescheduleEndTime.value = '';
             };
             const cancelReschedule = () => { isRescheduling.value = false; };
             const confirmReschedule = () => {
                 if(!rescheduleDate.value || !rescheduleTime.value) { alert("Please select a new date and time."); return; }
-                updateEventStatus('reschedule', { event_date: rescheduleDate.value, event_time: rescheduleTime.value });
+                updateEventStatus('reschedule', { 
+                    event_date: rescheduleDate.value, 
+                    event_time: rescheduleTime.value,
+                    event_end_time: rescheduleEndTime.value
+                });
             };
 
             const initiateReject = () => { isRejecting.value = true; };
@@ -561,9 +887,11 @@
                 historyEvents, filteredHistory, searchHistory, histOrg, histStatus, histMonth,
                 isModalOpen, isHistoryMode, selectedEvent, actionLoading, 
                 isRejecting, rejectReason, initiateReject, cancelReject, confirmReject,
-                isRescheduling, rescheduleDate, rescheduleTime, initiateReschedule, cancelReschedule, confirmReschedule,
+                isRescheduling, rescheduleDate, rescheduleTime, rescheduleEndTime, initiateReschedule, cancelReschedule, confirmReschedule,
                 isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
-                openModal, closeModal, approveEvent
+                openModal, closeModal, approveEvent,
+                currentDocCount, activeDocs,
+                showSuccessMsg, statusMessage
             }
         }
     }).mount('#vue-admin-app');
