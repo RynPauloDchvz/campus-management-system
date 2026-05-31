@@ -25,9 +25,6 @@
 
 {% block content %}
 <div v-pre>
-<script id="django-notifs-data" type="application/json">
-    {{ notifications_json|safe }}
-</script>
 
 <div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300 pt-8">
     
@@ -83,6 +80,9 @@
 {% endblock content %}
 
 {% block extra_js %}
+<script id="django-notifs-data" type="application/json">
+    {{ notifications_json|safe }}
+</script>
 <script>
     let notifications = [];
     let currentFiltered = [];

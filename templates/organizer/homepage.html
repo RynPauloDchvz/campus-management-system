@@ -197,7 +197,7 @@
                         </div>
                         <div class="pb-2">
                             <h4 class="font-bold text-gray-900 dark:text-white text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">Evaluation Form Drafted</h4>
-                            <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 mt-1 mb-1">Dec 10, 2025 • 02:30 PM</p>
+                            <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 mt-1 mb-1">Dec 10, 2025 02:30 PM</p>
                             <p class="text-xs text-gray-600 dark:text-gray-300">Drafted evaluation template for "Research Colloquium".</p>
                         </div>
                     </div>
@@ -209,7 +209,7 @@
                         </div>
                         <div class="pb-2">
                             <h4 class="font-bold text-gray-900 dark:text-white text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">New Event Proposal</h4>
-                            <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 mt-1 mb-1">Nov 28, 2025 • 09:15 AM</p>
+                            <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 mt-1 mb-1">Nov 28, 2025 09:15 AM</p>
                             <p class="text-xs text-gray-600 dark:text-gray-300">Submitted "Tech Summit 2026" for admin approval.</p>
                         </div>
                     </div>
@@ -311,7 +311,7 @@
         if (!event) return;
 
         document.getElementById('managedModalTitle').innerText = event.title;
-        document.getElementById('managedModalDate').innerHTML = `<i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37]"></i> ${event.date} • PUP Main Campus`;
+        document.getElementById('managedModalDate').innerHTML = `<i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37]"></i> ${event.date} ï¿½ PUP Main Campus`;
         
         const statusEl = document.getElementById('managedModalStatus');
         statusEl.innerHTML = `<i class="ph-fill ph-info"></i> Status: ${event.status}`;
@@ -348,13 +348,13 @@
             iconDiv.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2 bg-blue-100 text-blue-600";
             iconDiv.innerHTML = '<i class="ph-fill ph-clipboard-text text-4xl"></i>';
             title.innerText = "Evaluation Form Drafted";
-            date.innerText = "Dec 10, 2025 • 02:30 PM";
+            date.innerText = "Dec 10, 2025 02:30 PM";
             desc.innerText = "You have successfully drafted the evaluation template for the upcoming 'Research Colloquium' event. It is now ready for deployment.";
         } else {
             iconDiv.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2 bg-green-100 text-green-600";
             iconDiv.innerHTML = '<i class="ph-fill ph-plus-circle text-4xl"></i>';
             title.innerText = "New Event Proposal";
-            date.innerText = "Nov 28, 2025 • 09:15 AM";
+            date.innerText = "Nov 28, 2025 09:15 AM";
             desc.innerText = "Submitted 'Tech Summit 2026' proposal to the Office of Student Affairs. Status is currently Pending Adviser Review.";
         }
 

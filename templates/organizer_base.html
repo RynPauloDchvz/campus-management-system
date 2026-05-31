@@ -60,7 +60,7 @@
             position: absolute;
             inset: 0;
             background-color: #f4f4f4;
-            z-index: 50;
+            z-index: 30;
             min-height: 100vh;
         }
         .dark .backbone-overlay {
@@ -74,7 +74,7 @@
     <div id="app" class="min-h-screen flex flex-col relative z-10 w-full overflow-x-hidden">
 
         <!-- ?? NAVBAR ?? -->
-        <nav class="sticky top-0 z-[1000] w-full flex justify-between items-center px-4 sm:px-6 md:px-10 py-4 bg-white/95 dark:bg-pup-darkcard/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
+        <nav class="sticky top-0 z-40 w-full flex justify-between items-center px-4 sm:px-6 md:px-10 py-4 bg-white/95 dark:bg-pup-darkcard/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             
             <a href="{% url 'organizer_homepage' %}" class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <img src="{% static 'images/PUPLogo.png' %}" class="h-9 sm:h-10 md:h-11 object-contain" alt="PUP Logo">
@@ -118,8 +118,8 @@
         </nav>
 
         <!-- ?? MOBILE NAV ?? -->
-        <div v-if="isMobileMenuOpen" @click="isMobileMenuOpen = false" class="lg:hidden fixed inset-0 top-[70px] bg-black/20 dark:bg-black/50 z-[998] backdrop-blur-sm transition-opacity"></div>
-        <div :class="isMobileMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'" class="lg:hidden fixed top-[70px] left-0 right-0 w-full bg-white/95 dark:bg-pup-darkcard/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 p-5 px-4 flex flex-col gap-4 transition-all duration-400 z-[999]">
+        <div v-if="isMobileMenuOpen" @click="isMobileMenuOpen = false" class="lg:hidden fixed inset-0 top-[70px] bg-black/20 dark:bg-black/50 z-40 backdrop-blur-sm transition-opacity"></div>
+        <div :class="isMobileMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'" class="lg:hidden fixed top-[70px] left-0 right-0 w-full bg-white/95 dark:bg-pup-darkcard/95 backdrop-blur-md border-b border-gray-200 dark:border-white/10 p-5 px-4 flex flex-col gap-4 transition-all duration-400 z-50">
             <a href="{% url 'organizer_homepage' %}" class="text-lg font-bold p-2 border-b border-gray-200 dark:border-gray-700 transition-colors {% if request.resolver_match.url_name == 'organizer_homepage' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Home</a>
             <a href="{% url 'organizer_school_events' %}" class="text-lg font-bold p-2 border-b border-gray-200 dark:border-gray-700 transition-colors {% if request.resolver_match.url_name == 'organizer_school_events' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">School Events</a>
             <a href="{% url 'organizer_create_events' %}" class="text-lg font-bold p-2 border-b border-gray-200 dark:border-gray-700 transition-colors {% if request.resolver_match.url_name == 'organizer_create_events' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Create Events</a>
@@ -161,7 +161,7 @@
             </div>
 
             <!-- ?? ACTUAL PAGE CONTENT ?? -->
-            <div v-show="!isLoading" class="animate-fade-in relative z-10">
+            <div v-show="!isLoading" class="animate-fade-in relative">
                 {% block content %}
                 {% endblock content %}
             </div>
@@ -204,11 +204,76 @@
                         <ul class="flex flex-col gap-2 md:gap-3 text-[10px] md:text-sm text-gray-400">
                             <li><a href="{% url 'organizer_profile' %}" class="hover:text-pup-gold transition-colors">Profile</a></li>
                             <li><a href="#" onclick="openLogout(event)" class="hover:text-pup-gold transition-colors">Log Out</a></li>
+                            <li><a href="https://www.facebook.com/pupunisan" target="_blank" class="hover:text-pup-gold transition-colors">PUP Unisan FB</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
-            <div class="text-center text-gray-500 text-xs md:text-sm border-t border-white/10 pt-6 max-w-7xl mx-auto mt-10">
+
+            <div class="max-w-7xl mx-auto">
+                <hr class="border-white/10 mt-10 md:mt-12 mb-8" />
+            </div>
+
+            <div class="w-full max-w-screen-xl mx-auto mb-10 overflow-x-auto no-scrollbar">
+                <div class="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8">
+                    
+                    <div class="flex justify-center gap-3 md:gap-8 shrink-0">
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/ITO.png' %}" alt="ITO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">ITO</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/ITS.png' %}" alt="ITS" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">ITS</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/YEO.png' %}" alt="YEO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">YEO</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/FTO.png' %}" alt="FTO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">FTO</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/PAS.png' %}" alt="PAS" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">PAS</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-3 md:gap-8 shrink-0">
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/CAO.png' %}" alt="CAO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">CAO</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/NEWSETTE.png' %}" alt="NEWSETTE" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">NEWS</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/PRIDE.png' %}" alt="PRIDE" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">PRIDE</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/ROTC.png' %}" alt="ROTC" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">ROTC</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/PUSO.jpg' %}" alt="PUSO" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">PUSO</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-3 md:gap-8 shrink-0 mt-2 md:mt-0">
+                        <div class="flex flex-col items-center gap-2 w-10 sm:w-14">
+                            <img src="{% static 'images/footer/SSC.png' %}" alt="SSC" class="w-10 h-10 md:w-12 md:h-12 object-contain bg-white rounded-full p-0.5">
+                            <span class="text-[9px] md:text-xs text-gray-500 font-bold tracking-wider">SSC</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="text-center text-gray-500 text-xs md:text-sm border-t border-white/10 pt-6 max-w-7xl mx-auto mt-4">
                 &copy; 2026 Polytechnic University of the Philippines. All rights reserved.
             </div>
         </footer>
