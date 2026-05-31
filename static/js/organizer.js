@@ -21,14 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // --- ?? Bottom Nav Configuration ?? ---
                 navItems: [
-                    { name: 'Home', label: 'Home', icon: 'ph ph-house', iconActive: 'ph-fill ph-house', url: window.VUE_APP_DATA?.urls?.homepage },
-                    { name: 'Events', label: 'Events', icon: 'ph ph-ticket', iconActive: 'ph-fill ph-ticket', url: window.VUE_APP_DATA?.urls?.school_events },
-                    { name: 'Create', label: 'Create', icon: 'ph ph-plus-circle', iconActive: 'ph-fill ph-plus-circle', url: window.VUE_APP_DATA?.urls?.create_events },
-                    { name: 'Messages', label: 'Messages', icon: 'ph ph-bell', iconActive: 'ph-fill ph-bell', url: window.VUE_APP_DATA?.urls?.messages },
-                    { name: 'Students', label: 'Students', icon: 'ph ph-users', iconActive: 'ph-fill ph-users', url: window.VUE_APP_DATA?.urls?.manage_students },
-                    { name: 'Attendance', label: 'Attendance', icon: 'ph ph-fingerprint', iconActive: 'ph-fill ph-fingerprint', url: window.VUE_APP_DATA?.urls?.manage_attendance },
-                    { name: 'Analytics', label: 'Analytics', icon: 'ph ph-chart-bar', iconActive: 'ph-fill ph-chart-bar', url: window.VUE_APP_DATA?.urls?.analytics },
-                    { name: 'Theme', label: 'Mode', icon: 'ph ph-moon', iconActive: 'ph-fill ph-sun', url: null }
+                    { name: 'Home', label: 'Home', icon: 'ph-bold ph-house', iconActive: 'ph-fill ph-house', url: window.VUE_APP_DATA?.urls?.homepage },
+                    { name: 'Events', label: 'Events', icon: 'ph-bold ph-ticket', iconActive: 'ph-fill ph-ticket', url: window.VUE_APP_DATA?.urls?.school_events },
+                    { name: 'Create', label: 'Create', icon: 'ph-bold ph-plus-circle', iconActive: 'ph-fill ph-plus-circle', url: window.VUE_APP_DATA?.urls?.create_events },
+                    { name: 'Students', label: 'Students', icon: 'ph-bold ph-users', iconActive: 'ph-fill ph-users', url: window.VUE_APP_DATA?.urls?.manage_students },
+                    { name: 'Attendance', label: 'Attendance', icon: 'ph-bold ph-bounding-box', iconActive: 'ph-fill ph-bounding-box', url: window.VUE_APP_DATA?.urls?.manage_attendance },
+                    { name: 'Analytics', label: 'Analytics', icon: 'ph-bold ph-chart-bar', iconActive: 'ph-fill ph-chart-bar', url: window.VUE_APP_DATA?.urls?.analytics },
+                    { name: 'Theme', label: 'Mode', icon: 'ph-bold ph-moon', iconActive: 'ph-fill ph-sun', url: null }
                 ],
                 
                 // --- ?? Bottom Nav State ?? ---
@@ -52,10 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 'organizer_homepage': 0,
                 'organizer_school_events': 1,
                 'organizer_create_events': 2,
-                'organizer_message_history': 3,
-                'organizer_manage_students': 4,
-                'organizer_manage_attendance': 5,
-                'organizer_analytics': 6
+                'organizer_manage_students': 3,
+                'organizer_manage_attendance': 4,
+                'organizer_analytics': 5
             };
             this.activeIndex = urlToIndex[this.currentUrl] !== undefined ? urlToIndex[this.currentUrl] : -1;
         },
@@ -75,6 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         methods: {
+            handleHeaderProfileClick() {
+                if (window.innerWidth >= 1024) {
+                    window.location.href = window.VUE_APP_DATA?.urls?.profile || '#';
+                } else {
+                    this.showProfileBubble = !this.showProfileBubble;
+                }
+            },
             toggleTheme() {
                 this.isDark = !this.isDark;
                 document.documentElement.classList.toggle('dark', this.isDark);
@@ -90,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.$nextTick(() => {
                     if (this.activeIndex === -1) return;
                     setTimeout(() => this.calculatePosition(this.activeIndex), 250);
+                    setTimeout(() => this.calculatePosition(this.activeIndex), 600);
                 });
             },
             calculatePosition(index) {
@@ -99,6 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const el = this.navRefs[index];
                 if (el) {
+                    // Because the indicator is now inside the flex container,
+                    // we use offsetLeft relative to the parent, ignoring scroll.
                     this.indicatorWidth = el.offsetWidth - 10;
                     this.indicatorOffset = el.offsetLeft + 5;
                 }
@@ -118,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const el = e.target;
                 this.showLeftArrow = el.scrollLeft > 10;
                 this.showRightArrow = el.scrollLeft < (el.scrollWidth - el.clientWidth - 10);
-                this.calculatePosition(this.activeIndex);
             },
             triggerLogout() {
                 this.showProfileBubble = false;

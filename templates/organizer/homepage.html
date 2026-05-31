@@ -10,11 +10,11 @@
 </style>
 <!-- Inject Vue App Data early so organizer.js can pick it up -->
 <script>
-    window.VUE_APP_DATA = {
+    window.VUE_APP_DATA = Object.assign(window.VUE_APP_DATA || {}, {
         latestNews: {{ latest_news_json|default:"[]"|safe }},
         managedEvents: {{ managed_events_json|default:"[]"|safe }},
         actionRequired: {{ action_required_json|default:"null"|safe }}
-    };
+    });
 </script>
 {% endblock extra_head %}
 
