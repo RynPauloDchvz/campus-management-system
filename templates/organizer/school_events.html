@@ -5,6 +5,30 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 {% endblock extra_head %}
 
+{% block skeleton %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <div class="text-center mb-8 space-y-4">
+        <div class="w-64 h-10 rounded-lg skeleton-shimmer mx-auto"></div>
+        <div class="w-full max-w-2xl h-12 rounded-full skeleton-shimmer mx-auto"></div>
+    </div>
+
+    <div class="flex overflow-x-auto gap-3 justify-start lg:justify-center mb-8 pb-2">
+        <div v-for="i in 6" :key="i" class="w-24 h-10 rounded-full skeleton-shimmer shrink-0"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+        <div v-for="i in 6" :key="i" class="bg-white dark:bg-pup-darkcard rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-row md:flex-col h-[100px] md:h-auto overflow-hidden">
+            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 skeleton-shimmer"></div>
+            <div class="p-3 sm:p-4 md:p-5 flex-grow space-y-2">
+                <div class="w-20 h-3 rounded skeleton-shimmer"></div>
+                <div class="w-full h-5 rounded skeleton-shimmer"></div>
+                <div class="w-3/4 h-3 rounded skeleton-shimmer hidden md:block"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock skeleton %}
+
 {% block content %}
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">

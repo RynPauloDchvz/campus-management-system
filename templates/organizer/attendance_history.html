@@ -5,6 +5,29 @@
 <link rel="stylesheet" href="{% static 'css/event_history.css' %}">
 {% endblock extra_head %}
 
+{% block skeleton %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-100 dark:border-gray-800 pb-6">
+        <div class="space-y-3">
+            <div class="w-32 h-4 rounded skeleton-shimmer"></div>
+            <div class="w-64 h-10 rounded-lg skeleton-shimmer"></div>
+        </div>
+        <div class="w-full sm:w-80 h-12 rounded-xl skeleton-shimmer"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+        <div v-for="i in 6" :key="i" class="bg-white dark:bg-pup-darkcard rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-row sm:flex-col h-[100px] sm:h-auto overflow-hidden">
+            <div class="w-24 sm:w-full h-24 sm:h-32 skeleton-shimmer shrink-0"></div>
+            <div class="p-3 sm:p-4 flex-grow flex flex-col justify-center space-y-2">
+                <div class="w-20 h-3 rounded skeleton-shimmer"></div>
+                <div class="w-full h-5 rounded skeleton-shimmer"></div>
+                <div class="w-3/4 h-3 rounded skeleton-shimmer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock skeleton %}
+
 {% block content %}
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">

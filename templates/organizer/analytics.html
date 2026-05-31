@@ -13,23 +13,47 @@
 {% endblock extra_head %}
 
 {% block skeleton %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-10">
-    <!-- Header Skeleton -->
-    <div class="flex flex-col sm:flex-row justify-between items-center gap-6 border-b border-gray-200 dark:border-gray-800 pb-6">
-        <div class="space-y-2 w-full sm:w-1/2">
-            <div class="h-10 w-3/4 rounded-xl skeleton-shimmer"></div>
-            <div class="h-4 w-1/2 rounded-lg skeleton-shimmer"></div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+    <div class="mb-8 border-b border-gray-100 dark:border-gray-800 pb-6 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="space-y-2 w-full sm:w-auto">
+            <div class="h-10 w-64 rounded-lg skeleton-shimmer mx-auto sm:mx-0"></div>
+            <div class="h-4 w-96 rounded skeleton-shimmer mx-auto sm:mx-0"></div>
         </div>
-        <div class="h-14 w-full sm:w-48 rounded-2xl skeleton-shimmer"></div>
+        <div class="w-full sm:w-48 h-14 rounded-2xl skeleton-shimmer"></div>
     </div>
 
-    <!-- Stats Grid Skeleton -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="i in 4" :key="i" class="h-32 rounded-2xl skeleton-shimmer"></div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div v-for="i in 4" :key="i" class="h-32 bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center space-y-2">
+            <div class="w-8 h-8 rounded-full skeleton-shimmer"></div>
+            <div class="w-12 h-6 rounded skeleton-shimmer"></div>
+            <div class="w-20 h-2 rounded skeleton-shimmer"></div>
+        </div>
     </div>
 
-    <!-- History Analytics Skeleton -->
-    <div class="h-[600px] rounded-3xl skeleton-shimmer"></div>
+    <div class="bg-white dark:bg-[#151515] rounded-3xl border border-gray-100 dark:border-gray-800 p-6 sm:p-8 h-[600px] flex flex-col">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b border-gray-100 dark:border-gray-800 pb-4 gap-4">
+            <div class="space-y-2">
+                <div class="w-48 h-8 rounded-lg skeleton-shimmer"></div>
+                <div class="w-64 h-4 rounded skeleton-shimmer"></div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="w-64 h-11 rounded-xl skeleton-shimmer"></div>
+                <div class="w-48 h-11 rounded-xl skeleton-shimmer"></div>
+            </div>
+        </div>
+        <div class="space-y-4">
+            <div v-for="i in 4" :key="i" class="h-24 bg-gray-50 dark:bg-[#111] border border-gray-100 dark:border-gray-800 rounded-2xl p-5 flex items-center justify-between">
+                <div class="flex items-center gap-4 w-2/3">
+                    <div class="w-3 h-3 rounded-full skeleton-shimmer shrink-0"></div>
+                    <div class="space-y-2 w-full">
+                        <div class="w-3/4 h-5 rounded skeleton-shimmer"></div>
+                        <div class="w-1/2 h-3 rounded skeleton-shimmer"></div>
+                    </div>
+                </div>
+                <div class="w-6 h-6 rounded-lg skeleton-shimmer"></div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock skeleton %}
 

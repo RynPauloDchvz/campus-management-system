@@ -109,6 +109,50 @@
 </script>
 {% endblock extra_js %}
 
+{% block skeleton %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+    <div class="mb-8 space-y-4">
+        <div class="w-32 h-4 rounded skeleton-shimmer"></div>
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-6">
+            <div class="space-y-3">
+                <div class="w-48 h-3 rounded skeleton-shimmer"></div>
+                <div class="w-72 h-10 rounded-lg skeleton-shimmer"></div>
+                <div class="w-64 h-4 rounded skeleton-shimmer"></div>
+            </div>
+            <div class="w-full md:w-48 h-12 rounded-xl skeleton-shimmer"></div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div v-for="i in 3" :key="i" class="h-28 bg-white dark:bg-[#151515] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 flex items-center gap-5">
+            <div class="w-14 h-14 rounded-full skeleton-shimmer shrink-0"></div>
+            <div class="space-y-2 w-full">
+                <div class="w-20 h-2 rounded skeleton-shimmer"></div>
+                <div class="w-24 h-8 rounded skeleton-shimmer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-2 h-[400px] bg-white dark:bg-[#151515] rounded-3xl border border-gray-100 dark:border-gray-800 skeleton-shimmer"></div>
+        <div class="lg:col-span-1 h-[400px] bg-white dark:bg-[#151515] rounded-3xl border border-gray-100 dark:border-gray-800 skeleton-shimmer"></div>
+    </div>
+
+    <div class="bg-white dark:bg-[#151515] rounded-3xl border border-gray-100 dark:border-gray-800 p-6 sm:p-8 h-[500px] flex flex-col space-y-6">
+        <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-4">
+            <div class="space-y-2">
+                <div class="w-64 h-7 rounded skeleton-shimmer"></div>
+                <div class="w-48 h-3 rounded skeleton-shimmer"></div>
+            </div>
+            <div class="w-32 h-10 rounded-xl skeleton-shimmer"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-for="i in 4" :key="i" class="h-32 rounded-2xl border border-gray-100 dark:border-gray-800 skeleton-shimmer"></div>
+        </div>
+    </div>
+</div>
+{% endblock skeleton %}
+
 {% block content %}
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">

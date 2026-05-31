@@ -23,6 +23,33 @@
 </style>
 {% endblock extra_head %}
 
+{% block skeleton %}
+<div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen pt-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <div class="w-32 h-4 rounded skeleton-shimmer"></div>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+            <div class="w-64 h-10 rounded-lg skeleton-shimmer"></div>
+            <div class="w-full sm:w-80 h-12 rounded-xl skeleton-shimmer"></div>
+        </div>
+        <div class="flex flex-col gap-4">
+            <div v-for="i in 6" :key="i" class="h-32 bg-white dark:bg-[#151515] rounded-2xl border border-gray-100 dark:border-gray-800 p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-start sm:items-center gap-4 flex-1 w-full">
+                    <div class="w-12 h-12 rounded-full skeleton-shimmer shrink-0"></div>
+                    <div class="space-y-2 flex-1">
+                        <div class="w-48 h-5 rounded skeleton-shimmer"></div>
+                        <div class="w-24 h-3 rounded skeleton-shimmer"></div>
+                        <div class="w-full h-4 rounded skeleton-shimmer"></div>
+                    </div>
+                </div>
+                <div class="w-20 h-4 rounded skeleton-shimmer shrink-0"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock skeleton %}
+
 {% block content %}
 <div v-pre>
 

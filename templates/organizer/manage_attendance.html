@@ -5,6 +5,50 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 {% endblock extra_head %}
 
+{% block skeleton %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+    <div class="mb-8 border-b border-gray-100 dark:border-gray-800 pb-6 space-y-3">
+        <div class="w-64 h-10 rounded-lg skeleton-shimmer"></div>
+        <div class="w-full max-w-md h-5 rounded skeleton-shimmer"></div>
+    </div>
+
+    <div class="w-full text-center mb-6 flex flex-col items-center justify-center">
+        <div class="w-24 h-3 rounded skeleton-shimmer mb-2"></div>
+        <div class="w-72 h-10 rounded-full skeleton-shimmer"></div>
+    </div>
+
+    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6 flex flex-col lg:flex-row gap-4 items-center justify-between">
+        <div class="flex gap-4 w-full lg:w-auto">
+            <div class="w-24 h-10 rounded-xl skeleton-shimmer"></div>
+            <div class="w-32 h-10 rounded-xl skeleton-shimmer"></div>
+        </div>
+        <div class="w-full lg:w-80 h-10 rounded-xl skeleton-shimmer"></div>
+    </div>
+
+    <div class="bg-white dark:bg-pup-darkcard rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-[#0a0a0a]">
+            <div class="space-y-2">
+                <div class="w-32 h-8 rounded-lg skeleton-shimmer"></div>
+                <div class="w-48 h-4 rounded skeleton-shimmer"></div>
+            </div>
+            <div class="text-right space-y-2">
+                <div class="w-12 h-8 rounded-lg skeleton-shimmer ml-auto"></div>
+                <div class="w-16 h-3 rounded skeleton-shimmer"></div>
+            </div>
+        </div>
+        <div class="p-4 space-y-4">
+            <div v-for="i in 6" :key="i" class="flex items-center justify-between py-2">
+                <div class="w-1/4 h-5 rounded skeleton-shimmer"></div>
+                <div class="w-1/6 h-5 rounded skeleton-shimmer"></div>
+                <div class="w-1/6 h-5 rounded skeleton-shimmer"></div>
+                <div class="w-1/6 h-5 rounded skeleton-shimmer"></div>
+                <div class="w-16 h-7 rounded-full skeleton-shimmer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock skeleton %}
+
 {% block content %}
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">

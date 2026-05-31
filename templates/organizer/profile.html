@@ -29,6 +29,61 @@
 </style>
 {% endblock extra_head %}
 
+{% block skeleton %}
+<div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen">
+    <div class="h-32 sm:h-64 w-full bg-gray-200 dark:bg-gray-800 skeleton-shimmer"></div>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div class="flex flex-col sm:flex-row items-center sm:items-end justify-between mb-8 gap-4 sm:gap-6 -mt-16 sm:-mt-24 text-center sm:text-left">
+            <div class="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-6 w-full">
+                <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white dark:border-[#0a0a0a] skeleton-shimmer shrink-0 shadow-md"></div>
+                <div class="pb-1 sm:pb-3 flex-grow w-full space-y-4">
+                    <div class="w-64 h-12 rounded-xl skeleton-shimmer mx-auto sm:mx-0"></div>
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                        <div class="w-32 h-8 rounded-full skeleton-shimmer"></div>
+                        <div class="w-40 h-8 rounded-full skeleton-shimmer"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="pb-1 sm:pb-3 flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
+                <div v-for="i in 4" :key="i" class="w-10 h-10 rounded-lg skeleton-shimmer"></div>
+                <div class="w-32 h-10 rounded-lg skeleton-shimmer"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-10">
+            <div v-for="i in 3" :key="i" class="h-20 bg-white dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center space-y-2 px-2">
+                <div class="w-12 h-2 rounded skeleton-shimmer"></div>
+                <div class="w-16 h-5 rounded skeleton-shimmer"></div>
+            </div>
+        </div>
+
+        <div class="mb-10">
+            <div class="flex items-center justify-between mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">
+                <div class="w-48 h-7 rounded skeleton-shimmer"></div>
+                <div class="w-24 h-4 rounded skeleton-shimmer"></div>
+            </div>
+            <div class="flex overflow-x-auto gap-4 pb-4">
+                <div v-for="i in 3" :key="i" class="shrink-0 w-64 sm:w-80 h-32 bg-white dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-gray-800 skeleton-shimmer"></div>
+            </div>
+        </div>
+
+        <div class="mb-10">
+            <div class="flex items-center justify-between mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">
+                <div class="w-32 h-7 rounded skeleton-shimmer"></div>
+                <div class="flex gap-2">
+                    <div class="w-20 h-4 rounded skeleton-shimmer"></div>
+                    <div class="w-20 h-4 rounded skeleton-shimmer"></div>
+                </div>
+            </div>
+            <div class="flex flex-col gap-3">
+                <div v-for="i in 4" :key="i" class="h-20 bg-white dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-gray-800 skeleton-shimmer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock skeleton %}
+
 {% block content %}
 <div v-pre>
 <div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300">

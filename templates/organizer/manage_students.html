@@ -5,6 +5,44 @@
 <link rel="stylesheet" href="{% static 'css/manage_students.css' %}">
 {% endblock extra_head %}
 
+{% block skeleton %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+    <div class="mb-6 border-b border-gray-100 dark:border-gray-800 pb-6 space-y-3">
+        <div class="w-64 h-10 rounded-lg skeleton-shimmer"></div>
+        <div class="w-full max-w-md h-5 rounded skeleton-shimmer"></div>
+    </div>
+
+    <div class="w-full text-center mb-6 flex flex-col items-center justify-center">
+        <div class="w-32 h-3 rounded skeleton-shimmer mb-2"></div>
+        <div class="w-64 h-10 rounded-full skeleton-shimmer"></div>
+    </div>
+
+    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div class="w-full sm:w-96 h-12 rounded-xl skeleton-shimmer"></div>
+        <div class="w-full sm:w-48 h-12 rounded-xl skeleton-shimmer"></div>
+    </div>
+
+    <div class="w-48 h-7 rounded-lg skeleton-shimmer mb-3"></div>
+    <div class="bg-white dark:bg-pup-darkcard rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-10">
+        <div class="h-12 bg-gray-50 dark:bg-[#111] border-b border-gray-100 dark:border-gray-800 skeleton-shimmer"></div>
+        <div class="divide-y divide-gray-100 dark:divide-gray-800">
+            <div v-for="i in 5" :key="i" class="p-4 grid grid-cols-12 gap-4 items-center">
+                <div class="col-span-5 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full skeleton-shimmer shrink-0"></div>
+                    <div class="space-y-2 w-full">
+                        <div class="w-3/4 h-4 rounded skeleton-shimmer"></div>
+                        <div class="w-1/2 h-3 rounded skeleton-shimmer"></div>
+                    </div>
+                </div>
+                <div class="col-span-3 h-4 rounded skeleton-shimmer"></div>
+                <div class="col-span-2 h-4 rounded skeleton-shimmer mx-auto w-12"></div>
+                <div class="col-span-2 h-7 rounded-full skeleton-shimmer mx-auto w-16"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock skeleton %}
+
 {% block content %}
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
