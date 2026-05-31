@@ -12,6 +12,27 @@
 </style>
 {% endblock extra_head %}
 
+{% block skeleton %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-10">
+    <!-- Header Skeleton -->
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-6 border-b border-gray-200 dark:border-gray-800 pb-6">
+        <div class="space-y-2 w-full sm:w-1/2">
+            <div class="h-10 w-3/4 rounded-xl skeleton-shimmer"></div>
+            <div class="h-4 w-1/2 rounded-lg skeleton-shimmer"></div>
+        </div>
+        <div class="h-14 w-full sm:w-48 rounded-2xl skeleton-shimmer"></div>
+    </div>
+
+    <!-- Stats Grid Skeleton -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div v-for="i in 4" :key="i" class="h-32 rounded-2xl skeleton-shimmer"></div>
+    </div>
+
+    <!-- History Analytics Skeleton -->
+    <div class="h-[600px] rounded-3xl skeleton-shimmer"></div>
+</div>
+{% endblock skeleton %}
+
 {% block content %}
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">

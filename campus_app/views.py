@@ -525,9 +525,55 @@ def update_student_profile(request):
     return JsonResponse({"status": "error", "message": "Invalid request."})
 
 @user_passes_test(is_student_strictly, login_url='/')
-def student_homepage(request): return render(request, 'student/homepage.html')
+def student_homepage(request):
+    upcoming_events = Event.objects.filter(event_status='Approved').order_by('event_date')[:4]
+    latest_news = Event.objects.filter(event_status='Approved').order_by('-created_at')[:4]
+
+    upcoming_data = []
+    for e in upcoming_events:
+        upcoming_data.append({
+            'id': e.id,
+            'title': e.event_title,
+            'date': e.event_date.strftime('%b %d, %Y').upper(),
+            'location': e.venue,
+            'image': e.thumbnail.name if e.thumbnail else 'background.jpg',
+            'description': e.description
+        })
+
+    news_data = []
+    for e in latest_news:
+        news_data.append({
+            'id': e.id,
+            'title': e.event_title,
+            'date': e.created_at.strftime('%b %d, %Y').upper(),
+            'location': e.venue,
+            'image': e.thumbnail.name if e.thumbnail else 'research.jpg',
+            'description': e.description
+        })
+
+    context = {
+        'upcoming_events_json': json.dumps(upcoming_data),
+        'latest_news_json': json.dumps(news_data)
+    }
+    return render(request, 'student/homepage.html', context)
+
 @user_passes_test(is_student_strictly, login_url='/')
-def student_school_events(request): return render(request, 'student/school_events.html')
+def student_school_events(request):
+    all_events = Event.objects.filter(event_status='Approved').order_by('event_date')
+    events_data = []
+    for e in all_events:
+        events_data.append({
+            'id': e.id,
+            'title': e.event_title,
+            'category': 'Organization', # Default category for now
+            'date': e.event_date.strftime('%b %d, %Y').upper(),
+            'time': e.start_time.strftime('%I:%M %p'),
+            'venue': e.venue,
+            'image': e.thumbnail.url if e.thumbnail else '',
+            'description': e.description
+        })
+    return render(request, 'student/school_events.html', {'events_json': json.dumps(events_data)})
+
 @user_passes_test(is_student_strictly, login_url='/')
 def student_event_calendar(request): return render(request, 'student/event_calendar.html')
 @user_passes_test(is_student_strictly, login_url='/')
@@ -542,13 +588,47 @@ def student_event_history(request): return render(request, 'student/event_histor
 # ==========================================
 
 @user_passes_test(is_organizer_strictly, login_url='/')
-def organizer_homepage(request): 
+def organizer_homepage(request):
     try:
         org_profile = OrgProfile.objects.get(user=request.user)
         org_acronym = org_profile.organization.strip()
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
-    return render(request, 'organizer/homepage.html', {'org_acronym': org_acronym, 'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym)})
+
+    managed_events = Event.objects.filter(org_id=org_acronym).order_by('-created_at')[:5]
+    managed_data = []
+    for e in managed_events:
+        managed_data.append({
+            'id': e.id,
+            'title': e.event_title,
+            'date': e.event_date.strftime('%b %d, %Y').upper(),
+            'status': e.event_status,
+            'image': e.thumbnail.url if e.thumbnail else ''
+        })
+
+    action_required = Event.objects.filter(org_id=org_acronym, event_status='Admin Approved').first()
+    
+    latest_news = Event.objects.filter(event_status='Approved').order_by('-created_at')[:4]
+    news_data = []
+    for e in latest_news:
+        news_data.append({
+            'id': e.id,
+            'title': e.event_title,
+            'date': e.created_at.strftime('%b %d, %Y').upper(),
+            'image': e.thumbnail.url if e.thumbnail else ''
+        })
+
+    context = {
+        'org_acronym': org_acronym, 
+        'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
+        'managed_events_json': json.dumps(managed_data),
+        'action_required_json': json.dumps({
+            'title': action_required.event_title,
+            'id': action_required.id
+        }) if action_required else None,
+        'latest_news_json': json.dumps(news_data)
+    }
+    return render(request, 'organizer/homepage.html', context)
 
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_school_events(request): 
@@ -810,7 +890,35 @@ def organizer_manage_attendance(request):
         org_acronym = org_profile.organization.strip()
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
-    return render(request, 'organizer/manage_attendance.html', {'org_acronym': org_acronym, 'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym)})
+
+    # Fetch attendance for events belonging to this org
+    attendance_records = Attendance.objects.filter(event__org_id=org_acronym).select_related('student', 'event').order_by('-time_in')
+    
+    attendance_data = []
+    for att in attendance_records:
+        status = "Verified" if att.face_matched and att.is_valid_location else "Issue"
+        attendance_data.append({
+            'id': att.id,
+            'name': att.student.full_name,
+            'number': att.student.student_number,
+            'program': att.student.program,
+            'year': att.student.year_level,
+            'time': att.time_in.strftime('%I:%M %p'),
+            'date': att.time_in.strftime('%b %d, %Y'),
+            'status': status,
+            'event': att.event.event_title,
+            'venue': att.event.venue,
+            'lat': float(att.latitude) if att.latitude else 13.8392, # Default to campus if missing
+            'lng': float(att.longitude) if att.longitude else 121.9861,
+            'img': att.student.profile_picture.url if att.student.profile_picture else '/static/images/student.jpg'
+        })
+
+    context = {
+        'org_acronym': org_acronym, 
+        'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
+        'attendance_data_json': json.dumps(attendance_data)
+    }
+    return render(request, 'organizer/manage_attendance.html', context)
 
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_analytics(request): 
@@ -946,7 +1054,28 @@ def organizer_attendance_history(request):
         org_acronym = org_profile.organization.strip()
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
-    return render(request, 'organizer/attendance_history.html', {'org_acronym': org_acronym, 'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym)})
+
+    # Fetch completed events or events with attendance records
+    events_with_attendance = Event.objects.filter(org_id=org_acronym).order_by('-event_date')
+    
+    history_data = []
+    for e in events_with_attendance:
+        history_data.append({
+            'id': e.id,
+            'title': e.event_title,
+            'date': e.event_date.strftime('%b %d, %Y') if e.event_date else 'No Date',
+            'time': e.start_time.strftime('%I:%M %p') if e.start_time else '--',
+            'venue': e.venue,
+            'type': 'Attendance',
+            'img': e.thumbnail.url if e.thumbnail else '/static/images/PUPLogo.png'
+        })
+
+    context = {
+        'org_acronym': org_acronym, 
+        'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
+        'history_data_json': json.dumps(history_data)
+    }
+    return render(request, 'organizer/attendance_history.html', context)
 
 # ==========================================
 # 🟢 UPDATED 6-STEP DOCUMENT TRACKING LOGIC 🟢

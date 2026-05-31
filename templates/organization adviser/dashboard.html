@@ -5,7 +5,7 @@
 {% block page_title %}Event Approvals{% endblock %}
 {% block page_subtitle %}Review incoming proposals and verify permits from Student Organizations.{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
     .animate-fade-in {
         animation: fadeIn 0.3s ease-in-out;
@@ -16,6 +16,9 @@
     }
     [v-cloak] { display: none !important; }
 </style>
+{% endblock %}
+
+{% block content %}
 
 <div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center mb-6 transition-colors duration-300">
     <div class="flex items-center gap-3">
@@ -252,11 +255,13 @@
             }
         });
 
-        imagePreviewModal.addEventListener('click', (e) => {
-            if (e.target === imagePreviewModal) {
-                imagePreviewModal.classList.add('hidden');
-            }
-        });
+        if (imagePreviewModal) {
+            imagePreviewModal.addEventListener('click', (e) => {
+                if (e.target === imagePreviewModal) {
+                    imagePreviewModal.classList.add('hidden');
+                }
+            });
+        }
     });
 
     const { createApp, ref, computed, onMounted } = Vue;

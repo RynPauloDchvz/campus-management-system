@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 isMobileMenuOpen: false,
                 currentUrl: window.VUE_APP_DATA?.currentUrl || '',
                 
-                // --- 📱 Bottom Nav Configuration 📱 ---
+                // --- ?? Bottom Nav Configuration ?? ---
                 navItems: [
                     { name: 'Home', label: 'Home', icon: 'ph ph-house', iconActive: 'ph-fill ph-house', url: window.VUE_APP_DATA?.urls?.homepage },
                     { name: 'Events', label: 'Events', icon: 'ph ph-ticket', iconActive: 'ph-fill ph-ticket', url: window.VUE_APP_DATA?.urls?.school_events },
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     { name: 'Theme', label: 'Mode', icon: 'ph ph-moon', iconActive: 'ph-fill ph-sun', url: null }
                 ],
                 
-                // --- 📱 Bottom Nav State 📱 ---
+                // --- ?? Bottom Nav State ?? ---
                 navRefs: [],
                 indicatorOffset: 0,
                 indicatorWidth: 0,
@@ -39,10 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 showLeftArrow: false,
                 showRightArrow: true,
 
-                // --- 📊 State 📊 ---
+                // --- ?? State ?? ---
                 isEventModalOpen: false,
                 selectedEvent: {}, 
-                latestNews: window.VUE_APP_DATA?.latestNews || []
+                latestNews: window.VUE_APP_DATA?.latestNews || [],
+                managedEvents: window.VUE_APP_DATA?.managedEvents || [],
+                actionRequired: window.VUE_APP_DATA?.actionRequired || null
             }
         },
         created() {
