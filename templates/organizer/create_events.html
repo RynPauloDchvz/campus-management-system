@@ -138,21 +138,29 @@
             </form>
         </div>
 
-        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 relative font-sans h-full flex flex-col">
+        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 relative font-sans h-full flex flex-col min-h-[600px]">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-pup-maroon dark:bg-pup-gold"></div>
             
-            <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3 mb-4">
-                Submitted Proposals
-            </h3>
+            <div class="flex flex-col sm:flex-row justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-3 mb-4 gap-3">
+                <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white truncate">
+                    Submitted Proposals
+                </h3>
+                <div class="relative w-full sm:w-48">
+                    <input type="text" id="eventSearch" oninput="handleSearch()" placeholder="Search events..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-lg pl-8 pr-3 py-1.5 text-[10px] font-bold outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors text-gray-900 dark:text-white">
+                    <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                </div>
+            </div>
             
             <div id="eventsList" class="flex flex-col gap-3 overflow-y-auto max-h-[700px] pr-2 flex-grow" style="-ms-overflow-style: none; scrollbar-width: none;">
-                </div>
+                <!-- Events populated by JS -->
+            </div>
         </div>
         
     </div>
 
 </div>
 
+<!-- VIEW SUBMITTED PROPOSAL MODAL (FIXED TO READ EXCUSE/RESCHEDULE) -->
 <div id="viewModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-4 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeViewModal()"></div>
     <div class="relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
@@ -166,12 +174,46 @@
             <p id="viewDate" class="mb-6 font-bold"></p>
             <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
             <p class="mb-6 leading-tight">Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus</p>
-            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong></p>
+            
+            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong id="viewReText">Approval of Organizational Student Activity</strong></p>
+            
             <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
             <p class="mb-4">Greetings!</p>
-            <p class="mb-4 text-justify indent-8">To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong id="viewOrg"></strong> will be conducting a seminar entitled <strong>"<span id="viewTitle"></span>"</strong>. <span id="viewDesc"></span></p>
-            <p class="mb-8 text-justify indent-8">The activity will be held on <strong><span id="viewEvtDate"></span></strong>, <strong><span id="viewStartTime"></span></strong> to <strong><span id="viewEndTime"></span></strong> at <strong><span id="viewVenue"></span></strong>.</p>
-            <p class="mb-12">Thank you for your kind consideration and usual support.</p>
+            
+            <div id="viewContentApproval" class="hidden">
+                <p class="mb-4 text-justify indent-8">
+                    To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong id="viewOrgApp"></strong> will be conducting a seminar entitled <strong>"<span id="viewTitleApp"></span>"</strong>. <span id="viewDescApp"></span>
+                </p>
+                <p class="mb-8 text-justify indent-8">
+                    The activity will be held on <strong><span id="viewEvtDateApp"></span></strong>, <strong><span id="viewStartTimeApp"></span></strong> to <strong><span id="viewEndTimeApp"></span></strong> at <strong><span id="viewVenueApp"></span></strong>.
+                </p>
+            </div>
+
+            <div id="viewContentExcuse" class="hidden">
+                <p class="mb-4 text-justify indent-8">
+                    <strong id="viewOrgExc"></strong> is organizing an event with the theme <strong>"<span id="viewTitleExc"></span>"</strong> to be held on <strong><span id="viewEvtDateExc"></span></strong>, <strong><span id="viewStartTimeExc"></span></strong> to <strong><span id="viewEndTimeExc"></span></strong> at <strong><span id="viewVenueExc"></span></strong>. <span id="viewDescExc"></span>
+                </p>
+                <p class="mb-8 text-justify indent-8">
+                    In line with this, we respectfully request the excusal of <strong><span id="viewTargetExc"></span></strong> whose classes will be affected to allow full participation without academic conflicts, and we also request usage of the aforementioned hall, together with <strong><span id="viewEquipExc"></span></strong>.
+                </p>
+            </div>
+
+            <div id="viewContentReschedule" class="hidden">
+                <p class="mb-4 text-justify indent-8">
+                    We hope this letter finds you well and in good health. <strong id="viewOrgRes"></strong> respectfully requests a rescheduling of our upcoming event entitled <strong>"<span id="viewTitleRes"></span>"</strong>. The event is currently set for <strong id="viewOrigDateRes"></strong>.
+                </p>
+                <p class="mb-4 text-justify indent-8">
+                    We propose moving the event to <strong><span id="viewEvtDateRes"></span></strong>, from <strong><span id="viewStartTimeRes"></span></strong> to <strong><span id="viewEndTimeRes"></span></strong> at <strong><span id="viewVenueRes"></span></strong>.
+                </p>
+                <p class="mb-8 text-justify indent-8">
+                    This request is made <span id="viewReasonRes"></span>. To ensure that our participants have an adequate venue and preparation, we believe this adjustment is necessary.
+                </p>
+            </div>
+
+            <p id="viewOutroA" class="mb-12 hidden">Thank you for your kind consideration and usual support.</p>
+            <p id="viewOutroB" class="mb-12 hidden">We look forward to your response. Thank you for your kind consideration and usual support!</p>
+            <p id="viewOutroC" class="mb-12 hidden">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
+
             <p class="mb-8">Respectfully yours,</p>
             <div class="mb-8">
                 <p id="viewReqName" class="font-bold uppercase mb-0 whitespace-nowrap"></p>
@@ -329,7 +371,7 @@
             container.innerHTML = `
                 <div class="text-center py-16 bg-gray-50 dark:bg-[#111] border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl my-auto">
                     <i class="ph-fill ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
-                    <p class="text-base font-bold text-gray-500">No events found.</p>
+                    <p class="text-base font-bold text-gray-500 uppercase tracking-widest text-[10px]">No events found</p>
                 </div>
             `;
             return;
@@ -351,18 +393,100 @@
         container.innerHTML = html;
     }
 
+    function handleSearch() {
+        const query = document.getElementById('eventSearch').value.toLowerCase();
+        const filtered = allEvents.filter(ev => 
+            (ev.title && ev.title.toLowerCase().includes(query)) ||
+            (ev.venue && ev.venue.toLowerCase().includes(query)) ||
+            (ev.date && ev.date.toLowerCase().includes(query)) ||
+            (ev.status && ev.status.toLowerCase().includes(query))
+        );
+        renderEvents(filtered);
+    }
+
     function openViewModal(id) {
         const ev = allEvents.find(e => e.id === id);
         if(!ev) return;
         
+        let desc = ev.description || "";
+        
+        // Hide all specific content sections first
+        document.getElementById('viewContentApproval').classList.add('hidden');
+        document.getElementById('viewContentExcuse').classList.add('hidden');
+        document.getElementById('viewContentReschedule').classList.add('hidden');
+        document.getElementById('viewOutroA').classList.add('hidden');
+        document.getElementById('viewOutroB').classList.add('hidden');
+        document.getElementById('viewOutroC').classList.add('hidden');
+
+        // Logic to parse different document types from description
+        if (desc.includes("[RESCHEDULE REQUEST]")) {
+            let reasonStr = "";
+            let origDateStr = "";
+            let origDescStr = "";
+
+            let parts = desc.split("|");
+            parts.forEach(part => {
+                if(part.includes("Reason:")) reasonStr = part.replace("[RESCHEDULE REQUEST]", "").replace("Reason:", "").trim();
+                if(part.includes("Original Date:")) origDateStr = part.replace("Original Date:", "").trim();
+                if(part.includes("Original Desc:")) origDescStr = part.replace("Original Desc:", "").trim();
+            });
+
+            document.getElementById('viewReText').innerText = "Scheduling of Organizational Student Activity";
+            document.getElementById('viewContentReschedule').classList.remove('hidden');
+            document.getElementById('viewOutroC').classList.remove('hidden');
+            
+            document.getElementById('viewOrgRes').innerText = ev.org || "";
+            document.getElementById('viewTitleRes').innerText = ev.title || "";
+            document.getElementById('viewOrigDateRes').innerText = origDateStr || "(Original Date)";
+            document.getElementById('viewEvtDateRes').innerText = ev.date || "";
+            document.getElementById('viewStartTimeRes').innerText = ev.start_time || "";
+            document.getElementById('viewEndTimeRes').innerText = ev.end_time || "Finish";
+            document.getElementById('viewVenueRes').innerText = ev.venue || "";
+            document.getElementById('viewReasonRes').innerText = reasonStr || "due to unforeseen circumstances";
+
+        } else if (desc.includes("[EXCUSE & EQUIPMENT REQUEST]")) {
+            let targetStr = "";
+            let equipStr = "";
+            let origDescStr = "";
+
+            let parts = desc.split("|");
+            parts.forEach(part => {
+                if(part.includes("Target:")) targetStr = part.replace("[EXCUSE & EQUIPMENT REQUEST]", "").replace("Target:", "").trim();
+                if(part.includes("Equipment:")) equipStr = part.replace("Equipment:", "").trim();
+                if(part.includes("Desc:")) origDescStr = part.replace("Desc:", "").trim();
+            });
+
+            document.getElementById('viewReText').innerText = "Excuse and Request Usage of Equipment/Facility";
+            document.getElementById('viewContentExcuse').classList.remove('hidden');
+            document.getElementById('viewOutroB').classList.remove('hidden');
+            
+            document.getElementById('viewOrgExc').innerText = ev.org || "";
+            document.getElementById('viewTitleExc').innerText = ev.title || "";
+            document.getElementById('viewEvtDateExc').innerText = ev.date || "";
+            document.getElementById('viewStartTimeExc').innerText = ev.start_time || "";
+            document.getElementById('viewEndTimeExc').innerText = ev.end_time || "Finish";
+            document.getElementById('viewVenueExc').innerText = ev.venue || "";
+            document.getElementById('viewDescExc').innerText = origDescStr ? "This activity aims to " + origDescStr : "";
+            document.getElementById('viewTargetExc').innerText = targetStr || "all affected students";
+            document.getElementById('viewEquipExc').innerText = equipStr || "the necessary equipment";
+
+        } else {
+            // Default Standard Approval Letter
+            document.getElementById('viewReText').innerText = "Approval of Organizational Student Activity";
+            document.getElementById('viewContentApproval').classList.remove('hidden');
+            document.getElementById('viewOutroA').classList.remove('hidden');
+            
+            document.getElementById('viewOrgApp').innerText = ev.org || "";
+            document.getElementById('viewTitleApp').innerText = ev.title || "";
+            document.getElementById('viewDescApp').innerText = desc;
+            document.getElementById('viewEvtDateApp').innerText = ev.date || "";
+            document.getElementById('viewStartTimeApp').innerText = ev.start_time || "";
+            document.getElementById('viewEndTimeApp').innerText = ev.end_time || "Finish";
+            document.getElementById('viewVenueApp').innerText = ev.venue || "";
+        }
+
+        // Common Modal Header and Signatories
         document.getElementById('viewDate').innerText = ev.date || "";
-        document.getElementById('viewOrg').innerText = ev.org || "";
-        document.getElementById('viewTitle').innerText = ev.title || "";
-        document.getElementById('viewDesc').innerText = ev.description || "";
-        document.getElementById('viewEvtDate').innerText = ev.date || "";
-        document.getElementById('viewStartTime').innerText = ev.start_time || "";
-        document.getElementById('viewEndTime').innerText = ev.end_time || "Finish";
-        document.getElementById('viewVenue').innerText = ev.venue || "";
         document.getElementById('viewReqName').innerText = ev.requester_name || "";
         document.getElementById('viewOrgPres').innerText = ev.org || "";
         document.getElementById('viewAdvName').innerText = ev.adviser_name || "(Adviser Name)";
@@ -402,7 +526,7 @@
     }
 
     function getOrgFullName(acronym) {
-        const details = ORG_DETAILS[acronym] || ORG_DETAILS["DEFAULT"];
+        const details = ORG_DETAILS[acronym] || ORG_DETAILS["SSC"]; // Fallback to SSC
         return `The ${details.program}, through the ${details.fullname} (${acronym})`;
     }
 
@@ -464,7 +588,11 @@
             
             document.getElementById('orgFullRes').innerText = fullOrgText;
             document.getElementById('titleRes').innerText = title;
-            document.getElementById('origDateRes').innerText = document.getElementById('origDate').value || "(Original Date)";
+            
+            const origDateRaw = document.getElementById('origDate').value;
+            const formattedOrigDate = origDateRaw ? new Date(origDateRaw).toLocaleDateString('en-US', options) : "(Original Date)";
+            document.getElementById('origDateRes').innerText = formattedOrigDate;
+            
             document.getElementById('dateRes').innerText = formattedDate;
             document.getElementById('timeRes').innerText = `${sTime} to ${eTime}`;
             document.getElementById('venueRes').innerText = venue;
@@ -487,7 +615,6 @@
         document.body.style.overflow = '';
     }
 
-    // 🟢 UPDATED DOWNLOAD WORD FUNCTION 🟢
     async function downloadWord(btnElement) {
         const originalText = btnElement.innerHTML;
         btnElement.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
@@ -568,11 +695,12 @@
         formData.append('end_time', document.getElementById('evtEndTime').value);
         formData.append('venue', document.getElementById('evtVenue').value);
         
-        // Dagdag details sa description para alam ng backend
         const type = document.getElementById('letterType').value;
         let finalDesc = document.getElementById('evtDesc').value;
         if(type === 'reschedule') {
-            finalDesc = `[RESCHEDULE REQUEST] Reason: ${document.getElementById('reschedReason').value} | Original Desc: ${finalDesc}`;
+            const origDateRaw = document.getElementById('origDate').value;
+            const formattedOrigDate = origDateRaw ? new Date(origDateRaw).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "(Original Date)";
+            finalDesc = `[RESCHEDULE REQUEST] Reason: ${document.getElementById('reschedReason').value} | Original Date: ${formattedOrigDate} | Original Desc: ${finalDesc}`;
         } else if(type === 'excuse') {
             finalDesc = `[EXCUSE & EQUIPMENT REQUEST] Target: ${document.getElementById('excuseClasses').value} | Equipment: ${document.getElementById('reqEquipment').value} | Desc: ${finalDesc}`;
         }
