@@ -23,7 +23,13 @@
             theme: {
                 extend: {
                     colors: {
-                        pup: { maroon: '#800000', gold: '#D4AF37', dark: '#121212', darkcard: '#1e1e1e' },
+                        pup: { 
+                            maroon: '#800000', 
+                            gold: '#D4AF37', 
+                            dark: '#121212', 
+                            darkcard: '#1e1e1e',
+                            darkbg: '#0a0a0a'
+                        },
                         bglight: '#f4f6f8',
                     },
                     fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
@@ -31,45 +37,166 @@
             }
         }
     </script>
+    <style>
+        [v-cloak] { display: none !important; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* 🟢 Elevated Magic Box System 🟢 */
+        .indicator-box {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+        .active-unit-elevated {
+            transform: translateY(-20px);
+        }
+        .transition-all-custom { 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @media (max-width: 767px) {
+            .sidebar { display: none !important; }
+            .main-wrapper { margin-left: 0 !important; width: 100% !important; }
+            header { padding: 1rem !important; flex-direction: row !important; align-items: center !important; }
+            .content-area { padding: 1rem !important; }
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 
 <body class="bg-bglight dark:bg-pup-dark text-gray-800 dark:text-gray-200 font-sans antialiased overflow-hidden transition-colors duration-300 sidebar-expanded">
 
-    <nav class="sidebar" id="sidebar">
-        <i class="ph-bold ph-list toggle-btn" onclick="toggleSidebar()"></i>
-
-        <div class="brand">
-            <img src="{% static 'images/PUPLogo.png' %}" class="logo-img" alt="PUP Logo">
-            <div class="brand-text-wrapper">
-                <span class="logo-text">ADVISER PANEL</span>
-                <span class="brand-subtitle">PUPUni-CAMS</span>
+    <!-- Global Layout Managed by Base Vue Instance -->
+    <div id="base-app" v-cloak>
+        <!-- Skeleton Loading Overlay -->
+        <div v-if="isLoading" class="fixed inset-0 z-[9999] bg-[#f4f6f8] dark:bg-pup-darkbg flex flex-col overflow-hidden">
+            <div class="w-full flex justify-between items-center px-6 py-4 bg-white dark:bg-pup-darkcard border-b border-gray-200 dark:border-white/10 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full skeleton-shimmer"></div>
+                    <div class="w-32 h-6 rounded skeleton-shimmer"></div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-full skeleton-shimmer"></div>
+                    <div class="w-10 h-10 rounded-lg skeleton-shimmer"></div>
+                </div>
+            </div>
+            <div class="max-w-7xl mx-auto px-8 py-8 w-full flex-grow overflow-y-auto">
+                <div class="space-y-8 animate-pulse">
+                    <div class="w-64 h-10 rounded-lg skeleton-shimmer"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div v-for="i in 6" :key="i" class="h-48 rounded-2xl skeleton-shimmer"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- Sidebar (Desktop Only) -->
+        <nav class="sidebar hidden md:flex" id="sidebar">
+            <i class="ph-bold ph-list toggle-btn" @click="toggleSidebar"></i>
+
+            <div class="brand">
+                <img src="{% static 'images/PUPLogo.png' %}" class="logo-img" alt="PUP Logo">
+                <div class="brand-text-wrapper">
+                    <span class="logo-text">ADVISER PANEL</span>
+                    <span class="brand-subtitle">PUPUni-CAMS</span>
+                </div>
+            </div>
+
         <div class="menu-label">Main Menu</div>
         
-        <a href="{% url 'adviser_dashboard' %}" data-title="Event Approvals" class="nav-link {% if request.path == '/adviser/dashboard/' %}active{% endif %}">
+        <a href="{% url 'adviser_dashboard' %}" data-title="Event Approvals" class="nav-link {% if request.path == '/adviser/dashboard/' %}active{% endif %}" :class="{ 'active': currentUrl === 'adviser_dashboard' }">
             <i class="ph-bold ph-check-circle"></i>
             <span class="nav-text">Event Approvals</span>
         </a>
         
-        <a href="{% url 'adviser_history' %}" data-title="History" class="nav-link {% if request.path == '/adviser/history/' %}active{% endif %}">
+        <a href="{% url 'adviser_history' %}" data-title="History" class="nav-link {% if request.path == '/adviser/history/' %}active{% endif %}" :class="{ 'active': currentUrl === 'adviser_history' }">
             <i class="ph-bold ph-clock-counter-clockwise"></i>
             <span class="nav-text">History</span>
         </a>
 
         <div class="logout-btn-container">
-            <button onclick="document.getElementById('logoutModalOverlay').style.display='flex'" data-title="Logout" class="logout-btn">
+            <button @click="openLogoutModal" data-title="Logout" class="logout-btn">
                 <i class="ph-bold ph-sign-out"></i>
                 <span class="nav-text">Logout</span>
             </button>
         </div>
-    </nav>
+        </nav>
 
-    <main class="main-wrapper">
-        <header class="bg-bglight dark:bg-pup-dark px-8 py-6 flex justify-between items-end shrink-0 transition-colors duration-300 border-b border-gray-200 dark:border-gray-800">
-            <div>
+        <!-- 📱 Floating Bottom Navigation Bar (Mobile Only) 📱 -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 z-[1000] w-full px-4 pb-4 pointer-events-none">
+            <div class="relative w-full h-16 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex shadow-2xl pointer-events-auto transition-colors border border-white/5 overflow-visible">
+                <div class="indicator-box absolute h-[70px] transition-all duration-400 ease-out flex justify-center items-center pointer-events-none z-10"
+                    :style="{ left: indicatorOffset + 'px', width: indicatorWidth + 'px', opacity: (activeIndex >= 0 && activeIndex <= 1 && indicatorWidth > 0) ? 1 : 0, top: '-20px' }">
+                    <div class="w-full h-full bg-black dark:bg-white rounded-2xl shadow-2xl border-2 border-white/10 dark:border-black/5"></div>
+                </div>
+
+                <div v-for="(item, index) in navItems" :key="index" :ref="(el) => { if (el) setNavRef(index, el) }" @click="handleNavClick(item, index)"
+                    class="relative flex-1 h-full flex flex-col items-center justify-center cursor-pointer z-20 transition-all-custom"
+                    :class="{ 'active-unit-elevated': activeIndex === index && item.name !== 'Theme' && item.name !== 'Logout' }">
+                    <div class="flex flex-col items-center justify-center gap-0.5">
+                        <div class="transition-colors duration-300 flex justify-center items-center" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'">
+                            <i v-if="item.name === 'Theme'" :class="[isDark ? 'ph-fill ph-sun' : 'ph-bold ph-moon', 'text-2xl']"></i>
+                            <i v-else :class="[activeIndex === index ? item.iconActive : item.icon, 'text-2xl']"></i>
+                        </div>
+                        <span class="text-[7px] font-black transition-colors duration-300 w-full text-center uppercase tracking-tighter" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'">
+                            [[ item.label ]]
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🫧 Profile Bubble Modal (Mobile Only) 🫧 -->
+        <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 translate-y-[-10px] scale-95" enter-to-class="opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 translate-y-[-10px] scale-95">
+            <div v-if="showProfileBubble" class="md:hidden fixed top-20 right-4 z-[2000] w-[280px] bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-white/10 font-sans">
+                <div class="h-20 w-full relative bg-pup-maroon">
+                    <img src="{% static 'images/banner/banner.jpg' %}" class="w-full h-full object-cover opacity-80">
+                    <button @click="showProfileBubble = false" class="absolute top-2 right-2 text-white/80 hover:text-white"><i class="ph-bold ph-x text-lg"></i></button>
+                </div>
+                <div class="px-5 pb-8 pt-10 relative text-center">
+                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full border-4 border-white dark:border-pup-darkcard overflow-hidden bg-white shadow-md flex items-center justify-center">
+                        <div class="w-full h-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black flex items-center justify-center text-2xl font-bold">AD</div>
+                    </div>
+                    <h3 class="font-black text-gray-900 dark:text-white text-lg leading-tight uppercase px-2 break-words text-center">{{ request.user.username|default:"Adviser" }}</h3>
+                    <p class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold uppercase tracking-wider mb-2">Organization Adviser</p>
+                    <p class="text-[9px] text-gray-500 dark:text-gray-400 font-medium px-4 leading-tight">Faculty member overseeing student organization activities.</p>
+                </div>
+            </div>
+        </transition>
+        <div v-if="showProfileBubble" @click="showProfileBubble = false" class="md:hidden fixed inset-0 z-[1999] bg-black/20 dark:bg-black/40 backdrop-blur-[2px]"></div>
+
+        <!-- Logout Modal -->
+        <div v-show="isLogoutModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+            <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gray-200 dark:border-gray-800 transform scale-100 transition-transform font-sans">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200 dark:border-red-900/40">
+                        <i class="ph-fill ph-sign-out text-3xl text-pup-maroon dark:text-red-500"></i>
+                    </div>
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">Sign Out?</h3>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium leading-relaxed px-2">Are you sure you want to securely log out?</p>
+                </div>
+                <div class="flex gap-3 w-full">
+                    <button type="button" @click="closeLogoutModal" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold transition-colors uppercase text-[10px] tracking-widest border border-gray-200 dark:border-gray-700">Cancel</button>
+                    <form action="{% url 'admin_logout' %}" method="post" class="flex-1 m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full py-3 px-4 bg-pup-maroon hover:bg-red-900 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 text-center flex items-center justify-center uppercase text-[10px] tracking-widest border-none cursor-pointer">Yes, Sign Out</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Wrapper Outside base-app to allow independent Vue mounting in child templates -->
+    <main class="main-wrapper flex flex-col min-h-screen">
+        <!-- Header -->
+        <header class="bg-bglight dark:bg-pup-dark px-4 md:px-8 py-4 md:py-6 flex justify-between items-center md:items-end shrink-0 transition-colors duration-300 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
+            <!-- Mobile Logo -->
+            <div class="md:hidden flex items-center gap-2">
+                <img src="{% static 'images/PUPLogo.png' %}" class="h-8 w-8 object-contain" alt="PUP Logo">
+                <span class="font-black text-pup-maroon dark:text-pup-gold tracking-tighter uppercase text-sm">PUPUni-CAMS</span>
+            </div>
+
+            <!-- Page Title (Desktop Only) -->
+            <div class="hidden md:block">
                 <h2 class="text-3xl font-extrabold text-pup-maroon dark:text-pup-gold tracking-tight mb-1">
                     {% block page_title %}Event Approvals{% endblock %}
                 </h2>
@@ -78,23 +205,26 @@
                 </p>
             </div>
             
-            <div class="flex items-center gap-6">
-                <button onclick="toggleGlobalTheme()" class="text-gray-500 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold transition">
-                    <i id="themeIcon" class="ph-fill ph-moon text-2xl"></i>
+            <div class="flex items-center gap-4 md:gap-6">
+                <!-- Theme toggle triggered via Base Vue but visually here -->
+                <button onclick="window.baseApp.toggleTheme()" class="hidden md:block text-gray-500 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold transition">
+                    <i id="theme-icon-desktop" class="ph-fill ph-moon text-2xl"></i>
                 </button>
-                <div class="flex items-center gap-3">
-                    <div class="text-right leading-tight">
-                        <p class="font-bold text-sm text-gray-900 dark:text-white">{{ request.user.username|default:"admin" }}</p>
+                
+                <!-- Profile Trigger -->
+                <div onclick="window.baseApp.handleHeaderProfileClick()" class="flex items-center gap-3 cursor-pointer group">
+                    <div class="hidden md:block text-right leading-tight">
+                        <p class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition">{{ request.user.username|default:"Adviser" }}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Org Adviser</p>
                     </div>
-                    <div class="w-10 h-10 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black rounded-full flex items-center justify-center text-sm font-bold shadow-md">
+                    <div class="w-9 h-9 md:w-10 md:h-10 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black rounded-full flex items-center justify-center text-sm font-bold shadow-md border-2 border-transparent group-hover:border-pup-maroon dark:group-hover:border-pup-gold transition">
                         AD
                     </div>
                 </div>
             </div>
         </header>
 
-        <div id="app" v-cloak class="flex-1 overflow-y-auto px-8 py-6 grow">
+        <div id="app" v-cloak class="flex-1 overflow-y-auto px-4 md:px-8 py-6 grow content-area">
             <!-- 🟢 ACTUAL PAGE CONTENT 🟢 -->
             {% block content %}{% endblock %}
             
@@ -102,70 +232,115 @@
         </div>
     </main>
 
-    <div id="logoutModalOverlay" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
-        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center border border-gray-100 dark:border-gray-800 transform transition-all">
-            
-            <i class="ph-bold ph-sign-out text-5xl text-[#dc3545] mb-2 inline-block"></i>
-            
-            <h3 class="text-2xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">Confirm Logout</h3>
-            <p class="text-gray-500 dark:text-gray-400 font-medium text-sm mb-8 leading-relaxed">
-                Are you sure you want to securely end your session?
-            </p>
-            
-            <div class="flex gap-4">
-                <button onclick="document.getElementById('logoutModalOverlay').style.display='none'" class="flex-1 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    Cancel
-                </button>
-                <form action="{% url 'admin_logout' %}" method="post" class="flex-1 m-0 p-0">
-                    {% csrf_token %}
-                    <button type="submit" class="w-full py-3 bg-[#dc3545] hover:bg-red-700 text-white rounded-xl font-bold transition-colors">
-                        Yes, Logout
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
+    <script>
+        const { createApp } = Vue;
 
-<script>
-    // Theme logic
-    const savedTheme = localStorage.getItem('theme');
-    const themeIcon = document.getElementById('themeIcon');
-    
-    if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-        themeIcon.classList.replace('ph-moon', 'ph-sun');
-    }
+        const baseAppConfig = {
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    isLoading: true,
+                    isDark: false,
+                    isLogoutModalOpen: false,
+                    showProfileBubble: false,
+                    currentUrl: "{{ request.resolver_match.url_name }}",
+                    navRefs: [],
+                    indicatorOffset: 0,
+                    indicatorWidth: 0,
+                    activeIndex: -1,
+                    navItems: [
+                        { name: 'Approvals', label: 'Approvals', icon: 'ph ph-check-circle', iconActive: 'ph-fill ph-check-circle', url: "{% url 'adviser_dashboard' %}" },
+                        { name: 'History', label: 'History', icon: 'ph ph-clock-counter-clockwise', iconActive: 'ph-fill ph-clock-counter-clockwise', url: "{% url 'adviser_history' %}" },
+                        { name: 'Theme', label: 'Mode', icon: 'ph ph-moon', iconActive: 'ph-fill ph-sun', url: null },
+                        { name: 'Logout', label: 'Logout', icon: 'ph ph-sign-out', iconActive: 'ph-fill ph-sign-out', url: null }
+                    ]
+                }
+            },
+            created() {
+                const urlToIndex = { 'adviser_dashboard': 0, 'adviser_history': 1 };
+                this.activeIndex = urlToIndex[this.currentUrl] !== undefined ? urlToIndex[this.currentUrl] : -1;
+            },
+            mounted() {
+                setTimeout(() => { this.isLoading = false; }, 800);
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme === 'dark') {
+                    this.isDark = true;
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
+                    this.updateDesktopIcon(true);
+                }
+                const sidebarState = localStorage.getItem('adviserSidebarState');
+                if(sidebarState === 'collapsed') { document.body.classList.remove('sidebar-expanded'); }
+                this.initIndicator();
+                window.addEventListener('resize', () => this.calculatePosition(this.activeIndex));
+            },
+            methods: {
+                setNavRef(index, el) { this.navRefs[index] = el; },
+                initIndicator() {
+                    if (this.activeIndex === -1) return;
+                    this.$nextTick(() => { setTimeout(() => this.calculatePosition(this.activeIndex), 150); });
+                },
+                calculatePosition(index) {
+                    if (index === -1 || index >= 2) { this.indicatorWidth = 0; return; }
+                    const el = this.navRefs[index];
+                    if (el) {
+                        const offsetLeft = el.offsetLeft;
+                        const width = el.offsetWidth;
+                        this.indicatorWidth = width - 10;
+                        this.indicatorOffset = offsetLeft + 5;
+                    }
+                },
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    if (this.isDark) {
+                        document.documentElement.classList.add('dark');
+                        document.documentElement.classList.remove('light');
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        document.documentElement.classList.add('light');
+                        localStorage.setItem('theme', 'light');
+                    }
+                    this.updateDesktopIcon(this.isDark);
+                },
+                updateDesktopIcon(isDark) {
+                    const icon = document.getElementById('theme-icon-desktop');
+                    if (icon) {
+                        if (isDark) {
+                            icon.classList.replace('ph-moon', 'ph-sun');
+                            icon.classList.add('text-pup-gold');
+                        } else {
+                            icon.classList.replace('ph-sun', 'ph-moon');
+                            icon.classList.remove('text-pup-gold');
+                        }
+                    }
+                },
+                toggleSidebar() {
+                    const body = document.body;
+                    body.classList.toggle('sidebar-expanded');
+                    localStorage.setItem('adviserSidebarState', body.classList.contains('sidebar-expanded') ? 'expanded' : 'collapsed');
+                },
+                handleHeaderProfileClick() {
+                    if (window.innerWidth < 768) { this.showProfileBubble = !this.showProfileBubble; }
+                },
+                handleNavClick(item, index) {
+                    if (item.name === 'Theme') { this.toggleTheme(); } 
+                    else if (item.name === 'Logout') { this.openLogoutModal(); } 
+                    else {
+                        this.activeIndex = index;
+                        this.calculatePosition(index);
+                        if (item.url) { setTimeout(() => { window.location.href = item.url; }, 250); }
+                    }
+                },
+                openLogoutModal() { this.isLogoutModalOpen = true; document.body.style.overflow = 'hidden'; },
+                closeLogoutModal() { this.isLogoutModalOpen = false; document.body.style.overflow = ''; }
+            }
+        };
 
-    function toggleGlobalTheme() {
-        if (document.documentElement.classList.contains('dark')) {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-            themeIcon.classList.replace('ph-sun', 'ph-moon');
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-            themeIcon.classList.replace('ph-moon', 'ph-sun');
-        }
-    }
+        window.baseApp = createApp(baseAppConfig).mount('#base-app');
+    </script>
 
-    // Sidebar Toggle Logic
-    const sidebarState = localStorage.getItem('adviserSidebarState');
-    if(sidebarState === 'collapsed') {
-        document.body.classList.remove('sidebar-expanded');
-    }
-
-    function toggleSidebar() {
-        const body = document.body;
-        body.classList.toggle('sidebar-expanded');
-        if (body.classList.contains('sidebar-expanded')) {
-            localStorage.setItem('adviserSidebarState', 'expanded');
-        } else {
-            localStorage.setItem('adviserSidebarState', 'collapsed');
-        }
-    }
-</script>
-
-{% block extra_js %}{% endblock %}
+    {% block extra_js %}{% endblock %}
 
 </body>
 </html>

@@ -15,6 +15,45 @@
         to { opacity: 1; transform: translateY(0); }
     }
     [v-cloak] { display: none !important; }
+
+    /* 📄 Shrunken Desktop View for Mobile 📄 */
+    .document-wrapper {
+        width: 100%;
+        min-height: 400px;
+        background: #f0f0f0;
+        border-radius: 0.75rem;
+        overflow: hidden; /* CRITICAL: Prevent overflow */
+        display: block;
+        position: relative;
+    }
+    .dark .document-wrapper {
+        background: #222;
+    }
+    .document-page {
+        width: 800px !important; /* Fixed width to preserve desktop layout */
+        min-height: 1000px;
+        background: white !important;
+        color: black !important;
+        font-family: Arial, sans-serif !important;
+        padding: 4rem !important;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        transform-origin: top left; /* Scale from top-left for easier positioning */
+        transition: transform 0.2s ease;
+        position: relative;
+        display: block;
+        margin: 0;
+    }
+    @media (max-width: 640px) {
+        .document-wrapper {
+            margin: 0 !important;
+            border-radius: 0.5rem;
+        }
+        .document-page {
+            /* Transform will be precisely set via JS */
+            margin: 0 !important;
+            border: none !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -105,7 +144,7 @@
                 <button @click="closeModal" class="text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
             </div>
 
-            <div class="p-6 sm:p-8 flex flex-col gap-6 overflow-y-auto grow" v-if="selectedEvent">
+            <div class="p-4 sm:p-8 flex flex-col gap-6 overflow-y-auto grow" v-if="selectedEvent">
                 
                 <div v-if="selectedEvent.status === 'PERMIT VERIFICATION'" class="bg-blue-50 dark:bg-gray-800 p-5 rounded-xl border border-blue-200 dark:border-[#D4AF37] animate-fade-in shrink-0">
                     <div class="flex justify-between items-center mb-4">
@@ -119,94 +158,123 @@
                     </div>
                 </div>
 
-                <div v-if="selectedEvent.status !== 'PERMIT VERIFICATION'" class="bg-white text-black text-sm sm:text-base leading-relaxed p-8 sm:p-12 border border-gray-300 shadow-sm rounded-lg" style="color: #000 !important; font-family: Arial, sans-serif !important;">
-                    <p class="mb-6 font-bold">[[ selectedEvent.date ]]</p>
-                    
-                    <p class="mb-6 leading-tight">
-                        <strong>Dr. EDWIN G. MALABUYOC</strong><br>
-                        Director<br>
-                        This Campus
-                    </p>
+                <div v-if="selectedEvent.status !== 'PERMIT VERIFICATION'" class="document-wrapper">
+                    <div class="document-page" id="document-preview-card">
+                        <p class="mb-6 font-bold">[[ selectedEvent.date ]]</p>
+                        
+                        <p class="mb-6 leading-tight">
+                            <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+                            Director<br>
+                            This Campus
+                        </p>
 
-                    <p class="mb-6 leading-tight">
-                        Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
-                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
-                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
-                    </p>
+                        <p class="mb-6 leading-tight">
+                            Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+                            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+                            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
+                        </p>
 
-                    <template v-if="parsedDescription">
-                        <template v-if="parsedDescription.type === 'standard'">
-                            <p class="mb-6">
-                                Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
-                            </p>
-                            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-                            <p class="mb-4">Greetings!</p>
-                            <p class="mb-4 text-justify indent-8">
-                                To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.org ]]</strong> will be conducting a seminar entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
-                            </p>
-                            <p class="mb-8 text-justify indent-8">
-                                The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
-                            </p>
-                            <p class="mb-12">Thank you for your kind consideration and usual support.</p>
+                        <template v-if="parsedDescription">
+                            <template v-if="parsedDescription.type === 'standard'">
+                                <p class="mb-6">
+                                    Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
+                                </p>
+                                <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                <p class="mb-4">Greetings!</p>
+                                <p class="mb-4 text-justify indent-8">
+                                    To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.org ]]</strong> will be conducting a seminar entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
+                                </p>
+                                <p class="mb-8 text-justify indent-8">
+                                    The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                                </p>
+                                <p class="mb-12">Thank you for your kind consideration and usual support.</p>
+                            </template>
+
+                            <template v-if="parsedDescription.type === 'excuse'">
+                                <p class="mb-6">
+                                    Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong>
+                                </p>
+                                <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                <p class="mb-4">Greetings!</p>
+                                
+                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6 text-sm">
+                                    <p class="text-blue-800 font-bold mb-2 uppercase tracking-wider text-xs"><i class="ph-bold ph-info"></i> Specific Requests:</p>
+                                    <p class="text-blue-900 mb-1"><strong>Target Participants:</strong> [[ parsedDescription.target ]]</p>
+                                    <p class="text-blue-900"><strong>Equipment Needed:</strong> [[ parsedDescription.equipment ]]</p>
+                                </div>
+
+                                <p class="mb-4 text-justify indent-8">
+                                    The <strong>[[ selectedEvent.org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
+                                </p>
+                                <p class="mb-8 text-justify indent-8">
+                                    The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                                </p>
+                                <p class="mb-12">We look forward to your response. Thank you for your kind consideration and usual support!</p>
+                            </template>
+
+                            <template v-if="parsedDescription.type === 'reschedule'">
+                                <p class="mb-6">
+                                    Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong>
+                                </p>
+                                <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                <p class="mb-4">Greetings!</p>
+                                
+                                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-6 text-sm">
+                                    <p class="text-yellow-800 font-bold mb-2 uppercase tracking-wider text-xs"><i class="ph-bold ph-warning-circle"></i> Reschedule Details:</p>
+                                    <p class="text-yellow-900 mb-1"><strong>Reason:</strong> [[ parsedDescription.reason ]]</p>
+                                </div>
+
+                                <p class="mb-4 text-justify indent-8">
+                                    We respectfully request a rescheduling for the event entitled <strong>"[[ selectedEvent.title ]]"</strong>. We propose moving the event to <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                                </p>
+                                <p class="mb-8 text-justify indent-8">
+                                    [[ parsedDescription.originalDesc ]]
+                                </p>
+                                <p class="mb-12">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
+                            </template>
                         </template>
 
-                        <template v-if="parsedDescription.type === 'excuse'">
-                            <p class="mb-6">
-                                Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong>
-                            </p>
-                            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-                            <p class="mb-4">Greetings!</p>
-                            
-                            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6 text-sm">
-                                <p class="text-blue-800 font-bold mb-2 uppercase tracking-wider text-xs"><i class="ph-bold ph-info"></i> Specific Requests:</p>
-                                <p class="text-blue-900 mb-1"><strong>Target Participants:</strong> [[ parsedDescription.target ]]</p>
-                                <p class="text-blue-900"><strong>Equipment Needed:</strong> [[ parsedDescription.equipment ]]</p>
-                            </div>
+                        <p class="mb-8">Respectfully yours,</p>
 
-                            <p class="mb-4 text-justify indent-8">
-                                The <strong>[[ selectedEvent.org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
-                            </p>
-                            <p class="mb-8 text-justify indent-8">
-                                The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
-                            </p>
-                            <p class="mb-12">We look forward to your response. Thank you for your kind consideration and usual support!</p>
-                        </template>
+                        <div class="mb-8">
+                            <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+                            <p class="mt-0">[[ selectedEvent.org ]] President</p>
+                        </div>
 
-                        <template v-if="parsedDescription.type === 'reschedule'">
-                            <p class="mb-6">
-                                Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong>
-                            </p>
-                            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-                            <p class="mb-4">Greetings!</p>
-                            
-                            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-6 text-sm">
-                                <p class="text-yellow-800 font-bold mb-2 uppercase tracking-wider text-xs"><i class="ph-bold ph-warning-circle"></i> Reschedule Details:</p>
-                                <p class="text-yellow-900 mb-1"><strong>Reason:</strong> [[ parsedDescription.reason ]]</p>
-                            </div>
-
-                            <p class="mb-4 text-justify indent-8">
-                                We respectfully request a rescheduling for the event entitled <strong>"[[ selectedEvent.title ]]"</strong>. We propose moving the event to <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
-                            </p>
-                            <p class="mb-8 text-justify indent-8">
-                                [[ parsedDescription.originalDesc ]]
-                            </p>
-                            <p class="mb-12">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
-                        </template>
-                    </template>
-
-                    <p class="mb-8">Respectfully yours,</p>
-
-                    <div class="mb-8">
-                        <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
-                        <p class="mt-0">[[ selectedEvent.org ]] President</p>
-                    </div>
-
-                    <div>
-                        <p class="mb-6">Noted by:</p>
-                        <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
-                        <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
+                        <div>
+                            <p class="mb-6">Noted by:</p>
+                            <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+                            <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
+                        </div>
                     </div>
                 </div>
+
+                <div v-if="isRejecting" class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-200 dark:border-red-900/40 animate-fade-in shrink-0">
+                    <label class="block text-xs font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest mb-1.5"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection (Required)</label>
+                    <textarea v-model="rejectReason" rows="3" placeholder="Please explain why this event proposal is being rejected..." class="w-full bg-white dark:bg-[#151515] border border-red-300 dark:border-red-800 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-red-500 text-gray-900 dark:text-white transition-colors resize-none"></textarea>
+                </div>
+
+                <div v-if="actionLoading" class="text-center py-2 text-pup-maroon dark:text-pup-gold font-bold text-sm shrink-0">
+                    <i class="ph-bold ph-spinner animate-spin"></i> Processing decision...
+                </div>
+            </div>
+
+            <div class="p-5 bg-gray-100 dark:bg-[#111] border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
+                <template v-if="!isRejecting">
+                    <button @click="initiateReject" :disabled="actionLoading" class="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold text-sm rounded-lg transition-colors disabled:opacity-50">Reject</button>
+                    <button id="verify-forward-btn" @click="approveEvent" :disabled="actionLoading" class="px-6 py-2.5 bg-[#16a34a] text-white hover:bg-green-700 font-bold text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md">
+                        <i class="ph-bold ph-check-circle"></i>
+                        [[ selectedEvent.status === 'PERMIT VERIFICATION' ? 'Verify Signatures & Forward' : 'Approve & Forward to Admin' ]]
+                    </button>
+                </template>
+                
+                <template v-else>
+                    <button @click="cancelReject" :disabled="actionLoading" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50">Cancel</button>
+                    <button @click="confirmReject" :disabled="actionLoading" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-md"><i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection</button>
+                </template>
+            </div>
+        </div>
+    </div>
 
                 <div v-if="isRejecting" class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-200 dark:border-red-900/40 animate-fade-in shrink-0">
                     <label class="block text-xs font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest mb-1.5"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection (Required)</label>
@@ -313,10 +381,38 @@
 
                 const events = ref(parsedData);
 
+                // --- 📱 Responsive Document Scaling Logic 📱 ---
+                const updateMobileScale = () => {
+                    const wrapper = document.querySelector('.document-wrapper');
+                    const page = document.getElementById('document-preview-card');
+                    
+                    if (!wrapper || !page) return;
+
+                    if (window.innerWidth <= 640) {
+                        const wrapperWidth = wrapper.offsetWidth;
+                        const pageWidth = 800; // Fixed width base
+                        const scale = wrapperWidth / pageWidth;
+                        
+                        page.style.transform = `scale(${scale})`;
+                        page.style.width = `${pageWidth}px`;
+                        
+                        // Set wrapper height to the scaled height of the document
+                        // This forces the parent to respect the shrunken size
+                        const scaledHeight = page.offsetHeight * scale;
+                        wrapper.style.height = `${scaledHeight}px`;
+                        wrapper.style.minHeight = `${scaledHeight}px`;
+                    } else {
+                        page.style.transform = 'none';
+                        page.style.width = '100%';
+                        wrapper.style.height = 'auto';
+                        wrapper.style.minHeight = '400px';
+                    }
+                };
+
                 onMounted(() => {
                     setTimeout(() => {
                         isLoading.value = false;
-                        console.log("Adviser Dashboard: Loading complete. Events count:", events.value.length);
+                        window.addEventListener('resize', updateMobileScale);
                     }, 800);
                 });
 
@@ -370,8 +466,13 @@
                     isModalOpen.value = true;
                     document.body.style.overflow = 'hidden';
 
-                    // Trigger grid rendering explicitly since modal is now managed by Vue
+                    // Trigger scaling and grid rendering
                     setTimeout(() => {
+                        updateMobileScale(); // Initial attempt
+                        
+                        // Second attempt to ensure heights are captured correctly after render
+                        setTimeout(updateMobileScale, 100); 
+
                         const verificationFilesGrid = document.getElementById('verification-files-grid');
                         const fileCountBadge = document.getElementById('file-count-badge');
 
