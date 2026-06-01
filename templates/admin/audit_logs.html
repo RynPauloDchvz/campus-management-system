@@ -5,22 +5,6 @@
 {% block page_subtitle %}System-wide Audit Logs & Threat Monitoring{% endblock %}
 
 {% block content %}
-<!-- Tailwind and Vue.js are used here as per requirements -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-    tailwind.config = {
-        darkMode: 'class',
-        theme: {
-            extend: {
-                colors: {
-                    maroon: '#800000',
-                    gold: '#D4AF37',
-                }
-            }
-        }
-    }
-</script>
-
 <style>
     [v-cloak] { display: none; }
     /* Integration with base theme variables */
@@ -45,122 +29,165 @@
 </style>
 
 <div id="audit-app" class="space-y-6" v-cloak>
-    <!-- Stats Bar -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 flex flex-col justify-center">
-            <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Total Logs</p>
-            <p class="text-2xl font-black">[[ logs.length ]]</p>
+    <!-- 🟢 SKELETON LOADING STATE 🟢 -->
+    <div v-if="isLoading" class="space-y-6 fade-in">
+        <!-- Stats Bar Skeleton -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div v-for="i in 4" :key="i" class="audit-card p-4 rounded-2xl border-l-4 border-gray-200 dark:border-gray-800">
+                <div class="w-16 h-3 skeleton-shimmer rounded mb-2"></div>
+                <div class="w-12 h-8 skeleton-shimmer rounded"></div>
+            </div>
         </div>
-        <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-green-500 flex flex-col justify-center">
-            <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Success</p>
-            <p class="text-2xl font-black text-green-500">[[ successCount ]]</p>
+
+        <!-- Toolbar Skeleton -->
+        <div class="audit-card p-4 rounded-2xl flex flex-col md:flex-row gap-4">
+            <div class="flex-1 h-10 skeleton-shimmer rounded-xl"></div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <div class="w-full md:w-40 h-10 skeleton-shimmer rounded-xl"></div>
+                <div class="w-full md:w-40 h-10 skeleton-shimmer rounded-xl"></div>
+            </div>
         </div>
-        <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-red-500 flex flex-col justify-center">
-            <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Failures</p>
-            <p class="text-2xl font-black text-red-500">[[ failureCount ]]</p>
-        </div>
-        <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-gold flex flex-col justify-center">
-            <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Breaches</p>
-            <p class="text-2xl font-black text-gold">[[ breachCount ]]</p>
+
+        <!-- Table Skeleton -->
+        <div class="audit-card rounded-2xl overflow-hidden shadow-lg border border-gray-200/10">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead style="background: rgba(128,0,0,0.05);">
+                        <tr>
+                            <th v-for="i in 7" :key="i" class="px-6 py-4"><div class="w-20 h-3 skeleton-shimmer rounded"></div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="i in 8" :key="i">
+                            <td v-for="j in 7" :key="j" class="px-6 py-4">
+                                <div class="h-4 skeleton-shimmer rounded w-full"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- Toolbar: Search & Filters -->
-    <div class="audit-card p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center">
-        <div class="relative flex-1 w-full">
-            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 audit-text-muted"></i>
-            <input v-model="searchQuery" type="text" placeholder="Search actor, IP, or target..." 
-                   style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
-                   class="w-full pl-11 pr-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-maroon/50 transition-all">
+    <!-- 🟢 ACTUAL CONTENT 🟢 -->
+    <template v-else>
+        <!-- Stats Bar -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 flex flex-col justify-center">
+                <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Total Logs</p>
+                <p class="text-2xl font-black">[[ logs.length ]]</p>
+            </div>
+            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-green-500 flex flex-col justify-center">
+                <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Success</p>
+                <p class="text-2xl font-black text-green-500">[[ successCount ]]</p>
+            </div>
+            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-red-500 flex flex-col justify-center">
+                <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Failures</p>
+                <p class="text-2xl font-black text-red-500">[[ failureCount ]]</p>
+            </div>
+            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-gold flex flex-col justify-center">
+                <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Breaches</p>
+                <p class="text-2xl font-black text-gold">[[ breachCount ]]</p>
+            </div>
         </div>
-        <div class="flex gap-2 w-full md:w-auto">
-            <select v-model="statusFilter" 
-                    style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
-                    class="flex-1 md:w-40 px-3 py-2.5 rounded-xl outline-none text-sm font-semibold">
-                <option value="">All Status</option>
-                <option value="Success">Success</option>
-                <option value="Failed">Failed</option>
-                <option value="Denied">Denied</option>
-            </select>
-            <select v-model="actionFilter" 
-                    style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
-                    class="flex-1 md:w-40 px-3 py-2.5 rounded-xl outline-none text-sm font-semibold">
-                <option value="">All Actions</option>
-                <option value="LOGIN">Logins</option>
-                <option value="LOGOUT">Logouts</option>
-                <option value="ATTENDANCE">Attendance</option>
-                <option value="EVALUATION">Evaluations</option>
-                <option value="UNAUTHORIZED">Breaches</option>
-                <option value="UPDATE">Updates</option>
-                <option value="CREATE">Creates</option>
-                <option value="REGISTRATION">Registrations</option>
-                <option value="VERIFICATION">Verifications</option>
-            </select>
-        </div>
-    </div>
 
-    <!-- Main Logs Table -->
-    <div class="audit-card rounded-2xl overflow-hidden shadow-lg border border-gray-200/10">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead style="background: rgba(128,0,0,0.05);" class="audit-text-muted uppercase text-[10px] font-black tracking-tighter">
-                    <tr>
-                        <th class="px-6 py-4">Time</th>
-                        <th class="px-6 py-4">Actor</th>
-                        <th class="px-6 py-4">Action</th>
-                        <th class="px-6 py-4 mobile-hide">Target</th>
-                        <th class="px-6 py-4 mobile-hide">Origin</th>
-                        <th class="px-6 py-4 text-center">Status</th>
-                        <th class="px-6 py-4 text-right">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-500/10">
-                    <tr v-for="log in filteredLogs" :key="log.id" class="hover:bg-maroon/5 transition-all">
-                        <td class="px-6 py-4">
-                            <div class="flex flex-col">
-                                <span class="text-xs font-bold whitespace-nowrap">[[ log.timestamp.split(' ')[1] ]] [[ log.timestamp.split(' ')[2] ]]</span>
-                                <span class="text-[10px] audit-text-muted whitespace-nowrap">[[ log.timestamp.split(' ')[0] ]]</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-lg bg-maroon flex items-center justify-center text-[10px] font-black text-white">
-                                    [[ log.actor.substring(0,2).toUpperCase() ]]
-                                </div>
-                                <div class="flex flex-col overflow-hidden">
-                                    <span class="text-sm font-bold truncate max-w-[120px]">[[ log.actor ]]</span>
-                                    <span v-if="log.action === 'LOGOUT' && log.changes.session_duration" class="text-[9px] text-green-500 font-bold">
-                                        Stayed: [[ log.changes.session_duration ]]
-                                    </span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span :class="getActionClass(log.action)" class="px-2 py-0.5 rounded text-[9px] font-black uppercase whitespace-nowrap">
-                                [[ log.action.replace('_', ' ') ]]
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 mobile-hide text-xs font-semibold audit-text-muted">[[ log.target ]]</td>
-                        <td class="px-6 py-4 mobile-hide text-[10px] font-mono audit-text-muted">[[ log.ip ]]</td>
-                        <td class="px-6 py-4 text-center">
-                            <i :class="log.status === 'Success' ? 'ph-bold ph-check-circle text-green-500' : 'ph-bold ph-warning-circle text-red-500'" class="text-lg"></i>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <button @click="viewDetails(log)" class="text-[10px] font-black uppercase tracking-widest text-maroon dark:text-gold hover:underline">
-                                Details
-                            </button>
-                        </td>
-                    </tr>
-                    <tr v-if="filteredLogs.length === 0">
-                        <td colspan="7" class="px-6 py-20 text-center audit-text-muted italic text-sm">
-                            <i class="ph-bold ph-ghost text-4xl mb-2 block"></i>
-                            No activities detected matching your criteria.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- Toolbar: Search & Filters -->
+        <div class="audit-card p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center">
+            <div class="relative flex-1 w-full">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 audit-text-muted"></i>
+                <input v-model="searchQuery" type="text" placeholder="Search actor, IP, or target..." 
+                       style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
+                       class="w-full pl-11 pr-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-maroon/50 transition-all">
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <select v-model="statusFilter" 
+                        style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
+                        class="flex-1 md:w-40 px-3 py-2.5 rounded-xl outline-none text-sm font-semibold">
+                    <option value="">All Status</option>
+                    <option value="Success">Success</option>
+                    <option value="Failed">Failed</option>
+                    <option value="Denied">Denied</option>
+                </select>
+                <select v-model="actionFilter" 
+                        style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
+                        class="flex-1 md:w-40 px-3 py-2.5 rounded-xl outline-none text-sm font-semibold">
+                    <option value="">All Actions</option>
+                    <option value="LOGIN">Logins</option>
+                    <option value="LOGOUT">Logouts</option>
+                    <option value="ATTENDANCE">Attendance</option>
+                    <option value="EVALUATION">Evaluations</option>
+                    <option value="UNAUTHORIZED">Breaches</option>
+                    <option value="UPDATE">Updates</option>
+                    <option value="CREATE">Creates</option>
+                    <option value="REGISTRATION">Registrations</option>
+                    <option value="VERIFICATION">Verifications</option>
+                </select>
+            </div>
         </div>
-    </div>
+
+        <!-- Main Logs Table -->
+        <div class="audit-card rounded-2xl overflow-hidden shadow-lg border border-gray-200/10">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead style="background: rgba(128,0,0,0.05);" class="audit-text-muted uppercase text-[10px] font-black tracking-tighter">
+                        <tr>
+                            <th class="px-6 py-4">Time</th>
+                            <th class="px-6 py-4">Actor</th>
+                            <th class="px-6 py-4">Action</th>
+                            <th class="px-6 py-4 mobile-hide">Target</th>
+                            <th class="px-6 py-4 mobile-hide">Origin</th>
+                            <th class="px-6 py-4 text-center">Status</th>
+                            <th class="px-6 py-4 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-500/10">
+                        <tr v-for="log in filteredLogs" :key="log.id" class="hover:bg-maroon/5 transition-all">
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold whitespace-nowrap">[[ log.timestamp.split(' ')[1] ]] [[ log.timestamp.split(' ')[2] ]]</span>
+                                    <span class="text-[10px] audit-text-muted whitespace-nowrap">[[ log.timestamp.split(' ')[0] ]]</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 rounded-lg bg-maroon flex items-center justify-center text-[10px] font-black text-white">
+                                        [[ log.actor.substring(0,2).toUpperCase() ]]
+                                    </div>
+                                    <div class="flex flex-col overflow-hidden">
+                                        <span class="text-sm font-bold truncate max-w-[120px]">[[ log.actor ]]</span>
+                                        <span v-if="log.action === 'LOGOUT' && log.changes.session_duration" class="text-[9px] text-green-500 font-bold">
+                                            Stayed: [[ log.changes.session_duration ]]
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span :class="getActionClass(log.action)" class="px-2 py-0.5 rounded text-[9px] font-black uppercase whitespace-nowrap">
+                                    [[ log.action.replace('_', ' ') ]]
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 mobile-hide text-xs font-semibold audit-text-muted">[[ log.target ]]</td>
+                            <td class="px-6 py-4 mobile-hide text-[10px] font-mono audit-text-muted">[[ log.ip ]]</td>
+                            <td class="px-6 py-4 text-center">
+                                <i :class="log.status === 'Success' ? 'ph-bold ph-check-circle text-green-500' : 'ph-bold ph-warning-circle text-red-500'" class="text-lg"></i>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button @click="viewDetails(log)" class="text-[10px] font-black uppercase tracking-widest text-maroon dark:text-gold hover:underline">
+                                    Details
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-if="filteredLogs.length === 0">
+                            <td colspan="7" class="px-6 py-20 text-center audit-text-muted italic text-sm">
+                                <i class="ph-bold ph-ghost text-4xl mb-2 block"></i>
+                                No activities detected matching your criteria.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </template>
 
     <!-- Details Modal (Watchdog Portal) -->
     <div v-if="selectedLog" class="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-8">
@@ -247,11 +274,15 @@
         el: '#audit-app',
         delimiters: ['[[', ']]'],
         data: {
+            isLoading: true,
             logs: JSON.parse('{{ logs_json|escapejs }}'),
             searchQuery: '',
             statusFilter: '',
             actionFilter: '',
             selectedLog: null
+        },
+        mounted() {
+            setTimeout(() => { this.isLoading = false; }, 800);
         },
         computed: {
             filteredLogs() {

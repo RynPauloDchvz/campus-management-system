@@ -43,11 +43,81 @@
 {% block content %}
 <!-- 🟢 SKELETON LOADING STATE 🟢 -->
 <div id="skeleton-loader" class="fade-in">
-    <div class="control-bar"><div class="w-48 h-10 skeleton-shimmer rounded-lg"></div><div class="w-64 h-10 skeleton-shimmer rounded-lg"></div></div>
-    <div class="stats-grid">
-        <div v-for="i in 4" :key="i" class="stat-card"><div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div><div class="w-16 h-8 skeleton-shimmer rounded"></div></div>
+    <div class="control-bar" style="display: flex; justify-content: space-between; gap: 15px;">
+        <div class="filter-group flex items-center gap-3">
+            <div class="w-24 h-6 skeleton-shimmer rounded"></div>
+            <div class="w-40 h-10 skeleton-shimmer rounded-lg"></div>
+        </div>
+        <div class="w-64 h-10 skeleton-shimmer rounded-lg"></div>
     </div>
-    <div class="table-section"><div class="space-y-6 p-4"><div v-for="i in 5" :key="i" class="flex gap-4"><div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div><div class="grow"><div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div><div class="w-1/2 h-4 skeleton-shimmer rounded"></div></div></div></div></div>
+    
+    <div class="stats-grid">
+        <!-- 4 Stat Cards -->
+        <div class="stat-card" style="position: relative;">
+            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
+            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
+            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
+        </div>
+        <div class="stat-card" style="position: relative;">
+            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
+            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
+            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
+        </div>
+        <div class="stat-card" style="position: relative;">
+            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
+            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
+            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
+        </div>
+        <div class="stat-card" style="position: relative;">
+            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
+            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
+            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <div class="table-header">
+            <div class="w-64 h-8 skeleton-shimmer rounded"></div>
+        </div>
+        <div class="space-y-6 p-4">
+            <!-- 5 List Items -->
+            <div class="flex gap-4">
+                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
+                <div class="grow">
+                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
+                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
+                <div class="grow">
+                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
+                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
+                <div class="grow">
+                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
+                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
+                <div class="grow">
+                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
+                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
+                <div class="grow">
+                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
+                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
