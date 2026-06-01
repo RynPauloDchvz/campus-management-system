@@ -149,6 +149,11 @@ def portal_login_view(request):
         student_number = request.POST.get('student_number')
         password = request.POST.get('password')
 
+        # Check if user exists BEFORE applying lockout logic
+        if not User.objects.filter(username=student_number).exists():
+            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'reason': 'Account does not exist', 'username': student_number})
+            return JsonResponse({"status": "error", "message": "Account does not exist. Please register first."})
+
         # Check Account Lockout
         is_acc_locked, acc_remaining = check_account_lockout(student_number)
         if is_acc_locked:
@@ -187,7 +192,9 @@ def portal_login_view(request):
             # Failed attempt logic
             is_locked_now, lock_time, total_attempts = record_failed_attempt(student_number)
             
-            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'username': student_number, 'attempt_count': total_attempts})
+            # Since we checked existence above, we can attribute this to the user
+            existing_user = User.objects.filter(username=student_number).first()
+            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'username': student_number, 'attempt_count': total_attempts}, actor=existing_user)
 
             if is_locked_now:
                 request.session['lockout_until_portal'] = (timezone.now() + timedelta(seconds=lock_time)).isoformat()
@@ -1672,9 +1679,13 @@ def admin_audit_logs(request):
         # 🟢 Convert UTC to Local Time (Asia/Manila) before displaying
         local_time = localtime(log.timestamp)
         
+        # 🟢 Determine Actor Name with Fallback
+        changes = log.changes if isinstance(log.changes, dict) else (json.loads(log.changes) if log.changes else {})
+        actor_name = log.actor.username if log.actor else (changes.get('username', 'Anonymous') if changes.get('reason') != 'Account does not exist' else 'Anonymous')
+
         logs_data.append({
             'id': log.id,
-            'actor': log.actor.username if log.actor else 'Anonymous',
+            'actor': actor_name,
             'action': log.action,
             'target': log.target_model or 'System',
             'status': log.status,
@@ -1682,7 +1693,7 @@ def admin_audit_logs(request):
             'ua': log.user_agent,
             # 🟢 12-hour format with AM/PM for accuracy and readability
             'timestamp': local_time.strftime('%Y-%m-%d %I:%M:%S %p'),
-            'changes': log.changes if isinstance(log.changes, dict) else (json.loads(log.changes) if log.changes else {})
+            'changes': changes
         })
         
     return render(request, 'admin/audit_logs.html', {
@@ -1698,6 +1709,11 @@ def staff_login_view(request):
         u = request.POST.get('username')
         p = request.POST.get('password')
         
+        # Check if user exists BEFORE applying lockout logic
+        if not User.objects.filter(username=u).exists():
+            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'reason': 'Account does not exist', 'username': u})
+            return JsonResponse({"status": "error", "message": "Account does not exist."})
+
         # Check Account Lockout
         is_acc_locked, acc_remaining = check_account_lockout(u)
         if is_acc_locked:
@@ -1729,7 +1745,9 @@ def staff_login_view(request):
         else:
             is_locked_now, lock_time, total_attempts = record_failed_attempt(u)
             
-            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'username': u, 'attempt_count': total_attempts})
+            # Since we checked existence above, we can attribute this to the user
+            existing_user = User.objects.filter(username=u).first()
+            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'username': u, 'attempt_count': total_attempts}, actor=existing_user)
             
             if is_locked_now:
                 request.session['lockout_until_staff'] = (timezone.now() + timedelta(seconds=lock_time)).isoformat()
