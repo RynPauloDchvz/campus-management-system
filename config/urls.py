@@ -11,6 +11,7 @@ urlpatterns = [
     # ==========================================
     # ADMIN & ADVISER URLS
     # ==========================================
+    path('admin/', views.admin_dashboard, name='admin_dashboard'),
     path('admin/login/', views.staff_login_view, name='staff_login'),
     path('admin/logout/', views.staff_logout_view, name='admin_logout'),
     

@@ -106,22 +106,22 @@
     <div class="stats-grid">
         <div class="stat-card">
             <span class="stat-label">Total Events</span>
-            <span class="stat-value">48</span>
+            <span class="stat-value">{{ total_events }}</span>
             <i class="ph-bold ph-calendar-check stat-icon"></i>
         </div>
         <div class="stat-card" style="--accent: var(--warning);">
             <span class="stat-label">Pending Approval</span>
-            <span class="stat-value">5</span>
+            <span class="stat-value">{{ pending_approval }}</span>
             <i class="ph-bold ph-clock-countdown stat-icon"></i>
         </div>
         <div class="stat-card" style="--accent: #17a2b8;">
             <span class="stat-label">Active Orgs</span>
-            <span class="stat-value">5</span>
+            <span class="stat-value">{{ active_orgs }}</span>
             <i class="ph-bold ph-buildings stat-icon"></i>
         </div>
         <div class="stat-card" style="--accent: var(--success);">
             <span class="stat-label">Engaged Students</span>
-            <span class="stat-value">1,240</span>
+            <span class="stat-value">{{ engaged_students }}</span>
             <i class="ph-bold ph-student stat-icon"></i>
         </div>
     </div>
@@ -158,31 +158,35 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for event in recent_events %}
                     <tr>
-                        <td style="font-weight: 700; color: var(--accent);">ITO</td>
-                        <td>Tech Summit 2026</td>
-                        <td>March 28, 2026</td>
-                        <td><span class="badge badge-pending">Pending</span></td>
-                        <td><button class="btn-action-small" onclick="openReviewModal('ITO', 'Tech Summit 2026', 'Good day! We are respectfully requesting approval for the IT Tech Summit 2026. Attached herewith are the Letter of Request, Event Proposal, and proposed Budget Breakdown for your review.')">Review</button></td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: 700; color: var(--accent);">BPA</td>
-                        <td>Leadership Seminar</td>
-                        <td>April 05, 2026</td>
-                        <td><span class="badge badge-approved">Approved</span></td>
+                        <td style="font-weight: 700; color: var(--accent);">{{ event.org_id }}</td>
+                        <td>{{ event.event_title }}</td>
+                        <td style="color: var(--text-muted); font-weight: 600;">{{ event.event_date|date:"F d, Y" }}</td>
                         <td>
-                            <a href="/admin/event-approvals/">
-                                <button class="btn-action-small">View Details</button>
-                            </a>
+                            {% if event.event_status == 'Approved' %}
+                                <span class="badge badge-approved">Approved</span>
+                            {% elif event.event_status == 'Rejected' %}
+                                <span class="badge badge-rejected">Rejected</span>
+                            {% else %}
+                                <span class="badge badge-pending">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if event.event_status == 'Approved' or event.event_status == 'Rejected' %}
+                                <a href="/admin/event-approvals/">
+                                    <button class="btn-action-small">View Details</button>
+                                </a>
+                            {% else %}
+                                <button class="btn-action-small" onclick="openReviewModal('{{ event.org_id }}', '{{ event.event_title|escapejs }}', '{{ event.description|truncatewords:30|escapejs }}')">Review</button>
+                            {% endif %}
                         </td>
                     </tr>
+                    {% empty %}
                     <tr>
-                        <td style="font-weight: 700; color: var(--accent);">FTO</td>
-                        <td>Teaching Methodologies</td>
-                        <td>April 12, 2026</td>
-                        <td><span class="badge badge-pending">Pending</span></td>
-                        <td><button class="btn-action-small" onclick="openReviewModal('FTO', 'Teaching Methodologies', 'We would like to submit our proposal for the upcoming Teaching Methodologies Workshop aimed at all Education students. Kindly check the attached documents.')">Review</button></td>
+                        <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">No recent event requests found.</td>
                     </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -255,7 +259,7 @@
                 labels: ['5 Star', '4 Star', '3 Star', '2 Star', '1 Star'],
                 datasets: [{
                     label: 'Ratings',
-                    data: [120, 45, 15, 5, 2],
+                    data: {{ ratings_data|safe }},
                     backgroundColor: [gold, gold, '#17a2b8', '#ffc107', '#dc3545'],
                     borderRadius: 6
                 }]
@@ -263,7 +267,7 @@
             options: { 
                 indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
                 scales: { 
-                    x: { grid: { color: gridColor }, ticks: { color: textColor } }, 
+                    x: { grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }, 
                     y: { grid: { display: false }, ticks: { color: textColor, font: {weight: 'bold'} } } 
                 }, 
                 plugins: { legend: { display: false } } 
@@ -276,7 +280,7 @@
             data: {
                 labels: ['Positive', 'Neutral', 'Negative'],
                 datasets: [{
-                    data: [70, 20, 10],
+                    data: {{ sentiment_data|safe }},
                     backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
                     borderWidth: 0, hoverOffset: 4
                 }]
@@ -291,10 +295,10 @@
         eventChart = new Chart(ctxEvent, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: {{ event_freq_labels|safe }},
                 datasets: [{
                     label: 'Events Held',
-                    data: [2, 5, 3, 8, 4, 6],
+                    data: {{ event_freq_values|safe }},
                     borderColor: maroon, backgroundColor: 'rgba(128, 0, 0, 0.1)',
                     borderWidth: 3, tension: 0.4, fill: true,
                     pointBackgroundColor: gold, pointRadius: 4
@@ -303,7 +307,7 @@
             options: { 
                 responsive: true, maintainAspectRatio: false, 
                 scales: { 
-                    y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } }, 
+                    y: { beginAtZero: true, ticks: { color: textColor, precision: 0 }, grid: { color: gridColor } }, 
                     x: { ticks: { color: textColor }, grid: { display: false } } 
                 }, 
                 plugins: { legend: { display: false } } 

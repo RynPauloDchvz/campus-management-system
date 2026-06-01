@@ -4,7 +4,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.models import User 
-from django.db.models import Q
+from django.db.models import Q, Count, Sum, Avg
 from django.http import JsonResponse, HttpResponse
 from django.core.mail import send_mail 
 from django.conf import settings 
@@ -1662,6 +1662,72 @@ def adviser_api_action(request):
                 
         except Exception as e: return JsonResponse({"status": "error", "message": str(e)})
     return JsonResponse({"status": "error", "message": "Invalid request"})
+
+# ==========================================
+# 🟢 ADMIN DASHBOARD (REAL DATA AGGREGATION) 🟢
+# ==========================================
+@user_passes_test(is_admin_strictly, login_url='/admin/login/')
+def admin_dashboard(request):
+    """
+    Main entry point for the Admin Panel.
+    Aggregates real-time statistics and historical data for analytics.
+    """
+    # 1. Stats Grid Data
+    total_events = Event.objects.count()
+    pending_approval = Event.objects.filter(event_status__in=['Pending Admin', 'Final Admin Review']).count()
+    active_orgs = OrgProfile.objects.count()
+    engaged_students = Student.objects.filter(is_verified=True).count()
+
+    # 2. Recent Event Requests (Top 5)
+    recent_events = Event.objects.order_by('-created_at')[:5]
+    
+    # 3. Chart Data: Ratings Overview (Aggregated from AuditLog)
+    ratings_data = [0, 0, 0, 0, 0] # [1 Star, 2 Star, 3 Star, 4 Star, 5 Star]
+    eval_logs = AuditLog.objects.filter(action='EVALUATION', status='Success')
+    
+    for log in eval_logs:
+        try:
+            # log.changes might be a dict or a JSON string depending on how it was saved
+            changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
+            rating = float(changes.get('rating', 0))
+            idx = int(round(rating)) - 1
+            if 0 <= idx <= 4:
+                ratings_data[idx] += 1
+        except: continue
+
+    # 4. Chart Data: Sentiment (Derived from Ratings)
+    # Negative: 1-2, Neutral: 3, Positive: 4-5
+    sentiment_data = [
+        ratings_data[3] + ratings_data[4], # Positive
+        ratings_data[2],                   # Neutral
+        ratings_data[0] + ratings_data[1]  # Negative
+    ]
+
+    # 5. Chart Data: Event Frequency (Last 6 Months)
+    event_freq_labels = []
+    event_freq_values = []
+    today = timezone.now().date()
+    
+    for i in range(5, -1, -1):
+        first_day = (today.replace(day=1) - timedelta(days=i*30)).replace(day=1)
+        month_label = first_day.strftime('%b')
+        month_count = Event.objects.filter(event_date__month=first_day.month, event_date__year=first_day.year).count()
+        
+        event_freq_labels.append(month_label)
+        event_freq_values.append(month_count)
+
+    context = {
+        'total_events': total_events,
+        'pending_approval': pending_approval,
+        'active_orgs': active_orgs,
+        'engaged_students': engaged_students,
+        'recent_events': recent_events,
+        'ratings_data': json.dumps(list(reversed(ratings_data))), # Reverse for 5 to 1 order in chart
+        'sentiment_data': json.dumps(sentiment_data),
+        'event_freq_labels': json.dumps(event_freq_labels),
+        'event_freq_values': json.dumps(event_freq_values),
+    }
+    return render(request, 'admin/index.html', context)
 
 # ==========================================
 # 🟢 ADMIN AUDIT LOGS (WITH LOCAL TIME FIX) 🟢
