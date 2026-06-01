@@ -95,27 +95,8 @@
         </header>
 
         <div id="app" v-cloak class="flex-1 overflow-y-auto px-8 py-6 grow">
-            <!-- 🟢 SKELETON LOADING UI (CENTRALIZED) 🟢 -->
-            <div v-if="isLoading" class="animate-fade-in">
-                <div class="bg-white dark:bg-pup-darkcard p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center mb-8">
-                    <div class="w-48 h-8 skeleton-shimmer rounded-lg"></div>
-                    <div class="w-64 h-10 skeleton-shimmer rounded-xl"></div>
-                </div>
-                <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-                    <div class="p-8 space-y-6">
-                        <div v-for="i in 8" :key="i" class="flex items-center gap-6">
-                            <div class="w-20 h-10 skeleton-shimmer rounded-lg"></div>
-                            <div class="grow h-10 skeleton-shimmer rounded-lg"></div>
-                            <div class="w-32 h-10 skeleton-shimmer rounded-lg"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- 🟢 ACTUAL PAGE CONTENT 🟢 -->
-            <div v-else class="animate-fade-in h-full">
-                {% block content %}{% endblock %}
-            </div>
+            {% block content %}{% endblock %}
             
             {% block modals %}{% endblock %}
         </div>

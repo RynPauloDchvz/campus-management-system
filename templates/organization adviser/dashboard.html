@@ -19,17 +19,24 @@
 {% endblock %}
 
 {% block content %}
-
+<!-- Action Bar Skeleton & Real Content -->
 <div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center mb-6 transition-colors duration-300">
-    <div class="flex items-center gap-3">
-        <span class="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2 uppercase tracking-widest"><i class="ph-bold ph-clock"></i> Action Required</span>
+    <div v-if="isLoading" class="flex justify-between items-center w-full">
+        <div class="w-40 h-6 skeleton-shimmer rounded-lg"></div>
+        <div class="w-72 h-10 skeleton-shimmer rounded-xl"></div>
     </div>
-    <div class="relative w-full sm:w-80 mt-3 sm:mt-0">
-        <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-        <input type="text" v-model="searchQuery" placeholder="Search event or org..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
-    </div>
+    <template v-else>
+        <div class="flex items-center gap-3">
+            <span class="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2 uppercase tracking-widest"><i class="ph-bold ph-clock"></i> Action Required</span>
+        </div>
+        <div class="relative w-full sm:w-80 mt-3 sm:mt-0">
+            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input type="text" v-model="searchQuery" placeholder="Search event or org..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
+        </div>
+    </template>
 </div>
 
+<!-- Table Container -->
 <div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[600px]">
@@ -42,7 +49,20 @@
                     <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Action</th>
                 </tr>
             </thead>
-            <tbody class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+
+            <!-- Skeleton Body -->
+            <tbody v-if="isLoading" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+                <tr v-for="i in 5" :key="i">
+                    <td class="py-4 px-6"><div class="h-4 w-20 skeleton-shimmer rounded"></div></td>
+                    <td class="py-4 px-6"><div class="h-4 w-48 skeleton-shimmer rounded"></div></td>
+                    <td class="py-4 px-6"><div class="h-4 w-24 skeleton-shimmer rounded"></div></td>
+                    <td class="py-4 px-6"><div class="h-6 w-24 skeleton-shimmer rounded-lg"></div></td>
+                    <td class="py-4 px-6"><div class="h-9 w-32 skeleton-shimmer rounded-lg"></div></td>
+                </tr>
+            </tbody>
+
+            <!-- Real Data Body -->
+            <tbody v-else class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
                 <tr v-if="filteredEvents.length === 0">
                     <td colspan="5" class="py-12 text-center text-gray-500 font-medium">
                         <i class="ph-fill ph-check-circle text-4xl text-green-500 mb-2 opacity-50 block"></i>
@@ -73,7 +93,8 @@
 </div>
 {% endblock %}
 
-        <div v-if="isModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+{% block modals %}
+    <div v-if="isModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
         <div class="bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
             
             <div class="p-4 border-b border-gray-300 dark:border-gray-800 flex justify-between items-center bg-gray-100 dark:bg-[#111] shrink-0">
@@ -213,276 +234,283 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Image Preview Lightbox -->
-<div id="image-preview-modal" class="hidden fixed inset-0 bg-black/95 z-[99999] flex items-center justify-center p-4">
-    <button id="close-preview-btn" class="sm:hidden absolute top-4 right-4 z-[999999] bg-white text-black rounded-full w-10 h-10 flex items-center justify-center font-bold shadow-lg">X</button>
-    <img id="preview-image-element" class="max-h-[90vh] max-w-full object-contain">
-</div>
+    <!-- Image Preview Lightbox -->
+    <div id="image-preview-modal" class="hidden fixed inset-0 bg-black/95 z-[99999] flex items-center justify-center p-4">
+        <button id="close-preview-btn" class="sm:hidden absolute top-4 right-4 z-[999999] bg-white text-black rounded-full w-10 h-10 flex items-center justify-center font-bold shadow-lg">X</button>
+        <img id="preview-image-element" class="max-h-[90vh] max-w-full object-contain">
+    </div>
 
-<!-- Approval Success Toast -->
-<div id="approval-success-toast" class="fixed bottom-4 right-4 z-[99999] transform translate-y-20 opacity-0 transition-all duration-300 bg-green-500 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3">
-    <i class="ph-bold ph-check-circle text-2xl"></i>
-    <span class="font-bold">Event Documents Successfully Verified & Forwarded</span>
-</div>
-
-<script>
-    window.DJANGO_EVENTS_DATA = JSON.parse('{{ events_json|escapejs|default:"[]" }}');
-</script>
+    <!-- Approval Success Toast -->
+    <div id="approval-success-toast" class="fixed bottom-4 right-4 z-[99999] transform translate-y-20 opacity-0 transition-all duration-300 bg-green-500 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3">
+        <i class="ph-bold ph-check-circle text-2xl"></i>
+        <span class="font-bold">Event Documents Successfully Verified & Forwarded</span>
+    </div>
+{% endblock %}
 
 {% block extra_js %}
 <script>
+    window.DJANGO_EVENTS_DATA = JSON.parse('{{ events_json|escapejs|default:"[]" }}');
+</script>
+<script>
     document.addEventListener('DOMContentLoaded', () => {
-        const imagePreviewModal = document.getElementById('image-preview-modal');
-        const previewImageElement = document.getElementById('preview-image-element');
-        const toast = document.getElementById('approval-success-toast');
-
+        // --- Restore Lightbox logic ---
         document.addEventListener('click', (e) => {
             const viewImgBtn = e.target.closest('.view-image-btn');
             if (viewImgBtn) {
                 const src = viewImgBtn.getAttribute('data-img-src');
                 if (src && src !== 'undefined' && src !== 'null' && src !== '') {
-                    previewImageElement.src = src;
-                    imagePreviewModal.classList.remove('hidden');
+                    const previewImageElement = document.getElementById('preview-image-element');
+                    const imagePreviewModal = document.getElementById('image-preview-modal');
+                    if (previewImageElement && imagePreviewModal) {
+                        previewImageElement.src = src;
+                        imagePreviewModal.classList.remove('hidden');
+                    }
                 } else {
                     alert("No document image available.");
                 }
             }
 
             if (e.target.closest('#close-preview-btn')) {
-                imagePreviewModal.classList.add('hidden');
-            }
-        });
-
-        if (imagePreviewModal) {
-            imagePreviewModal.addEventListener('click', (e) => {
-                if (e.target === imagePreviewModal) {
+                const imagePreviewModal = document.getElementById('image-preview-modal');
+                if (imagePreviewModal) {
                     imagePreviewModal.classList.add('hidden');
                 }
-            });
-        }
-    });
-
-    const { createApp, ref, computed, onMounted } = Vue;
-    createApp({
-        delimiters: ['[[', ']]'],
-        setup() {
-            const isLoading = ref(true);
-            const isModalOpen = ref(false);
-            const selectedEvent = ref(null);
-            const actionLoading = ref(false);
-            const searchQuery = ref('');
-
-            const isRejecting = ref(false);
-            const rejectReason = ref('');
-
-            let parsedData = [];
-            try {
-                parsedData = window.DJANGO_EVENTS_DATA || [];
-                if (typeof parsedData === 'string') {
-                    parsedData = JSON.parse(parsedData);
-                }
-            } catch(e) {}
-
-            const events = ref(parsedData);
-
-            onMounted(() => {
-                setTimeout(() => {
-                    isLoading.value = false;
-                }, 800);
-            });
-
-            const filteredEvents = computed(() => {
-                if (!events.value || !Array.isArray(events.value)) return [];
-                return events.value.filter(e => {
-                    const searchLower = searchQuery.value.toLowerCase();
-                    return e.title.toLowerCase().includes(searchLower) || e.org.toLowerCase().includes(searchLower);
-                });
-            });
-
-            const parsedDescription = computed(() => {
-                if (!selectedEvent.value) return null;
-                let desc = selectedEvent.value.description || "";
-
-                if (desc.includes("[RESCHEDULE REQUEST]")) {
-                    let reasonStr = "";
-                    let origDescStr = "";
-
-                    let parts = desc.split("|");
-                    parts.forEach(part => {
-                        if(part.includes("Reason:")) reasonStr = part.replace("[RESCHEDULE REQUEST]", "").replace("Reason:", "").trim();
-                        if(part.includes("Original Desc:")) origDescStr = part.replace("Original Desc:", "").trim();
-                    });
-
-                    return { type: 'reschedule', reason: reasonStr, originalDesc: origDescStr };
-                }
-                else if (desc.includes("[EXCUSE & EQUIPMENT REQUEST]")) {
-                    let targetStr = "";
-                    let equipStr = "";
-                    let origDescStr = "";
-
-                    let parts = desc.split("|");
-                    parts.forEach(part => {
-                        if(part.includes("Target:")) targetStr = part.replace("[EXCUSE & EQUIPMENT REQUEST]", "").replace("Target:", "").trim();
-                        if(part.includes("Equipment:")) equipStr = part.replace("Equipment:", "").trim();
-                        if(part.includes("Desc:")) origDescStr = part.replace("Desc:", "").trim();
-                    });
-
-                    return { type: 'excuse', target: targetStr, equipment: equipStr, originalDesc: origDescStr }; 
-                }
-                else {
-                    return { type: 'standard', originalDesc: desc };
-                }
-            });
-
-            const openModal = (event) => {
-                selectedEvent.value = event;
-                isRejecting.value = false;
-                rejectReason.value = '';
-                isModalOpen.value = true;
-                document.body.style.overflow = 'hidden';
-
-                // Trigger grid rendering explicitly since modal is now managed by Vue
-                setTimeout(() => {
-                    const verificationFilesGrid = document.getElementById('verification-files-grid');
-                    const fileCountBadge = document.getElementById('file-count-badge');
-
-                    if(verificationFilesGrid && selectedEvent.value.status === 'PERMIT VERIFICATION') {
-                         const eventData = selectedEvent.value;
-                         const count = eventData.requirement_mode ? eventData.requirement_mode.toString() : (eventData.description && eventData.description.includes('[RESCHEDULE REQUEST]') ? '2' : '4');
-
-                         verificationFilesGrid.innerHTML = '';
-
-                         if (count === '4') {
-                            verificationFilesGrid.className = 'grid grid-cols-2 lg:grid-cols-4 gap-4';
-                            if(fileCountBadge) fileCountBadge.textContent = '4 FILES UPLOADED';
-
-                            const files = [
-                                { label: 'Letter of Approval', icon: 'ph-file-text', url: eventData.letter_url }, 
-                                { label: 'Permit to Conduct Activity', icon: 'ph-certificate', url: eventData.permit_url },
-                                { label: 'Excuse Letter & Equipment', icon: 'ph-toolbox', url: eventData.equipment_url },
-                                { label: 'Event Cover Photo', icon: 'ph-image', url: eventData.event_cover_photo }
-                            ];
-
-                            files.forEach(f => {
-                                verificationFilesGrid.innerHTML += `
-                                    <div class="view-image-btn bg-white dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center cursor-pointer hover:border-[#800000] dark:hover:border-[#D4AF37] hover:shadow-md transition-all flex flex-col items-center justify-center group" data-img-src="${f.url || ''}">      
-                                        <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
-                                            <i class="ph-fill ${f.icon} text-4xl text-gray-300 dark:text-gray-500 transition-opacity"></i>
-                                            <div class="absolute inset-0 flex items-center justify-center">
-                                                <i class="ph-bold ph-eye text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#800000] dark:text-[#D4AF37]"></i>
-                                            </div>
-                                        </div>
-                                        <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-300 uppercase">${f.label}</span>
-                                        <span class="text-[9px] text-blue-500 dark:text-[#D4AF37] mt-1 block">Click to view image</span>
-                                    </div>
-                                `;
-                            });
-                        } else {
-                            verificationFilesGrid.className = 'grid grid-cols-2 gap-4';
-                            if(fileCountBadge) fileCountBadge.textContent = '2 FILES UPLOADED';
-
-                            const files = [
-                                { label: 'Letter of Reschedule', icon: 'ph-file-text', url: eventData.letter_of_reschedule || eventData.letter_url },
-                                { label: 'Event Reschedule Cover Photo', icon: 'ph-image', url: eventData.reschedule_cover_photo || eventData.event_cover_photo }
-                            ];
-
-                            files.forEach(f => {
-                                verificationFilesGrid.innerHTML += `
-                                    <div class="view-image-btn bg-white dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center cursor-pointer hover:border-[#800000] dark:hover:border-[#D4AF37] hover:shadow-md transition-all flex flex-col items-center justify-center group" data-img-src="${f.url || ''}">      
-                                        <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
-                                            <i class="ph-fill ${f.icon} text-4xl text-gray-300 dark:text-gray-500 transition-opacity"></i>
-                                            <div class="absolute inset-0 flex items-center justify-center">       
-                                                <i class="ph-bold ph-eye text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#800000] dark:text-[#D4AF37]"></i>
-                                            </div>
-                                        </div>
-                                        <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-300 uppercase">${f.label}</span>
-                                        <span class="text-[9px] text-blue-500 dark:text-[#D4AF37] mt-1 block">Click to view image</span>
-                                    </div>
-                                `;
-                            });
-                        }
-                    }
-                }, 50);
-            };
-
-            const closeModal = () => {
-                isModalOpen.value = false;
-                document.body.style.overflow = '';
-                setTimeout(() => { selectedEvent.value = null; }, 300);
-            };
-
-            const getCookie = (name) => {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break;
-                        }
-                    }
-                }
-                return cookieValue;
-            };
-
-            const updateEventStatus = async (status, remarks = "") => {
-                actionLoading.value = true;
-                try {
-                    const response = await fetch("{% url 'adviser_api_action' %}", {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },   
-                        body: JSON.stringify({ event_id: selectedEvent.value.id, action: status, remarks: remarks })
-                    });
-                    const data = await response.json();
-                    if(data.status === 'success') {
-                        events.value = events.value.filter(e => e.id !== selectedEvent.value.id);
-
-                        // Show toast via Vue before closing modal if it was an approval
-                        if (status === 'approve') {
-                             const toast = document.getElementById('approval-success-toast');
-                             if (toast) {
-                                toast.classList.remove('translate-y-20', 'opacity-0');
-                                toast.classList.add('translate-y-0', 'opacity-100');
-                                setTimeout(() => {
-                                    toast.classList.remove('translate-y-0', 'opacity-100');
-                                    toast.classList.add('translate-y-20', 'opacity-0');
-                                }, 3000);
-                             }
-                        }
-                        closeModal();
-                    } else { alert(data.message); }
-                } catch(err) { alert('Error connecting to server.'); }
-                actionLoading.value = false;
-            };
-
-            const approveEvent = () => updateEventStatus('approve');
-
-            const initiateReject = () => {
-                isRejecting.value = true;
-            };
-
-            const cancelReject = () => {
-                isRejecting.value = false;
-                rejectReason.value = '';
-            };
-
-            const confirmReject = () => {
-                if(rejectReason.value.trim() === '') {
-                    alert("Please provide a reason before confirming the rejection.");
-                    return;
-                }
-                updateEventStatus('reject', rejectReason.value);
-            };
-
-            return {
-                isLoading, events, filteredEvents, searchQuery, isModalOpen, selectedEvent,
-                actionLoading, isRejecting, rejectReason,
-                openModal, closeModal, approveEvent, initiateReject, cancelReject, confirmReject,
-                parsedDescription
             }
-        }
-    }).mount('#app');
+
+            const imagePreviewModalClick = document.getElementById('image-preview-modal');
+            if (imagePreviewModalClick && e.target === imagePreviewModalClick) {
+                imagePreviewModalClick.classList.add('hidden');
+            }
+        });
+        // --- End Restore ---
+
+        const { createApp, ref, computed, onMounted } = Vue;
+        
+        console.log("Adviser Dashboard: Initializing with data:", window.DJANGO_EVENTS_DATA);
+
+        createApp({
+            delimiters: ['[[', ']]'],
+            setup() {
+                const isLoading = ref(true);
+                const isModalOpen = ref(false);
+                const selectedEvent = ref(null);
+                const actionLoading = ref(false);
+                const searchQuery = ref('');
+
+                const isRejecting = ref(false);
+                const rejectReason = ref('');
+
+                let parsedData = [];
+                try {
+                    parsedData = window.DJANGO_EVENTS_DATA || [];
+                    if (typeof parsedData === 'string') {
+                        parsedData = JSON.parse(parsedData);
+                    }
+                } catch(e) {
+                    console.error("Adviser Dashboard: Error parsing events data:", e);
+                }
+
+                const events = ref(parsedData);
+
+                onMounted(() => {
+                    setTimeout(() => {
+                        isLoading.value = false;
+                        console.log("Adviser Dashboard: Loading complete. Events count:", events.value.length);
+                    }, 800);
+                });
+
+                const filteredEvents = computed(() => {
+                    if (!events.value || !Array.isArray(events.value)) return [];
+                    return events.value.filter(e => {
+                        const searchLower = searchQuery.value.toLowerCase();
+                        return e.title.toLowerCase().includes(searchLower) || e.org.toLowerCase().includes(searchLower);
+                    });
+                });
+
+                const parsedDescription = computed(() => {
+                    if (!selectedEvent.value) return null;
+                    let desc = selectedEvent.value.description || "";
+
+                    if (desc.includes("[RESCHEDULE REQUEST]")) {
+                        let reasonStr = "";
+                        let origDescStr = "";
+
+                        let parts = desc.split("|");
+                        parts.forEach(part => {
+                            if(part.includes("Reason:")) reasonStr = part.replace("[RESCHEDULE REQUEST]", "").replace("Reason:", "").trim();
+                            if(part.includes("Original Desc:")) origDescStr = part.replace("Original Desc:", "").trim();
+                        });
+
+                        return { type: 'reschedule', reason: reasonStr, originalDesc: origDescStr };
+                    }
+                    else if (desc.includes("[EXCUSE & EQUIPMENT REQUEST]")) {
+                        let targetStr = "";
+                        let equipStr = "";
+                        let origDescStr = "";
+
+                        let parts = desc.split("|");
+                        parts.forEach(part => {
+                            if(part.includes("Target:")) targetStr = part.replace("[EXCUSE & EQUIPMENT REQUEST]", "").replace("Target:", "").trim();
+                            if(part.includes("Equipment:")) equipStr = part.replace("Equipment:", "").trim();
+                            if(part.includes("Desc:")) origDescStr = part.replace("Desc:", "").trim();
+                        });
+
+                        return { type: 'excuse', target: targetStr, equipment: equipStr, originalDesc: origDescStr }; 
+                    }
+                    else {
+                        return { type: 'standard', originalDesc: desc };
+                    }
+                });
+
+                const openModal = (event) => {
+                    selectedEvent.value = event;
+                    isRejecting.value = false;
+                    rejectReason.value = '';
+                    isModalOpen.value = true;
+                    document.body.style.overflow = 'hidden';
+
+                    // Trigger grid rendering explicitly since modal is now managed by Vue
+                    setTimeout(() => {
+                        const verificationFilesGrid = document.getElementById('verification-files-grid');
+                        const fileCountBadge = document.getElementById('file-count-badge');
+
+                        if(verificationFilesGrid && selectedEvent.value.status === 'PERMIT VERIFICATION') {
+                             const eventData = selectedEvent.value;
+                             const count = eventData.requirement_mode ? eventData.requirement_mode.toString() : (eventData.description && eventData.description.includes('[RESCHEDULE REQUEST]') ? '2' : '4');
+
+                             verificationFilesGrid.innerHTML = '';
+
+                             if (count === '4') {
+                                verificationFilesGrid.className = 'grid grid-cols-2 lg:grid-cols-4 gap-4';
+                                if(fileCountBadge) fileCountBadge.textContent = '4 FILES UPLOADED';
+
+                                const files = [
+                                    { label: 'Letter of Approval', icon: 'ph-file-text', url: eventData.letter_url }, 
+                                    { label: 'Permit to Conduct Activity', icon: 'ph-certificate', url: eventData.permit_url },
+                                    { label: 'Excuse Letter & Equipment', icon: 'ph-toolbox', url: eventData.equipment_url },
+                                    { label: 'Event Cover Photo', icon: 'ph-image', url: eventData.event_cover_photo }
+                                ];
+
+                                files.forEach(f => {
+                                    verificationFilesGrid.innerHTML += `
+                                        <div class="view-image-btn bg-white dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center cursor-pointer hover:border-[#800000] dark:hover:border-[#D4AF37] hover:shadow-md transition-all flex flex-col items-center justify-center group" data-img-src="${f.url || ''}">      
+                                            <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
+                                                <i class="ph-fill ${f.icon} text-4xl text-gray-300 dark:text-gray-500 transition-opacity"></i>
+                                                <div class="absolute inset-0 flex items-center justify-center">
+                                                    <i class="ph-bold ph-eye text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#800000] dark:text-[#D4AF37]"></i>
+                                                </div>
+                                            </div>
+                                            <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-300 uppercase">${f.label}</span>
+                                            <span class="text-[9px] text-blue-500 dark:text-[#D4AF37] mt-1 block">Click to view image</span>
+                                        </div>
+                                    `;
+                                });
+                            } else {
+                                verificationFilesGrid.className = 'grid grid-cols-2 gap-4';
+                                if(fileCountBadge) fileCountBadge.textContent = '2 FILES UPLOADED';
+
+                                const files = [
+                                    { label: 'Letter of Reschedule', icon: 'ph-file-text', url: eventData.letter_of_reschedule || eventData.letter_url },
+                                    { label: 'Event Reschedule Cover Photo', icon: 'ph-image', url: eventData.reschedule_cover_photo || eventData.event_cover_photo }
+                                ];
+
+                                files.forEach(f => {
+                                    verificationFilesGrid.innerHTML += `
+                                        <div class="view-image-btn bg-white dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center cursor-pointer hover:border-[#800000] dark:hover:border-[#D4AF37] hover:shadow-md transition-all flex flex-col items-center justify-center group" data-img-src="${f.url || ''}">      
+                                            <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
+                                                <i class="ph-fill ${f.icon} text-4xl text-gray-300 dark:text-gray-500 transition-opacity"></i>
+                                                <div class="absolute inset-0 flex items-center justify-center">       
+                                                    <i class="ph-bold ph-eye text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#800000] dark:text-[#D4AF37]"></i>
+                                                </div>
+                                            </div>
+                                            <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-300 uppercase">${f.label}</span>
+                                            <span class="text-[9px] text-blue-500 dark:text-[#D4AF37] mt-1 block">Click to view image</span>
+                                        </div>
+                                    `;
+                                });
+                            }
+                        }
+                    }, 50);
+                };
+
+                const closeModal = () => {
+                    isModalOpen.value = false;
+                    document.body.style.overflow = '';
+                    setTimeout(() => { selectedEvent.value = null; }, 300);
+                };
+
+                const getCookie = (name) => {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                };
+
+                const updateEventStatus = async (status, remarks = "") => {
+                    actionLoading.value = true;
+                    try {
+                        const response = await fetch("{% url 'adviser_api_action' %}", {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },   
+                            body: JSON.stringify({ event_id: selectedEvent.value.id, action: status, remarks: remarks })
+                        });
+                        const data = await response.json();
+                        if(data.status === 'success') {
+                            events.value = events.value.filter(e => e.id !== selectedEvent.value.id);
+
+                            // Show toast via Vue before closing modal if it was an approval
+                            if (status === 'approve') {
+                                 const toast = document.getElementById('approval-success-toast');
+                                 if (toast) {
+                                    toast.classList.remove('translate-y-20', 'opacity-0');
+                                    toast.classList.add('translate-y-0', 'opacity-100');
+                                    setTimeout(() => {
+                                        toast.classList.remove('translate-y-0', 'opacity-100');
+                                        toast.classList.add('translate-y-20', 'opacity-0');
+                                    }, 3000);
+                                 }
+                            }
+                            closeModal();
+                        } else { alert(data.message); }
+                    } catch(err) { alert('Error connecting to server.'); }
+                    actionLoading.value = false;
+                };
+
+                const approveEvent = () => updateEventStatus('approve');
+
+                const initiateReject = () => {
+                    isRejecting.value = true;
+                };
+
+                const cancelReject = () => {
+                    isRejecting.value = false;
+                    rejectReason.value = '';
+                };
+
+                const confirmReject = () => {
+                    if(rejectReason.value.trim() === '') {
+                        alert("Please provide a reason before confirming the rejection.");
+                        return;
+                    }
+                    updateEventStatus('reject', rejectReason.value);
+                };
+
+                return {
+                    isLoading, events, filteredEvents, searchQuery, isModalOpen, selectedEvent,
+                    actionLoading, isRejecting, rejectReason,
+                    openModal, closeModal, approveEvent, initiateReject, cancelReject, confirmReject,
+                    parsedDescription
+                }
+            }
+        }).mount('#app');
+    });
 </script>
 {% endblock %}

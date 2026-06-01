@@ -19,30 +19,39 @@
 
 <!-- Filter & Search Bar -->
 <div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col lg:flex-row justify-between items-center gap-4 mb-6 transition-colors duration-300">
-    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-        <span class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1"><i class="ph-bold ph-funnel"></i> Filters:</span>
-        
-        <div class="relative w-full sm:w-auto">
-            <select v-model="statusFilter" class="w-full sm:min-w-[180px] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold bg-gray-50 dark:bg-[#111] cursor-pointer appearance-none transition-all">
-                <option value="All">All Event Records</option>
-                <option value="Approved">Fully Published</option>
-                <option value="In Progress">Under Process</option>
-                <option value="Rejected">Rejected Proposals</option>
-            </select>
-            <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+    <div v-if="isLoading" class="flex justify-between items-center w-full">
+        <div class="flex gap-3">
+            <div class="w-20 h-6 skeleton-shimmer rounded"></div>
+            <div class="w-40 h-10 skeleton-shimmer rounded-lg"></div>
         </div>
+        <div class="w-72 h-10 skeleton-shimmer rounded-lg"></div>
     </div>
+    <template v-else>
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <span class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1"><i class="ph-bold ph-funnel"></i> Filters:</span>
+            
+            <div class="relative w-full sm:w-auto">
+                <select v-model="statusFilter" class="w-full sm:min-w-[180px] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold bg-gray-50 dark:bg-[#111] cursor-pointer appearance-none transition-all">
+                    <option value="All">All Event Records</option>
+                    <option value="Approved">Fully Published</option>
+                    <option value="In Progress">Under Process</option>
+                    <option value="Rejected">Rejected Proposals</option>
+                </select>
+                <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
+        </div>
 
-    <div class="relative w-full lg:w-96">
-        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-        <input type="text" v-model="searchQuery" placeholder="Search event title, org, or venue..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-12 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
-    </div>
+        <div class="relative w-full lg:w-96">
+            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input type="text" v-model="searchQuery" placeholder="Search event title, org, or venue..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-12 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
+        </div>
+    </template>
 </div>
 
 <!-- Main Table Container -->
 <div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[800px]" v-if="filteredEvents.length > 0">
+        <table class="w-full text-left border-collapse min-w-[800px]">
             <thead>
                 <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/20">
                     <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Organization</th>
@@ -52,7 +61,20 @@
                     <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase text-center">Action</th>
                 </tr>
             </thead>
-            <tbody class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+
+            <!-- Skeleton Body -->
+            <tbody v-if="isLoading" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+                <tr v-for="i in 8" :key="i">
+                    <td class="py-4 px-6"><div class="h-4 w-16 skeleton-shimmer rounded"></div></td>
+                    <td class="py-4 px-6"><div class="h-4 w-56 skeleton-shimmer rounded"></div></td>
+                    <td class="py-4 px-6"><div class="h-4 w-24 skeleton-shimmer rounded"></div></td>
+                    <td class="py-4 px-6"><div class="h-6 w-28 skeleton-shimmer rounded-lg"></div></td>
+                    <td class="py-4 px-6 flex justify-center"><div class="h-9 w-24 skeleton-shimmer rounded-lg"></div></td>
+                </tr>
+            </tbody>
+
+            <!-- Real Data Body -->
+            <tbody v-else-if="filteredEvents.length > 0" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
                 <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50/80 dark:hover:bg-[#151515] transition-colors cursor-pointer group" @click="openModal(event)">
                     <td class="py-4 px-6 font-black text-pup-maroon dark:text-pup-gold text-xs tracking-tight">[[ event.org ]]</td>
                     <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
@@ -75,16 +97,21 @@
                     </td>
                 </tr>
             </tbody>
-        </table>
 
-        <div v-else class="py-24 text-center">
-            <div class="relative inline-block mb-4">
-                <i class="ph-fill ph-folder-open text-7xl text-gray-200 dark:text-gray-800"></i>
-                <i class="ph-bold ph-magnifying-glass absolute -bottom-2 -right-2 text-3xl text-gray-400 dark:text-gray-600"></i>
-            </div>
-            <h3 class="text-lg font-black text-gray-500 dark:text-gray-400 tracking-tight uppercase">No records found</h3>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 font-bold uppercase tracking-widest">Refine your search or check filters.</p>
-        </div>
+            <!-- No Results -->
+            <tbody v-else>
+                <tr>
+                    <td colspan="5" class="py-24 text-center">
+                        <div class="relative inline-block mb-4">
+                            <i class="ph-fill ph-folder-open text-7xl text-gray-200 dark:text-gray-800"></i>
+                            <i class="ph-bold ph-magnifying-glass absolute -bottom-2 -right-2 text-3xl text-gray-400 dark:text-gray-600"></i>
+                        </div>
+                        <h3 class="text-lg font-black text-gray-500 dark:text-gray-400 tracking-tight uppercase">No records found</h3>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 font-bold uppercase tracking-widest">Refine your search or check filters.</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
