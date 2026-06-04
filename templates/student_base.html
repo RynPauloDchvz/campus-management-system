@@ -676,6 +676,8 @@
                     localStorage.setItem('student_read_notifs', JSON.stringify(this.readNotifs));
                 },
                 getStaticImageUrl(filename) {
+                    if (!filename) return "{% static 'images/PUPLogo.png' %}";
+                    if (filename.startsWith('/') || filename.startsWith('http')) return filename;
                     return "{% static 'images/' %}" + filename;
                 },
                 handleImageError(event) {
@@ -694,6 +696,13 @@
                 viewEventDetails() {
                     this.closeModal();
                     window.location.href = "{% url 'student_school_events' %}"; 
+                },
+                startActionEvaluation(event) {
+                    // Save context and move to official form
+                    sessionStorage.setItem('currentEvalTitle', event.title);
+                    sessionStorage.setItem('currentEvalCategory', 'Organization Activity');
+                    sessionStorage.setItem('currentEvalImg', event.image || "{% static 'images/PUPLogo.png' %}");
+                    window.location.href = "{% url 'student_evaluation_form' %}";
                 }
             }
         };

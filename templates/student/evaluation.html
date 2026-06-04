@@ -1,198 +1,145 @@
 {% extends 'student_base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<style>
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .evaluation-card { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .evaluation-card:hover { transform: translateY(-5px); }
+</style>
+{% endblock extra_head %}
+
 {% block content %}
+<!-- SAFE DATA INJECTION -->
+<script id="events-data" type="application/json">{{ events_json|safe }}</script>
+<script id="history-data" type="application/json">{{ history_json|safe }}</script>
+
 <div v-pre>
-<div class="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
+<div class="max-w-[98rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">
 
-    <div class="text-center mb-8">
-        <h1 class="font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold mb-4 uppercase tracking-wide">Evaluation Center</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-2">Manage your pending evaluations and view past submissions.</p>
+    <div class="text-center mb-12">
+        <h1 class="font-black text-4xl sm:text-6xl text-pup-maroon dark:text-pup-gold mb-4 uppercase tracking-tighter">Evaluation Ledger</h1>
+        <p class="text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-[0.4em]">Synchronize feedback to unlock institutional certificates</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Side: Available Evaluations -->
-        <div class="lg:col-span-2 flex flex-col gap-6">
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-                    <i class="ph-fill ph-clipboard-text text-pup-maroon dark:text-pup-gold"></i> Available Evaluations
-                </h2>
-            </div>
-            
-            <div class="relative w-full mb-2">
-                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
-                <input type="text" id="evalSearch" placeholder="Search events to evaluate..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full py-3.5 pl-12 pr-6 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm sm:text-base">
-            </div>
-
-            <!-- Category Filters -->
-            <div class="flex overflow-x-auto hide-scrollbar gap-3 justify-start pb-2">
-                <button data-category="All" class="js-category-btn active whitespace-nowrap bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-pup-maroon dark:border-pup-gold border px-5 py-2 rounded-full font-bold text-sm transition-colors">All Pending</button>
-                <button data-category="Academic" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Academic</button>
-                <button data-category="Sports" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Sports</button>
-                <button data-category="Cultural" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Cultural</button>
-            </div>
-
-            <!-- Grid matching School Events -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-10" id="evalGrid">
-                <div class="js-eval-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Research Colloquium 2025" data-category="Academic" data-date="MAY 12, 2025" data-org="PUP UNISAN">
-                    <div class="w-28 sm:w-full h-28 sm:h-36 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r sm:border-r-0 sm:border-b border-gray-200 dark:border-gray-800">
-                        <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-                        <div class="absolute top-2 right-2 bg-pup-gold text-black text-[8px] font-black px-2 py-0.5 rounded-full shadow-sm">PENDING</div>
+    <!-- SIDE-BY-SIDE LAYOUT -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        
+        <!-- LEFT PANEL: Open Sessions (8 cols) -->
+        <div class="xl:col-span-8 bg-white dark:bg-pup-darkcard rounded-[3rem] p-6 sm:p-10 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col min-h-[700px]">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-6 border-b border-gray-100 dark:border-gray-800">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-[1.5rem] flex items-center justify-center text-pup-maroon dark:text-pup-gold shadow-sm border border-red-100 dark:border-red-900/30">
+                        <i class="ph-fill ph-pulse text-3xl"></i>
                     </div>
-                    <div class="p-3 sm:p-4 flex flex-col justify-center w-full min-w-0">
-                        <div class="text-[0.6rem] font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate uppercase">MAY 12, 2025</div>
-                        <h3 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white leading-tight mb-1 truncate">Research Colloquium 2025</h3>
-                        <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate">
-                            <i class="ph-fill ph-users text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">By PUP UNISAN</span>
-                        </p>
-                        <div class="hidden sm:flex border-t border-gray-100 dark:border-gray-800 pt-3 justify-between items-center mt-4">
-                            <span class="text-xs font-bold uppercase text-gray-400">Evaluate Now</span>
-                            <i class="ph-bold ph-arrow-right text-pup-maroon dark:text-pup-gold text-lg"></i>
-                        </div>
+                    <div>
+                        <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-1">Open Sessions</h2>
+                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Active participation window</p>
                     </div>
                 </div>
+                <div class="relative w-full sm:w-72">
+                    <input type="text" id="openSearch" placeholder="Search sessions..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-[10px] font-black uppercase tracking-widest shadow-inner transition-all">
+                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                </div>
             </div>
-            
-            <div id="noResults" class="hidden text-center py-20 w-full">
-                <i class="ph-bold ph-smiley-wink text-6xl text-gray-300 dark:text-gray-700 mb-4"></i>
-                <h3 class="font-bold text-xl text-gray-500 dark:text-gray-400">All caught up!</h3>
-                <p class="text-sm text-gray-400 mt-1">You have no pending evaluations at the moment.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="activeEvaluationsGrid">
+                <!-- Events injected by JS -->
+            </div>
+
+            <div id="noActiveEvaluations" style="display: none;" class="text-center py-24 m-auto">
+                <i class="ph-bold ph-chats-circle text-7xl text-gray-200 dark:text-gray-700 mb-6"></i>
+                <h3 class="font-black text-xl text-gray-400 uppercase tracking-tighter">No Active Sessions</h3>
+                <p class="text-gray-400 text-[10px] mt-1 font-black uppercase tracking-[0.2em]">Feedback portals unlock 1 hour before event ends.</p>
             </div>
         </div>
 
-        <!-- Right Side: Submission History -->
-        <div class="flex flex-col gap-6 lg:border-l border-gray-200 dark:border-gray-800 lg:pl-8">
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-                    <i class="ph-bold ph-clock-counter-clockwise text-pup-maroon dark:text-pup-gold"></i> Submission History
-                </h2>
+        <!-- RIGHT PANEL: History (4 cols) -->
+        <div class="xl:col-span-4 bg-gray-50 dark:bg-[#0a0a0a] rounded-[3rem] p-6 sm:p-8 border border-gray-100 dark:border-gray-900 shadow-inner flex flex-col min-h-[700px]">
+            <div class="flex items-center gap-4 mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
+                <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center text-gray-400 shadow-sm border border-gray-100 dark:border-gray-700">
+                    <i class="ph-fill ph-clock-counter-clockwise text-2xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-1">Committed</h2>
+                    <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Feedback History</p>
+                </div>
             </div>
 
-            <!-- History Search -->
-            <div class="relative w-full">
-                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                <input type="text" id="historySearch" placeholder="Search history..." class="w-full bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm">
-            </div>
-
-            <!-- History List -->
-            <div class="flex flex-col gap-3 overflow-y-auto max-h-[600px] pr-2 hide-scrollbar pb-4" id="historyContainer">
-                <!-- History Item 1 -->
-                <div class="js-history-card bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all group" data-title="Tech-Talk 1.0" data-date="Nov 22, 2025" data-rating="5" data-feedback="The speaker was excellent and the topics were very relevant to our current subjects.">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="text-[10px] font-black uppercase tracking-widest text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md">Completed</div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[10px] font-black text-gray-900 dark:text-white">5.0</span>
-                            <div class="flex text-pup-gold text-[10px]">
-                                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <h4 class="font-bold text-gray-900 dark:text-white mb-1 uppercase text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">Tech-Talk 1.0</h4>
-                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex justify-between items-center">
-                        Submitted: Nov 22, 2025
-                        <i class="ph-bold ph-caret-right text-base opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all"></i>
-                    </p>
-                </div>
-                
-                <!-- History Item 2 -->
-                <div class="js-history-card bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all group" data-title="Foundation Day 2025" data-date="Oct 10, 2025" data-rating="4.5" data-feedback="Great event overall, but the venue was a bit crowded during the afternoon sessions.">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="text-[10px] font-black uppercase tracking-widest text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md">Completed</div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[10px] font-black text-gray-900 dark:text-white">4.5</span>
-                            <div class="flex text-pup-gold text-[10px]">
-                                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star-half"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <h4 class="font-bold text-gray-900 dark:text-white mb-1 uppercase text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">Foundation Day 2025</h4>
-                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex justify-between items-center">
-                        Submitted: Oct 10, 2025
-                        <i class="ph-bold ph-caret-right text-base opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all"></i>
-                    </p>
-                </div>
+            <div class="flex flex-col gap-4 overflow-y-auto hide-scrollbar max-h-[600px]" id="historyGrid">
+                <!-- History injected by JS -->
             </div>
             
-            <div id="noHistoryResults" class="hidden text-center py-10 w-full">
-                <p class="text-sm text-gray-400">No matching history found.</p>
+            <div id="noHistory" style="display: none;" class="text-center py-20 m-auto">
+                <i class="ph-bold ph-folder-open text-5xl text-gray-200 dark:text-gray-700 mb-4"></i>
+                <h3 class="font-black text-sm text-gray-400 uppercase tracking-tighter">No records found</h3>
             </div>
         </div>
+
     </div>
 
 </div>
 
-<!-- Start Evaluation Modal -->
-<div id="evalStartModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-6">
-    <div id="evalModalBg" class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10 font-sans transform scale-95 opacity-0 transition-all duration-300" id="evalModalContent">
-        <div class="w-24 h-24 mx-auto bg-pup-maroon/10 dark:bg-pup-gold/10 rounded-full flex items-center justify-center mb-6 text-pup-maroon dark:text-pup-gold text-5xl shadow-inner">
-            <i class="ph-fill ph-info"></i>
-        </div>
-        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-4 uppercase tracking-tight">Begin Evaluation?</h2>
-        <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-10 px-2 font-medium">Your answers will remain anonymous and will be used to improve future university events.</p>
-        <div class="flex flex-col gap-3">
-            <button id="btnConfirmEval" class="w-full py-4 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black rounded-2xl text-sm transition-all shadow-md hover:scale-[1.02] active:scale-95 uppercase tracking-widest">
-                Continue to Form
-            </button>
-            <button id="btnCloseEvalModal" class="w-full py-3 text-gray-500 font-bold text-sm hover:text-gray-900 dark:hover:text-white transition-colors uppercase tracking-widest">
-                Maybe Later
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- History Details Modal -->
-<div id="historyModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-6">
-    <div id="historyModalBg" class="fixed inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-[2.5rem] shadow-2xl w-full max-w-md p-8 sm:p-10 border border-gray-100 dark:border-gray-800 z-10 font-sans transform scale-95 opacity-0 transition-all duration-300" id="historyModalContent">
+<!-- HISTORY DETAIL MODAL -->
+<div id="historyDetailModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-4 sm:p-6">
+    <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="closeHistoryModal()"></div>
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[85vh] overflow-hidden border border-gray-100 dark:border-gray-800 z-10 transition-all">
         
-        <button id="btnCloseHistoryModal" class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors z-20">
-            <i class="ph-bold ph-x text-xl"></i>
-        </button>
+        <div class="p-8 sm:p-12 overflow-y-auto hide-scrollbar flex-grow">
+            <button onclick="closeHistoryModal()" class="absolute top-8 right-8 w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors z-50">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
 
-        <div class="flex items-center justify-center mb-8">
-            <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-500 text-4xl shadow-inner border border-green-200 dark:border-green-800/50">
-                <i class="ph-fill ph-check-circle"></i>
+            <div class="mb-10">
+                <span class="inline-block bg-pup-maroon/10 text-pup-maroon dark:bg-pup-gold/10 dark:text-pup-gold text-[11px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.25em] mb-4">Institutional Record</span>
+                <h2 id="modalH_Title" class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white leading-tight uppercase tracking-tighter">Event Title</h2>
+                <div class="flex items-center gap-4 mt-4">
+                    <p id="modalH_Date" class="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em]">Submitted Nov 12, 2025</p>
+                    <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                    <p id="modalH_Time" class="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em]">02:30 PM</p>
+                </div>
             </div>
-        </div>
-        
-        <div class="text-center mb-8">
-            <div class="text-[11px] font-black uppercase tracking-[0.2em] text-green-500 mb-2">Submission Detailed View</div>
-            <h2 id="histModalTitle" class="text-2xl font-black text-gray-900 dark:text-white uppercase leading-tight mb-2 tracking-tight">Event Title</h2>
-            <div class="flex items-center justify-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-700"></span>
-                <p id="histModalDate" class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Submitted: Date</p>
-                <span class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-700"></span>
-            </div>
-        </div>
 
-        <div class="space-y-4">
-            <!-- Rating Section -->
-            <div class="bg-gray-50 dark:bg-[#111] p-6 rounded-[2rem] border border-gray-200 dark:border-gray-800 shadow-sm">
-                <div class="flex flex-col items-center text-center">
-                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Overall Performance Rating</span>
-                    <div class="flex items-center gap-3 mb-2">
-                        <div id="histModalRating" class="flex text-pup-gold text-2xl gap-0.5">
-                            <!-- Stars injected here -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Average Rating -->
+                <div class="bg-gray-50 dark:bg-[#0a0a0a] rounded-[2rem] p-6 border border-gray-100 dark:border-gray-900">
+                    <span class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4">Synchronization Score</span>
+                    <div class="flex items-end gap-2 mb-2">
+                        <span id="modalH_Rating" class="text-5xl font-black text-pup-maroon dark:text-pup-gold leading-none">5.0</span>
+                        <span class="text-xs font-bold text-gray-400 uppercase mb-1">/ 5.0</span>
+                    </div>
+                    <div id="modalH_Stars" class="flex gap-1 text-pup-gold text-lg">
+                        <!-- Stars -->
+                    </div>
+                </div>
+
+                <!-- Sentiment Block -->
+                <div class="bg-gray-50 dark:bg-[#0a0a0a] rounded-[2rem] p-6 border border-gray-100 dark:border-gray-900 flex flex-col justify-center">
+                    <span class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4">Feedback Analysis</span>
+                    <div class="flex items-center gap-3">
+                        <div id="modalH_SentimentIcon" class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl">
+                            <!-- Icon -->
+                        </div>
+                        <div>
+                            <span id="modalH_SentimentLabel" class="block font-black text-gray-900 dark:text-white uppercase tracking-tight text-lg leading-none">POSITIVE</span>
+                            <span id="modalH_SentimentPct" class="text-green-500 font-black text-sm">92% Match</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <span id="histModalScore" class="text-3xl font-black text-gray-900 dark:text-white">5.0</span>
-                        <span class="text-sm font-bold text-gray-400">/ 5.0</span>
-                    </div>
                 </div>
             </div>
 
-            <!-- Feedback Section -->
-            <div class="bg-white dark:bg-[#0a0a0a] p-6 rounded-[2rem] border border-gray-200 dark:border-gray-800 shadow-sm">
-                <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 text-center">Student Narrative Feedback</span>
-                <div class="relative">
-                    <i class="ph-fill ph-quotes text-3xl text-pup-maroon/10 dark:text-pup-gold/10 absolute -top-2 -left-2"></i>
-                    <p id="histModalFeedback" class="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed text-center px-4 relative z-10">
-                        "Feedback goes here..."
-                    </p>
+            <div class="space-y-4">
+                <span class="block text-[9px] font-black text-gray-400 uppercase tracking-widest px-2">Verbatim Commentary</span>
+                <div class="relative p-6 bg-gray-900 rounded-[2rem] border border-gray-800 italic text-white/80 text-sm leading-relaxed font-medium">
+                    <i class="ph-fill ph-quotes absolute -top-2 -left-2 text-3xl text-pup-gold/20"></i>
+                    "<span id="modalH_Feedback">No feedback provided.</span>"
                 </div>
             </div>
+
+            <button onclick="closeHistoryModal()" class="w-full mt-12 py-5 bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black text-[11px] rounded-2xl uppercase tracking-[0.3em] shadow-2xl hover:opacity-90 active:scale-95 transition-all">
+                Dismiss Record
+            </button>
         </div>
     </div>
 </div>
@@ -201,178 +148,225 @@
 
 {% block extra_js %}
 <script>
-function initEvaluationPageLogic() {
-    // --- Pending Evaluations Logic ---
-    const searchInput = document.getElementById('evalSearch');
-    const filterBtns = document.querySelectorAll('.js-category-btn');
-    const evalCards = document.querySelectorAll('.js-eval-card');
-    const noResults = document.getElementById('noResults');
-    const evalModal = document.getElementById('evalStartModal');
-    const evalModalContent = document.getElementById('evalModalContent');
+    const eventsText = document.getElementById('events-data').textContent;
+    const historyText = document.getElementById('history-data').textContent;
+    
+    const EVENTS_DATA = eventsText ? JSON.parse(eventsText) : [];
+    const HISTORY_DATA = historyText ? JSON.parse(historyText) : [];
+    const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
 
-    function filterEvals() {
-        if (!searchInput || !noResults) return;
-        const query = searchInput.value.toLowerCase().trim();
-        const activeBtn = document.querySelector('.js-category-btn.active');
-        const activeFilter = activeBtn ? activeBtn.dataset.category : 'All';
+    function initEvaluationHubLogic() {
+        const activeGrid = document.getElementById('activeEvaluationsGrid');
+        const historyGrid = document.getElementById('historyGrid');
+        const noActive = document.getElementById('noActiveEvaluations');
+        const noHistory = document.getElementById('noHistory');
         
-        let visibleCount = 0;
-        evalCards.forEach(card => {
-            const title = card.dataset.title.toLowerCase();
-            const category = card.dataset.category;
-            const matchesSearch = title.includes(query);
-            const matchesCategory = activeFilter === 'All' || category === activeFilter;
+        const openSearch = document.getElementById('openSearch');
 
-            if (matchesSearch && matchesCategory) {
-                card.style.display = ""; 
-                visibleCount++;
-            } else {
-                card.style.display = "none";
-            }
-        });
-        
-        const grid = document.getElementById('evalGrid');
-        if (visibleCount === 0) {
-            noResults.classList.remove('hidden');
-            if(grid) grid.classList.add('hidden');
-        } else {
-            noResults.classList.add('hidden');
-            if(grid) grid.classList.remove('hidden');
-        }
-    }
-
-    if (searchInput) searchInput.addEventListener('input', filterEvals);
-    
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            filterBtns.forEach(b => {
-                b.classList.remove('active', 'bg-pup-maroon', 'text-white', 'dark:bg-pup-gold', 'dark:text-black', 'border-pup-maroon', 'dark:border-pup-gold');
-                b.classList.add('bg-white', 'dark:bg-pup-darkcard', 'text-gray-600', 'dark:text-gray-300');
-            });
-            const target = e.currentTarget;
-            target.classList.remove('bg-white', 'dark:bg-pup-darkcard', 'text-gray-600', 'dark:text-gray-300');
-            target.classList.add('active', 'bg-pup-maroon', 'text-white', 'dark:bg-pup-gold', 'dark:text-black', 'border-pup-maroon', 'dark:border-pup-gold');
-            filterEvals();
-        });
-    });
-
-    evalCards.forEach(card => {
-        card.addEventListener('click', () => {
-            evalModal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => {
-                evalModalContent.classList.remove('scale-95', 'opacity-0');
-                evalModalContent.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        });
-    });
-
-    function closeEvalModal() {
-        evalModalContent.classList.remove('scale-100', 'opacity-100');
-        evalModalContent.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            evalModal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }, 300);
-    }
-
-    const closeBtn = document.getElementById('btnCloseEvalModal');
-    if(closeBtn) closeBtn.addEventListener('click', closeEvalModal);
-    
-    const bgOverlay = document.getElementById('evalModalBg');
-    if(bgOverlay) bgOverlay.addEventListener('click', closeEvalModal);
-
-    const confirmBtn = document.getElementById('btnConfirmEval');
-    if(confirmBtn) {
-        confirmBtn.addEventListener('click', () => {
-            window.location.href = "{% url 'student_evaluation_form' %}";
-        });
-    }
-
-    // --- History Logic ---
-    const historySearch = document.getElementById('historySearch');
-    const historyCards = document.querySelectorAll('.js-history-card');
-    const noHistoryResults = document.getElementById('noHistoryResults');
-    
-    const historyModal = document.getElementById('historyModal');
-    const historyModalContent = document.getElementById('historyModalContent');
-
-    if (historySearch) {
-        historySearch.addEventListener('input', () => {
-            const query = historySearch.value.toLowerCase().trim();
-            let visibleCount = 0;
-            historyCards.forEach(card => {
-                const title = card.dataset.title.toLowerCase();
-                if (title.includes(query)) {
-                    card.style.display = "";
-                    visibleCount++;
-                } else {
-                    card.style.display = "none";
-                }
-            });
-            if (noHistoryResults) {
-                noHistoryResults.classList.toggle('hidden', visibleCount > 0);
-            }
-        });
-    }
-
-    historyCards.forEach(card => {
-        card.addEventListener('click', () => {
-            const title = card.dataset.title;
-            const date = card.dataset.date;
-            const rating = parseFloat(card.dataset.rating) || 5.0;
-            const feedback = card.dataset.feedback || "No comments provided.";
-
-            document.getElementById('histModalTitle').innerText = title;
-            document.getElementById('histModalDate').innerText = "Submitted: " + date;
-            document.getElementById('histModalFeedback').innerText = `"${feedback}"`;
-            document.getElementById('histModalScore').innerText = rating.toFixed(1);
+        function renderActive(query = '') {
+            if (!activeGrid) return;
+            activeGrid.innerHTML = '';
+            const now = new Date();
             
-            // Build stars based on rating (supporting half stars)
-            let starsHtml = '';
-            for(let i=1; i<=5; i++){
-                if(i <= Math.floor(rating)) {
-                    starsHtml += '<i class="ph-fill ph-star"></i>';
-                } else if(i === Math.ceil(rating) && rating % 1 !== 0) {
-                    starsHtml += '<i class="ph-fill ph-star-half"></i>';
-                } else {
-                    starsHtml += '<i class="ph ph-star text-gray-300 dark:text-gray-700"></i>';
-                }
+            const activeEvents = EVENTS_DATA.filter(e => {
+                const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
+                if (!end) return false;
+                
+                const evalOpenTime = new Date(end.getTime() - (60 * 60 * 1000));
+                const evalCloseTime = new Date(end.getTime() + (60 * 60 * 1000)); 
+                
+                const matchesSearch = e.title.toLowerCase().includes(query.toLowerCase());
+                const isToday = e.date === now.toISOString().split('T')[0];
+                
+                return (now <= evalCloseTime && matchesSearch) || (isToday && matchesSearch);
+            });
+
+            if (activeEvents.length === 0) {
+                if(noActive) noActive.style.display = 'block';
+                return;
             }
-            document.getElementById('histModalRating').innerHTML = starsHtml;
+            if(noActive) noActive.style.display = 'none';
 
-            historyModal.classList.remove('hidden');
+            activeEvents.forEach(e => {
+                const card = document.createElement('div');
+                card.className = "evaluation-card bg-white dark:bg-pup-darkcard rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-gray-800 group shadow-sm hover:shadow-xl transition-all flex flex-col";
+                
+                const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
+                const evalOpenTime = end ? new Date(end.getTime() - (60 * 60 * 1000)) : null;
+                const evalCloseTime = end ? new Date(end.getTime() + (60 * 60 * 1000)) : null;
+
+                const isOpen = end && now >= evalOpenTime && now <= evalCloseTime;
+                const isUpcoming = end && now < evalOpenTime;
+                
+                let btnHtml = "";
+                let statusLabel = "";
+                
+                if (e.already_evaluated) {
+                    statusLabel = "COMPLETED";
+                    btnHtml = `<button disabled class="mt-auto w-full py-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                        <i class="ph-fill ph-check-circle text-green-500 text-lg"></i> Feedback Synchronized
+                      </button>`;
+                } else if (isUpcoming) {
+                    const diff = evalOpenTime - now;
+                    statusLabel = `OPENS IN ${formatTimeDiffShort(diff)}`;
+                    btnHtml = `<button disabled class="mt-auto w-full py-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-lock-key"></i> Unlocks @ ${formatClockTime(evalOpenTime)}
+                      </button>`;
+                } else if (isOpen) {
+                    const diff = evalCloseTime - now;
+                    statusLabel = `CLOSES IN ${formatTimeDiffShort(diff)}`;
+                    btnHtml = `<button onclick="startEvaluation('${e.id}', '${e.title.replace(/'/g, "\\'")}', '${e.image}')" class="mt-auto w-full py-5 rounded-2xl bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:opacity-90 active:scale-95 transition-all">
+                        Initialize Sync Portal
+                      </button>`;
+                } else {
+                    statusLabel = "WINDOW CLOSED";
+                    btnHtml = `<button disabled class="mt-auto w-full py-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-x-circle text-red-500 text-lg"></i> Session Expired
+                      </button>`;
+                }
+
+                card.innerHTML = `
+                    <div class="h-44 w-full relative overflow-hidden bg-gray-900">
+                        <img src="${e.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-6');">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                        <div class="absolute top-4 left-4">
+                            <span class="bg-black/60 backdrop-blur-xl border border-white/10 text-white text-[8px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest">${statusLabel}</span>
+                        </div>
+                        <div class="absolute bottom-4 left-6 right-6">
+                            <p class="text-pup-gold text-[9px] font-black uppercase tracking-[0.2em] mb-1">${e.org}</p>
+                            <h3 class="text-white font-black text-lg leading-tight uppercase tracking-tighter truncate">${e.title}</h3>
+                        </div>
+                    </div>
+                    <div class="p-6 flex-grow flex flex-col bg-white dark:bg-pup-darkcard">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-2">
+                                <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i>
+                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">${e.venue}</span>
+                            </div>
+                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">${e.time}</span>
+                        </div>
+                        ${btnHtml}
+                    </div>
+                `;
+                activeGrid.appendChild(card);
+            });
+        }
+
+        function renderHistory() {
+            if (!historyGrid) return;
+            historyGrid.innerHTML = '';
+            if (HISTORY_DATA.length === 0) {
+                if(noHistory) noHistory.style.display = 'block';
+                return;
+            }
+            if(noHistory) noHistory.style.display = 'none';
+
+            HISTORY_DATA.forEach((h, index) => {
+                const item = document.createElement('div');
+                item.className = "bg-white dark:bg-[#111] p-5 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all group";
+                item.onclick = () => openHistoryModal(h);
+                
+                item.innerHTML = `
+                    <div class="flex items-center gap-4 min-w-0">
+                        <div class="w-10 h-10 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-400 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors shrink-0">
+                            <i class="ph-fill ph-file-text text-xl"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-black text-[11px] text-gray-900 dark:text-white uppercase tracking-tight truncate leading-none mb-1">${h.title}</h4>
+                            <p class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">${h.date}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span class="text-xs font-black text-pup-maroon dark:text-pup-gold">${parseFloat(h.rating).toFixed(1)}</span>
+                        <i class="ph-bold ph-caret-right text-gray-300 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                `;
+                historyGrid.appendChild(item);
+            });
+        }
+
+        function formatTimeDiffShort(ms) {
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            if (h > 0) return `${h}H ${m}M`;
+            return `${m}M ${s}S`;
+        }
+
+        function formatClockTime(date) {
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        window.openHistoryModal = (record) => {
+            document.getElementById('modalH_Title').innerText = record.title;
+            document.getElementById('modalH_Date').innerText = `Submitted on ${record.date}`;
+            document.getElementById('modalH_Time').innerText = record.time || '--:--';
+            document.getElementById('modalH_Rating').innerText = parseFloat(record.rating).toFixed(1);
+            document.getElementById('modalH_Feedback').innerText = record.feedback || 'No comments provided.';
+            
+            let starsHtml = '';
+            const r = parseFloat(record.rating);
+            for(let i=1; i<=5; i++) {
+                if(i <= Math.floor(r)) starsHtml += '<i class="ph-fill ph-star"></i>';
+                else if(i === Math.ceil(r) && r % 1 !== 0) starsHtml += '<i class="ph-fill ph-star-half"></i>';
+                else starsHtml += '<i class="ph-fill ph-star text-gray-200 dark:text-gray-800"></i>';
+            }
+            document.getElementById('modalH_Stars').innerHTML = starsHtml;
+
+            const ratingVal = parseFloat(record.rating);
+            const sPctEl = document.getElementById('modalH_SentimentPct');
+            const sLabelEl = document.getElementById('modalH_SentimentLabel');
+            const sIconEl = document.getElementById('modalH_SentimentIcon');
+
+            if (ratingVal >= 4.0) {
+                sPctEl.innerText = `${Math.floor(ratingVal * 20)}% Match`;
+                sLabelEl.innerText = "POSITIVE";
+                sPctEl.className = "text-green-500 font-black text-sm";
+                sIconEl.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-green-50 text-green-500 dark:bg-green-900/20";
+                sIconEl.innerHTML = '<i class="ph-fill ph-smiley"></i>';
+            } else if (ratingVal >= 2.5) {
+                sPctEl.innerText = `${Math.floor(ratingVal * 20)}% Match`;
+                sLabelEl.innerText = "NEUTRAL";
+                sPctEl.className = "text-amber-500 font-black text-sm";
+                sIconEl.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-amber-50 text-amber-500 dark:bg-amber-900/20";
+                sIconEl.innerHTML = '<i class="ph-fill ph-smiley-meh"></i>';
+            } else {
+                sPctEl.innerText = `${Math.floor(ratingVal * 20)}% Match`;
+                sLabelEl.innerText = "NEGATIVE";
+                sPctEl.className = "text-red-500 font-black text-sm";
+                sIconEl.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-red-50 text-red-500 dark:bg-red-900/20";
+                sIconEl.innerHTML = '<i class="ph-fill ph-smiley-sad"></i>';
+            }
+
+            const modal = document.getElementById('historyDetailModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
-            setTimeout(() => {
-                historyModalContent.classList.remove('scale-95', 'opacity-0');
-                historyModalContent.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        });
-    });
+        };
 
-    function closeHistoryModal() {
-        historyModalContent.classList.remove('scale-100', 'opacity-100');
-        historyModalContent.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            historyModal.classList.add('hidden');
+        window.closeHistoryModal = () => {
+            const modal = document.getElementById('historyDetailModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
             document.body.style.overflow = '';
-        }, 300);
+        };
+
+        window.startEvaluation = (id, title, img) => {
+            sessionStorage.setItem('eval_event_id', id);
+            sessionStorage.setItem('eval_event_title', title);
+            sessionStorage.setItem('eval_event_img', img);
+            window.location.href = "{% url 'student_evaluation_form' %}";
+        };
+
+        if (openSearch) openSearch.addEventListener('input', () => renderActive(openSearch.value));
+
+        renderActive();
+        renderHistory();
+        setInterval(renderActive, 1000); 
     }
 
-    ['btnCloseHistoryModal', 'historyModalBg'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', closeHistoryModal);
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initEvaluationHubLogic, 100);
     });
-}
-
-// Stability Wait for Vue
-window.addEventListener('load', () => {
-    const checkInterval = setInterval(() => {
-        if (window.VUE_APP_MOUNTED) {
-            clearInterval(checkInterval);
-            initEvaluationPageLogic();
-        }
-    }, 100);
-});
 </script>
 {% endblock extra_js %}

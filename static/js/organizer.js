@@ -132,6 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.isLogoutModalOpen = true;
             },
             getStaticImageUrl(filename) {
+                if (!filename) return window.DEFAULT_LOGO;
+                if (filename.startsWith('/') || filename.startsWith('http')) return filename;
                 return window.STATIC_IMAGES_BASE + filename;
             },
             handleImageError(event) {

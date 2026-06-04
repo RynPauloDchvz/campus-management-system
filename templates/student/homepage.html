@@ -7,6 +7,17 @@
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
 </style>
+<script>
+    // 🟢 Inject Homepage Data into VUE_APP_DATA before Vue Mount 🟢
+    (function() {
+        window.VUE_APP_DATA = {
+            ...window.VUE_APP_DATA,
+            latestNews: {{ latest_news_json|safe }},
+            upcomingEvents: {{ upcoming_events_json|safe }},
+            actionRequired: {{ action_required_json|safe }}
+        };
+    })();
+</script>
 {% endblock extra_head %}
 
 {% block content %}
@@ -80,7 +91,7 @@
                 </div>
             </div>
 
-            <div>
+            <div v-if="actionRequired">
                 <div class="flex justify-between items-center border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
                     <div class="flex items-center gap-3">
                         <i class="ph-bold ph-warning-circle text-2xl text-red-600 dark:text-pup-gold"></i>
@@ -94,12 +105,12 @@
                             <i class="ph-fill ph-clipboard-text text-2xl"></i>
                         </div>
                         <div>
-                            <h4 class="font-bold text-gray-900 dark:text-white text-lg">Research Colloquium 2025</h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Submit feedback to claim E-Certificate.</p>
+                            <h4 class="font-bold text-gray-900 dark:text-white text-lg">[[ actionRequired.title ]]</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">[[ actionRequired.message ]]</p>
                         </div>
                     </div>
-                    <button onclick="window.location.href='{% url 'student_evaluation_form' %}'" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-pup-darkbg text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-colors uppercase tracking-widest">
-                        Evaluate
+                    <button @click="startActionEvaluation(actionRequired)" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-pup-darkbg text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-colors uppercase tracking-widest">
+                        Evaluate Now
                     </button>
                 </div>
             </div>
@@ -173,42 +184,8 @@
     (function() {
         window.VUE_APP_DATA = {
             ...window.VUE_APP_DATA,
-            latestNews: [
-                {
-                    id: 101,
-                    title: 'Research Colloquium 2025',
-                    date: 'DEC 12, 2025',
-                    location: 'PUP Unisan Quezon',
-                    image: 'research.jpg',
-                    description: 'Isang pagtitipon para sa pagpapakita at pagtalakay ng mga pinakabagong pananaliksik at pag-aaral ng mga iskolar ng bayan.'
-                },
-                {
-                    id: 102,
-                    title: 'Navigating the World of IT-Tech-Talk 1.0',
-                    date: 'NOV 21, 2025',
-                    location: 'Computer Laboratory',
-                    image: 'tech_talk.jpg',
-                    description: 'Seminar na nakatuon sa mga makabagong teknolohiya, programming trends, at mga oportunidad sa larangan ng Information Technology.'
-                }
-            ],
-            upcomingEvents: [
-                {
-                    id: 1,
-                    title: 'PUP General Assembly',
-                    date: 'FEB 14, 2026',
-                    location: 'PUP Main Campus Gym',
-                    image: 'background.jpg', 
-                    description: 'Ang taunang pagtitipon ng lahat ng Iskolar ng Bayan para sa mga anunsyo at pagpapakilala ng mga bagong proyekto ng unibersidad.'
-                },
-                {
-                    id: 2,
-                    title: 'Tech Summit 2026',
-                    date: 'MAR 05, 2026',
-                    location: 'Computer Lab 1 & 2',
-                    image: 'tech_talk.jpg',
-                    description: 'Isang summit na nakatuon sa pinakabagong teknolohiya, inobasyon, at mga workshop mula sa mga eksperto sa industriya.'
-                }
-            ]
+            latestNews: {{ latest_news_json|safe }},
+            upcomingEvents: {{ upcoming_events_json|safe }}
         };
     })();
 </script>

@@ -273,11 +273,11 @@
             </button>
             <div class="overflow-y-auto hide-scrollbar w-full">
                 <div class="h-56 sm:h-72 w-full relative shrink-0">
-                    <img :src="getStaticImageUrl(selectedEvent.image)" :alt="selectedEvent.title" class="w-full h-full object-cover">
+                    <img :src="selectedEvent.image ? getStaticImageUrl(selectedEvent.image) : '{% static 'images/background.jpg' %}'" :alt="selectedEvent.title" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
                     <div class="absolute bottom-6 left-6 right-6">
                         <div class="text-xs sm:text-sm text-pup-gold font-black tracking-wider mb-1 uppercase">[[ selectedEvent.date ]]</div>
-                        <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">[[ selectedEvent.title ]]</h2>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight uppercase tracking-tight">[[ selectedEvent.title ]]</h2>
                     </div>
                 </div>
                 <div class="p-6 sm:p-8 shrink-0 pb-10">
@@ -288,8 +288,8 @@
                             <div class="font-semibold text-gray-900 dark:text-white">[[ selectedEvent.location || 'PUP Unisan Campus' ]]</div>
                         </div>
                     </div>
-                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-3">Overview</h3>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed">[[ selectedEvent.description || 'No description provided.' ]]</p>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-3 tracking-tight">Overview</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium">[[ selectedEvent.description || 'No detailed description available for this activity.' ]]</p>
                 </div>
             </div>
         </div>
@@ -306,24 +306,24 @@
             <div id="managedModalStatus" class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold text-xs px-3 py-1 rounded-full uppercase mb-2 inline-flex items-center gap-1">
                 <i class="ph-fill ph-info"></i> Status: Pending
             </div>
-            <h2 id="managedModalTitle" class="text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2">Event Title</h2>
-            <p id="managedModalDate" class="text-sm text-gray-500 dark:text-gray-400"><i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37]"></i> Event Date</p>
+            <h2 id="managedModalTitle" class="text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2 uppercase tracking-tight">Event Title</h2>
+            <p id="managedModalDate" class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest"><i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37]"></i> Event Date</p>
         </div>
         <div class="p-6 sm:p-8 overflow-y-auto hide-scrollbar flex-grow bg-gray-50 dark:bg-[#0a0a0a]">
-            <h3 class="font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Event Details</h3>
-            <p id="managedModalDesc" class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+            <h3 class="font-black text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Event Brief</h3>
+            <p id="managedModalDesc" class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-8 font-medium">
                 This event is being managed by your organization. Once approved by the administration, students will be able to register and view it on their portal.
             </p>
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white dark:bg-[#151515] p-4 rounded-xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
+                <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
                     <i class="ph-fill ph-users-three text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>        
-                    <h4 class="font-bold text-gray-900 dark:text-white text-lg">0</h4>
-                    <p class="text-[0.65rem] uppercase font-bold text-gray-500">Registered</p>
+                    <h4 class="font-black text-gray-900 dark:text-white text-xl">0</h4>
+                    <p class="text-[0.6rem] uppercase font-black text-gray-400 tracking-widest">Registered</p>
                 </div>
-                <div class="bg-white dark:bg-[#151515] p-4 rounded-xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
+                <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
                     <i class="ph-fill ph-clipboard-text text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>     
-                    <h4 class="font-bold text-gray-900 dark:text-white text-lg">Pending</h4>
-                    <p class="text-[0.65rem] uppercase font-bold text-gray-500">Evaluation Form</p>
+                    <h4 class="font-black text-gray-900 dark:text-white text-xl">Pending</h4>
+                    <p class="text-[0.6rem] uppercase font-black text-gray-400 tracking-widest">Evaluation Form</p>
                 </div>
             </div>
         </div>
@@ -337,10 +337,10 @@
             <i class="ph-bold ph-x"></i>
         </button>
         <div id="logModalIcon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2"></div>
-        <h2 id="logModalTitle" class="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2">Log Action</h2>
+        <h2 id="logModalTitle" class="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2 uppercase tracking-tight">Log Action</h2>
         <p id="logModalDate" class="text-[0.7rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-6">Date</p>
-        <div class="bg-gray-50 dark:bg-[#0a0a0a] p-4 rounded-xl border border-gray-200 dark:border-gray-800">      
-            <p id="logModalDesc" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">Description goes here.</p>
+        <div class="bg-gray-50 dark:bg-[#0a0a0a] p-5 rounded-2xl border border-gray-200 dark:border-gray-800">      
+            <p id="logModalDesc" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium italic">Description goes here.</p>
         </div>
     </div>
 </div>
@@ -355,17 +355,17 @@
         if (!event) return;
 
         document.getElementById('managedModalTitle').innerText = event.title;
-        document.getElementById('managedModalDate').innerHTML = `<i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37]"></i> ${event.date} � PUP Main Campus`;
+        document.getElementById('managedModalDate').innerHTML = `<i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37]"></i> ${event.date} • ${event.location || 'PUP Unisan'}`;
         
         const statusEl = document.getElementById('managedModalStatus');
         statusEl.innerHTML = `<i class="ph-fill ph-info"></i> Status: ${event.status}`;
         
         if (event.status === 'Approved') {
             statusEl.className = "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold text-xs px-3 py-1 rounded-full uppercase mb-2 inline-flex items-center gap-1";
-            document.getElementById('managedModalDesc').innerText = `Your proposal for "${event.title}" has been successfully approved by the Higher Administration. The event is now live and students can start registering.`;
+            document.getElementById('managedModalDesc').innerText = event.description || `Your proposal for "${event.title}" has been successfully approved by the Higher Administration.`;
         } else {
             statusEl.className = "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold text-xs px-3 py-1 rounded-full uppercase mb-2 inline-flex items-center gap-1";
-            document.getElementById('managedModalDesc').innerText = `Your event "${event.title}" is currently pending or undergoing review. It will be visible to students once fully approved.`;
+            document.getElementById('managedModalDesc').innerText = event.description || `Your event "${event.title}" is currently pending or undergoing review.`;
         }
 
         const modal = document.getElementById('managedEventModal');
@@ -391,15 +391,15 @@
         if(type === 'eval') {
             iconDiv.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2 bg-blue-100 text-blue-600";
             iconDiv.innerHTML = '<i class="ph-fill ph-clipboard-text text-4xl"></i>';
-            title.innerText = "Evaluation Form Drafted";
-            date.innerText = "Dec 10, 2025 02:30 PM";
-            desc.innerText = "You have successfully drafted the evaluation template for the upcoming 'Research Colloquium' event. It is now ready for deployment.";
+            title.innerText = "Evaluation Hub Sync";
+            date.innerText = "LIVE STATUS";
+            desc.innerText = "Evaluation portals are automatically synchronized with event schedules. Feedback data is encrypted and logged to the central university ledger.";
         } else {
             iconDiv.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2 bg-green-100 text-green-600";
             iconDiv.innerHTML = '<i class="ph-fill ph-plus-circle text-4xl"></i>';
-            title.innerText = "New Event Proposal";
-            date.innerText = "Nov 28, 2025 09:15 AM";
-            desc.innerText = "Submitted 'Tech Summit 2026' proposal to the Office of Student Affairs. Status is currently Pending Adviser Review.";
+            title.innerText = "System Integrity Check";
+            date.innerText = "ACTIVE SESSION";
+            desc.innerText = "All event proposals undergo multi-stage verification. Signatures and location data are cross-referenced to ensure institutional compliance.";
         }
 
         modal.classList.remove('hidden');

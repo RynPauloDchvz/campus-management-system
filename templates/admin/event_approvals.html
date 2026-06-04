@@ -514,13 +514,14 @@
                             <th>Organization</th>
                             <th>Event Title</th>
                             <th>Target Date</th>
+                            <th>Participation Ledger</th>
                             <th>Final Result</th>
                             <th style="text-align: center;">Details</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-if="filteredHistory.length === 0">
-                            <td colspan="5" style="text-align: center; padding: 60px; color: var(--text-muted);">
+                            <td colspan="6" style="text-align: center; padding: 60px; color: var(--text-muted);">
                                 <i class="ph-fill ph-folder-open" style="font-size: 4rem; opacity: 0.2; display: block; margin-bottom: 15px;"></i>
                                 <span style="font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">No records found.</span>
                             </td>
@@ -529,6 +530,16 @@
                             <td style="font-weight: 900; color: var(--pup-maroon);">[[ event.org ]]</td>
                             <td style="font-weight: 800; color: var(--text-main);">[[ event.title ]]</td>
                             <td style="color: var(--text-muted); font-weight: 700;">[[ event.date ]]</td>
+                            <td>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <span class="badge" style="background: rgba(40, 167, 69, 0.1); color: #28a745; border-color: rgba(40, 167, 69, 0.3);">
+                                        <i class="ph-bold ph-users"></i> [[ event.attendance_count || 0 ]] Attendance
+                                    </span>
+                                    <span class="badge" style="background: rgba(0, 123, 255, 0.1); color: #007bff; border-color: rgba(0, 123, 255, 0.3);">
+                                        <i class="ph-bold ph-star"></i> [[ event.evaluation_count || 0 ]] Feedback
+                                    </span>
+                                </div>
+                            </td>
                             <td>
                                 <span v-if="event.status === 'APPROVED'" class="badge badge-approved"><i class="ph-bold ph-check-circle"></i> Published</span>
                                 <span v-else class="badge badge-rejected"><i class="ph-bold ph-x-circle"></i> Rejected</span>

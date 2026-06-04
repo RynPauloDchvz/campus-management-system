@@ -3,592 +3,261 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .countdown-timer { font-variant-numeric: tabular-nums; }
+    .status-ongoing { background-color: #059669; }
+    .status-ended { background-color: #800000; }
+    .status-upcoming { background-color: #1e1e1e; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
 {% endblock extra_head %}
 
-{% block skeleton %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-    <div class="text-center mb-8 space-y-4">
-        <div class="w-64 h-10 rounded-lg skeleton-shimmer mx-auto"></div>
-        <div class="w-full max-w-2xl h-12 rounded-full skeleton-shimmer mx-auto"></div>
-    </div>
-
-    <div class="flex overflow-x-auto gap-3 justify-start lg:justify-center mb-8 pb-2">
-        <div v-for="i in 6" :key="i" class="w-24 h-10 rounded-full skeleton-shimmer shrink-0"></div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-        <div v-for="i in 6" :key="i" class="bg-white dark:bg-pup-darkcard rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-row md:flex-col h-[100px] md:h-auto overflow-hidden">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 skeleton-shimmer"></div>
-            <div class="p-3 sm:p-4 md:p-5 flex-grow space-y-2">
-                <div class="w-20 h-3 rounded skeleton-shimmer"></div>
-                <div class="w-full h-5 rounded skeleton-shimmer"></div>
-                <div class="w-3/4 h-3 rounded skeleton-shimmer hidden md:block"></div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock skeleton %}
-
 {% block content %}
+<!-- SAFE DATA INJECTION -->
+<script id="events-data" type="application/json">{{ events_json|safe }}</script>
+
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">
 
-    <div class="text-center mb-8">
-        <h1 class="font-bold text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold mb-4 uppercase tracking-wide">Participation Hub</h1>
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+        <div class="text-left">
+            <h1 class="font-black text-3xl sm:text-5xl text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-4">Campus Ledger</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-[0.3em]">Real-time monitoring of institutional activities</p>
+        </div>
         
-        <div class="relative max-w-2xl mx-auto">
+        <div class="relative w-full md:w-96">
+            <input type="text" id="eventSearch" placeholder="Search event records..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-100 dark:border-gray-800 text-gray-900 dark:text-white rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm text-xs font-black uppercase tracking-tight">
             <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
-            <input type="text" id="eventSearch" placeholder="Search events by name..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full py-3.5 pl-12 pr-6 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm sm:text-base">
         </div>
     </div>
 
-    <div class="flex overflow-x-auto hide-scrollbar gap-3 justify-start lg:justify-center mb-8 px-2 sm:px-0 pb-2">
-        <button data-category="All" class="js-category-btn active whitespace-nowrap bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-pup-maroon dark:border-pup-gold border px-5 py-2 rounded-full font-bold text-sm transition-colors">All Events</button>
-        <button data-category="Academic" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Academic</button>
-        <button data-category="Sports" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Sports</button>
-        <button data-category="Cultural" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Cultural</button>
-        <button data-category="Organization" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Organization</button>
-        <button data-category="Seminar" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Seminar</button>
-        <button data-category="Volunteer" class="js-category-btn whitespace-nowrap bg-white dark:bg-pup-darkcard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-5 py-2 rounded-full font-bold text-sm transition-colors hover:border-pup-maroon dark:hover:border-pup-gold">Volunteer</button>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="eventsGrid">
+        <!-- Events injected by JS -->
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 pb-10 px-2 sm:px-0" id="eventsGrid">
-        
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Research Colloquium" data-category="Academic" data-date="MAY 12, 2026" data-time="08:00 AM" data-venue="Audio Visual Room" data-desc="Present and defend your capstone projects and research papers in front of university panels.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">MAY 12, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Research Colloquium</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Audio Visual Room</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Present and defend your capstone projects.</p>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="IT Week Hackathon" data-category="Academic" data-date="JUN 05, 2026" data-time="07:00 AM" data-venue="Computer Lab 1" data-desc="A 24-hour coding challenge. Build innovative solutions for campus problems.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">JUN 05, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">IT Week Hackathon</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Computer Lab 1</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">A 24-hour coding challenge.</p>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Quiz Bee Competition" data-category="Academic" data-date="JUL 20, 2026" data-time="01:00 PM" data-venue="Main Gym" data-desc="Test your general knowledge and win academic merits.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">JUL 20, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Quiz Bee Competition</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Main Gym</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Test your general knowledge.</p>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="PUP Intramurals - Basketball" data-category="Sports" data-date="AUG 15, 2026" data-time="08:00 AM" data-venue="University Oval" data-desc="Support your department's basketball team as they clash for the championship.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/student_week.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">AUG 15, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Basketball Intrams</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">University Oval</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Support your department's team.</p>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Volleyball Tryouts" data-category="Sports" data-date="AUG 18, 2026" data-time="03:00 PM" data-venue="PUP Gym" data-desc="Open for all students who want to join the varsity team.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">AUG 18, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Volleyball Tryouts</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">PUP Gym</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Open for all aspiring varsity players.</p>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="E-Sports Tournament" data-category="Sports" data-date="SEP 05, 2026" data-time="09:00 AM" data-venue="ComLab 3" data-desc="Valorant and Mobile Legends tournament for PUPians.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">SEP 05, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">E-Sports Tournament</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">ComLab 3</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Valorant & ML Tournament.</p>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Buwan ng Wika Celebration" data-category="Cultural" data-date="AUG 28, 2026" data-time="08:00 AM" data-venue="PUP Plaza" data-desc="Sabayang pagbigkas, balagtasan, at iba pang patimpalak sa wikang Filipino.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">AUG 28, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Buwan ng Wika</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">PUP Plaza</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Sabayang pagbigkas at balagtasan.</p>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="PUP Got Talent" data-category="Cultural" data-date="OCT 15, 2026" data-time="04:00 PM" data-venue="Main Stage" data-desc="Showcase your singing, dancing, or unique talents to the whole campus.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/student_week.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">OCT 15, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">PUP Got Talent</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Main Stage</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Showcase your talents to the campus.</p>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Sining at Kultura Exhibit" data-category="Cultural" data-date="NOV 10, 2026" data-time="10:00 AM" data-venue="Library Lobby" data-desc="An exhibition of artworks created by talented PUP students.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">NOV 10, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Sining Exhibit</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Library Lobby</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Art exhibition by talented students.</p>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="SSC General Assembly" data-category="Organization" data-date="FEB 14, 2026" data-time="01:00 PM" data-venue="PUP Gym" data-desc="Annual gathering of all students with the Supreme Student Council.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">FEB 14, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">SSC Gen Assembly</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">PUP Gym</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Annual gathering with the SSC.</p>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="ITO Meet and Greet" data-category="Organization" data-date="MAR 01, 2026" data-time="10:00 AM" data-venue="Audio Visual Room" data-desc="Welcoming all IT freshies and familiarization of ITO officers.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">MAR 01, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">ITO Meet & Greet</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Audio Visual Room</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Welcoming IT freshies.</p>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Red Cross Youth Orientation" data-category="Organization" data-date="MAR 20, 2026" data-time="09:00 AM" data-venue="Room 201" data-desc="Basic first aid seminar and orientation for new volunteers.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/community.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">MAR 20, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">RCY Orientation</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Room 201</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">First aid basics and orientation.</p>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Financial Literacy 101" data-category="Seminar" data-date="APR 05, 2026" data-time="01:00 PM" data-venue="Conference Hall" data-desc="Learn how to save, invest, and manage your allowance wisely.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/leadership.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">APR 05, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Financial Literacy</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Conference Hall</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Manage your allowance wisely.</p>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Tech Trends 2026" data-category="Seminar" data-date="MAY 02, 2026" data-time="08:00 AM" data-venue="Audio Visual Room" data-desc="Discussion on AI, Machine Learning, and Future Web Development.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">MAY 02, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Tech Trends 2026</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Audio Visual Room</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">AI and Web Development Seminar.</p>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Mental Health Awareness" data-category="Seminar" data-date="OCT 22, 2026" data-time="10:00 AM" data-venue="Main Gym" data-desc="Taking care of your well-being while balancing academics.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">OCT 22, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Mental Health Talk</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Main Gym</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Balancing well-being and academics.</p>
-            </div>
-        </div>
-
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Coastal Clean-up" data-category="Volunteer" data-date="NOV 08, 2026" data-time="06:00 AM" data-venue="Unisan Beachfront" data-desc="Join the NSTP and orgs in maintaining the cleanliness of our shores.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/community.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">NOV 08, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Coastal Clean-up</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Unisan Beachfront</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Maintain the cleanliness of our shores.</p>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Blood Donation Drive" data-category="Volunteer" data-date="DEC 01, 2026" data-time="08:00 AM" data-venue="PUP Clinic" data-desc="Donate blood and save lives in partnership with the Red Cross.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">DEC 01, 2026</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Blood Donation</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">PUP Clinic</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">Donate blood and save lives.</p>
-            </div>
-        </div>
-        <div class="js-event-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" data-title="Tree Planting Activity" data-category="Volunteer" data-date="JAN 15, 2027" data-time="07:00 AM" data-venue="Mt. Unisan Reserve" data-desc="A green initiative to combat climate change.">
-            <div class="w-24 sm:w-32 md:w-full h-24 sm:h-32 md:h-40 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-200 dark:border-gray-800">
-                <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-            </div>
-            <div class="p-3 sm:p-4 md:p-5 flex flex-col justify-center w-full min-w-0">
-                <div class="text-[0.6rem] md:text-xs font-bold text-pup-maroon dark:text-pup-gold mb-0.5 truncate">JAN 15, 2027</div>
-                <h3 class="font-bold text-sm sm:text-base md:text-lg text-gray-900 dark:text-white leading-tight mb-1 truncate">Tree Planting</h3>
-                <p class="text-[0.65rem] md:hidden text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">Mt. Unisan Reserve</span></p>
-                <p class="text-xs text-gray-500 hidden md:block mb-4 flex-grow line-clamp-2">A green initiative for climate change.</p>
-            </div>
-        </div>
-
-    </div>
-    
-    <div id="noResults" style="display: none;" class="text-center py-10 w-full col-span-full">
-        <i class="ph-bold ph-calendar-blank text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
-        <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">Event Not Found</h3>
-        <p class="text-gray-500 text-sm mt-1">Try searching with a different keyword.</p>
+    <div id="noResults" style="display: none;" class="text-center py-24 bg-gray-50 dark:bg-pup-darkcard rounded-[3rem] border border-dashed border-gray-200 dark:border-gray-800">
+        <i class="ph-bold ph-calendar-blank text-7xl text-gray-200 dark:text-gray-700 mb-6"></i>
+        <h3 class="font-black text-xl text-gray-400 uppercase tracking-tighter">No Active Ledger</h3>
+        <p class="text-gray-400 text-[10px] mt-1 font-black uppercase tracking-widest">No activities have been committed to the public calendar yet.</p>
     </div>
 
 </div>
 
-<div id="participationModal" style="display: none;" class="fixed inset-0 z-[2000] items-center justify-center overflow-hidden p-4 sm:p-6 font-sans">
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose"></div>
+<!-- Details Modal -->
+<div id="eventModal" style="display: none;" class="fixed inset-0 z-[2000] items-center justify-center p-4 sm:p-6 font-sans">
+    <div class="fixed inset-0 bg-black/90 backdrop-blur-md" id="modalOverlay"></div>
     
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[85vh] overflow-hidden border border-gray-100 dark:border-gray-800">
         
-        <button id="btnTopClose" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-xl backdrop-blur-sm hover:bg-black/70 transition-colors">
+        <button id="btnClose" class="absolute top-8 right-8 z-[2010] w-12 h-12 flex items-center justify-center bg-black/50 text-white rounded-full text-xl hover:bg-black/70 transition-colors">
             <i class="ph-bold ph-x"></i>
         </button>
 
-        <div id="viewDetails" style="display: none;" class="flex-col w-full h-full overflow-y-auto hide-scrollbar">
+        <div class="overflow-y-auto hide-scrollbar flex-grow">
             <div class="h-64 sm:h-80 w-full relative shrink-0 bg-gray-900">
                 <img id="modalImg" src="" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                <div class="absolute bottom-6 left-6 right-6">
-                    <div id="modalCategory" class="bg-pup-gold inline-block text-black font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2">Category</div>
-                    <h2 id="modalTitle" class="text-3xl sm:text-4xl font-black text-white leading-tight">Title</h2>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                <div class="absolute bottom-8 left-10 right-10">
+                    <h2 id="modalTitle" class="text-3xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">Title</h2>
                 </div>
             </div>
             
-            <div class="p-6 sm:p-10 shrink-0 flex-grow">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-gray-50 dark:bg-[#111] p-5 rounded-2xl border border-gray-200 dark:border-gray-800">
+            <div class="p-8 sm:p-10">
+                <div class="flex items-center justify-between mb-8 p-6 bg-gray-900 rounded-[2.5rem] border border-gray-800 shadow-2xl">
                     <div>
-                        <div class="text-xs font-bold uppercase text-gray-400 mb-1">Date & Time</div>
-                        <div id="modalDateTime" class="font-bold text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> Date Time</div>
+                        <span id="countdownLabel" class="block text-[10px] font-black text-pup-gold uppercase tracking-[0.3em] mb-1">Live Status</span>
+                        <span id="modalCountdown" class="text-3xl font-black text-white countdown-timer tabular-nums tracking-tighter">00:00:00</span>
                     </div>
-                    <div>
-                        <div class="text-xs font-bold uppercase text-gray-400 mb-1">Venue</div>
-                        <div id="modalVenue" class="font-bold text-gray-900 dark:text-white flex items-center gap-2"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> Venue</div>
+                    <div class="w-16 h-16 bg-pup-gold rounded-2xl flex items-center justify-center text-black shadow-lg">
+                        <i id="countdownIcon" class="ph-fill ph-broadcast text-4xl"></i>
                     </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+                    <div class="flex items-center gap-5 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-3xl border border-gray-100 dark:border-gray-800">
+                        <div class="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                            <i class="ph-fill ph-calendar text-2xl"></i>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Schedule</span>
+                            <span id="modalDateTime" class="font-black text-gray-900 dark:text-white uppercase text-sm">Date Time</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-5 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-3xl border border-gray-100 dark:border-gray-800">
+                        <div class="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                            <i class="ph-fill ph-map-pin text-2xl"></i>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Venue</span>
+                            <span id="modalVenue" class="font-black text-gray-900 dark:text-white uppercase text-sm">Venue</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-8 border-t border-gray-100 dark:border-gray-800">
+                    <h3 class="font-black text-[10px] text-gray-400 uppercase tracking-[0.3em] mb-4">Executive Brief</h3>
+                    <p id="modalDesc" class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-medium">Description</p>
                 </div>
                 
-                <h3 class="font-bold text-xl text-gray-900 dark:text-white mb-3">About the Event</h3>
-                <p id="modalDesc" class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-10">Description</p>
-                
-                <button id="btnParticipateNow" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-4 px-6 rounded-xl text-lg flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md transform hover:-translate-y-0.5">
-                    <i class="ph-bold ph-scan text-xl"></i> Participate Now
-                </button>
-            </div>
-        </div>
-
-        <div id="viewPermissions" style="display: none;" class="flex-col items-center justify-center w-full h-full p-6 sm:p-10 text-center overflow-y-auto hide-scrollbar m-auto">
-            <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6 text-blue-500 dark:text-blue-400 text-3xl sm:text-4xl shrink-0">
-                <i class="ph-fill ph-shield-check"></i>
-            </div>
-            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-3 text-center w-full">System Permissions</h2>
-            <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base mb-8 leading-relaxed w-full max-w-md mx-auto text-center">
-                Bago tayo magpatuloy, kailangan ng system na buksan ang iyong <strong class="text-gray-900 dark:text-white">Camera</strong> para ma-verify ang iyong mukha (Face ID) at <strong class="text-gray-900 dark:text-white">Location (GPS)</strong> para masiguradong nasa loob ka ng unibersidad.
-            </p>
-            
-            <div class="flex flex-col gap-4 w-full max-w-md mx-auto mb-8">
-                <div class="flex items-center gap-4 bg-white dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-gray-800 text-left w-full shadow-sm">
-                    <div class="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0">
-                        <i class="ph-fill ph-camera text-xl"></i>
-                    </div>
-                    <div>
-                        <span class="block text-sm font-bold text-gray-900 dark:text-white">Allow Camera Access</span>
-                        <span class="block text-xs text-gray-500 mt-0.5">Required for Face Verification</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 bg-white dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-gray-800 text-left w-full shadow-sm">
-                    <div class="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0">
-                        <i class="ph-fill ph-map-pin text-xl"></i>
-                    </div>
-                    <div>
-                        <span class="block text-sm font-bold text-gray-900 dark:text-white">Allow Location Access</span>
-                        <span class="block text-xs text-gray-500 mt-0.5">Required for Campus Check</span>
-                    </div>
+                <div class="mt-12 bg-gray-50 dark:bg-[#111] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 text-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        <i class="ph-bold ph-shield-check"></i> Monitoring Mode Active for {{ org_acronym }}
+                    </p>
                 </div>
             </div>
-
-            <button id="btnGrantPermission" class="w-full max-w-md mx-auto bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-3.5 rounded-xl text-sm sm:text-base transition-all shadow-md hover:bg-red-950 dark:hover:bg-yellow-500">
-                I Understand, Allow Access
-            </button>
-            <button id="btnCancelPermission" class="w-full max-w-md mx-auto bg-transparent text-gray-500 font-bold py-3 text-sm hover:text-gray-900 dark:hover:text-white transition-colors mt-2 text-center">
-                Cancel
-            </button>
         </div>
-
-        <div id="viewScanner" style="display: none;" class="flex-col items-center justify-start w-full h-full p-4 sm:p-8 overflow-y-auto hide-scrollbar m-auto">
-            
-            <div id="cameraContainer" class="relative bg-black rounded-2xl overflow-hidden w-full max-w-xl h-[400px] sm:h-[500px] border border-gray-300 dark:border-gray-700 transition-all shadow-md mx-auto mb-4 shrink-0">
-                <video id="videoFeed" class="w-full h-full object-cover transform -scale-x-100" autoplay playsinline></video>
-                <div class="absolute inset-0 border-[3px] border-white/30 border-dashed m-4 sm:m-6 rounded-xl pointer-events-none"></div>
-            </div>
-
-            <div id="locationMap" class="w-full max-w-xl mx-auto h-32 sm:h-40 rounded-2xl border border-gray-200 dark:border-gray-800 mb-3 z-10 shadow-inner shrink-0 relative overflow-hidden"></div>
-            
-            <p id="locStatus" class="text-sm font-bold mb-6 flex items-center justify-center w-full gap-2 text-center text-gray-500 mx-auto">
-                <i class="ph-bold ph-spinner animate-spin text-lg"></i> Waiting for GPS signal...
-            </p>
-
-            <button id="btnSubmitScan" class="w-full max-w-xl mx-auto bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-3.5 px-6 rounded-xl text-lg flex items-center justify-center gap-2 transition-all shadow-md mt-auto hover:bg-red-950 dark:hover:bg-yellow-500 disabled:opacity-50">
-                <i class="ph-bold ph-bounding-box text-xl"></i> Scan & Submit Attendance
-            </button>
-        </div>
-
-        <div id="viewSuccess" style="display: none;" class="flex-col items-center justify-center w-full h-full p-10 sm:p-12 text-center overflow-y-auto hide-scrollbar m-auto">
-            <div class="w-32 h-32 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-8 shrink-0">
-                <i class="ph-fill ph-check-circle text-7xl text-green-500"></i>
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white mb-4 text-center w-full">Verification Success!</h2>
-            <p class="text-gray-600 dark:text-gray-400 mb-12 text-base sm:text-lg leading-relaxed max-w-md mx-auto text-center">Face Identity and Location confirmed. You have successfully registered for this event.</p>
-            <button id="btnSuccessClose" class="w-full max-w-sm mx-auto border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold py-4 px-8 rounded-xl hover:bg-gray-100 dark:hover:bg-[#111] transition-colors text-lg text-center">
-                Return to Events
-            </button>
-        </div>
-
-        <div id="viewProof" style="display: none;" class="flex-col w-full h-full overflow-y-auto hide-scrollbar bg-white dark:bg-pup-darkcard rounded-3xl">
-            
-            <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-800 shrink-0 text-center sm:text-left">
-                <div class="inline-block bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[0.65rem] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3">Attendance Record</div>
-                <h2 id="proofModalTitle" class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight">Event Title Here</h2>
-            </div>
-            
-            <div class="p-6 sm:p-8 shrink-0 flex-grow w-full max-w-4xl mx-auto">
-                <div class="flex flex-col gap-3 mb-8">
-                    <div class="flex items-center gap-3 text-gray-700 dark:text-gray-300 font-bold text-sm sm:text-base">
-                        <i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-xl"></i>
-                        <span id="proofModalDateTime">MAY 02, 2026 • 08:00 AM</span>
-                    </div>
-                    <div class="flex items-center gap-3 text-gray-700 dark:text-gray-300 font-bold text-sm sm:text-base">
-                        <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-xl"></i>
-                        <span id="proofModalVenue">Audio Visual Room</span>
-                    </div>
-                </div>
-
-                <h3 class="font-bold text-xl text-gray-900 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-800 pb-3">Proof of Attendance</h3>
-                
-                <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-8">
-                    <div class="sm:w-[35%] bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center shadow-sm">
-                        <div class="w-full aspect-[3/4] sm:h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3 border border-gray-200 dark:border-gray-700">
-                            <img id="proofFaceImg" src="" class="w-full h-full object-cover transform -scale-x-100">
-                        </div>
-                        <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1 text-center w-full">Face Capture ID</div>
-                        <div class="text-sm font-bold text-green-600 dark:text-green-500 flex items-center justify-center gap-1.5 w-full text-center">
-                            <i class="ph-bold ph-scan"></i> System Matched
-                        </div>
-                    </div>
-
-                    <div class="sm:w-[65%] flex flex-col gap-4">
-                        <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
-                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Timestamp Log</div>
-                            <div id="proofTime" class="font-bold text-gray-900 dark:text-white text-base">March 24, 2026 at 7:14:54 AM</div>
-                        </div>
-                        
-                        <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex-grow">
-                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-2">Location Signature</div>
-                            <div class="flex items-start gap-3 mt-1">
-                                <i class="ph-fill ph-map-pin text-3xl text-pup-maroon dark:text-pup-gold shrink-0"></i>
-                                <div>
-                                    <div id="proofAddress" class="font-bold text-gray-900 dark:text-white text-sm leading-snug">Verified inside PUP Campus Perimeter.</div>
-                                    <div id="proofLocation" class="text-xs text-gray-400 mt-1 font-mono">Coordinates Here</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button id="btnProofClose" class="w-full border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold py-3.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors text-sm text-center block shadow-sm">
-                    Close Proof Preview
-                </button>
-            </div>
-        </div>
-
     </div>
-</div>
 </div>
 {% endblock content %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const APP_STATIC_URL = "{% static 'images/' %}";
+    const eventsText = document.getElementById('events-data').textContent;
+    const EVENTS_DATA = eventsText ? JSON.parse(eventsText) : [];
     const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
 
-// Logic wrap to re-init after Vue mount
-function initSchoolEventsLogic() {
-    let stream = null;
-    let map = null;
-    let userLat = null;
-    let userLng = null;
-    let currentEventTitle = ""; 
-    let detectedAddress = "";
-    let scanAttempts = 0; 
+    function initSchoolEventsLogic() {
+        const eventsGrid = document.getElementById('eventsGrid');
+        const noResults = document.getElementById('noResults');
+        const searchInput = document.getElementById('eventSearch');
+        let currentEvent = null;
 
-    const searchInput = document.getElementById('eventSearch');
-    const filterBtns = document.querySelectorAll('.js-category-btn');
-    const eventCards = document.querySelectorAll('.js-event-card');
-    const noResults = document.getElementById('noResults');
+        function renderEvents(query = '') {
+            if (!eventsGrid) return;
+            eventsGrid.innerHTML = '';
+            
+            const filtered = EVENTS_DATA.filter(e => e.title.toLowerCase().includes(query.toLowerCase()));
 
-    function filterEvents() {
-        if (!searchInput || !noResults) return;
-        const query = searchInput.value.toLowerCase().trim();
-        const activeBtn = document.querySelector('.js-category-btn.active');
-        const activeFilter = activeBtn ? activeBtn.dataset.category : 'All';
-        
-        let visibleCount = 0;
-        eventCards.forEach(card => {
-            const title = card.dataset.title.toLowerCase();
-            const category = card.dataset.category;
-            const matchesSearch = title.includes(query);
-            const matchesCategory = activeFilter === 'All' || category === activeFilter;
-
-            if (matchesSearch && matchesCategory) {
-                card.style.display = ""; 
-                visibleCount++;
-            } else {
-                card.style.display = "none";
+            if (filtered.length === 0) {
+                if(noResults) noResults.style.display = 'block';
+                return;
             }
-        });
-        noResults.style.display = visibleCount > 0 ? 'none' : 'block';
-    }
+            if(noResults) noResults.style.display = 'none';
 
-    if (searchInput) searchInput.addEventListener('input', filterEvents);
-    
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            filterBtns.forEach(b => {
-                b.classList.remove('active', 'bg-pup-maroon', 'text-white', 'dark:bg-pup-gold', 'dark:text-black', 'border-pup-maroon', 'dark:border-pup-gold');
-                b.classList.add('bg-white', 'dark:bg-pup-darkcard', 'text-gray-600', 'dark:text-gray-300');
+            filtered.forEach(e => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-pup-darkcard rounded-[3rem] overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700";
+                card.innerHTML = `
+                    <div class="h-52 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <img src="${e.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-8');">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute top-5 right-5">
+                            <span class="text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1.5" data-event-id="${e.id}">
+                                <i class="ph-bold ph-clock"></i> --:--:--
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-8">
+                        <div class="text-[9px] font-black text-pup-maroon dark:text-pup-gold mb-2 uppercase tracking-[0.2em]">${e.date_display}</div>
+                        <h3 class="font-black text-xl text-gray-900 dark:text-white leading-none mb-6 uppercase tracking-tighter truncate">${e.title}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 font-medium">${e.description || 'No description provided.'}</p>
+                        <div class="flex items-center justify-between pt-6 border-t border-gray-50 dark:border-gray-800 mt-auto">
+                             <div class="flex items-center gap-2 text-gray-400 font-bold text-[9px] uppercase tracking-widest">
+                                <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> ${e.venue}
+                             </div>
+                             <i class="ph-bold ph-arrow-right text-gray-200 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-2"></i>
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('click', () => openModal(e));
+                eventsGrid.appendChild(card);
             });
-            const target = e.currentTarget;
-            target.classList.remove('bg-white', 'dark:bg-pup-darkcard', 'text-gray-600', 'dark:text-gray-300');
-            target.classList.add('active', 'bg-pup-maroon', 'text-white', 'dark:bg-pup-gold', 'dark:text-black', 'border-pup-maroon', 'dark:border-pup-gold');
-            filterEvents();
-        });
-    });
+            updateAllCountdowns();
+        }
 
-    function switchView(viewId) {
-        ['viewDetails', 'viewPermissions', 'viewScanner', 'viewSuccess'].forEach(v => {
-            const el = document.getElementById(v);
-            if (el) el.style.display = 'none';
-        });
-        const target = document.getElementById(viewId);
-        if (target) {
-            target.style.display = 'flex';
-            if (viewId === 'viewScanner' || viewId === 'viewPermissions' || viewId === 'viewSuccess') {
-                target.classList.add('m-auto');
+        function updateAllCountdowns() {
+            const now = new Date();
+            document.querySelectorAll('.countdown-small').forEach(el => {
+                const e = EVENTS_DATA.find(evt => evt.id == el.dataset.eventId);
+                if (!e) return;
+                const start = new Date(`${e.date}T${e.start_time_iso}`);
+                const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
+                
+                const expiry = end ? new Date(end.getTime() + (60 * 60 * 1000)) : new Date(start.getTime() + (4 * 60 * 60 * 1000));
+                
+                const diffStart = start - now;
+                const diffExpiry = expiry - now;
+
+                if (diffStart > 0) {
+                    el.innerHTML = `<i class="ph-bold ph-hourglass"></i> ${formatTimeDiff(diffStart)}`;
+                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-upcoming";
+                } else if (diffExpiry > 0) {
+                    el.innerHTML = `<i class="ph-fill ph-broadcast animate-pulse"></i> ACTIVE`;
+                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ongoing";
+                } else {
+                    el.innerHTML = `<i class="ph-bold ph-lock"></i> CLOSED`;
+                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ended";
+                }
+            });
+
+            if (currentEvent) {
+                const start = new Date(`${currentEvent.date}T${currentEvent.start_time_iso}`);
+                const end = currentEvent.end_time_iso ? new Date(`${currentEvent.date}T${currentEvent.end_time_iso}`) : null;
+                const expiry = end ? new Date(end.getTime() + (60 * 60 * 1000)) : new Date(start.getTime() + (4 * 60 * 60 * 1000));
+                
+                const diffStart = start - now;
+                const diffExpiry = expiry - now;
+
+                const modalCD = document.getElementById('modalCountdown');
+                const label = document.getElementById('countdownLabel');
+                const icon = document.getElementById('countdownIcon');
+                
+                if (diffStart > 0) {
+                    if(label) label.innerText = "UPCOMING IN";
+                    if(modalCD) modalCD.innerText = formatTimeDiff(diffStart);
+                    if(icon) icon.className = "ph-fill ph-clock text-4xl";
+                } else if (diffExpiry > 0) {
+                    if(label) label.innerText = "LIVE STATUS";
+                    if(modalCD) modalCD.innerText = "ACTIVE NOW";
+                    if(icon) icon.className = "ph-fill ph-broadcast text-4xl animate-pulse";
+                } else {
+                    if(label) label.innerText = "LEDGER STATUS";
+                    if(modalCD) modalCD.innerText = "ARCHIVED";
+                    if(icon) icon.className = "ph-bold ph-lock-key text-4xl";
+                }
             }
         }
-    }
 
-    function closeParticipationModal() {
-        const modal = document.getElementById('participationModal');
-        if (modal) modal.style.display = 'none';
-        document.body.style.overflow = '';
-        if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-    }
+        function formatTimeDiff(ms) {
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
 
-    eventCards.forEach(card => {
-        card.addEventListener('click', () => {
-            currentEventTitle = card.dataset.title;
-            document.getElementById('modalImg').src = card.querySelector('img').src;
-            document.getElementById('modalCategory').innerText = card.dataset.category;
-            document.getElementById('modalTitle').innerText = currentEventTitle;
-            document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${card.dataset.date} • ${card.dataset.time}`;
-            document.getElementById('modalVenue').innerHTML = `<i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> ${card.dataset.venue}`;
-            document.getElementById('modalDesc').innerText = card.dataset.desc;
+        setInterval(updateAllCountdowns, 1000);
 
-            const modal = document.getElementById('participationModal');
-            modal.style.display = 'flex';
+        function openModal(e) {
+            currentEvent = e;
+            document.getElementById('modalImg').src = e.image;
+            document.getElementById('modalTitle').innerText = e.title;
+            document.getElementById('modalDateTime').innerText = `${e.date_display} @ ${e.time}`;
+            document.getElementById('modalVenue').innerText = e.venue;
+            document.getElementById('modalDesc').innerText = e.description || 'Institutional activity synchronization in progress.';
+            document.getElementById('eventModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
-            switchView('viewDetails');
-        });
-    });
-
-    // Button Listeners
-    ['btnTopClose', 'bgOverlayClose', 'btnCancelPermission', 'btnSuccessClose'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', closeParticipationModal);
-    });
-
-    const participateBtn = document.getElementById('btnParticipateNow');
-    if (participateBtn) participateBtn.addEventListener('click', () => switchView('viewPermissions'));
-
-    const grantBtn = document.getElementById('btnGrantPermission');
-    if (grantBtn) grantBtn.addEventListener('click', function() {
-        this.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Initializing...';
-        switchView('viewScanner');
-        
-        // Camera Init
-        const video = document.getElementById('videoFeed');
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(s => { stream = s; video.srcObject = stream; })
-                .catch(err => alert("Camera access denied."));
+            updateAllCountdowns();
         }
 
-        // Map Init
-        if (!map) {
-            map = L.map('locationMap', {zoomControl: false}).setView([13.8392, 121.9861], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        function closeModal() {
+            document.getElementById('eventModal').style.display = 'none';
+            document.body.style.overflow = '';
+            currentEvent = null;
         }
-        
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                userLat = pos.coords.latitude;
-                userLng = pos.coords.longitude;
-                map.setView([userLat, userLng], 17);
-                L.marker([userLat, userLng]).addTo(map);
-                document.getElementById('locStatus').innerHTML = "Location Secured!";
-            });
-        }
-    });
 
-    const submitBtn = document.getElementById('btnSubmitScan');
-    if (submitBtn) submitBtn.addEventListener('click', () => {
-        submitBtn.innerHTML = "Verifying...";
-        submitBtn.disabled = true;
-        setTimeout(() => {
-            switchView('viewSuccess');
-        }, 1500);
-    });
-}
+        if(searchInput) searchInput.addEventListener('input', () => renderEvents(searchInput.value));
+        const overlay = document.getElementById('modalOverlay');
+        if(overlay) overlay.addEventListener('click', closeModal);
+        const closeBtn = document.getElementById('btnClose');
+        if(closeBtn) closeBtn.addEventListener('click', closeModal);
 
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(initSchoolEventsLogic, 100);
-});
+        renderEvents();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initSchoolEventsLogic, 100);
+    });
 </script>
 {% endblock extra_js %}

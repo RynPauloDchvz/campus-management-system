@@ -6,17 +6,17 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. Fetch Event Details from SessionStorage
-    const currentTitle = sessionStorage.getItem('currentEvalTitle') || "General Event Evaluation";
-    const currentCategory = sessionStorage.getItem('currentEvalCategory') || "Feedback";
-    const currentImg = sessionStorage.getItem('currentEvalImg') || "{% static 'images/background.jpg' %}";
+    // 1. Fetch Event Details from SessionStorage (Synchronized with Ledger)
+    const currentId = sessionStorage.getItem('eval_event_id');
+    const currentTitle = sessionStorage.getItem('eval_event_title') || "General Event Evaluation";
+    const currentImg = sessionStorage.getItem('eval_event_img') || "{% static 'images/background.jpg' %}";        
 
     const headerTitle = document.getElementById('headerTitle');
     const headerCategory = document.getElementById('headerCategory');
     const headerImg = document.getElementById('headerImg');
 
     if(headerTitle) headerTitle.innerText = currentTitle;
-    if(headerCategory) headerCategory.innerText = currentCategory;
+    if(headerCategory) headerCategory.innerText = "Institutional Activity"; // Default
     if(headerImg) headerImg.src = currentImg;
 
     // 2. Generate 25 Questions (5 Categories)
@@ -72,15 +72,13 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
         }
     ];
-    
-    const emojis = ['😐', '😡', '😟', '😐', '🙂', '🤩']; 
 
+    const emojis = ['😐', '😡', '😟', '😐', '🙂', '🤩'];
     const container = document.getElementById('questionsContainer');
     let globalQIndex = 1;
 
     if(container) {
         evaluationData.forEach((section) => {
-            // Category Header
             const headerHTML = `
                 <div class="mt-6 mb-2">
                     <h3 class="text-sm sm:text-base font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest border-b border-gray-300 dark:border-gray-800 pb-2 flex items-center gap-2">
@@ -90,54 +88,55 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             container.insertAdjacentHTML('beforeend', headerHTML);
 
-            // Category Questions
             section.questions.forEach((q) => {
+                const qIdx = globalQIndex++;
                 const html = `
                     <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors">
-                        <p class="text-sm font-bold text-gray-700 dark:text-gray-300 sm:w-2/3 leading-snug">${globalQIndex}. ${q}</p>
+                        <p class="text-sm font-bold text-gray-700 dark:text-gray-300 sm:w-2/3 leading-snug">${qIdx}. ${q}</p>
                         <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-1/3">
-                            <div class="flex items-center gap-1 sm:gap-2 star-group" data-q="${globalQIndex}" data-value="0">
+                            <div class="flex items-center gap-1 sm:gap-2 star-group" data-q="${qIdx}" data-value="0">
                                 <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="1"></i>
                                 <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="2"></i>
                                 <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="3"></i>
                                 <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="4"></i>
                                 <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="5"></i>
                             </div>
-                            <div class="text-3xl" id="emoji-${globalQIndex}">😐</div>
+                            <div class="text-3xl emoji-display" id="emoji-${qIdx}">😐</div>
                         </div>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', html);
-                globalQIndex++;
             });
         });
 
-        // 3. Star Click Logic
-        document.querySelectorAll('.star-group').forEach(group => {
-            const stars = group.querySelectorAll('.star-btn');
+        // 3. Robust Star Click Logic using Event Delegation
+        container.addEventListener('click', (e) => {
+            const star = e.target.closest('.star-btn');
+            if (!star) return;
+
+            const group = star.closest('.star-group');
+            const rating = parseInt(star.getAttribute('data-val'));
             const qId = group.getAttribute('data-q');
             const emojiDisplay = document.getElementById(`emoji-${qId}`);
+            
+            group.setAttribute('data-value', rating);
 
-            stars.forEach(star => {
-                star.addEventListener('click', function() {
-                    const rating = parseInt(this.getAttribute('data-val'));
-                    group.setAttribute('data-value', rating);
-                    
-                    stars.forEach((s, idx) => {
-                        if(idx < rating) {
-                            s.classList.remove('text-gray-300', 'dark:text-gray-700');
-                            s.classList.add('star-active');
-                        } else {
-                            s.classList.add('text-gray-300', 'dark:text-gray-700');
-                            s.classList.remove('star-active');
-                        }
-                    });
-
-                    emojiDisplay.innerText = emojis[rating];
-                    emojiDisplay.classList.add('animate-bounce');
-                    setTimeout(() => emojiDisplay.classList.remove('animate-bounce'), 500);
-                });
+            const stars = group.querySelectorAll('.star-btn');
+            stars.forEach((s, idx) => {
+                if(idx < rating) {
+                    s.classList.remove('text-gray-300', 'dark:text-gray-700');
+                    s.classList.add('star-active');
+                } else {
+                    s.classList.add('text-gray-300', 'dark:text-gray-700');
+                    s.classList.remove('star-active');
+                }
             });
+
+            if(emojiDisplay) {
+                emojiDisplay.innerText = emojis[rating] || '😐';
+                emojiDisplay.classList.add('animate-bounce');
+                setTimeout(() => emojiDisplay.classList.remove('animate-bounce'), 500);
+            }
         });
     }
 
@@ -148,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if(btnSubmit) {
         btnSubmit.addEventListener('click', async function() {
-            // Requirement: Must answer ALL 25 questions
             let allAnswered = true;
             let totalRating = 0;
             document.querySelectorAll('.star-group').forEach(g => {
@@ -167,26 +165,25 @@ document.addEventListener('DOMContentLoaded', () => {
             this.disabled = true;
 
             const formData = new FormData();
+            formData.append('event_id', currentId);
             formData.append('event_title', currentTitle);
             formData.append('rating', (totalRating / 25).toFixed(1));
             formData.append('comments', document.getElementById('evalComments').value);
 
+            const csrf = document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
+
             try {
                 const response = await fetch("{% url 'submit_evaluation' %}", {
                     method: 'POST',
-                    headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    headers: { 'X-CSRFToken': csrf },
                     body: formData
                 });
                 const data = await response.json();
 
                 if (data.status === 'success') {
-                    const evaluatedEvents = JSON.parse(localStorage.getItem('evaluatedEvents') || '{}');
-                    evaluatedEvents[currentTitle] = true;
-                    localStorage.setItem('evaluatedEvents', JSON.stringify(evaluatedEvents));
-
                     const finalRating = (totalRating / 25);
                     document.getElementById('successRating').innerText = finalRating.toFixed(1);
-                    
+
                     let starsHtml = '';
                     for(let i=1; i<=5; i++){
                         if(i <= Math.floor(finalRating)) {
@@ -205,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert("Error: " + data.message);
                 }
             } catch (error) {
-                alert("Connection error.");
+                alert("Institutional Sync Error: Connection failed.");
             } finally {
                 this.innerHTML = originalText;
                 this.disabled = false;
@@ -213,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close Modal -> Redirect to Masterlist
+    // Close Modal -> Redirect
     ['btnCloseModal', 'btnReceiptDone'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.addEventListener('click', () => {
@@ -230,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .star-btn { transition: transform 0.1s ease, color 0.2s ease; }
     .star-btn:hover { transform: scale(1.2); }
-    .star-active { color: #D4AF37 !important; } 
+    .star-active { color: #D4AF37 !important; }
 </style>
 {% endblock extra_head %}
 
@@ -244,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <i class="ph-bold ph-arrow-left text-lg"></i> Back
         </a>
         <div id="headerCategory" class="bg-pup-gold inline-block text-black font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2 mt-8">Category</div>
-        <h2 id="headerTitle" class="text-3xl sm:text-5xl font-black text-white leading-tight">Event Title</h2>
+        <h2 id="headerTitle" class="text-3xl sm:text-5xl font-black text-white leading-tight">Event Title</h2>    
         <p class="text-gray-300 text-sm mt-1">Official Evaluation Form</p>
     </div>
 </div>
@@ -252,14 +249,15 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
 
     <div class="bg-white dark:bg-[#0a0a0a] rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
-        
+
         <div class="border-b border-gray-200 dark:border-gray-800 pb-4 mb-6 text-center">
             <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wide">Performance Rating</h3>
-            <p class="text-sm text-gray-500 mt-1">Please rate the following aspects of the event honestly.</p>
+            <p class="text-sm text-gray-500 mt-1">Please rate the following aspects of the event honestly.</p>    
         </div>
 
         <div id="questionsContainer" class="flex flex-col gap-6 mb-8">
-            </div>
+            <!-- Questions Injected by JS -->
+        </div>
 
         <div class="bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-8 shadow-sm">
             <label class="block text-sm font-bold uppercase text-gray-600 dark:text-gray-400 mb-3">Additional Comments</label>
@@ -276,9 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <div id="successModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
-    
+
     <div class="relative bg-white dark:bg-[#111] rounded-[2.5rem] shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-10 text-center border border-gray-200 dark:border-gray-800 z-10 transform scale-95 transition-transform duration-300 font-sans" id="successBox">
-        
+
         <button id="btnCloseModal" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
             <i class="ph-bold ph-x"></i>
         </button>
@@ -286,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-6 shrink-0 shadow-lg ring-4 ring-green-500/10">
             <i class="ph-bold ph-check text-4xl text-white"></i>
         </div>
-        
+
         <div class="mb-6">
             <h2 class="text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">EVALUATION SAVED</h2>
             <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Your feedback has been successfully submitted.</p>
@@ -313,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Feedback Analysis</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Sentiment Engine:</span>
+                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Sentiment Engine:</span>     
                     <span class="text-[10px] font-black text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md uppercase tracking-wider">Positive</span>
                 </div>
             </div>
@@ -322,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <button id="btnReceiptDone" class="w-full py-4 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black rounded-2xl text-xs transition-all shadow-md hover:opacity-90 active:scale-95 uppercase tracking-[0.2em]">
             Proceed to Dashboard
         </button>
-        
+
     </div>
 </div>
 </div>
