@@ -407,12 +407,77 @@ def student_profile(request):
     present_count = Attendance.objects.filter(student=student, face_matched=True, is_valid_location=True).count()
     absent_count = attended_count - present_count # Simplistic
 
+    # 🟢 RECENT ACTIVITY LOGS
+    # Get latest 3 attendance records and 3 audit logs for evaluations
+    recent_attendance = Attendance.objects.filter(student=student, face_matched=True, is_valid_location=True).order_by('-time_in')[:3]
+    
+    # Using AuditLog to find recent evaluations
+    from .models import AuditLog
+    recent_evals = AuditLog.objects.filter(actor=request.user, action='EVALUATION').order_by('-timestamp')[:3]
+    
+    recent_activity = []
+    for att in recent_attendance:
+        details = {
+            'face_matched': att.face_matched,
+            'is_valid_location': att.is_valid_location,
+            'timestamp': att.time_in.strftime('%B %d, %Y at %I:%M %p')
+        }
+        recent_activity.append({
+            'id': f'att_{att.id}',
+            'type': 'Attendance',
+            'title': att.event.event_title,
+            'venue': att.event.venue,
+            'date': att.time_in.strftime('%b %d, %Y'),
+            'time': att.time_in.strftime('%I:%M %p'),
+            'icon': 'ph-user-focus',
+            'color': 'text-green-500',
+            'bg': 'bg-green-50 dark:bg-green-900/20',
+            'timestamp': att.time_in,
+            'details': details,
+            'details_json': json.dumps(details)
+        })
+    
+    for evl in recent_evals:
+        changes = evl.changes if isinstance(evl.changes, dict) else json.loads(evl.changes)
+        title = changes.get('event', 'Event Evaluation')
+        
+        # Try to find the event to get venue
+        event = Event.objects.filter(event_title=title).first()
+        venue = event.venue if event else 'Campus Event'
+
+        details = {
+            'rating': changes.get('rating', '0'),
+            'feedback': changes.get('feedback', 'No feedback provided.'),
+            'total_raw_score': changes.get('total_raw_score', '0'),
+            'detailed_scores': changes.get('detailed_scores', {})
+        }
+
+        recent_activity.append({
+            'id': f'eval_{evl.id}',
+            'type': 'Evaluation',
+            'title': title,
+            'venue': venue,
+            'date': evl.timestamp.strftime('%b %d, %Y'),
+            'time': evl.timestamp.strftime('%I:%M %p'),
+            'icon': 'ph-star',
+            'color': 'text-blue-500',
+            'bg': 'bg-blue-50 dark:bg-blue-900/20',
+            'timestamp': evl.timestamp,
+            'details': details,
+            'details_json': json.dumps(details)
+        })
+    
+    # Sort activity by actual timestamp
+    recent_activity.sort(key=lambda x: x['timestamp'], reverse=True)
+    recent_activity = recent_activity[:5]
+
     context = {
         'student': student,
         'notifications': recent_notifications,
         'attended_count': attended_count,
         'present_count': present_count,
-        'absent_count': absent_count
+        'absent_count': absent_count,
+        'recent_activity': recent_activity
     }
     return render(request, 'student/profile.html', context)
 

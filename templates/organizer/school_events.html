@@ -112,7 +112,7 @@
 
                 <div class="pt-8 border-t border-gray-100 dark:border-gray-800">
                     <h3 class="font-black text-[10px] text-gray-400 uppercase tracking-[0.3em] mb-4">Executive Brief</h3>
-                    <p id="modalDesc" class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-medium">Description</p>
+                    <p id="modalDesc" class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-medium text-justify">Description</p>
                 </div>
                 
                 <!-- Participation Button -->
@@ -271,26 +271,25 @@
 
             filtered.forEach(e => {
                 const card = document.createElement('div');
-                card.className = "bg-white dark:bg-pup-darkcard rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700";
+                card.className = "bg-white dark:bg-pup-darkcard rounded-2xl sm:rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700 h-full";
                 card.innerHTML = `
-                    <div class="h-40 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800">
-                        <img src="${e.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-8');">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div class="absolute top-4 right-4">
-                            <span class="text-white text-[8px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1.5" data-event-id="${e.id}">
+                    <div class="w-24 h-24 sm:h-40 sm:w-full shrink-0 relative overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-r sm:border-r-0 sm:border-b border-gray-100 dark:border-gray-800">
+                        <img src="${e.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-6 sm:p-8');">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent hidden sm:block"></div>
+                        <div class="absolute top-2 right-2 sm:top-4 sm:right-4">
+                            <span class="text-white text-[6px] sm:text-[8px] px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1 sm:gap-1.5" data-event-id="${e.id}">
                                 <i class="ph-bold ph-clock"></i> --:--:--
                             </span>
                         </div>
                     </div>
-                    <div class="p-5 flex flex-col justify-center flex-grow">
-                        <div class="text-[8px] font-black text-pup-maroon dark:text-pup-gold mb-1 uppercase tracking-[0.2em]">${e.date_display}</div>
-                        <h3 class="font-black text-base text-gray-900 dark:text-white leading-tight mb-3 uppercase tracking-tighter truncate">${e.title}</h3>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-2 mb-4 font-medium leading-relaxed">${e.description || 'No description provided.'}</p>
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800 mt-auto">
-                             <div class="flex items-center gap-1.5 text-gray-400 font-bold text-[8px] uppercase tracking-widest truncate">
+                    <div class="p-3 sm:p-5 flex flex-col flex-grow min-w-0">
+                        <div class="text-[7px] sm:text-[8px] font-black text-pup-maroon dark:text-pup-gold mb-0.5 sm:mb-1 uppercase tracking-[0.2em]">${e.date_display}</div>
+                        <h3 class="font-black text-xs sm:text-base text-gray-900 dark:text-white leading-tight mb-1 sm:mb-3 uppercase tracking-tighter truncate">${e.title}</h3>
+                        <div class="flex items-center justify-between pt-2 sm:pt-4 border-t border-gray-50 dark:border-gray-800 mt-auto">
+                             <div class="flex items-center gap-1 sm:gap-1.5 text-gray-400 font-bold text-[7px] sm:text-[8px] uppercase tracking-widest truncate">
                                 <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> <span class="truncate">${e.venue}</span>
                              </div>
-                             <i class="ph-bold ph-arrow-right text-gray-200 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-1"></i>
+                             <i class="ph-bold ph-arrow-right text-gray-200 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-1 text-xs sm:text-base"></i>
                         </div>
                     </div>
                 `;

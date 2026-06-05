@@ -106,7 +106,7 @@
                     </div>
                     
                     <h3 class="font-black text-[9px] text-gray-400 uppercase tracking-[0.4em] mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">Activity Dossier</h3>
-                    <p id="modalDesc" class="text-gray-500 dark:text-gray-400 text-xs leading-relaxed mb-10 font-medium">Description</p>
+                    <p id="modalDesc" class="text-gray-500 dark:text-gray-400 text-xs leading-relaxed mb-10 font-medium text-justify">Description</p>
                     
                     <button id="btnParticipateNow" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 px-6 rounded-2xl text-[10px] flex items-center justify-center gap-3 transition-all shadow-2xl hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase tracking-[0.4em]">
                         <i class="ph-bold ph-scan text-xl"></i> Initialize Biometric Scanner
@@ -209,24 +209,23 @@
 
             filtered.forEach(e => {
                 const card = document.createElement('div');
-                card.className = "js-event-card bg-white dark:bg-pup-darkcard rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700";
+                card.className = "js-event-card bg-white dark:bg-pup-darkcard rounded-2xl sm:rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700 h-full";
                 card.innerHTML = `
-                    <div class="h-40 w-full shrink-0 relative bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-b border-gray-100 dark:border-gray-800 overflow-hidden">
-                        <img src="${e.image}" class="event-card-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-6');">
-                        <div class="absolute top-3 right-3">
-                            <span class="text-white text-[8px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1.5" data-event-id="${e.id}">
+                    <div class="w-24 h-24 sm:h-40 sm:w-full shrink-0 relative bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-r sm:border-r-0 sm:border-b border-gray-100 dark:border-gray-800 overflow-hidden">
+                        <img src="${e.image}" class="event-card-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-4 sm:p-6');">
+                        <div class="absolute top-2 right-2 sm:top-3 sm:right-3">
+                            <span class="text-white text-[6px] sm:text-[8px] px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1 sm:gap-1.5" data-event-id="${e.id}">
                                 <i class="ph-bold ph-clock"></i> --:--:--
                             </span>
                         </div>
                     </div>
-                    <div class="p-4 flex flex-col justify-center w-full min-w-0">
-                        <div class="text-[8px] font-black text-pup-maroon dark:text-pup-gold mb-1 truncate uppercase tracking-[0.2em]">${e.date_display}</div>
-                        <h3 class="font-black text-base text-gray-900 dark:text-white leading-tight mb-2 truncate uppercase tracking-tighter">${e.title}</h3>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-2 mb-4 font-medium leading-relaxed">${e.description || 'Join us for this exciting campus activity.'}</p>
-                        <div class="flex items-center justify-between pt-3 border-t border-gray-50 dark:border-gray-800 mt-auto">
-                            <p class="text-[8px] text-gray-400 flex items-center gap-1 font-bold uppercase tracking-widest truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> <span class="truncate">${e.venue}</span></p>
+                    <div class="p-3 sm:p-4 flex flex-col w-full min-w-0 flex-grow">
+                        <div class="text-[7px] sm:text-[8px] font-black text-pup-maroon dark:text-pup-gold mb-0.5 sm:mb-1 truncate uppercase tracking-[0.2em]">${e.date_display}</div>
+                        <h3 class="font-black text-xs sm:text-base text-gray-900 dark:text-white leading-tight mb-1 sm:mb-2 truncate uppercase tracking-tighter">${e.title}</h3>
+                        <div class="flex items-center justify-between pt-2 sm:pt-3 border-t border-gray-50 dark:border-gray-800 mt-auto">
+                            <p class="text-[7px] sm:text-[8px] text-gray-400 flex items-center gap-1 font-bold uppercase tracking-widest truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> <span class="truncate">${e.venue}</span></p>
                             <div class="flex items-center gap-2">
-                                ${e.already_attended ? '<i class="ph-fill ph-check-circle text-green-500 text-base"></i>' : '<i class="ph-bold ph-caret-right text-gray-300 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-1 text-base"></i>'}
+                                ${e.already_attended ? '<i class="ph-fill ph-check-circle text-green-500 text-sm sm:text-base"></i>' : '<i class="ph-bold ph-caret-right text-gray-300 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-1 text-sm sm:text-base"></i>'}
                             </div>
                         </div>
                     </div>
