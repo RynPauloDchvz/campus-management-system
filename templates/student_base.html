@@ -495,6 +495,7 @@
     </div>
 
     <!-- 🟢 VUE CONSOLIDATION LOGIC 🟢 -->
+    {% block extra_js %}{% endblock extra_js %}
     <script>
         // Use existing if defined by page, else new object
         window.VUE_APP_DATA = window.VUE_APP_DATA || {};
@@ -714,6 +715,5 @@
             }
         });
     </script>
-    {% block extra_js %}{% endblock extra_js %}
 </body>
 </html>

@@ -645,7 +645,54 @@ def student_school_events(request):
     })
 
 @user_passes_test(is_student_strictly, login_url='/')
-def student_event_calendar(request): return render(request, 'student/event_calendar.html')
+def student_event_calendar(request):
+    # Fetch all approved events
+    approved_events = Event.objects.filter(event_status='Approved').order_by('event_date', 'start_time')
+    
+    # Prepare data for FullCalendar
+    events_data = []
+    for event in approved_events:
+        # Default image logic
+        img_url = '/static/images/PUPLogo.png'
+        if event.thumbnail:
+            img_url = event.thumbnail.url
+        elif event.event_cover_photo:
+            img_url = event.event_cover_photo.url
+        elif event.cover_photo:
+            img_url = event.cover_photo.url
+
+        events_data.append({
+            'title': event.event_title,
+            'start': event.event_date.isoformat(),
+            'backgroundColor': '#800000',
+            'borderColor': '#800000',
+            'extendedProps': {
+                'description': event.description,
+                'venue': event.venue,
+                'time': event.start_time.strftime('%I:%M %p'),
+                'category': event.org_id,
+                'image': img_url
+            }
+        })
+
+    now = timezone.now()
+    # Total upcoming events for CURRENT month
+    upcoming_this_month_count = approved_events.filter(
+        event_date__year=now.year,
+        event_date__month=now.month,
+        event_date__gte=now.date()
+    ).count()
+
+    # Masterlist: All approved events from today onwards
+    masterlist_events = approved_events.filter(event_date__gte=now.date())
+
+    context = {
+        'events_json': json.dumps(events_data),
+        'masterlist_events': masterlist_events,
+        'total_upcoming_month': upcoming_this_month_count,
+        'current_month_year': now.strftime('%B %Y').upper()
+    }
+    return render(request, 'student/event_calendar.html', context)
 
 @user_passes_test(is_student_strictly, login_url='/')
 def student_evaluation(request):
@@ -705,7 +752,76 @@ def student_evaluation(request):
 @user_passes_test(is_student_strictly, login_url='/')
 def student_evaluation_form(request): return render(request, 'student/evaluation_form.html')
 @user_passes_test(is_student_strictly, login_url='/')
-def student_event_history(request): return render(request, 'student/event_history.html')
+def student_event_history(request):
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        return redirect('index')
+
+    # 1. Fetch Attendance Records
+    attendance_qs = Attendance.objects.filter(student=student).select_related('event').order_by('-time_in')
+    history_data = []
+
+    for att in attendance_qs:
+        e = att.event
+        img_url = '/static/images/PUPLogo.png'
+        if e.thumbnail: img_url = e.thumbnail.url
+        elif e.event_cover_photo: img_url = e.event_cover_photo.url
+        elif e.cover_photo: img_url = e.cover_photo.url
+
+        history_data.append({
+            'id': f"att_{att.id}",
+            'title': e.event_title,
+            'date': att.time_in.strftime('%b %d, %Y'),
+            'time': att.time_in.strftime('%I:%M %p'),
+            'venue': e.venue,
+            'type': 'Attendance',
+            'img': img_url,
+            'details': {
+                'face_matched': att.face_matched,
+                'is_valid_location': att.is_valid_location,
+                'timestamp': att.time_in.strftime('%B %d, %Y at %I:%M %p')
+            }
+        })
+
+    # 2. Fetch Evaluation Records (from AuditLog)
+    eval_logs = AuditLog.objects.filter(actor=request.user, action='EVALUATION', status='Success').order_on_timestamp = AuditLog.objects.filter(actor=request.user, action='EVALUATION', status='Success').order_by('-timestamp')
+    for log in eval_logs:
+        changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
+        
+        # Try to find the event to get venue and image
+        event_title = changes.get('event', 'Unknown Event')
+        event = Event.objects.filter(event_title=event_title).first()
+        
+        img_url = '/static/images/PUPLogo.png'
+        venue = 'Campus Event'
+        if event:
+            if event.thumbnail: img_url = event.thumbnail.url
+            elif event.event_cover_photo: img_url = event.event_cover_photo.url
+            venue = event.venue
+
+        history_data.append({
+            'id': f"eval_{log.id}",
+            'title': event_title,
+            'date': log.timestamp.strftime('%b %d, %Y'),
+            'time': log.timestamp.strftime('%I:%M %p'),
+            'venue': venue,
+            'type': 'Evaluation',
+            'img': img_url,
+            'details': {
+                'rating': changes.get('rating', '0'),
+                'feedback': changes.get('feedback', 'No feedback provided.'),
+                'total_raw_score': changes.get('total_raw_score', '0'),
+                'detailed_scores': changes.get('detailed_scores', {})
+            }
+        })
+
+    # Sort combined history by date (latest first)
+    # Since they are strings, we might need a better sort, but let's keep it simple for now or pass raw timestamps
+    
+    return render(request, 'student/event_history.html', {
+        'history_json': json.dumps(history_data)
+    })
 
 # ==========================================
 # ORGANIZER VIEWS
@@ -773,8 +889,15 @@ def organizer_school_events(request):
         org_acronym = org_profile.organization.strip()
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
+        org_profile = None
 
     all_events = Event.objects.filter(event_status='Approved').order_by('-event_date', '-start_time')
+    
+    # 🟢 ID-BASED TRACKING 🟢
+    attended_ids = []
+    if org_profile:
+        attended_ids = [str(eid) for eid in list(Attendance.objects.filter(organizer=org_profile).values_list('event_id', flat=True))]
+
     events_data = []
     for e in all_events:
         img_url = ""
@@ -803,13 +926,20 @@ def organizer_school_events(request):
             'evaluation_count': eval_count,
             'target_lat': float(e.target_latitude) if e.target_latitude else 13.84615,
             'target_lng': float(e.target_longitude) if e.target_longitude else 121.96955,
+            'already_attended': str(e.id) in attended_ids
         })
+
+    organizer_data = {
+        'face_encoding': org_profile.face_encoding if org_profile else None
+    }
 
     return render(request, 'organizer/school_events.html', {
         'org_acronym': org_acronym, 
         'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
-        'events_json': json.dumps(events_data)
+        'events_json': json.dumps(events_data),
+        'organizer_json': json.dumps(organizer_data)
     })
+
 
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_create_events(request):
@@ -1483,11 +1613,16 @@ def event_approvals_view(request):
         'history_json': json.dumps(history_data)
     })
 
-@user_passes_test(is_student_strictly, login_url='/')
+@login_required
 def record_attendance(request):
     if request.method == 'POST':
         try:
-            student = Student.objects.get(user=request.user)
+            student = Student.objects.filter(user=request.user).first()
+            organizer = OrgProfile.objects.filter(user=request.user).first()
+
+            if not student and not organizer:
+                return JsonResponse({'status': 'error', 'message': 'Account not authorized for attendance.'})
+
             event_id = request.POST.get('event_id')
             face_matched = request.POST.get('face_matched') == 'true'
             is_valid_location = request.POST.get('is_valid_location') == 'true'
@@ -1502,12 +1637,10 @@ def record_attendance(request):
             now = timezone.now()
             start_dt = timezone.make_aware(datetime.combine(event.event_date, event.start_time))
             
-            # Use 1-hour grace period after end_time
             if event.end_time:
                 end_dt = timezone.make_aware(datetime.combine(event.event_date, event.end_time))
                 expiry_dt = end_dt + timedelta(hours=1)
             else:
-                # If no end time, allow for 4 hours from start
                 expiry_dt = start_dt + timedelta(hours=4)
 
             if now < start_dt:
@@ -1516,11 +1649,16 @@ def record_attendance(request):
                 return JsonResponse({'status': 'error', 'message': 'Attendance window has closed for this event.'})
 
             # 🟢 PREVENT DUPLICATE ATTENDANCE
-            if Attendance.objects.filter(student=student, event=event).exists():
-                return JsonResponse({'status': 'error', 'message': 'Attendance already recorded for this event.'})
+            if student:
+                if Attendance.objects.filter(student=student, event=event).exists():
+                    return JsonResponse({'status': 'error', 'message': 'Attendance already recorded for this event.'})
+            elif organizer:
+                if Attendance.objects.filter(organizer=organizer, event=event).exists():
+                    return JsonResponse({'status': 'error', 'message': 'Attendance already recorded for this event.'})
 
             attendance = Attendance.objects.create(
                 student=student,
+                organizer=organizer,
                 event=event,
                 face_matched=face_matched,
                 is_valid_location=is_valid_location,
@@ -1530,7 +1668,7 @@ def record_attendance(request):
             
             log_audit_event(request, 'ATTENDANCE', target_model='Event', target_id=str(event.id), status='Success', changes={
                 'event': event.event_title,
-                'student': student.full_name,
+                'user': student.full_name if student else organizer.user.username,
                 'face_match': face_matched,
                 'location': is_valid_location
             })
@@ -1538,6 +1676,27 @@ def record_attendance(request):
             return JsonResponse({'status': 'success', 'message': 'Attendance recorded successfully!'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
+
+    return redirect('index')
+
+@user_passes_test(is_organizer_strictly, login_url='/')
+def register_organizer_face(request):
+    if request.method == 'POST':
+        try:
+            org_profile = OrgProfile.objects.get(user=request.user)
+            face_data = request.POST.get('face_encoding')
+            if not face_data:
+                return JsonResponse({'status': 'error', 'message': 'No facial data received.'})
+            
+            org_profile.face_encoding = face_data
+            org_profile.save()
+            
+            log_audit_event(request, 'UPDATE', target_model='OrgProfile', target_id=str(org_profile.id), status='Success', changes={'face_encoding': 'Updated'})
+            return JsonResponse({'status': 'success', 'message': 'Face identity registered successfully!'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+
     return JsonResponse({'status': 'error', 'message': 'Invalid request'})
 
 @user_passes_test(is_student_strictly, login_url='/')
@@ -1549,6 +1708,8 @@ def submit_evaluation(request):
             event_title = request.POST.get('event_title')
             feedback = request.POST.get('feedback') or request.POST.get('comments') or 'No feedback provided.'
             rating = request.POST.get('rating')
+            detailed_scores = request.POST.get('detailed_scores')
+            total_raw_score = request.POST.get('total_raw_score')
 
             event = Event.objects.filter(id=event_id, event_status='Approved').first()
             if not event:
@@ -1585,11 +1746,19 @@ def submit_evaluation(request):
             if not rating:
                 return JsonResponse({'status': 'error', 'message': 'Please provide a rating.'})
 
-            log_audit_event(request, 'EVALUATION', target_model='Event', target_id=str(event_id), status='Success', changes={
+            changes = {
                 'event': event_title, 
                 'rating': rating,
                 'feedback': feedback
-            })
+            }
+            if detailed_scores:
+                try:
+                    changes['detailed_scores'] = json.loads(detailed_scores)
+                except: pass
+            if total_raw_score:
+                changes['total_raw_score'] = total_raw_score
+
+            log_audit_event(request, 'EVALUATION', target_model='Event', target_id=str(event_id), status='Success', changes=changes)
             return JsonResponse({'status': 'success', 'message': 'Evaluation submitted successfully!'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})

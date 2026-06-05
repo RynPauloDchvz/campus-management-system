@@ -24,8 +24,8 @@
             <!-- Banner -->
             <div class="bg-gradient-to-br from-pup-maroon to-red-900 dark:from-pup-gold dark:to-yellow-600 rounded-3xl p-6 text-white dark:text-black shadow-lg relative overflow-hidden flex items-center justify-between">
                 <div class="relative z-10">
-                    <h3 class="font-black text-5xl mb-1" id="totalEventsBanner">3</h3>
-                    <p class="text-xs font-bold opacity-90 uppercase tracking-widest">Total Upcoming Events</p>
+                    <h3 class="font-black text-5xl mb-1" id="totalEventsBanner">{{ total_upcoming_month }}</h3>
+                    <p class="text-xs font-bold opacity-90 uppercase tracking-widest">Total Upcoming Events on {{ current_month_year }}</p>
                 </div>
                 <i class="ph-fill ph-calendar-star text-7xl opacity-20 transform rotate-12 absolute -right-2 -bottom-2"></i>
             </div>
@@ -43,53 +43,34 @@
             <!-- Event List -->
             <div class="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-2 hide-scrollbar pb-4" id="masterlistContainer">
                 
-                <!-- Event Card 1 -->
+                {% for event in masterlist_events %}
                 <div class="js-masterlist-card bg-white dark:bg-pup-darkcard rounded-2xl p-4 border border-gray-100 dark:border-gray-800 flex gap-4 cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all shadow-sm group" 
-                     data-title="Research Colloquium" data-category="Academic" data-date="MAY 12, 2026" data-time="08:00 AM" data-venue="Audio Visual Room" data-desc="Present and defend your capstone projects and research papers in front of university panels." data-img="{% static 'images/research.jpg' %}">
+                     data-title="{{ event.event_title }}" 
+                     data-category="{{ event.org_id }}" 
+                     data-date="{{ event.event_date|date:'M d, Y'|upper }}" 
+                     data-full-date="{{ event.event_date|date:'Y-m-d' }}" 
+                     data-time="{{ event.start_time|time:'h:i A' }}" 
+                     data-venue="{{ event.venue }}" 
+                     data-desc="{{ event.description }}" 
+                     data-img="{% if event.thumbnail %}{{ event.thumbnail.url }}{% elif event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% else %}{% static 'images/PUPLogo.png' %}{% endif %}">
                     <div class="w-20 h-20 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] shrink-0 overflow-hidden">
-                        <img src="{% static 'images/research.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                        <img src="{% if event.thumbnail %}{{ event.thumbnail.url }}{% elif event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% else %}{% static 'images/PUPLogo.png' %}{% endif %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
                     </div>
                     <div class="flex flex-col justify-center min-w-0 flex-grow">
-                        <div class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold mb-1 truncate">MAY 12, 2026 • 08:00 AM</div>
-                        <h4 class="font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate text-sm">Research Colloquium</h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin"></i> Audio Visual Room</p>
+                        <div class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold mb-1 truncate">{{ event.event_date|date:'M d, Y'|upper }} • {{ event.start_time|time:'h:i A' }}</div>
+                        <h4 class="font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate text-sm">{{ event.event_title }}</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin"></i> {{ event.venue }}</p>
                     </div>
                     <div class="flex items-center text-gray-300 dark:text-gray-700 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">
                         <i class="ph-bold ph-caret-right text-xl"></i>
                     </div>
                 </div>
-
-                <!-- Event Card 2 -->
-                <div class="js-masterlist-card bg-white dark:bg-pup-darkcard rounded-2xl p-4 border border-gray-100 dark:border-gray-800 flex gap-4 cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all shadow-sm group"
-                     data-title="IT Week Hackathon" data-category="Academic" data-date="JUN 05, 2026" data-time="07:00 AM" data-venue="Computer Lab 1" data-desc="A 24-hour coding challenge. Build innovative solutions for campus problems." data-img="{% static 'images/tech_talk.jpg' %}">
-                    <div class="w-20 h-20 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] shrink-0 overflow-hidden">
-                        <img src="{% static 'images/tech_talk.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-                    </div>
-                    <div class="flex flex-col justify-center min-w-0 flex-grow">
-                        <div class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold mb-1 truncate">JUN 05, 2026 • 07:00 AM</div>
-                        <h4 class="font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate text-sm">IT Week Hackathon</h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin"></i> Computer Lab 1</p>
-                    </div>
-                    <div class="flex items-center text-gray-300 dark:text-gray-700 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">
-                        <i class="ph-bold ph-caret-right text-xl"></i>
-                    </div>
+                {% empty %}
+                <div class="text-center py-10 opacity-50">
+                    <i class="ph-bold ph-calendar-x text-4xl mb-2"></i>
+                    <p class="text-sm">No upcoming events found.</p>
                 </div>
-
-                <!-- Event Card 3 -->
-                <div class="js-masterlist-card bg-white dark:bg-pup-darkcard rounded-2xl p-4 border border-gray-100 dark:border-gray-800 flex gap-4 cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all shadow-sm group"
-                     data-title="PUP Intramurals" data-category="Sports" data-date="AUG 15, 2026" data-time="08:00 AM" data-venue="University Oval" data-desc="Annual university sports competition. Represent your college!" data-img="{% static 'images/background.jpg' %}">
-                    <div class="w-20 h-20 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] shrink-0 overflow-hidden">
-                        <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-                    </div>
-                    <div class="flex flex-col justify-center min-w-0 flex-grow">
-                        <div class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold mb-1 truncate">AUG 15, 2026 • 08:00 AM</div>
-                        <h4 class="font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate text-sm">PUP Intramurals</h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin"></i> University Oval</p>
-                    </div>
-                    <div class="flex items-center text-gray-300 dark:text-gray-700 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">
-                        <i class="ph-bold ph-caret-right text-xl"></i>
-                    </div>
-                </div>
+                {% endfor %}
 
             </div>
         </div>
@@ -147,33 +128,7 @@ function initCalendarLogic() {
     const calendarEl = document.getElementById('calendar');
     if (!calendarEl) return;
 
-    // Define mock data mapping for calendar events to their details
-    const eventDetailsMap = {
-        'Research Colloquium': {
-            category: 'Academic',
-            date: 'MAY 12, 2026',
-            time: '08:00 AM',
-            venue: 'Audio Visual Room',
-            desc: 'Present and defend your capstone projects and research papers in front of university panels.',
-            img: "{% static 'images/research.jpg' %}"
-        },
-        'IT Week Hackathon': {
-            category: 'Academic',
-            date: 'JUN 05, 2026',
-            time: '07:00 AM',
-            venue: 'Computer Lab 1',
-            desc: 'A 24-hour coding challenge. Build innovative solutions for campus problems.',
-            img: "{% static 'images/tech_talk.jpg' %}"
-        },
-        'PUP Intramurals': {
-            category: 'Sports',
-            date: 'AUG 15, 2026',
-            time: '08:00 AM',
-            venue: 'University Oval',
-            desc: 'Annual university sports competition. Represent your college!',
-            img: "{% static 'images/background.jpg' %}"
-        }
-    };
+    const allEvents = {{ events_json|safe }};
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -183,17 +138,84 @@ function initCalendarLogic() {
             right: 'dayGridMonth,timeGridWeek'
         },
         themeSystem: 'standard',
-        events: [
-            { title: 'Research Colloquium', start: '2026-05-12', backgroundColor: '#800000', borderColor: '#800000' },
-            { title: 'IT Week Hackathon', start: '2026-06-05', backgroundColor: '#800000', borderColor: '#800000' },
-            { title: 'PUP Intramurals', start: '2026-08-15', end: '2026-08-20', backgroundColor: '#D4AF37', borderColor: '#D4AF37', textColor: '#000' }
-        ],
+        events: allEvents,
+        datesSet: function(info) {
+            // Update the banner based on the current view
+            const viewTitle = info.view.title.toUpperCase();
+            const bannerTextEl = document.querySelector('#totalEventsBanner + p');
+            if (bannerTextEl) {
+                bannerTextEl.innerText = `Total Upcoming Events on ${viewTitle}`;
+            }
+
+            // Calculate count for the visible month
+            const currentYear = info.view.currentStart.getFullYear();
+            const currentMonth = info.view.currentStart.getMonth();
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            const count = allEvents.filter(evt => {
+                const evtDate = new Date(evt.start);
+                return evtDate.getFullYear() === currentYear && 
+                       evtDate.getMonth() === currentMonth &&
+                       evtDate >= today;
+            }).length;
+
+            const bannerCountEl = document.getElementById('totalEventsBanner');
+            if (bannerCountEl) {
+                bannerCountEl.innerText = count;
+            }
+
+            // Filter masterlist cards to match the month
+            const masterlistCards = document.querySelectorAll('.js-masterlist-card');
+            let visibleCount = 0;
+            masterlistCards.forEach(card => {
+                const cardDate = new Date(card.dataset.fullDate);
+                if (cardDate.getFullYear() === currentYear && cardDate.getMonth() === currentMonth) {
+                    card.classList.remove('hidden');
+                    card.classList.add('flex');
+                    visibleCount++;
+                } else {
+                    card.classList.remove('flex');
+                    card.classList.add('hidden');
+                }
+            });
+
+            // Handle empty state for masterlist
+            let emptyMsg = document.getElementById('masterlistEmptyMsg');
+            if (visibleCount === 0) {
+                if (!emptyMsg) {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.id = 'masterlistEmptyMsg';
+                    msgDiv.className = 'text-center py-10 opacity-50';
+                    msgDiv.innerHTML = '<i class="ph-bold ph-calendar-x text-4xl mb-2"></i><p class="text-sm">No events this month.</p>';
+                    document.getElementById('masterlistContainer').appendChild(msgDiv);
+                } else {
+                    emptyMsg.classList.remove('hidden');
+                }
+            } else if (emptyMsg) {
+                emptyMsg.classList.add('hidden');
+            }
+        },
         eventClick: function(info) {
             const eventTitle = info.event.title;
-            const details = eventDetailsMap[eventTitle];
-            if (details) {
-                openModal(eventTitle, details.category, details.date, details.time, details.venue, details.desc, details.img);
-            }
+            const props = info.event.extendedProps;
+            
+            // Format date for display
+            const eventDate = info.event.start.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            }).toUpperCase();
+
+            openModal(
+                eventTitle, 
+                props.category, 
+                eventDate, 
+                props.time, 
+                props.venue, 
+                props.description, 
+                props.image
+            );
         },
         height: '100%'
     });

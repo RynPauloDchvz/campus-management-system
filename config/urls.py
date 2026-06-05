@@ -59,7 +59,8 @@ urlpatterns = [
     path('student/update-password', views.update_student_password, name='update_student_password'),
     path('student/update-profile', views.update_student_profile, name='update_student_profile'),
     path('student/update-notif-preference', views.update_notification_preference, name='update_notification_preference'),
-    path('student/record-attendance', views.record_attendance, name='record_attendance'),
+    path('student/record-attendance', views.record_attendance, name='record_attendance_student'),
+    path('record-attendance/', views.record_attendance, name='record_attendance'),
     path('student/submit-evaluation', views.submit_evaluation, name='submit_evaluation'),
     path('student/dashboard', views.student_homepage, name='student_homepage'),
     path('student/school-events', views.student_school_events, name='student_school_events'),
@@ -75,6 +76,7 @@ urlpatterns = [
     # ==========================================
     path('organizer/homepage', views.organizer_homepage, name='organizer_homepage'),
     path('organizer/school-events', views.organizer_school_events, name='organizer_school_events'),
+    path('organizer/register-face/', views.register_organizer_face, name='register_organizer_face'),
     path('organizer/create-events', views.organizer_create_events, name='organizer_create_events'),
     
     # 🟢 DITO YUNG API PARA MA-SAVE YUNG GINAWANG EVENT PROPOSAL SA DATABASE 🟢

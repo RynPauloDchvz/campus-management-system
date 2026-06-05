@@ -10,12 +10,21 @@
     .status-upcoming { background-color: #1e1e1e; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* Participation Scanner Styles */
+    #attendanceScanner { position: relative; width: 100%; height: 300px; background: #000; border-radius: 2rem; overflow: hidden; }
+    #video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    #overlayCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; transform: scaleX(-1); }
+    
+    .scanner-glow { border: 2px solid #800000; box-shadow: 0 0 20px rgba(128, 0, 0, 0.4); }
+    .scanner-active { border-color: #fbbf24 !important; box-shadow: 0 0 30px rgba(251, 191, 36, 0.6) !important; }
 </style>
 {% endblock extra_head %}
 
 {% block content %}
 <!-- SAFE DATA INJECTION -->
 <script id="events-data" type="application/json">{{ events_json|safe }}</script>
+<script id="organizer-data" type="application/json">{{ organizer_json|safe }}</script>
 
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">
@@ -23,7 +32,12 @@
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
         <div class="text-left">
             <h1 class="font-black text-3xl sm:text-5xl text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-4">Campus Ledger</h1>
-            <p class="text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-[0.3em]">Real-time monitoring of institutional activities</p>
+            <div class="max-w-xl">
+                <p class="text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Real-time monitoring of institutional activities</p>
+                <p class="text-gray-400 dark:text-gray-500 text-[10px] leading-relaxed font-bold uppercase tracking-widest">
+                    Manage and monitor organizational events through the central ledger. Track live status, verify attendance windows, and ensure all activities are synchronized with the university calendar.
+                </p>
+            </div>
         </div>
         
         <div class="relative w-full md:w-96">
@@ -32,11 +46,11 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="eventsGrid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="eventsGrid">
         <!-- Events injected by JS -->
     </div>
 
-    <div id="noResults" style="display: none;" class="text-center py-24 bg-gray-50 dark:bg-pup-darkcard rounded-[3rem] border border-dashed border-gray-200 dark:border-gray-800">
+    <div id="noResults" style="display: none;" class="text-center py-24 bg-gray-50 dark:bg-pup-darkcard rounded-[2rem] border border-dashed border-gray-200 dark:border-gray-800">
         <i class="ph-bold ph-calendar-blank text-7xl text-gray-200 dark:text-gray-700 mb-6"></i>
         <h3 class="font-black text-xl text-gray-400 uppercase tracking-tighter">No Active Ledger</h3>
         <p class="text-gray-400 text-[10px] mt-1 font-black uppercase tracking-widest">No activities have been committed to the public calendar yet.</p>
@@ -55,43 +69,43 @@
         </button>
 
         <div class="overflow-y-auto hide-scrollbar flex-grow">
-            <div class="h-64 sm:h-80 w-full relative shrink-0 bg-gray-900">
+            <div class="h-56 sm:h-72 w-full relative shrink-0 bg-gray-900">
                 <img id="modalImg" src="" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                <div class="absolute bottom-8 left-10 right-10">
-                    <h2 id="modalTitle" class="text-3xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">Title</h2>
+                <div class="absolute bottom-6 left-8 right-8">
+                    <h2 id="modalTitle" class="text-2xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">Title</h2>
                 </div>
             </div>
             
             <div class="p-8 sm:p-10">
-                <div class="flex items-center justify-between mb-8 p-6 bg-gray-900 rounded-[2.5rem] border border-gray-800 shadow-2xl">
+                <div class="flex items-center justify-between mb-8 p-6 bg-pup-maroon dark:bg-pup-gold rounded-2xl shadow-xl">
                     <div>
-                        <span id="countdownLabel" class="block text-[10px] font-black text-pup-gold uppercase tracking-[0.3em] mb-1">Live Status</span>
-                        <span id="modalCountdown" class="text-3xl font-black text-white countdown-timer tabular-nums tracking-tighter">00:00:00</span>
+                        <span id="countdownLabel" class="block text-[10px] font-black text-white/80 dark:text-black/80 uppercase tracking-[0.3em] mb-1">Live Status</span>
+                        <span id="modalCountdown" class="text-3xl font-black text-white dark:text-black countdown-timer tabular-nums tracking-tighter">00:00:00</span>
                     </div>
-                    <div class="w-16 h-16 bg-pup-gold rounded-2xl flex items-center justify-center text-black shadow-lg">
+                    <div class="w-16 h-16 bg-white/20 dark:bg-black/10 rounded-2xl flex items-center justify-center text-white dark:text-black shadow-inner">
                         <i id="countdownIcon" class="ph-fill ph-broadcast text-4xl"></i>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-                    <div class="flex items-center gap-5 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-3xl border border-gray-100 dark:border-gray-800">
-                        <div class="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
-                            <i class="ph-fill ph-calendar text-2xl"></i>
+                <div class="grid grid-cols-2 gap-4 mb-10">
+                    <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-800 min-h-[80px]">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                            <i class="ph-fill ph-calendar text-xl"></i>
                         </div>
-                        <div>
-                            <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Schedule</span>
-                            <span id="modalDateTime" class="font-black text-gray-900 dark:text-white uppercase text-sm">Date Time</span>
+                        <div class="min-w-0">
+                            <span class="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Schedule</span>
+                            <span id="modalDateTime" class="font-black text-gray-900 dark:text-white uppercase text-[10px] block break-words">Date Time</span>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-5 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-3xl border border-gray-100 dark:border-gray-800">
-                        <div class="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
-                            <i class="ph-fill ph-map-pin text-2xl"></i>
+                    <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-800 min-h-[80px]">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                            <i class="ph-fill ph-map-pin text-xl"></i>
                         </div>
-                        <div>
-                            <span class="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Venue</span>
-                            <span id="modalVenue" class="font-black text-gray-900 dark:text-white uppercase text-sm">Venue</span>
+                        <div class="min-w-0">
+                            <span class="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Venue</span>
+                            <span id="modalVenue" class="font-black text-gray-900 dark:text-white uppercase text-[10px] block break-words line-clamp-2">Venue</span>
                         </div>
                     </div>
                 </div>
@@ -101,6 +115,17 @@
                     <p id="modalDesc" class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-medium">Description</p>
                 </div>
                 
+                <!-- Participation Button -->
+                <div class="mt-12" id="participationArea" style="display: none;">
+                    <button id="btnParticipate" class="w-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-3">
+                        <i class="ph-bold ph-identification-card text-2xl"></i>
+                        Participate in Event
+                    </button>
+                    <p id="attendedNotice" style="display: none;" class="text-center text-[10px] font-black text-green-500 uppercase tracking-widest mt-4">
+                        <i class="ph-bold ph-check-circle"></i> Attendance Already Recorded
+                    </p>
+                </div>
+
                 <div class="mt-12 bg-gray-50 dark:bg-[#111] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 text-center">
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                         <i class="ph-bold ph-shield-check"></i> Monitoring Mode Active for {{ org_acronym }}
@@ -110,19 +135,127 @@
         </div>
     </div>
 </div>
+
+<!-- Participation Modal -->
+<div id="participationModal" style="display: none;" class="fixed inset-0 z-[3000] items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/95 backdrop-blur-2xl" id="participationOverlay"></div>
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-[3rem] w-full max-w-lg p-10 border border-gray-100 dark:border-gray-800 shadow-2xl">
+        <div class="text-center mb-10">
+            <h3 class="font-black text-2xl text-gray-900 dark:text-white uppercase tracking-tighter">Attendance Scanner</h3>
+            <p class="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">Biometric & Geofence Verification</p>
+        </div>
+
+        <div id="attendanceScanner" class="scanner-glow mb-8">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlayCanvas"></canvas>
+            
+            <div id="scannerLoader" class="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+                <div class="flex flex-col items-center gap-4">
+                    <div class="w-12 h-12 border-4 border-pup-gold border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-[10px] font-black text-white uppercase tracking-widest">Calibrating...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div id="faceStatus" class="flex items-center justify-between p-4 bg-gray-50 dark:bg-black/40 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Face Match</span>
+                <span class="status-label text-[10px] font-black text-red-500 uppercase tracking-widest">Awaiting Detection</span>
+            </div>
+            <div id="locStatus" class="flex items-center justify-between p-4 bg-gray-50 dark:bg-black/40 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Location</span>
+                <span class="status-label text-[10px] font-black text-red-500 uppercase tracking-widest">Locating...</span>
+            </div>
+        </div>
+
+        <div class="mt-10 flex gap-4">
+            <button id="btnCancelScan" class="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-200 transition-colors">Cancel</button>
+            <button id="btnSubmitScan" disabled class="flex-[2] bg-pup-maroon dark:bg-pup-gold text-white dark:text-black py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl disabled:opacity-50 disabled:grayscale transition-all">Submit Entry</button>
+        </div>
+    </div>
+</div>
+
+<!-- Face Registration Modal -->
+<div id="registrationModal" style="display: none;" class="fixed inset-0 z-[4000] items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/95 backdrop-blur-2xl"></div>
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-[3rem] w-full max-w-lg p-10 border border-gray-100 dark:border-gray-800 shadow-2xl">
+        <div class="text-center mb-10">
+            <h3 class="font-black text-2xl text-gray-900 dark:text-white uppercase tracking-tighter">Register Face Identity</h3>
+            <p class="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">One-time registration for Organizer participation</p>
+        </div>
+
+        <div id="regScanner" class="relative w-full h-[300px] bg-black rounded-2xl overflow-hidden mb-8 border-2 border-pup-maroon">
+            <video id="regVideo" class="w-full h-full object-cover" style="transform: scaleX(-1);" autoplay muted playsinline></video>
+            <canvas id="regCanvas" class="absolute inset-0 w-full h-full pointer-events-none" style="transform: scaleX(-1);"></canvas>
+            <div id="regLoader" class="absolute inset-0 flex items-center justify-center bg-black/50">
+                <div class="w-12 h-12 border-4 border-pup-gold border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        </div>
+
+        <p class="text-[9px] text-gray-400 dark:text-gray-500 text-center mb-8 uppercase tracking-widest leading-relaxed">
+            Please look directly at the camera. Once your face is clearly detected, the "Register Identity" button will be enabled.
+        </p>
+
+        <div class="flex gap-4">
+            <button id="btnCancelReg" class="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px]">Cancel</button>
+            <button id="btnConfirmReg" disabled class="flex-[2] bg-pup-maroon dark:bg-pup-gold text-white dark:text-black py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl disabled:opacity-50">Register Identity</button>
+        </div>
+    </div>
+</div>
+
+<!-- Initial Question Modal -->
+<div id="questionModal" style="display: none;" class="fixed inset-0 z-[2500] items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="questionOverlay"></div>
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-[3rem] w-full max-w-md p-10 border border-gray-100 dark:border-gray-800 shadow-2xl">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-3xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mx-auto mb-6 border border-red-100 dark:border-red-900/30">
+                <i class="ph-fill ph-user-focus text-4xl"></i>
+            </div>
+            <h3 class="font-black text-xl text-gray-900 dark:text-white uppercase tracking-tighter">Biometric Setup</h3>
+            <p class="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">Have you registered your face identity yet?</p>
+        </div>
+
+        <div class="flex flex-col gap-3">
+            <button id="btnAlreadyRegistered" class="w-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-[1.02] transition-transform">
+                Yes, Proceed to Attendance
+            </button>
+            <button id="btnNeedRegister" class="w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-[1.02] transition-transform border border-gray-200 dark:border-gray-700">
+                No, Register Face First
+            </button>
+            <button id="btnCancelQuestion" class="w-full text-gray-400 text-[9px] font-black uppercase tracking-widest mt-4">Maybe Later</button>
+        </div>
+    </div>
+</div>
+
+</div>
 {% endblock content %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
     const eventsText = document.getElementById('events-data').textContent;
     const EVENTS_DATA = eventsText ? JSON.parse(eventsText) : [];
+    
+    const organizerText = document.getElementById('organizer-data').textContent;
+    const ORGANIZER_DATA = organizerText ? JSON.parse(organizerText) : { face_encoding: null };
+    
     const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
+    const CAMPUS_COORDS = [13.84615, 121.96955];
 
     function initSchoolEventsLogic() {
         const eventsGrid = document.getElementById('eventsGrid');
         const noResults = document.getElementById('noResults');
         const searchInput = document.getElementById('eventSearch');
         let currentEvent = null;
+
+        // Scanner Vars
+        let videoStream = null;
+        let scanInterval = null;
+        let faceMatcher = null;
+        let isFaceVerified = false;
+        let isLocationVerified = false;
+        let userLat = null;
+        let userLng = null;
 
         function renderEvents(query = '') {
             if (!eventsGrid) return;
@@ -138,26 +271,26 @@
 
             filtered.forEach(e => {
                 const card = document.createElement('div');
-                card.className = "bg-white dark:bg-pup-darkcard rounded-[3rem] overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700";
+                card.className = "bg-white dark:bg-pup-darkcard rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700";
                 card.innerHTML = `
-                    <div class="h-52 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <div class="h-40 w-full relative overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <img src="${e.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-8');">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div class="absolute top-5 right-5">
-                            <span class="text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1.5" data-event-id="${e.id}">
+                        <div class="absolute top-4 right-4">
+                            <span class="text-white text-[8px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1.5" data-event-id="${e.id}">
                                 <i class="ph-bold ph-clock"></i> --:--:--
                             </span>
                         </div>
                     </div>
-                    <div class="p-8">
-                        <div class="text-[9px] font-black text-pup-maroon dark:text-pup-gold mb-2 uppercase tracking-[0.2em]">${e.date_display}</div>
-                        <h3 class="font-black text-xl text-gray-900 dark:text-white leading-none mb-6 uppercase tracking-tighter truncate">${e.title}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 font-medium">${e.description || 'No description provided.'}</p>
-                        <div class="flex items-center justify-between pt-6 border-t border-gray-50 dark:border-gray-800 mt-auto">
-                             <div class="flex items-center gap-2 text-gray-400 font-bold text-[9px] uppercase tracking-widest">
-                                <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> ${e.venue}
+                    <div class="p-5 flex flex-col justify-center flex-grow">
+                        <div class="text-[8px] font-black text-pup-maroon dark:text-pup-gold mb-1 uppercase tracking-[0.2em]">${e.date_display}</div>
+                        <h3 class="font-black text-base text-gray-900 dark:text-white leading-tight mb-3 uppercase tracking-tighter truncate">${e.title}</h3>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-2 mb-4 font-medium leading-relaxed">${e.description || 'No description provided.'}</p>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800 mt-auto">
+                             <div class="flex items-center gap-1.5 text-gray-400 font-bold text-[8px] uppercase tracking-widest truncate">
+                                <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> <span class="truncate">${e.venue}</span>
                              </div>
-                             <i class="ph-bold ph-arrow-right text-gray-200 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-2"></i>
+                             <i class="ph-bold ph-arrow-right text-gray-200 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-1"></i>
                         </div>
                     </div>
                 `;
@@ -203,19 +336,33 @@
                 const modalCD = document.getElementById('modalCountdown');
                 const label = document.getElementById('countdownLabel');
                 const icon = document.getElementById('countdownIcon');
+                const participationArea = document.getElementById('participationArea');
+                const btnParticipate = document.getElementById('btnParticipate');
+                const attendedNotice = document.getElementById('attendedNotice');
                 
                 if (diffStart > 0) {
                     if(label) label.innerText = "UPCOMING IN";
                     if(modalCD) modalCD.innerText = formatTimeDiff(diffStart);
                     if(icon) icon.className = "ph-fill ph-clock text-4xl";
+                    participationArea.style.display = 'none';
                 } else if (diffExpiry > 0) {
                     if(label) label.innerText = "LIVE STATUS";
                     if(modalCD) modalCD.innerText = "ACTIVE NOW";
                     if(icon) icon.className = "ph-fill ph-broadcast text-4xl animate-pulse";
+                    
+                    participationArea.style.display = 'block';
+                    if (currentEvent.already_attended) {
+                        btnParticipate.style.display = 'none';
+                        attendedNotice.style.display = 'block';
+                    } else {
+                        btnParticipate.style.display = 'flex';
+                        attendedNotice.style.display = 'none';
+                    }
                 } else {
                     if(label) label.innerText = "LEDGER STATUS";
                     if(modalCD) modalCD.innerText = "ARCHIVED";
                     if(icon) icon.className = "ph-bold ph-lock-key text-4xl";
+                    participationArea.style.display = 'none';
                 }
             }
         }
@@ -245,6 +392,259 @@
             document.getElementById('eventModal').style.display = 'none';
             document.body.style.overflow = '';
             currentEvent = null;
+        }
+
+        // ==========================================
+        // 🟢 PARTICIPATION LOGIC (Scanner & Geofence)
+        // ==========================================
+        const btnParticipate = document.getElementById('btnParticipate');
+        const questionModal = document.getElementById('questionModal');
+        const registrationModal = document.getElementById('registrationModal');
+        const participationModal = document.getElementById('participationModal');
+
+        btnParticipate.addEventListener('click', () => {
+            closeModal();
+            questionModal.style.display = 'flex';
+        });
+
+        document.getElementById('btnCancelQuestion').addEventListener('click', () => questionModal.style.display = 'none');
+        document.getElementById('btnCancelReg').addEventListener('click', () => {
+            registrationModal.style.display = 'none';
+            stopScanner();
+        });
+        document.getElementById('btnCancelScan').addEventListener('click', () => {
+            participationModal.style.display = 'none';
+            stopScanner();
+        });
+
+        document.getElementById('btnAlreadyRegistered').addEventListener('click', () => {
+            questionModal.style.display = 'none';
+            if (!ORGANIZER_DATA.face_encoding) {
+                alert("You haven't registered your face yet. Please choose the 'No, Register Face First' option.");
+                questionModal.style.display = 'flex';
+                return;
+            }
+            startParticipationScanner();
+        });
+
+        document.getElementById('btnNeedRegister').addEventListener('click', () => {
+            questionModal.style.display = 'none';
+            startRegistrationScanner();
+        });
+
+        async function startRegistrationScanner() {
+            registrationModal.style.display = 'flex';
+            document.getElementById('regLoader').style.display = 'flex';
+            
+            try {
+                await loadModels();
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                const v = document.getElementById('regVideo');
+                v.srcObject = videoStream;
+                
+                v.onloadedmetadata = () => {
+                    document.getElementById('regLoader').style.display = 'none';
+                    const canvas = document.getElementById('regCanvas');
+                    canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+                    
+                    let capturedEncoding = null;
+                    const btn = document.getElementById('btnConfirmReg');
+
+                    scanInterval = setInterval(async () => {
+                        const detect = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                        if (detect) {
+                            faceapi.draw.drawDetections(canvas, detect);
+                            capturedEncoding = Array.from(detect.descriptor);
+                            btn.disabled = false;
+                        } else {
+                            btn.disabled = true;
+                        }
+                    }, 200);
+
+                    btn.onclick = async () => {
+                        if (!capturedEncoding) return;
+                        btn.disabled = true; btn.innerText = "REGISTERING...";
+                        
+                        const fd = new FormData();
+                        fd.append('face_encoding', JSON.stringify(capturedEncoding));
+                        fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                        try {
+                            const res = await fetch('/organizer/register-face/', { method: 'POST', body: fd });
+                            const data = await res.json();
+                            if (data.status === 'success') {
+                                ORGANIZER_DATA.face_encoding = JSON.stringify(capturedEncoding);
+                                alert("Success! Your face identity has been registered.");
+                                registrationModal.style.display = 'none';
+                                stopScanner();
+                                startParticipationScanner();
+                            } else {
+                                alert(data.message);
+                                btn.disabled = false; btn.innerText = "Register Identity";
+                            }
+                        } catch (e) { alert("Registration failed. Please try again."); btn.disabled = false; }
+                    };
+                };
+            } catch (e) {
+                alert("Camera Access Required! Please enable camera permissions in your settings.");
+                registrationModal.style.display = 'none';
+            }
+        }
+
+        async function startParticipationScanner() {
+            participationModal.style.display = 'flex';
+            document.getElementById('scannerLoader').style.display = 'flex';
+            isFaceVerified = false; isLocationVerified = false;
+            updateSubmitButton();
+
+            try {
+                await loadModels();
+                if (!faceMatcher && ORGANIZER_DATA.face_encoding) {
+                    const desc = new Float32Array(JSON.parse(ORGANIZER_DATA.face_encoding));
+                    faceMatcher = new faceapi.FaceMatcher([new faceapi.LabeledFaceDescriptors("Organizer", [desc])], 0.5);
+                }
+
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                const v = document.getElementById('video');
+                v.srcObject = videoStream;
+
+                startGeofenceWatch();
+
+                v.onloadedmetadata = () => {
+                    document.getElementById('scannerLoader').style.display = 'none';
+                    const canvas = document.getElementById('overlayCanvas');
+                    canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+
+                    scanInterval = setInterval(async () => {
+                        const detect = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                        const faceStatus = document.querySelector('#faceStatus .status-label');
+
+                        if (detect && faceMatcher) {
+                            faceapi.draw.drawDetections(canvas, detect);
+                            const match = faceMatcher.findBestMatch(detect.descriptor);
+                            if (match.label !== 'unknown' && match.distance < 0.5) {
+                                isFaceVerified = true;
+                                faceStatus.innerText = "VERIFIED";
+                                faceStatus.className = "status-label text-[10px] font-black text-green-500 uppercase tracking-widest";
+                                document.getElementById('attendanceScanner').classList.add('scanner-active');
+                            } else {
+                                isFaceVerified = false;
+                                faceStatus.innerText = "UNKNOWN IDENTITY";
+                                faceStatus.className = "status-label text-[10px] font-black text-red-500 uppercase tracking-widest";
+                                document.getElementById('attendanceScanner').classList.remove('scanner-active');
+                            }
+                        } else {
+                            isFaceVerified = false;
+                            faceStatus.innerText = "SEARCHING FACE...";
+                            faceStatus.className = "status-label text-[10px] font-black text-gray-400 uppercase tracking-widest";
+                        }
+                        updateSubmitButton();
+                    }, 200);
+                };
+            } catch (e) {
+                alert("Camera Access Required!");
+                participationModal.style.display = 'none';
+            }
+        }
+
+        function startGeofenceWatch() {
+            const locLabel = document.querySelector('#locStatus .status-label');
+            if (!navigator.geolocation) {
+                locLabel.innerText = "GPS NOT SUPPORTED";
+                return;
+            }
+
+            navigator.geolocation.watchPosition((pos) => {
+                userLat = pos.coords.latitude;
+                userLng = pos.coords.longitude;
+                
+                const targetLat = currentEvent ? currentEvent.target_lat : CAMPUS_COORDS[0];
+                const targetLng = currentEvent ? currentEvent.target_lng : CAMPUS_COORDS[1];
+                
+                const dist = calculateDistance(userLat, userLng, targetLat, targetLng);
+                
+                if (dist <= 150) { // 150 meters
+                    isLocationVerified = true;
+                    locLabel.innerText = "GEOFENCE VERIFIED";
+                    locLabel.className = "status-label text-[10px] font-black text-green-500 uppercase tracking-widest";
+                } else {
+                    isLocationVerified = false;
+                    locLabel.innerText = `OUTSIDE GEOFENCE (${Math.round(dist)}m AWAY)`;
+                    locLabel.className = "status-label text-[10px] font-black text-red-500 uppercase tracking-widest";
+                }
+                updateSubmitButton();
+            }, (err) => {
+                locLabel.innerText = "LOCATION BLOCKED";
+                isLocationVerified = false;
+                updateSubmitButton();
+            }, { enableHighAccuracy: true });
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lat2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (arguments[3]-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function updateSubmitButton() {
+            const btn = document.getElementById('btnSubmitScan');
+            btn.disabled = !(isFaceVerified && isLocationVerified);
+        }
+
+        document.getElementById('btnSubmitScan').addEventListener('click', async () => {
+            const btn = document.getElementById('btnSubmitScan');
+            btn.disabled = true; btn.innerText = "COMMITTING ENTRY...";
+            
+            const fd = new FormData();
+            fd.append('event_id', currentEvent.id);
+            fd.append('face_matched', 'true');
+            fd.append('is_valid_location', 'true');
+            fd.append('latitude', userLat);
+            fd.append('longitude', userLng);
+            fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            try {
+                const res = await fetch('/record-attendance/', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert("Attendance Recorded Successfully!");
+                    location.reload();
+                } else {
+                    alert(data.message);
+                    btn.disabled = false; btn.innerText = "Submit Entry";
+                }
+            } catch (e) { alert("Submission error."); btn.disabled = false; }
+        });
+
+        async function loadModels() {
+            if (faceapi.nets.tinyFaceDetector.params) return;
+            const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+        }
+
+        function stopScanner() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+            }
         }
 
         if(searchInput) searchInput.addEventListener('input', () => renderEvents(searchInput.value));

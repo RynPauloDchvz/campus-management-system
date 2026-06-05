@@ -18,9 +18,18 @@
         </div>
 
         <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            <div class="relative w-full sm:w-80">
-                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="historySearch" placeholder="Search record..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors shadow-sm text-gray-900 dark:text-white">
+            <div class="relative w-full sm:w-64 group">
+                <i class="ph-bold ph-funnel absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 dark:text-black/70 pointer-events-none z-10"></i>
+                <select id="typeFilter" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-none text-sm rounded-xl py-3 pl-10 pr-10 focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-yellow-400 transition-all shadow-md appearance-none cursor-pointer font-black uppercase tracking-widest relative">
+                    <option value="all" class="bg-white text-gray-900 dark:bg-pup-darkcard dark:text-white">All Records</option>
+                    <option value="Attendance" class="bg-white text-gray-900 dark:bg-pup-darkcard dark:text-white">Attendance</option>
+                    <option value="Evaluation" class="bg-white text-gray-900 dark:bg-pup-darkcard dark:text-white">Evaluations</option>
+                </select>
+                <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 text-white/70 dark:text-black/70 pointer-events-none z-10"></i>
+            </div>
+            <div class="relative w-full sm:w-80 group">
+                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-pup-maroon dark:group-focus-within:text-pup-gold transition-colors"></i>
+                <input type="text" id="historySearch" placeholder="Search record..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold transition-all shadow-sm text-gray-900 dark:text-white">
             </div>
         </div>
     </div>
@@ -87,29 +96,37 @@
 
             <div id="viewEvaluationProof" class="hidden">
                 <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Evaluation Summary</h3>
-                <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Student Rating</span>
-                        <div id="modalEvalStars" class="flex text-pup-gold text-lg">
+                
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
+                        <div class="text-[0.65rem] font-black uppercase text-gray-400 mb-2 tracking-widest">Average Rating</div>
+                        <div id="modalEvalStars" class="flex text-pup-gold text-xl gap-0.5 mb-1">
                             <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
                         </div>
+                        <div class="text-[0.7rem] font-black text-gray-900 dark:text-white" id="modalEvalAvgLabel">5.0 / 5.0</div>
                     </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 italic leading-relaxed" id="modalEvalComment">"The event was very informative and well-organized. I look forward to more seminars like this."</p>
+                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
+                        <div class="text-[0.65rem] font-black uppercase text-gray-400 mb-1 tracking-widest">Performance</div>
+                        <div class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                            <span id="modalEvalPercent">0%</span>
+                            <span id="modalEvalEmoji">😐</span>
+                        </div>
+                        <div id="modalEvalGrade" class="text-[0.65rem] font-bold text-green-600 dark:text-green-400 mt-1 uppercase tracking-tighter">Excellent</div>
+                    </div>
                 </div>
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/40 p-4 rounded-xl flex items-center gap-3">
-                    <i class="ph-fill ph-certificate text-blue-600 dark:text-blue-400 text-2xl"></i>
-                    <div>
-                        <p class="text-xs font-bold text-blue-900 dark:text-blue-200">E-Certificate Generated</p>
-                        <button class="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase hover:underline">Download Copy</button>
+
+                <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4 relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Student Feedback</span>
+                        <div id="modalSentimentBadge" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                            <i class="ph-fill ph-smiley"></i> Positive
+                        </div>
                     </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 italic leading-relaxed relative z-10" id="modalEvalComment">"No feedback provided."</p>
+                    <i class="ph-fill ph-quotes absolute -bottom-2 -right-2 text-6xl text-gray-200/50 dark:text-white/5 pointer-events-none"></i>
                 </div>
             </div>
 
-            <div class="mt-8 flex flex-col gap-3">
-                <button id="btnCloseModal" class="w-full py-4 rounded-2xl bg-gray-900 text-white dark:bg-white dark:text-black font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:opacity-90 transition-all active:scale-[0.98]">
-                    Close Record View
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -119,17 +136,11 @@
 {% block extra_js %}
 <script>
 function initHistoryLogic() {
-    const APP_STATIC_URL = "{% static 'images/' %}";
-    const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
-
-    const historyData = [
-        { id: 1, title: "Research Colloquium", date: "May 12, 2026", time: "08:15 AM", venue: "Audio Visual Room", type: "Attendance", img: "research.jpg" },
-        { id: 2, title: "IT Week Hackathon", date: "Jun 05, 2026", time: "07:30 AM", venue: "Computer Lab 1", type: "Attendance", img: "tech_talk.jpg" },
-        { id: 3, title: "Web Dev Seminar", date: "Jan 10, 2026", time: "01:00 PM", venue: "Computer Lab 1", type: "Evaluation", img: "tech_talk.jpg" },
-    ];
+    const historyData = {{ history_json|safe }};
 
     const grid = document.getElementById('historyGrid');
     const searchInput = document.getElementById('historySearch');
+    const typeFilter = document.getElementById('typeFilter');
     const noResults = document.getElementById('noResults');
     const modal = document.getElementById('historyModal');
     const modalContent = document.getElementById('modalContentBlock');
@@ -145,13 +156,14 @@ function initHistoryLogic() {
         noResults.classList.add('hidden');
 
         dataToRender.forEach(item => {
-            const badgeClass = item.type === 'Attendance' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-            const icon = item.type === 'Attendance' ? 'ph-user-focus' : 'ph-clipboard-text';
+            const isAttendance = item.type === 'Attendance';
+            const badgeClass = isAttendance ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+            const icon = isAttendance ? 'ph-user-focus' : 'ph-clipboard-text';
             
             const html = `
-                <div class="bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" onclick="openHistoryModal(${item.id})">
+                <div class="bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" onclick="openHistoryModal('${item.id}')">
                     <div class="w-24 sm:w-full h-24 sm:h-32 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] border-r sm:border-r-0 sm:border-b border-gray-200 dark:border-gray-800">
-                        <img src="${APP_STATIC_URL}${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='${DEFAULT_IMG}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                        <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
                         <div class="absolute top-2 right-2 hidden sm:block">
                             <span class="text-[0.65rem] font-bold px-2 py-1 rounded-md uppercase ${badgeClass} shadow-sm"><i class="ph-fill ${icon}"></i> ${item.type}</span>
                         </div>
@@ -169,6 +181,23 @@ function initHistoryLogic() {
         });
     }
 
+    function analyzeSentiment(text) {
+        if (!text || text.toLowerCase() === 'no feedback provided.') return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
+        
+        const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'helpful', 'informative', 'learned', 'well', 'organized', 'maganda', 'mahusay', 'sulit', 'maraming natutunan', 'salamat', 'thank', 'nice', 'ayos', 'the best'];
+        const negativeWords = ['bad', 'poor', 'boring', 'waste', 'disorganized', 'late', 'rude', 'confusing', 'pangit', 'sayang', 'mabagal', 'maingay', 'gulo', 'hindi maganda', 'failed'];
+        
+        const lowerText = text.toLowerCase();
+        let score = 0;
+        
+        positiveWords.forEach(word => { if (lowerText.includes(word)) score++; });
+        negativeWords.forEach(word => { if (lowerText.includes(word)) score--; });
+        
+        if (score > 0) return { label: 'Positive', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: 'ph-smiley' };
+        if (score < 0) return { label: 'Negative', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: 'ph-smiley-sad' };
+        return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
+    }
+
     window.openHistoryModal = function(id) {
         const item = historyData.find(i => i.id === id);
         if(!item) return;
@@ -181,10 +210,72 @@ function initHistoryLogic() {
         if(item.type === 'Attendance') {
             document.getElementById('viewAttendanceProof').classList.remove('hidden');
             document.getElementById('viewEvaluationProof').classList.add('hidden');
-            document.getElementById('proofTime').innerText = item.date + " at " + item.time;
+            document.getElementById('proofTime').innerText = item.details.timestamp;
+            
+            // Handle location signature
+            const locSig = document.querySelector('#viewAttendanceProof .text-sm.font-bold');
+            if (item.details.is_valid_location) {
+                locSig.innerText = "Verified inside PUP Campus Perimeter.";
+                locSig.classList.add('text-gray-900', 'dark:text-white');
+                locSig.classList.remove('text-red-600');
+            } else {
+                locSig.innerText = "Detected outside the designated event location.";
+                locSig.classList.remove('text-gray-900', 'dark:text-white');
+                locSig.classList.add('text-red-600');
+            }
+
+            // Handle face capture status
+            const faceBadge = document.querySelector('#viewAttendanceProof .text-green-600, #viewAttendanceProof .text-red-600');
+            if (item.details.face_matched) {
+                faceBadge.innerHTML = '<i class="ph-fill ph-check-circle"></i> Matched';
+                faceBadge.className = 'text-xs font-bold text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-md w-full text-center border border-green-200 dark:border-green-800/50';
+            } else {
+                faceBadge.innerHTML = '<i class="ph-fill ph-x-circle"></i> Mismatch';
+                faceBadge.className = 'text-xs font-bold text-red-600 dark:text-red-500 bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-md w-full text-center border border-red-200 dark:border-red-800/50';
+            }
+
         } else {
             document.getElementById('viewAttendanceProof').classList.add('hidden');
             document.getElementById('viewEvaluationProof').classList.remove('hidden');
+            
+            const rawScore = parseInt(item.details.total_raw_score) || 0;
+            const avgRating = (rawScore / 25).toFixed(1);
+            const percent = Math.round((rawScore / 125) * 100);
+            
+            // Render Star Icons
+            const starsContainer = document.getElementById('modalEvalStars');
+            let starsHtml = '';
+            const fullStars = Math.floor(avgRating);
+            for(let i=1; i<=5; i++) {
+                if (i <= fullStars) {
+                    starsHtml += '<i class="ph-fill ph-star"></i>';
+                } else if (i === fullStars + 1 && (avgRating % 1) >= 0.5) {
+                    starsHtml += '<i class="ph-fill ph-star-half"></i>';
+                } else {
+                    starsHtml += '<i class="ph ph-star"></i>'; // Empty star
+                }
+            }
+            starsContainer.innerHTML = starsHtml;
+            document.getElementById('modalEvalAvgLabel').innerText = `${avgRating} / 5.0`;
+            
+            document.getElementById('modalEvalPercent').innerText = `${percent}%`;
+            
+            // Emoji & Grade Logic
+            const emojiEl = document.getElementById('modalEvalEmoji');
+            const gradeEl = document.getElementById('modalEvalGrade');
+            if (percent >= 90) { emojiEl.innerText = '😍'; gradeEl.innerText = 'Excellent'; gradeEl.className = 'text-[0.65rem] font-bold text-green-600 dark:text-green-400 mt-1 uppercase tracking-tighter'; }
+            else if (percent >= 75) { emojiEl.innerText = '😊'; gradeEl.innerText = 'Very Good'; gradeEl.className = 'text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 mt-1 uppercase tracking-tighter'; }
+            else if (percent >= 50) { emojiEl.innerText = '😐'; gradeEl.innerText = 'Satisfactory'; gradeEl.className = 'text-[0.65rem] font-bold text-yellow-600 dark:text-yellow-400 mt-1 uppercase tracking-tighter'; }
+            else { emojiEl.innerText = '😡'; gradeEl.innerText = 'Needs Improvement'; gradeEl.className = 'text-[0.65rem] font-bold text-red-600 dark:text-red-400 mt-1 uppercase tracking-tighter'; }
+
+            // Sentiment Analysis for Feedback
+            const feedback = item.details.feedback || "No feedback provided.";
+            document.getElementById('modalEvalComment').innerText = `"${feedback}"`;
+            
+            const sentiment = analyzeSentiment(feedback);
+            const badge = document.getElementById('modalSentimentBadge');
+            badge.className = `px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 ${sentiment.class}`;
+            badge.innerHTML = `<i class="ph-fill ${sentiment.icon}"></i> ${sentiment.label}`;
         }
 
         modal.classList.remove('hidden');
@@ -204,15 +295,22 @@ function initHistoryLogic() {
         }, 300);
     };
 
-    if(searchInput) {
-        searchInput.addEventListener('input', () => {
-            const query = searchInput.value.toLowerCase();
-            const filtered = historyData.filter(item => item.title.toLowerCase().includes(query));
-            renderHistory(filtered);
+    function applyFilters() {
+        const query = searchInput.value.toLowerCase();
+        const selectedType = typeFilter.value;
+        
+        const filtered = historyData.filter(item => {
+            const matchesSearch = item.title.toLowerCase().includes(query) || item.venue.toLowerCase().includes(query);
+            const matchesType = selectedType === 'all' || item.type === selectedType;
+            return matchesSearch && matchesType;
         });
+        renderHistory(filtered);
     }
 
-    ['btnCloseModal', 'bgOverlayClose', 'btnTopClose'].forEach(id => {
+    if(searchInput) searchInput.addEventListener('input', applyFilters);
+    if(typeFilter) typeFilter.addEventListener('change', applyFilters);
+
+    ['bgOverlayClose', 'btnTopClose'].forEach(id => {
         const btn = document.getElementById(id);
         if(btn) btn.addEventListener('click', window.closeHistoryModal);
     });

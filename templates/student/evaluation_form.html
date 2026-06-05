@@ -1,158 +1,205 @@
 {% extends 'student_base.html' %}
 {% load static %}
 
-{% block extra_js %}
-<script src="https://unpkg.com/@phosphor-icons/web"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. Fetch Event Details from SessionStorage (Synchronized with Ledger)
-    const currentId = sessionStorage.getItem('eval_event_id');
-    const currentTitle = sessionStorage.getItem('eval_event_title') || "General Event Evaluation";
-    const currentImg = sessionStorage.getItem('eval_event_img') || "{% static 'images/background.jpg' %}";        
+{% block extra_head %}
+<style>
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .star-btn { transition: transform 0.1s ease, color 0.2s ease; }
+    .star-btn:hover { transform: scale(1.2); }
+    .star-active { color: #D4AF37 !important; }
+    [v-cloak] { display: none; }
+</style>
+{% endblock extra_head %}
 
-    const headerTitle = document.getElementById('headerTitle');
-    const headerCategory = document.getElementById('headerCategory');
-    const headerImg = document.getElementById('headerImg');
+{% block content %}
+<div class="relative">
+    <!-- Header Section -->
+    <div class="w-full bg-gray-900 relative h-48 sm:h-64 flex items-end">
+        <img :src="currentImg" class="absolute inset-0 w-full h-full object-cover opacity-50">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
+        <div class="relative z-10 p-6 sm:p-10 w-full max-w-4xl mx-auto">
+            <a href="{% url 'student_evaluation' %}" class="absolute top-4 left-4 sm:top-6 sm:left-6 text-white hover:text-pup-gold transition-colors flex items-center gap-2 text-sm font-bold bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10">
+                <i class="ph-bold ph-arrow-left text-lg"></i> Back
+            </a>
+            <div class="bg-pup-gold inline-block text-black font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2 mt-8">Institutional Activity</div>
+            <h2 class="text-3xl sm:text-5xl font-black text-white leading-tight" v-text="currentTitle"></h2>    
+            <p class="text-gray-300 text-sm mt-1">Official Evaluation Form</p>
+        </div>
+    </div>
 
-    if(headerTitle) headerTitle.innerText = currentTitle;
-    if(headerCategory) headerCategory.innerText = "Institutional Activity"; // Default
-    if(headerImg) headerImg.src = currentImg;
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div class="bg-white dark:bg-[#0a0a0a] rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
+            
+            <div class="border-b border-gray-200 dark:border-gray-800 pb-4 mb-6 text-center">
+                <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wide">Performance Rating</h3>
+                <p class="text-sm text-gray-500 mt-1">Please rate the following aspects of the event honestly.</p>    
+            </div>
 
-    // 2. Generate 25 Questions (5 Categories)
-    const evaluationData = [
-        {
-            category: "Venue & Facilities",
-            questions: [
-                "Cleanliness of the venue?",
-                "Comfort of the seating arrangements?",
-                "Quality of audio/visual equipment?",
-                "Accessibility of the location?",
-                "Adequacy of space for all participants?"
-            ]
-        },
-        {
-            category: "Speaker / Facilitator",
-            questions: [
-                "Knowledge and expertise of the speaker?",
-                "Clarity of the presentation?",
-                "Ability to engage the audience effectively?",
-                "Responsiveness to questions and clarifications?",
-                "Time management during the session?"
-            ]
-        },
-        {
-            category: "Content & Relevance",
-            questions: [
-                "Relevance of the topic to your field/course?",
-                "Clarity of the event's overall objectives?",
-                "Usefulness of the learning materials provided?",
-                "Depth of the subject matter covered?",
-                "Applicability of knowledge gained in real life?"
-            ]
-        },
-        {
-            category: "Organization & Logistics",
-            questions: [
-                "Efficiency of the registration process?",
-                "Punctuality of the event schedule?",
-                "Clarity of prior announcements and communications?",
-                "Quality of food/refreshments (if applicable)?",
-                "Helpfulness and approachability of the event staff?"
-            ]
-        },
-        {
-            category: "Overall Experience",
-            questions: [
-                "Your overall satisfaction with the event?",
-                "Value for the time you invested?",
-                "Likelihood of attending similar events in the future?",
-                "Likelihood of recommending this event to others?",
-                "Did the event meet your initial expectations?"
-            ]
-        }
-    ];
+            <!-- Questions Container (Vue Managed) -->
+            <div class="flex flex-col gap-6 mb-8">
+                <div v-for="(section, sIdx) in evaluationData" :key="sIdx">
+                    <div class="mt-6 mb-4">
+                        <h3 class="text-sm sm:text-base font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest border-b border-gray-300 dark:border-gray-800 pb-2 flex items-center gap-2">
+                            <i class="ph-fill ph-check-square-offset"></i> [[ section.category ]]
+                        </h3>
+                    </div>
 
-    const emojis = ['😐', '😡', '😟', '😐', '🙂', '🤩'];
-    const container = document.getElementById('questionsContainer');
-    let globalQIndex = 1;
-
-    if(container) {
-        evaluationData.forEach((section) => {
-            const headerHTML = `
-                <div class="mt-6 mb-2">
-                    <h3 class="text-sm sm:text-base font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest border-b border-gray-300 dark:border-gray-800 pb-2 flex items-center gap-2">
-                        <i class="ph-fill ph-check-square-offset"></i> ${section.category}
-                    </h3>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', headerHTML);
-
-            section.questions.forEach((q) => {
-                const qIdx = globalQIndex++;
-                const html = `
-                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors">
-                        <p class="text-sm font-bold text-gray-700 dark:text-gray-300 sm:w-2/3 leading-snug">${qIdx}. ${q}</p>
-                        <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-1/3">
-                            <div class="flex items-center gap-1 sm:gap-2 star-group" data-q="${qIdx}" data-value="0">
-                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="1"></i>
-                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="2"></i>
-                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="3"></i>
-                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="4"></i>
-                                <i class="ph-fill ph-star text-2xl text-gray-300 dark:text-gray-700 cursor-pointer star-btn" data-val="5"></i>
+                    <div class="space-y-4">
+                        <div v-for="(q, qIdx) in section.questions" :key="qIdx" 
+                             class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors">
+                            <p class="text-sm font-bold text-gray-700 dark:text-gray-300 sm:w-2/3 leading-snug">
+                                [[ getGlobalIndex(sIdx, qIdx) ]]. [[ q ]]
+                            </p>
+                            <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-1/3">
+                                <div class="flex items-center gap-1 sm:gap-2">
+                                    <i v-for="star in 5" :key="star" 
+                                       @click="setRating(sIdx, qIdx, star)"
+                                       :class="['ph-fill ph-star text-2xl cursor-pointer star-btn', 
+                                                section.ratings[qIdx] >= star ? 'star-active' : 'text-gray-300 dark:text-gray-700']">
+                                    </i>
+                                </div>
+                                <div class="text-3xl emoji-display" :id="'emoji-' + sIdx + '-' + qIdx" v-text="emojis[section.ratings[qIdx]]">
+                                </div>
                             </div>
-                            <div class="text-3xl emoji-display" id="emoji-${qIdx}">😐</div>
                         </div>
                     </div>
-                `;
-                container.insertAdjacentHTML('beforeend', html);
-            });
-        });
+                </div>
+            </div>
 
-        // 3. Robust Star Click Logic using Event Delegation
-        container.addEventListener('click', (e) => {
-            const star = e.target.closest('.star-btn');
-            if (!star) return;
+            <!-- Comments Section -->
+            <div class="bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-8 shadow-sm">
+                <label class="block text-sm font-bold uppercase text-gray-600 dark:text-gray-400 mb-3">Additional Comments</label>
+                <textarea v-model="comments" rows="5" placeholder="Share your detailed feedback, suggestions, or concerns here..." class="w-full bg-white dark:bg-[#111] border border-gray-300 dark:border-gray-700 rounded-xl p-4 text-base text-gray-900 dark:text-white focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold resize-y shadow-inner"></textarea>
+                <p class="text-xs text-gray-500 mt-3 flex items-center gap-1"><i class="ph-fill ph-robot text-pup-maroon dark:text-pup-gold text-lg"></i> Your response will be analyzed using NLP Sentiment Engine.</p>
+            </div>
 
-            const group = star.closest('.star-group');
-            const rating = parseInt(star.getAttribute('data-val'));
-            const qId = group.getAttribute('data-q');
-            const emojiDisplay = document.getElementById(`emoji-${qId}`);
+            <!-- Submit Button -->
+            <button @click="submitEvaluation" :disabled="isSubmitting" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-4 sm:py-5 px-6 rounded-xl text-lg flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                <template v-if="isSubmitting">
+                    <i class="ph-bold ph-spinner animate-spin text-2xl"></i> ANALYZING...
+                </template>
+                <template v-else>
+                    <i class="ph-bold ph-paper-plane-tilt text-2xl"></i> SUBMIT FEEDBACK
+                </template>
+            </button>
+
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    // 🟢 INTEGRATE INTO STUDENT BASE VUE APP 🟢
+    window.VUE_APP_DATA = {
+        currentId: sessionStorage.getItem('eval_event_id'),
+        currentTitle: sessionStorage.getItem('eval_event_title') || "General Event Evaluation",
+        currentImg: sessionStorage.getItem('eval_event_img') || "{% static 'images/background.jpg' %}",
+        comments: '',
+        isSubmitting: false,
+        showSuccessModal: false,
+        finalRating: 0,
+        emojis: ['😐', '😡', '😟', '😐', '🙂', '🤩'],
+        evaluationData: [
+            {
+                category: "Venue & Facilities",
+                questions: [
+                    "Cleanliness of the venue?",
+                    "Comfort of the seating arrangements?",
+                    "Quality of audio/visual equipment?",
+                    "Accessibility of the location?",
+                    "Adequacy of space for all participants?"
+                ],
+                ratings: [0, 0, 0, 0, 0]
+            },
+            {
+                category: "Speaker / Facilitator",
+                questions: [
+                    "Knowledge and expertise of the speaker?",
+                    "Clarity of the presentation?",
+                    "Ability to engage the audience effectively?",
+                    "Responsiveness to questions and clarifications?",
+                    "Time management during the session?"
+                ],
+                ratings: [0, 0, 0, 0, 0]
+            },
+            {
+                category: "Content & Relevance",
+                questions: [
+                    "Relevance of the topic to your field/course?",
+                    "Clarity of the event's overall objectives?",
+                    "Usefulness of the learning materials provided?",
+                    "Depth of the subject matter covered?",
+                    "Applicability of knowledge gained in real life?"
+                ],
+                ratings: [0, 0, 0, 0, 0]
+            },
+            {
+                category: "Organization & Logistics",
+                questions: [
+                    "Efficiency of the registration process?",
+                    "Punctuality of the event schedule?",
+                    "Clarity of prior announcements and communications?",
+                    "Quality of food/refreshments (if applicable)?",
+                    "Helpfulness and approachability of the event staff?"
+                ],
+                ratings: [0, 0, 0, 0, 0]
+            },
+            {
+                category: "Overall Experience",
+                questions: [
+                    "Your overall satisfaction with the event?",
+                    "Value for the time you invested?",
+                    "Likelihood of attending similar events in the future?",
+                    "Likelihood of recommending this event to others?",
+                    "Did the event meet your initial expectations?"
+                ],
+                ratings: [0, 0, 0, 0, 0]
+            }
+        ]
+    };
+
+    window.VUE_APP_METHODS = {
+        getGlobalIndex(sIdx, qIdx) {
+            let count = 0;
+            if (this.evaluationData) {
+                for(let i=0; i<sIdx; i++) {
+                    count += this.evaluationData[i].questions.length;
+                }
+            }
+            return count + qIdx + 1;
+        },
+        setRating(sIdx, qIdx, val) {
+            this.evaluationData[sIdx].ratings[qIdx] = val;
             
-            group.setAttribute('data-value', rating);
-
-            const stars = group.querySelectorAll('.star-btn');
-            stars.forEach((s, idx) => {
-                if(idx < rating) {
-                    s.classList.remove('text-gray-300', 'dark:text-gray-700');
-                    s.classList.add('star-active');
-                } else {
-                    s.classList.add('text-gray-300', 'dark:text-gray-700');
-                    s.classList.remove('star-active');
+            // Animation trigger for emoji
+            const elId = `emoji-${sIdx}-${qIdx}`;
+            this.$nextTick(() => {
+                const el = document.getElementById(elId);
+                if(el) {
+                    el.classList.add('animate-bounce');
+                    setTimeout(() => el.classList.remove('animate-bounce'), 500);
                 }
             });
-
-            if(emojiDisplay) {
-                emojiDisplay.innerText = emojis[rating] || '😐';
-                emojiDisplay.classList.add('animate-bounce');
-                setTimeout(() => emojiDisplay.classList.remove('animate-bounce'), 500);
-            }
-        });
-    }
-
-    // 4. Submit & Validation Logic
-    const btnSubmit = document.getElementById('btnSubmitEval');
-    const modal = document.getElementById('successModal');
-    const modalBox = document.getElementById('successBox');
-
-    if(btnSubmit) {
-        btnSubmit.addEventListener('click', async function() {
+        },
+        async submitEvaluation() {
+            // Check if all questions are answered
             let allAnswered = true;
-            let totalRating = 0;
-            document.querySelectorAll('.star-group').forEach(g => {
-                const val = parseInt(g.getAttribute('data-value'));
-                if(val === 0) allAnswered = false;
-                totalRating += val;
+            let totalScore = 0;
+            let categoryScores = [];
+
+            this.evaluationData.forEach(section => {
+                let sectionSum = 0;
+                section.ratings.forEach(r => {
+                    if(r === 0) allAnswered = false;
+                    sectionSum += r;
+                    totalScore += r;
+                });
+                categoryScores.push({
+                    category: section.category,
+                    total: sectionSum,
+                    average: (sectionSum / 5).toFixed(1)
+                });
             });
 
             if(!allAnswered) {
@@ -160,19 +207,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const originalText = this.innerHTML;
-            this.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-2xl"></i> ANALYZING...';
-            this.disabled = true;
+            this.isSubmitting = true;
+
+            const finalAvg = (totalScore / 25);
+            this.finalRating = finalAvg;
 
             const formData = new FormData();
-            formData.append('event_id', currentId);
-            formData.append('event_title', currentTitle);
-            formData.append('rating', (totalRating / 25).toFixed(1));
-            formData.append('comments', document.getElementById('evalComments').value);
-
-            const csrf = document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
+            formData.append('event_id', this.currentId);
+            formData.append('event_title', this.currentTitle);
+            formData.append('rating', finalAvg.toFixed(1));
+            formData.append('comments', this.comments);
+            
+            // Send additional analytical data
+            formData.append('detailed_scores', JSON.stringify(categoryScores));
+            formData.append('total_raw_score', totalScore);
 
             try {
+                const csrfMatch = document.cookie.match(/csrftoken=([^;]+)/);
+                const csrf = csrfMatch ? csrfMatch[1] : '';
+                
                 const response = await fetch("{% url 'submit_evaluation' %}", {
                     method: 'POST',
                     headers: { 'X-CSRFToken': csrf },
@@ -181,147 +234,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (data.status === 'success') {
-                    const finalRating = (totalRating / 25);
-                    document.getElementById('successRating').innerText = finalRating.toFixed(1);
-
-                    let starsHtml = '';
-                    for(let i=1; i<=5; i++){
-                        if(i <= Math.floor(finalRating)) {
-                            starsHtml += '<i class="ph-fill ph-star"></i>';
-                        } else if(i === Math.ceil(finalRating) && finalRating % 1 !== 0) {
-                            starsHtml += '<i class="ph-fill ph-star-half"></i>';
-                        } else {
-                            starsHtml += '<i class="ph ph-star text-gray-300 dark:text-gray-700"></i>';
-                        }
-                    }
-                    document.getElementById('successStars').innerHTML = starsHtml;
-
-                    modal.classList.remove('hidden');
-                    setTimeout(() => modalBox.classList.remove('scale-95'), 10);
+                    this.showSuccessModal = true;
                 } else {
                     alert("Error: " + data.message);
                 }
             } catch (error) {
-                alert("Institutional Sync Error: Connection failed.");
+                console.error(error);
+                alert("Institutional Sync Error: Connection failed. Make sure you are logged in.");
             } finally {
-                this.innerHTML = originalText;
-                this.disabled = false;
+                this.isSubmitting = false;
             }
-        });
-    }
-
-    // Close Modal -> Redirect
-    ['btnCloseModal', 'btnReceiptDone'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.addEventListener('click', () => {
+        },
+        getStarClass(i, rating) {
+            if(i <= Math.floor(rating)) return 'ph-fill ph-star';
+            if(i === Math.ceil(rating) && rating % 1 !== 0) return 'ph-fill ph-star-half';
+            return 'ph ph-star text-gray-300 dark:text-gray-700';
+        },
+        redirectToLedger() {
             window.location.href = "{% url 'student_evaluation' %}";
-        });
-    });
-});
+        }
+    };
 </script>
 {% endblock extra_js %}
-
-{% block extra_head %}
-<style>
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .star-btn { transition: transform 0.1s ease, color 0.2s ease; }
-    .star-btn:hover { transform: scale(1.2); }
-    .star-active { color: #D4AF37 !important; }
-</style>
-{% endblock extra_head %}
-
-{% block content %}
-<div v-pre>
-<div class="w-full bg-gray-900 relative h-48 sm:h-64 flex items-end">
-    <img id="headerImg" src="{% static 'images/background.jpg' %}" class="absolute inset-0 w-full h-full object-cover opacity-50">
-    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
-    <div class="relative z-10 p-6 sm:p-10 w-full max-w-4xl mx-auto">
-        <a href="{% url 'student_evaluation' %}" class="absolute top-4 left-4 sm:top-6 sm:left-6 text-white hover:text-pup-gold transition-colors flex items-center gap-2 text-sm font-bold bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10">
-            <i class="ph-bold ph-arrow-left text-lg"></i> Back
-        </a>
-        <div id="headerCategory" class="bg-pup-gold inline-block text-black font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2 mt-8">Category</div>
-        <h2 id="headerTitle" class="text-3xl sm:text-5xl font-black text-white leading-tight">Event Title</h2>    
-        <p class="text-gray-300 text-sm mt-1">Official Evaluation Form</p>
-    </div>
-</div>
-
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-
-    <div class="bg-white dark:bg-[#0a0a0a] rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
-
-        <div class="border-b border-gray-200 dark:border-gray-800 pb-4 mb-6 text-center">
-            <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wide">Performance Rating</h3>
-            <p class="text-sm text-gray-500 mt-1">Please rate the following aspects of the event honestly.</p>    
-        </div>
-
-        <div id="questionsContainer" class="flex flex-col gap-6 mb-8">
-            <!-- Questions Injected by JS -->
-        </div>
-
-        <div class="bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-8 shadow-sm">
-            <label class="block text-sm font-bold uppercase text-gray-600 dark:text-gray-400 mb-3">Additional Comments</label>
-            <textarea id="evalComments" rows="5" placeholder="Share your detailed feedback, suggestions, or concerns here..." class="w-full bg-white dark:bg-[#111] border border-gray-300 dark:border-gray-700 rounded-xl p-4 text-base text-gray-900 dark:text-white focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold resize-y shadow-inner"></textarea>
-            <p class="text-xs text-gray-500 mt-3 flex items-center gap-1"><i class="ph-fill ph-robot text-pup-maroon dark:text-pup-gold text-lg"></i> Your response will be analyzed using NLP Sentiment Engine.</p>
-        </div>
-
-        <button id="btnSubmitEval" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-4 sm:py-5 px-6 rounded-xl text-lg flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md transform hover:-translate-y-0.5">
-            <i class="ph-bold ph-paper-plane-tilt text-2xl"></i> SUBMIT FEEDBACK
-        </button>
-
-    </div>
-</div>
-
-<div id="successModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
-
-    <div class="relative bg-white dark:bg-[#111] rounded-[2.5rem] shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-10 text-center border border-gray-200 dark:border-gray-800 z-10 transform scale-95 transition-transform duration-300 font-sans" id="successBox">
-
-        <button id="btnCloseModal" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-            <i class="ph-bold ph-x"></i>
-        </button>
-
-        <div class="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-6 shrink-0 shadow-lg ring-4 ring-green-500/10">
-            <i class="ph-bold ph-check text-4xl text-white"></i>
-        </div>
-
-        <div class="mb-6">
-            <h2 class="text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tight">EVALUATION SAVED</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Your feedback has been successfully submitted.</p>
-        </div>
-
-        <!-- Receipt-style Summary -->
-        <div class="w-full space-y-4 mb-8">
-            <div class="bg-gray-50 dark:bg-[#151515] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 text-center">
-                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Overall Rating Given</span>
-                <div class="flex flex-col items-center gap-1">
-                    <div id="successStars" class="flex text-pup-gold text-2xl gap-0.5 mb-1">
-                        <!-- Stars injected here -->
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span id="successRating" class="text-3xl font-black text-pup-maroon dark:text-pup-gold">5.0</span>
-                        <span class="text-xs font-bold text-gray-400 uppercase">/ 5.0</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-[#0a0a0a] p-5 rounded-2xl border border-gray-100 dark:border-gray-800 text-left">
-                <div class="flex items-center gap-2 mb-3">
-                    <div class="w-1.5 h-4 bg-pup-maroon dark:bg-pup-gold rounded-full"></div>
-                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Feedback Analysis</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Sentiment Engine:</span>     
-                    <span class="text-[10px] font-black text-green-500 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-md uppercase tracking-wider">Positive</span>
-                </div>
-            </div>
-        </div>
-
-        <button id="btnReceiptDone" class="w-full py-4 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black rounded-2xl text-xs transition-all shadow-md hover:opacity-90 active:scale-95 uppercase tracking-[0.2em]">
-            Proceed to Dashboard
-        </button>
-
-    </div>
-</div>
-</div>
-{% endblock content %}

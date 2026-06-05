@@ -5,9 +5,10 @@ from django.contrib.auth.hashers import make_password
 # 1. ORGANIZATION PROFILE
 class OrgProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    organization = models.CharField(max_length=50) 
+    organization = models.CharField(max_length=50)
     profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
     cover_photo = models.ImageField(upload_to='covers/', null=True, blank=True)
+    face_encoding = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.organization}"
@@ -122,7 +123,8 @@ class Student(models.Model):
 # 4. ATTENDANCE MODEL
 class Attendance(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True, blank=True)
+    organizer = models.ForeignKey(OrgProfile, on_delete=models.CASCADE, null=True, blank=True)
     time_in = models.DateTimeField(auto_now_add=True)
     
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
@@ -131,7 +133,8 @@ class Attendance(models.Model):
     is_valid_location = models.BooleanField(default=False) 
     
     def __str__(self):
-        return f"{self.student.student_number} - {self.event.event_title}"
+        target = self.student.student_number if self.student else (self.organizer.user.username if self.organizer else "Unknown")
+        return f"{target} - {self.event.event_title}"
 
 # 5. LOGIN LOCKOUT TRACKER
 class LoginLockout(models.Model):

@@ -11,6 +11,12 @@
     .status-ongoing { background-color: #059669; }
     .status-ended { background-color: #800000; }
     .status-upcoming { background-color: #1e1e1e; }
+    
+    /* Dark Mode Badge Overrides */
+    .dark .status-ongoing { background-color: #D4AF37; color: #fff; }
+    .dark .status-ended { background-color: #D4AF37; color: #fff; opacity: 0.7; }
+    .dark .status-upcoming { background-color: #D4AF37; color: #fff; opacity: 0.5; }
+
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
@@ -33,11 +39,11 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-10" id="eventsGrid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-10" id="eventsGrid">
         <!-- Events injected by JS -->
     </div>
     
-    <div id="noResults" style="display: none;" class="text-center py-20 bg-gray-50 dark:bg-pup-darkcard rounded-[3rem] border border-dashed border-gray-200 dark:border-gray-800">
+    <div id="noResults" style="display: none;" class="text-center py-20 bg-gray-50 dark:bg-pup-darkcard rounded-[2rem] border border-dashed border-gray-200 dark:border-gray-800">
         <i class="ph-bold ph-calendar-blank text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
         <h3 class="font-black text-xl text-gray-600 dark:text-gray-400 uppercase tracking-tighter">No Events Found</h3>
         <p class="text-gray-400 text-xs mt-1 uppercase tracking-widest font-bold">Check back later for newly approved activities.</p>
@@ -68,33 +74,33 @@
                 </div>
                 
                 <div class="p-8 sm:p-10">
-                    <div id="countdownWrapper" class="mb-8 p-5 bg-gray-900 border border-gray-800 rounded-[2rem] flex items-center justify-between shadow-2xl">
+                    <div id="countdownWrapper" class="mb-8 p-5 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex items-center justify-between shadow-xl">
                         <div class="flex flex-col">
-                            <span id="countdownLabel" class="text-[9px] font-black text-pup-gold uppercase tracking-[0.3em] mb-1">Authorization Link</span>
-                            <div id="modalCountdown" class="text-2xl font-black text-white countdown-timer tabular-nums tracking-tighter">00:00:00</div>
+                            <span id="countdownLabel" class="text-[9px] font-black text-white/80 dark:text-black/80 uppercase tracking-[0.3em] mb-1">Authorization Link</span>
+                            <div id="modalCountdown" class="text-2xl font-black text-white dark:text-black countdown-timer tabular-nums tracking-tighter">00:00:00</div>
                         </div>
-                        <div class="w-12 h-12 bg-pup-gold rounded-xl flex items-center justify-center text-black shadow-lg">
+                        <div class="w-12 h-12 bg-white/20 dark:bg-black/10 rounded-xl flex items-center justify-center text-white dark:text-black shadow-inner">
                             <i id="countdownIcon" class="ph-fill ph-clock text-2xl"></i>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-gray-50 dark:bg-[#0a0a0a] p-5 rounded-[1.5rem] border border-gray-100 dark:border-gray-900 shadow-inner text-xs">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
-                                <i class="ph-fill ph-calendar text-xl"></i>
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm min-h-[70px]">
+                            <div class="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                                <i class="ph-fill ph-calendar text-lg"></i>
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <span class="block text-[8px] font-black text-gray-400 uppercase tracking-widest">Schedule</span>
-                                <span id="modalDateTime" class="font-black text-gray-900 dark:text-white uppercase tracking-tight">Date Time</span>
+                                <span id="modalDateTime" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words">Date Time</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
-                                <i class="ph-fill ph-map-pin text-xl"></i>
+                        <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm min-h-[70px]">
+                            <div class="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                                <i class="ph-fill ph-map-pin text-lg"></i>
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <span class="block text-[8px] font-black text-gray-400 uppercase tracking-widest">Venue</span>
-                                <span id="modalVenue" class="font-black text-gray-900 dark:text-white uppercase tracking-tight truncate block">Venue</span>
+                                <span id="modalVenue" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2">Venue</span>
                             </div>
                         </div>
                     </div>
@@ -203,24 +209,24 @@
 
             filtered.forEach(e => {
                 const card = document.createElement('div');
-                card.className = "js-event-card bg-white dark:bg-pup-darkcard rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-row md:flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700";
+                card.className = "js-event-card bg-white dark:bg-pup-darkcard rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700";
                 card.innerHTML = `
-                    <div class="w-28 sm:w-36 md:w-full h-28 sm:h-36 md:h-48 shrink-0 relative bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-r md:border-r-0 md:border-b border-gray-100 dark:border-gray-800 overflow-hidden">
+                    <div class="h-40 w-full shrink-0 relative bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-b border-gray-100 dark:border-gray-800 overflow-hidden">
                         <img src="${e.image}" class="event-card-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-6');">
-                        <div class="absolute top-4 right-4">
-                            <span class="text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1.5" data-event-id="${e.id}">
+                        <div class="absolute top-3 right-3">
+                            <span class="text-white text-[8px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1.5" data-event-id="${e.id}">
                                 <i class="ph-bold ph-clock"></i> --:--:--
                             </span>
                         </div>
                     </div>
-                    <div class="p-5 flex flex-col justify-center w-full min-w-0">
-                        <div class="text-[9px] font-black text-pup-maroon dark:text-pup-gold mb-1 truncate uppercase tracking-[0.2em]">${e.date_display}</div>
-                        <h3 class="font-black text-lg sm:text-xl text-gray-900 dark:text-white leading-none mb-3 truncate uppercase tracking-tighter">${e.title}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 font-medium">${e.description || 'Join us for this exciting campus activity.'}</p>
-                        <div class="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800 mt-auto">
-                            <p class="text-[9px] text-gray-400 flex items-center gap-1.5 font-bold uppercase tracking-widest truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> <span class="truncate">${e.venue}</span></p>
+                    <div class="p-4 flex flex-col justify-center w-full min-w-0">
+                        <div class="text-[8px] font-black text-pup-maroon dark:text-pup-gold mb-1 truncate uppercase tracking-[0.2em]">${e.date_display}</div>
+                        <h3 class="font-black text-base text-gray-900 dark:text-white leading-tight mb-2 truncate uppercase tracking-tighter">${e.title}</h3>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-2 mb-4 font-medium leading-relaxed">${e.description || 'Join us for this exciting campus activity.'}</p>
+                        <div class="flex items-center justify-between pt-3 border-t border-gray-50 dark:border-gray-800 mt-auto">
+                            <p class="text-[8px] text-gray-400 flex items-center gap-1 font-bold uppercase tracking-widest truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> <span class="truncate">${e.venue}</span></p>
                             <div class="flex items-center gap-2">
-                                ${e.already_attended ? '<i class="ph-fill ph-check-circle text-green-500 text-lg"></i>' : '<i class="ph-bold ph-caret-right text-gray-300 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-2 text-lg"></i>'}
+                                ${e.already_attended ? '<i class="ph-fill ph-check-circle text-green-500 text-base"></i>' : '<i class="ph-bold ph-caret-right text-gray-300 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-1 text-base"></i>'}
                             </div>
                         </div>
                     </div>
