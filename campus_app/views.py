@@ -497,7 +497,14 @@ def get_student_notifications(student):
     })
 
     # 2. Upcoming Events (Approved & Future)
-    upcoming_events = Event.objects.filter(event_status='Approved', event_date__gte=timezone.now().date()).order_by('event_date')[:5]
+    # 🟢 RBAC Filtered: Own Org + Global Events
+    upcoming_events = Event.objects.filter(
+        Q(org_id=student.organization) | 
+        Q(event_title__icontains='Flag Raising') | 
+        Q(event_title__icontains='General Assembly') | 
+        Q(event_title__icontains='Student Week')
+    ).filter(event_status='Approved', event_date__gte=timezone.now().date()).order_by('event_date')[:5]
+    
     for evt in upcoming_events:
         notifications.append({
             'id': f"event_{evt.id}",
@@ -603,8 +610,11 @@ def student_homepage(request):
     except Student.DoesNotExist:
         return redirect('index')
 
-    upcoming_events = Event.objects.filter(event_status='Approved').order_by('event_date', 'start_time')[:4]
-    latest_news = Event.objects.filter(event_status='Approved').order_by('-created_at')[:4]
+    # 🟢 RBAC Filtered: Own Org + Global Events
+    org_filter = Q(org_id=student.organization) | Q(event_title__icontains='Flag Raising') | Q(event_title__icontains='General Assembly') | Q(event_title__icontains='Student Week')
+
+    upcoming_events = Event.objects.filter(org_filter).filter(event_status='Approved').order_by('event_date', 'start_time')[:4]
+    latest_news = Event.objects.filter(org_filter).filter(event_status='Approved').order_by('-created_at')[:4]
 
     def get_img(e):
         if e.event_cover_photo: return e.event_cover_photo.url
@@ -639,7 +649,7 @@ def student_homepage(request):
     action_required = None
     
     # Simple logic: check events that ended today or within last 24h
-    evaluatable_events = Event.objects.filter(event_status='Approved', event_date=now.date())
+    evaluatable_events = Event.objects.filter(org_filter).filter(event_status='Approved', event_date=now.date())
     evaluated_titles = list(AuditLog.objects.filter(actor=request.user, action='EVALUATION', status='Success').values_list('changes__event', flat=True))
 
     for e in evaluatable_events:
@@ -670,7 +680,13 @@ def student_school_events(request):
     except Student.DoesNotExist:
         return redirect('index')
 
-    all_events = Event.objects.filter(event_status='Approved').order_by('-event_date', '-start_time')
+    # 🟢 RBAC Filtered: Own Org + Global Events
+    all_events = Event.objects.filter(
+        Q(org_id=student.organization) | 
+        Q(event_title__icontains='Flag Raising') | 
+        Q(event_title__icontains='General Assembly') | 
+        Q(event_title__icontains='Student Week')
+    ).filter(event_status='Approved').order_by('-event_date', '-start_time')
     
     # 🟢 ID-BASED TRACKING 🟢
     attended_ids = [str(eid) for eid in list(Attendance.objects.filter(student=student).values_list('event_id', flat=True))]
@@ -711,8 +727,18 @@ def student_school_events(request):
 
 @user_passes_test(is_student_strictly, login_url='/')
 def student_event_calendar(request):
-    # Fetch all approved events
-    approved_events = Event.objects.filter(event_status='Approved').order_by('event_date', 'start_time')
+    try:
+        student = Student.objects.get(user=request.user)
+    except Student.DoesNotExist:
+        return redirect('index')
+
+    # 🟢 RBAC Filtered: Own Org + Global Events
+    approved_events = Event.objects.filter(
+        Q(org_id=student.organization) | 
+        Q(event_title__icontains='Flag Raising') | 
+        Q(event_title__icontains='General Assembly') | 
+        Q(event_title__icontains='Student Week')
+    ).filter(event_status='Approved').order_by('event_date', 'start_time')
     
     # Prepare data for FullCalendar
     events_data = []
@@ -766,7 +792,13 @@ def student_evaluation(request):
     except Student.DoesNotExist:
         return redirect('index')
 
-    all_events = Event.objects.filter(event_status='Approved').order_by('-event_date', '-start_time')
+    # 🟢 RBAC Filtered: Own Org + Global Events
+    all_events = Event.objects.filter(
+        Q(org_id=student.organization) | 
+        Q(event_title__icontains='Flag Raising') | 
+        Q(event_title__icontains='General Assembly') | 
+        Q(event_title__icontains='Student Week')
+    ).filter(event_status='Approved').order_by('-event_date', '-start_time')
     
     # 🟢 ID-BASED TRACKING 🟢
     evaluated_ids = [str(eid) for eid in list(AuditLog.objects.filter(
@@ -923,7 +955,14 @@ def organizer_homepage(request):
     # Action Required: Find events that just ended but haven't had a terminal report generated (placeholder logic)
     action_required = Event.objects.filter(org_id=org_acronym, event_status='Approved', event_date__lte=timezone.now().date()).first()
     
-    latest_news = Event.objects.filter(event_status='Approved').order_by('-created_at')[:4]
+    # 🟢 RBAC Filtered Latest News: Own Org + Global Events
+    latest_news = Event.objects.filter(
+        Q(org_id=org_acronym) | 
+        Q(event_title__icontains='Flag Raising') | 
+        Q(event_title__icontains='General Assembly') | 
+        Q(event_title__icontains='Student Week')
+    ).filter(event_status='Approved').order_by('-created_at')[:4]
+
     news_data = []
     for e in latest_news:
         news_data.append({
@@ -956,7 +995,13 @@ def organizer_school_events(request):
         org_acronym = "UNKNOWN"
         org_profile = None
 
-    all_events = Event.objects.filter(event_status='Approved').order_by('-event_date', '-start_time')
+    # 🟢 RBAC Filtered Ledger: Own Org + Global Events
+    all_events = Event.objects.filter(
+        Q(org_id=org_acronym) | 
+        Q(event_title__icontains='Flag Raising') | 
+        Q(event_title__icontains='General Assembly') | 
+        Q(event_title__icontains='Student Week')
+    ).filter(event_status='Approved').order_by('-event_date', '-start_time')
     
     # 🟢 ID-BASED TRACKING 🟢
     attended_ids = []
@@ -1294,7 +1339,72 @@ def organizer_analytics(request):
         org_acronym = org_profile.organization.strip()
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
-    return render(request, 'organizer/analytics.html', {'org_acronym': org_acronym, 'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym)})
+
+    # Fetch all approved events for this org
+    org_events = Event.objects.filter(org_id=org_acronym, event_status='Approved')
+    event_ids = [str(e.id) for e in org_events]
+    
+    # Fetch evaluations from AuditLog
+    eval_logs = AuditLog.objects.filter(action='EVALUATION', target_id__in=event_ids, status='Success')
+    
+    total_evals = eval_logs.count()
+    
+    # Calculate average rating and sentiment
+    total_rating = 0
+    positive_count = 0
+    
+    # Response Distribution [1, 2, 3, 4, 5]
+    distribution = [0, 0, 0, 0, 0]
+    
+    event_analytics_data = []
+    for e in org_events:
+        e_logs = [log for log in eval_logs if log.target_id == str(e.id)]
+        e_count = len(e_logs)
+        e_rating = 0
+        e_dist = [0, 0, 0, 0, 0]
+        
+        if e_count > 0:
+            e_total_rating = 0
+            e_pos = 0
+            for log in e_logs:
+                try:
+                    changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
+                    r = float(changes.get('rating', 0))
+                    e_total_rating += r
+                    idx = int(round(r)) - 1
+                    if 0 <= idx <= 4:
+                        e_dist[idx] += 1
+                        distribution[idx] += 1
+                    if r >= 4: e_pos += 1
+                except: continue
+            
+            e_rating = e_total_rating / e_count
+            total_rating += e_total_rating
+            positive_count += e_pos
+            
+        event_analytics_data.append({
+            'id': e.id,
+            'title': e.event_title,
+            'date': e.event_date.strftime('%b %d, %Y'),
+            'respondents': e_count,
+            'score': round(e_rating, 1),
+            'sentiment': int((e_pos / e_count * 100)) if e_count > 0 else 0,
+            'dist': e_dist
+        })
+
+    avg_rating = round(total_rating / total_evals, 1) if total_evals > 0 else 0.0
+    pos_sentiment = int((positive_count / total_evals * 100)) if total_evals > 0 else 0
+
+    context = {
+        'org_acronym': org_acronym, 
+        'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
+        'total_evals': total_evals,
+        'avg_rating': avg_rating,
+        'pos_sentiment': pos_sentiment,
+        'events_managed': org_events.count(),
+        'history_data_json': json.dumps(event_analytics_data)
+    }
+    return render(request, 'organizer/analytics.html', context)
 
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_profile(request):

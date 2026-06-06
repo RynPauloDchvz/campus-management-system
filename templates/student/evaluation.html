@@ -23,71 +23,44 @@
         <p class="text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-[0.4em]">Synchronize feedback to unlock institutional certificates</p>
     </div>
 
-    <!-- SIDE-BY-SIDE LAYOUT -->
-    <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-        
-        <!-- LEFT PANEL: Open Sessions (8 cols) -->
-        <div class="xl:col-span-8 bg-white dark:bg-pup-darkcard rounded-[3rem] p-6 sm:p-10 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col min-h-[700px]">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-6 border-b border-gray-100 dark:border-gray-800">
-                <div class="flex items-center gap-4">
-                    <div class="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-[1.5rem] flex items-center justify-center text-pup-maroon dark:text-pup-gold shadow-sm border border-red-100 dark:border-red-900/30">
-                        <i class="ph-fill ph-pulse text-3xl"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-1">Open Sessions</h2>
-                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Active participation window</p>
-                    </div>
-                </div>
-                <div class="relative w-full sm:w-72">
-                    <input type="text" id="openSearch" placeholder="Search sessions..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-[10px] font-black uppercase tracking-widest shadow-inner transition-all">
-                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="activeEvaluationsGrid">
-                <!-- Events injected by JS -->
-            </div>
-
-            <div id="noActiveEvaluations" style="display: none;" class="text-center py-24 m-auto">
-                <i class="ph-bold ph-chats-circle text-7xl text-gray-200 dark:text-gray-700 mb-6"></i>
-                <h3 class="font-black text-xl text-gray-400 uppercase tracking-tighter">No Active Sessions</h3>
-                <p class="text-gray-400 text-[10px] mt-1 font-black uppercase tracking-[0.2em]">Feedback portals unlock 1 hour before event ends.</p>
-            </div>
-        </div>
-
-        <!-- RIGHT PANEL: History (4 cols) -->
-        <div class="xl:col-span-4 bg-gray-50 dark:bg-[#0a0a0a] rounded-[3rem] p-6 sm:p-8 border border-gray-100 dark:border-gray-900 shadow-inner flex flex-col min-h-[700px]">
-            <div class="flex items-center gap-4 mb-8 pb-6 border-b border-gray-200 dark:border-gray-800">
-                <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center text-gray-400 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <i class="ph-fill ph-clock-counter-clockwise text-2xl"></i>
+    <!-- MAIN PANEL: Open Sessions -->
+    <div class="bg-white dark:bg-pup-darkcard rounded-[3rem] p-6 sm:p-10 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col min-h-[700px]">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-6 border-b border-gray-100 dark:border-gray-800">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-[1.5rem] flex items-center justify-center text-pup-maroon dark:text-pup-gold shadow-sm border border-red-100 dark:border-red-900/30">
+                    <i class="ph-fill ph-pulse text-3xl"></i>
                 </div>
                 <div>
-                    <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-1">Committed</h2>
-                    <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Feedback History</p>
+                    <h2 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-1">Open Sessions</h2>
+                    <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Active participation window</p>
                 </div>
             </div>
-
-            <div class="flex flex-col gap-4 overflow-y-auto hide-scrollbar max-h-[600px]" id="historyGrid">
-                <!-- History injected by JS -->
-            </div>
-            
-            <div id="noHistory" style="display: none;" class="text-center py-20 m-auto">
-                <i class="ph-bold ph-folder-open text-5xl text-gray-200 dark:text-gray-700 mb-4"></i>
-                <h3 class="font-black text-sm text-gray-400 uppercase tracking-tighter">No records found</h3>
+            <div class="relative w-full sm:w-72">
+                <input type="text" id="openSearch" placeholder="Search sessions..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-[10px] font-black uppercase tracking-widest shadow-inner transition-all">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
             </div>
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="activeEvaluationsGrid">
+            <!-- Events injected by JS -->
+        </div>
+
+        <div id="noActiveEvaluations" style="display: none;" class="text-center py-24 m-auto">
+            <i class="ph-bold ph-chats-circle text-7xl text-gray-200 dark:text-gray-700 mb-6"></i>
+            <h3 class="font-black text-xl text-gray-400 uppercase tracking-tighter">No Active Sessions</h3>
+            <p class="text-gray-400 text-[10px] mt-1 font-black uppercase tracking-[0.2em]">Feedback portals unlock 1 hour before event ends.</p>
+        </div>
     </div>
 
 </div>
 
 <!-- HISTORY DETAIL MODAL -->
-<div id="historyDetailModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-4 sm:p-6">
+<div id="historyDetailModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-0 sm:p-6">
     <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="closeHistoryModal()"></div>
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[85vh] overflow-hidden border border-gray-100 dark:border-gray-800 z-10 transition-all">
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-100 dark:border-gray-800 z-10 transition-all">
         
-        <div class="p-8 sm:p-12 overflow-y-auto hide-scrollbar flex-grow">
-            <button onclick="closeHistoryModal()" class="absolute top-8 right-8 w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors z-50">
+        <div class="p-6 sm:p-12 overflow-y-auto hide-scrollbar flex-grow">
+            <button onclick="closeHistoryModal()" class="absolute top-6 right-6 w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors z-50">
                 <i class="ph-bold ph-x text-xl"></i>
             </button>
 
@@ -157,9 +130,7 @@
 
     function initEvaluationHubLogic() {
         const activeGrid = document.getElementById('activeEvaluationsGrid');
-        const historyGrid = document.getElementById('historyGrid');
         const noActive = document.getElementById('noActiveEvaluations');
-        const noHistory = document.getElementById('noHistory');
         
         const openSearch = document.getElementById('openSearch');
 
@@ -252,39 +223,6 @@
             });
         }
 
-        function renderHistory() {
-            if (!historyGrid) return;
-            historyGrid.innerHTML = '';
-            if (HISTORY_DATA.length === 0) {
-                if(noHistory) noHistory.style.display = 'block';
-                return;
-            }
-            if(noHistory) noHistory.style.display = 'none';
-
-            HISTORY_DATA.forEach((h, index) => {
-                const item = document.createElement('div');
-                item.className = "bg-white dark:bg-[#111] p-5 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all group";
-                item.onclick = () => openHistoryModal(h);
-                
-                item.innerHTML = `
-                    <div class="flex items-center gap-4 min-w-0">
-                        <div class="w-10 h-10 bg-gray-50 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-400 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors shrink-0">
-                            <i class="ph-fill ph-file-text text-xl"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="font-black text-[11px] text-gray-900 dark:text-white uppercase tracking-tight truncate leading-none mb-1">${h.title}</h4>
-                            <p class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">${h.date}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3 shrink-0">
-                        <span class="text-xs font-black text-pup-maroon dark:text-pup-gold">${parseFloat(h.rating).toFixed(1)}</span>
-                        <i class="ph-bold ph-caret-right text-gray-300 group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-                `;
-                historyGrid.appendChild(item);
-            });
-        }
-
         function formatTimeDiffShort(ms) {
             const h = Math.floor(ms / 3600000);
             const m = Math.floor((ms % 3600000) / 60000);
@@ -361,7 +299,6 @@
         if (openSearch) openSearch.addEventListener('input', () => renderActive(openSearch.value));
 
         renderActive();
-        renderHistory();
         setInterval(renderActive, 1000); 
     }
 

@@ -52,10 +52,10 @@
 </div>
 
 <!-- Participation Modal -->
-<div id="participationModal" style="display: none;" class="fixed inset-0 z-[2000] items-center justify-center overflow-hidden p-4 sm:p-10 font-sans">
+<div id="participationModal" style="display: none;" class="fixed inset-0 z-[2000] items-center justify-center overflow-hidden p-0 sm:p-10 font-sans">
     <div class="fixed inset-0 bg-black/95 backdrop-blur-md" id="bgOverlayClose"></div>
     
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] border border-gray-100 dark:border-gray-800 overflow-hidden">
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] border-0 sm:border border-gray-100 dark:border-gray-800 overflow-hidden">
         
         <button id="btnTopClose" class="absolute top-6 right-6 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-lg hover:bg-black/70 transition-colors">
             <i class="ph-bold ph-x"></i>
@@ -68,13 +68,13 @@
                 <div class="h-56 sm:h-72 w-full relative shrink-0 bg-gray-900">
                     <img id="modalImg" src="" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                    <div class="absolute bottom-6 left-8 right-8">
+                    <div class="absolute bottom-6 left-6 sm:left-8 right-6 sm:right-8">
                         <h2 id="modalTitle" class="text-2xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">Title</h2>
                     </div>
                 </div>
                 
-                <div class="p-8 sm:p-10">
-                    <div id="countdownWrapper" class="mb-8 p-5 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex items-center justify-between shadow-xl">
+                <div class="p-6 sm:p-10">
+                    <div id="countdownWrapper" class="mb-6 sm:mb-8 p-5 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex items-center justify-between shadow-xl">
                         <div class="flex flex-col">
                             <span id="countdownLabel" class="text-[9px] font-black text-white/80 dark:text-black/80 uppercase tracking-[0.3em] mb-1">Authorization Link</span>
                             <div id="modalCountdown" class="text-2xl font-black text-white dark:text-black countdown-timer tabular-nums tracking-tighter">00:00:00</div>
@@ -84,23 +84,23 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4 mb-8">
-                        <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm min-h-[70px]">
-                            <div class="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
-                                <i class="ph-fill ph-calendar text-lg"></i>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                        <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm h-[85px]">
+                            <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                                <i class="ph-fill ph-calendar text-xl"></i>
                             </div>
-                            <div class="min-w-0">
-                                <span class="block text-[8px] font-black text-gray-400 uppercase tracking-widest">Schedule</span>
-                                <span id="modalDateTime" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words">Date Time</span>
+                            <div class="min-w-0 flex-grow text-left">
+                                <span class="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Schedule</span>
+                                <span id="modalDateTime" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2 leading-tight">Date Time</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm min-h-[70px]">
-                            <div class="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
-                                <i class="ph-fill ph-map-pin text-lg"></i>
+                        <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm h-[85px]">
+                            <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                                <i class="ph-fill ph-map-pin text-xl"></i>
                             </div>
-                            <div class="min-w-0">
-                                <span class="block text-[8px] font-black text-gray-400 uppercase tracking-widest">Venue</span>
-                                <span id="modalVenue" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2">Venue</span>
+                            <div class="min-w-0 flex-grow text-left">
+                                <span class="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Venue</span>
+                                <span id="modalVenue" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2 leading-tight">Venue</span>
                             </div>
                         </div>
                     </div>

@@ -53,7 +53,7 @@
                      data-venue="{{ event.venue }}" 
                      data-desc="{{ event.description }}" 
                      data-img="{% if event.thumbnail %}{{ event.thumbnail.url }}{% elif event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% else %}{% static 'images/PUPLogo.png' %}{% endif %}">
-                    <div class="w-20 h-20 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] shrink-0 overflow-hidden">
+                    <div class="w-24 h-24 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] shrink-0 overflow-hidden">
                         <img src="{% if event.thumbnail %}{{ event.thumbnail.url }}{% elif event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% else %}{% static 'images/PUPLogo.png' %}{% endif %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
                     </div>
                     <div class="flex flex-col justify-center min-w-0 flex-grow">
@@ -78,19 +78,19 @@
 </div>
 
 <!-- Event Details Modal (Similar to Participation Hub Modal) -->
-<div id="masterlistModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden p-4 sm:p-6">
+<div id="masterlistModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden p-0 sm:p-6">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose"></div>
     
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 transform transition-transform scale-95 opacity-0 duration-300" id="modalContentBlock">
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-3xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700 transform transition-transform scale-95 opacity-0 duration-300" id="modalContentBlock">
         
-        <button id="btnTopClose" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
+        <button id="btnTopClose" class="absolute top-6 right-6 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
             <i class="ph-bold ph-x"></i>
         </button>
 
         <div class="flex flex-col w-full h-full overflow-y-auto hide-scrollbar">
             <div class="h-64 sm:h-80 w-full relative shrink-0 bg-gray-900">
                 <img id="modalImg" src="" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
                 <div class="absolute bottom-6 left-6 right-6">
                     <div id="modalCategory" class="bg-pup-gold inline-block text-black font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2">Category</div>
                     <h2 id="modalTitle" class="text-3xl sm:text-4xl font-black text-white leading-tight">Title</h2>

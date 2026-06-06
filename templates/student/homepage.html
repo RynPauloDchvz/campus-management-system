@@ -23,7 +23,7 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
     
-    <div class="hero-container relative w-full h-[200px] sm:h-[250px] md:h-[300px] rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl mb-8 bg-gray-900">
+    <div class="hero-container relative -mx-5 sm:mx-0 h-[200px] sm:h-[250px] md:h-[300px] rounded-none sm:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl mb-8 bg-gray-900">
         <img src="{% static 'images/banner/banner.jpg' %}" alt="PUP Banner" class="absolute inset-0 w-full h-full object-cover z-0">
         <div class="absolute inset-0 bg-black/30 z-0"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-pup-maroon/95 to-black/70 dark:from-black/95 dark:to-pup-darkbg/80 z-0"></div>
@@ -142,9 +142,9 @@
 
 <!-- Modal News -->
 <transition enter-active-class="transition ease-out duration-300" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-200" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-    <div v-if="isEventModalOpen" class="fixed inset-0 z-[3000] flex items-center justify-center p-4">
+    <div v-if="isEventModalOpen" class="fixed inset-0 z-[3000] flex items-center justify-center p-0 sm:p-4">
         <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" @click="closeModal"></div>
-        <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-3xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700">
             <button @click="closeModal" class="absolute top-4 right-4 z-[3010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
                 <i class="ph-bold ph-x"></i>
             </button>
