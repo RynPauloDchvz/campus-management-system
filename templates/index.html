@@ -48,6 +48,12 @@
             100% { top: 100%; }
         }
         .scan-line { animation: scan 2s linear infinite; }
+
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow { animation: spin-slow 8s linear infinite; }
     </style>
 </head>
 <body class="bg-white dark:bg-pup-darkbg text-gray-800 dark:text-gray-200 transition-colors duration-300 antialiased selection:bg-pup-gold selection:text-black overflow-hidden">
@@ -158,6 +164,7 @@
                     </div>
 
                     <form @submit.prevent="submitLogin" class="space-y-5">
+                        {% csrf_token %}
                         <!-- Student No Only -->
                         <div>
                             <label class="block text-xs font-bold text-gray-500 dark:text-pup-gold mb-1.5 uppercase tracking-wider">Student Number</label>
@@ -202,9 +209,9 @@
                 <!-- ============================================== -->
                 <div v-if="currentView === 'register'" class="w-full animate-[fadeIn_0.3s_ease-out] flex flex-col">
                     
-                    <!-- 🟢 PERSISTENT PROGRESS BAR 🟢 -->
+                    <!-- 🟢 PERSISTENT PROGRESS BAR (Updated to 5 steps) 🟢 -->
                     <div class="w-full h-1.5 bg-gray-100 dark:bg-gray-800 flex rounded-full overflow-hidden mb-8 shrink-0">
-                        <div class="h-full bg-pup-maroon dark:bg-pup-gold transition-all duration-500" :style="{ width: (registerStep / 3 * 100) + '%' }"></div>
+                        <div class="h-full bg-pup-maroon dark:bg-pup-gold transition-all duration-500" :style="{ width: (registerStep / 5 * 100) + '%' }"></div>
                     </div>
 
                     <!-- STEP 1: VERIFICATION -->
@@ -227,8 +234,142 @@
                         </p>
                     </div>
 
-                    <!-- STEP 2: FORM DETAILS -->
-                    <div v-if="registerStep === 2" class="pb-6">
+                    <!-- STEP 2: ACCOUNT TYPE SELECTION -->
+                    <div v-if="registerStep === 2" class="flex flex-col items-center text-center py-2">
+                        <div class="w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6 border border-gray-100 dark:border-gray-700">
+                            <i class="ph-fill ph-identification-card text-4xl text-pup-maroon dark:text-pup-gold"></i>
+                        </div>
+                        <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2">Account Type</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-8">Choose the type of organization you belong to.</p>
+                        
+                        <div class="w-full grid grid-cols-1 gap-4">
+                            <button @click="accountType = 'academic'; registerStep = 3" class="group w-full p-5 rounded-2xl border-2 border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold transition-all text-left flex items-center gap-4 bg-gray-50/50 dark:bg-gray-800/30">
+                                <div class="w-12 h-12 rounded-xl bg-white dark:bg-gray-900 flex items-center justify-center shadow-sm group-hover:bg-pup-maroon dark:group-hover:bg-pup-gold transition-colors">
+                                    <i class="ph-bold ph-graduation-cap text-2xl text-pup-maroon dark:text-pup-gold group-hover:text-white dark:group-hover:text-black"></i>
+                                </div>
+                                <div>
+                                    <span class="block font-black text-gray-900 dark:text-white uppercase tracking-tight">Academic Track</span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">For Program-based Organizations (ITO, YEO, etc.)</span>
+                                </div>
+                            </button>
+
+                            <button @click="accountType = 'non-academic'; registerStep = 3" class="group w-full p-5 rounded-2xl border-2 border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold transition-all text-left flex items-center gap-4 bg-gray-50/50 dark:bg-gray-800/30">
+                                <div class="w-12 h-12 rounded-xl bg-white dark:bg-gray-900 flex items-center justify-center shadow-sm group-hover:bg-pup-maroon dark:group-hover:bg-pup-gold transition-colors">
+                                    <i class="ph-bold ph-users-three text-2xl text-pup-maroon dark:text-pup-gold group-hover:text-white dark:group-hover:text-black"></i>
+                                </div>
+                                <div>
+                                    <span class="block font-black text-gray-900 dark:text-white uppercase tracking-tight">Non-Academic Track</span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">For University-wide Organizations (ROTC, SSC, etc.)</span>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <button @click="registerStep = 1" class="mt-8 text-xs font-bold text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-left"></i> Go Back
+                        </button>
+                    </div>
+
+                    <!-- STEP 3: ORGANIZATION LIST / DESCRIPTION -->
+                    <div v-if="registerStep === 3" class="flex flex-col py-2">
+                        <div class="text-center mb-6">
+                            <h2 class="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tight">[[ accountType === 'academic' ? 'Academic Organizations' : 'Non-Academic Organizations' ]]</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Verification will be handled by the organizers of these groups.</p>
+                        </div>
+
+                        <div class="bg-gray-50 dark:bg-[#111] rounded-3xl p-6 border border-gray-100 dark:border-gray-800 mb-8 max-h-[300px] overflow-y-auto form-scroll">
+                            <ul class="space-y-4">
+                                <template v-if="accountType === 'academic'">
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">ITO (Information Technology Organization)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">For BSIT students.</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">YEO (Young Entrepreneurship Organization)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">For BSENT students.</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">FTO (Future Teacher Organization)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">For BEED students.</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">ITS (Institute of Technology Society)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">For DIT and DOMT students.</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">PAS (Public Administration Society)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">For BPA students.</p>
+                                        </div>
+                                    </li>
+                                </template>
+                                <template v-else>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-maroon dark:bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">CAO (Culture and Arts)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">University performing arts and culture groups.</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-maroon dark:bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">NEWSETTE</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">The official campus student publication.</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-maroon dark:bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">PUSO (PUP Unisan Sports Organization)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">Sports development and athlete management.</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-maroon dark:bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">ROTC (Reserve Officers' Training Corps)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">Military training and civic welfare services.</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-maroon dark:bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">PRIDE (PRIDEVerse)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">Advocacy and support for the LGBTQ+ community.</p>
+                                        </div>
+                                    </li>
+                                    <li class="flex gap-4 items-start">
+                                        <div class="mt-1 w-2 h-2 rounded-full bg-pup-maroon dark:bg-pup-gold shrink-0"></div>
+                                        <div>
+                                            <p class="text-sm font-black text-gray-900 dark:text-white">SSC (Supreme Student Council)</p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">The highest student governing body.</p>
+                                        </div>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+
+                        <div class="w-full flex flex-col gap-3">
+                            <button @click="registerStep = 4" class="w-full py-4 rounded-xl bg-pup-maroon hover:bg-red-900 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm transition-all shadow-md">Proceed to Registration</button>
+                            <button @click="registerStep = 2" class="w-full py-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold text-sm transition-all">Back</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: FORM DETAILS (Original was Step 2) -->
+                    <div v-if="registerStep === 4" class="pb-6">
                         <form @submit.prevent="verifyAndProceed" class="w-full">
                             
                             <div class="text-center sm:text-left mb-6">
@@ -269,17 +410,27 @@
                                 </div>
 
                                 <div class="grid grid-cols-1 gap-4">
-                                    <!-- 🟢 PROGRAM ANG NAUNA 🟢 -->
+                                    <!-- 🟢 DYNAMIC PROGRAM / ORGANIZATION 🟢 -->
                                     <div class="relative">
-                                        <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Program</label>
+                                        <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">[[ accountType === 'academic' ? 'Program' : 'Organization' ]]</label>
                                         <select v-model="formData.program" @change="handleProgramChange" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm appearance-none cursor-pointer">
-                                            <option value="" disabled selected>Select Program</option>
-                                            <option value="BSIT">BSIT - BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY</option>
-                                            <option value="BEED">BEED - BACHELOR OF ELEMENTARY EDUCATION</option>
-                                            <option value="BSENT">BSENT - BACHELOR OF SCIENCE IN ENTREPRENEURSHIP</option>
-                                            <option value="BPA">BPA - BACHELOR OF PUBLIC ADMINISTRATION</option>
-                                            <option value="DOMT">DOMT - DIPLOMA IN OFFICE MANAGEMENT TECHNOLOGY MAJOR IN LEGAL OFFICE MANAGEMENT</option>
-                                            <option value="DIT">DIT - DIPLOMA IN INFORMATION TECHNOLOGY</option>
+                                            <option value="" disabled selected>Select [[ accountType === 'academic' ? 'Program' : 'Organization' ]]</option>
+                                            <template v-if="accountType === 'academic'">
+                                                <option value="BSIT">BSIT - BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY</option>
+                                                <option value="BEED">BEED - BACHELOR OF ELEMENTARY EDUCATION</option>
+                                                <option value="BSENT">BSENT - BACHELOR OF SCIENCE IN ENTREPRENEURSHIP</option>
+                                                <option value="BPA">BPA - BACHELOR OF PUBLIC ADMINISTRATION</option>
+                                                <option value="DOMT">DOMT - DIPLOMA IN OFFICE MANAGEMENT TECHNOLOGY MAJOR IN LEGAL OFFICE MANAGEMENT</option>
+                                                <option value="DIT">DIT - DIPLOMA IN INFORMATION TECHNOLOGY</option>
+                                            </template>
+                                            <template v-else>
+                                                <option value="CAO">CAO - CULTURE AND ARTS</option>
+                                                <option value="NEWSETTE">NEWSETTE - CAMPUS NEWSPAPER</option>
+                                                <option value="PUSO">PUSO - PUP UNISAN SPORTS ORGANIZATION</option>
+                                                <option value="ROTC">ROTC - RESERVE OFFICERS' TRAINING CORPS</option>
+                                                <option value="PRIDEVerse">PRIDE - PRIDEVerse</option>
+                                                <option value="SSC">SSC - SUPREME STUDENT COUNCIL</option>
+                                            </template>
                                         </select>
                                         <i class="ph-bold ph-caret-down absolute right-4 top-[35px] pointer-events-none text-gray-400"></i>
                                     </div>
@@ -313,7 +464,7 @@
                             </div>
 
                             <div class="flex gap-3 mt-8">
-                                <button type="button" @click="registerStep = 1" class="w-1/3 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-[#111] dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold transition-all shadow-sm text-sm">Back</button>
+                                <button type="button" @click="registerStep = 3" class="w-1/3 py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-[#111] dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold transition-all shadow-sm text-sm">Back</button>
                                 <button type="submit" :disabled="isVerifying" class="w-2/3 bg-pup-maroon hover:bg-red-900 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold py-3.5 rounded-xl transition-all shadow-md text-sm flex items-center justify-center gap-2 disabled:opacity-50">
                                     <i v-if="isVerifying" class="ph-bold ph-spinner animate-spin text-lg"></i>
                                     <span v-text="isVerifying ? 'Checking...' : 'Next Step'"></span>
@@ -322,42 +473,106 @@
                         </form>
                     </div>
 
-                    <!-- STEP 3: FACE ENROLLMENT -->
-                    <div v-if="registerStep === 3" class="flex flex-col items-center text-center py-4">
-                        <h2 class="text-xl font-black dark:text-white mb-1 uppercase tracking-tight">Face Enrollment</h2>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">Position your face within the frame.</p>
+                    <!-- STEP 5: FACE ENROLLMENT (Original was Step 3) -->
+                    <div v-if="registerStep === 5" class="flex flex-col items-center py-4">
+                        <div class="text-center mb-6">
+                            <h2 class="text-xl font-black dark:text-white mb-1 uppercase tracking-tight">Biometric Face Enrollment</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Position your face within the scanner frame for identity verification.</p>
+                        </div>
                         
-                        <div class="relative w-64 h-64 sm:w-72 sm:h-72 rounded-3xl overflow-hidden bg-gray-900 border-4 border-gray-200 dark:border-gray-700 shadow-inner mb-6 mx-auto">
-                            <video v-show="!faceCaptured" ref="video" autoplay playsinline class="w-full h-full object-cover"></video>
-                            <img v-if="faceCaptured" :src="capturedFace" class="w-full h-full object-cover" />
-                            <div v-if="!faceCaptured && isCameraActive" class="absolute inset-0 pointer-events-none">
-                                <div class="absolute inset-10 border-2 border-dashed border-pup-gold/50 rounded-full opacity-50"></div>
-                                <div class="absolute top-0 left-0 w-full h-1 bg-pup-gold/60 blur-sm scan-line"></div>
+                        <!-- 🟢 QUALITY METER (New) 🟢 -->
+                        <div v-if="isCameraActive && !faceCaptured" class="w-full max-w-[280px] mb-4 space-y-1.5">
+                            <div class="flex justify-between items-end">
+                                <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Signal Quality</span>
+                                <span class="text-[10px] font-bold" :class="qualityStatus.isReady ? 'text-green-500' : 'text-amber-500'">[[ qualityStatus.isReady ? 'OPTIMAL' : 'ADJUSTING...' ]]</span>
                             </div>
-                            <div v-if="!isCameraActive && !faceCaptured" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 gap-2">
-                                <i class="ph-bold ph-camera-rotate text-5xl"></i>
-                                <span class="text-xs font-bold">Ready to capture</span>
+                            <div class="h-1.5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-green-500 transition-all duration-300" :style="{ width: qualityScore + '%' }"></div>
+                            </div>
+                        </div>
+
+                        <!-- 🟢 SCANNER FRAME (Redesigned) 🟢 -->
+                        <div class="relative w-64 h-64 sm:w-72 sm:h-72 rounded-[2.5rem] overflow-hidden bg-black border-4 border-gray-100 dark:border-gray-800 shadow-2xl mb-8 mx-auto group">
+                            <video v-show="!faceCaptured" ref="video" autoplay playsinline class="w-full h-full object-cover"></video>
+                            <img v-if="faceCaptured" :src="capturedFace" class="w-full h-full object-cover animate-in zoom-in duration-500" />
+                            
+                            <!-- 🟢 BIOMETRIC OVERLAY 🟢 -->
+                            <div v-if="isCameraActive && !faceCaptured" class="absolute inset-0 pointer-events-none">
+                                <!-- Scan Corners -->
+                                <div class="absolute top-8 left-8 w-6 h-6 border-t-4 border-l-4 border-pup-gold/60 rounded-tl-lg transition-transform duration-300" :class="{'scale-110 -translate-x-1 -translate-y-1 border-green-500': qualityStatus.isReady}"></div>
+                                <div class="absolute top-8 right-8 w-6 h-6 border-t-4 border-r-4 border-pup-gold/60 rounded-tr-lg transition-transform duration-300" :class="{'scale-110 translate-x-1 -translate-y-1 border-green-500': qualityStatus.isReady}"></div>
+                                <div class="absolute bottom-8 left-8 w-6 h-6 border-b-4 border-l-4 border-pup-gold/60 rounded-bl-lg transition-transform duration-300" :class="{'scale-110 -translate-x-1 translate-y-1 border-green-500': qualityStatus.isReady}"></div>
+                                <div class="absolute bottom-8 right-8 w-6 h-6 border-b-4 border-r-4 border-pup-gold/60 rounded-br-lg transition-transform duration-300" :class="{'scale-110 translate-x-1 translate-y-1 border-green-500': qualityStatus.isReady}"></div>
+
+                                <!-- Central Target -->
+                                <div class="absolute inset-14 border border-white/10 rounded-full flex items-center justify-center">
+                                    <div class="w-2 h-2 bg-pup-gold/40 rounded-full animate-ping"></div>
+                                </div>
+
+                                <!-- 🟢 REAL-TIME STATUS ALERTS 🟢 -->
+                                <div class="absolute inset-x-6 bottom-12 flex flex-col items-center gap-2">
+                                    <div v-if="qualityStatus.obstructed" class="bg-red-600 text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl animate-bounce backdrop-blur-md">
+                                        <i class="ph-bold ph-warning-circle"></i> Detection Blocked
+                                    </div>
+                                    <div v-else-if="qualityStatus.tooDark" class="bg-amber-600 text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl backdrop-blur-md">
+                                        <i class="ph-bold ph-moon"></i> Increase Lighting
+                                    </div>
+                                    <div v-else-if="qualityStatus.noFaceDetail" class="bg-pup-maroon text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl backdrop-blur-md">
+                                        <i class="ph-bold ph-user-focus"></i> Position Face Clearly
+                                    </div>
+                                    <div v-if="qualityStatus.isReady" class="bg-green-600 text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl backdrop-blur-md animate-pulse">
+                                        <i class="ph-bold ph-fingerprint"></i> Identity Ready
+                                    </div>
+                                </div>
+
+                                <div class="absolute top-0 left-0 w-full h-[2px] bg-pup-gold/40 blur-sm scan-line"></div>
+                            </div>
+
+                            <div v-if="!isCameraActive && !faceCaptured" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 gap-3 p-6 text-center">
+                                <i class="ph-fill ph-aperture text-5xl text-gray-700 animate-spin-slow"></i>
+                                <span class="text-[9px] font-bold uppercase tracking-[0.3em]">Module Offline</span>
                             </div>
                         </div>
 
                         <div class="w-full space-y-3">
-                            <button v-if="!isCameraActive" @click="startCamera" class="w-full py-3.5 rounded-xl bg-gray-900 text-white dark:bg-pup-gold dark:text-black font-bold text-sm flex justify-center items-center gap-2 transition-colors">
-                                <i class="ph-bold ph-power text-lg"></i> Activate Camera
+                            <!-- 🟢 GLASSES VERIFICATION (New) 🟢 -->
+                            <div v-if="!faceCaptured" class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex items-start gap-4 mb-2">
+                                <div class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-amber-600">
+                                    <i class="ph-bold ph-eyeglasses text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Physical Audit</p>
+                                    <p class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">Please ensure you are <span class="text-pup-maroon dark:text-pup-gold font-bold">NOT wearing glasses</span>, face masks, or hats for accurate matching.</p>
+                                </div>
+                            </div>
+
+                            <button v-if="!isCameraActive && !faceCaptured" @click="startCamera" class="w-full py-4 rounded-xl bg-gray-900 text-white dark:bg-pup-gold dark:text-black font-bold text-sm flex justify-center items-center gap-2 transition-all hover:shadow-lg active:scale-95">
+                                <i class="ph-bold ph-camera text-lg"></i> Initiate Biometric Scan
                             </button>
-                            <button v-if="isCameraActive && !faceCaptured" @click="captureFace" class="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm flex justify-center items-center gap-2 transition-all">
-                                <i class="ph-bold ph-bounding-box text-lg"></i> Register Face ID
+                            
+                            <button v-if="isCameraActive && !faceCaptured" @click="captureFace" 
+                                    :disabled="!qualityStatus.isReady || qualityStatus.obstructed"
+                                    class="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg disabled:opacity-30 disabled:grayscale transition-all duration-500">
+                                <i v-if="qualityStatus.isReady" class="ph-bold ph-bounding-box text-lg animate-pulse"></i>
+                                <i v-else class="ph-bold ph-spinner animate-spin text-lg"></i>
+                                <span v-text="qualityStatus.obstructed ? 'Obstruction Detected' : (qualityStatus.noFaceDetail ? 'Searching for Face...' : (qualityStatus.isReady ? 'Secure Identity Data' : 'Optimizing Quality...'))"></span>
                             </button>
+                            
                             <div v-if="faceCaptured" class="flex flex-col gap-3">
-                                <button @click="submitFinalRegistration" :disabled="isSubmitting" class="w-full py-3.5 rounded-xl bg-green-600 hover:bg-green-700 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm flex justify-center items-center gap-2 shadow-lg disabled:opacity-50 transition-colors">
-                                    <i v-if="!isSubmitting" class="ph-bold ph-check-circle text-lg"></i>
+                                <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center gap-3 mb-2">
+                                    <i class="ph-fill ph-check-circle text-green-500 text-xl"></i>
+                                    <span class="text-[10px] font-bold text-green-500 uppercase tracking-wider">Identity Map Secured</span>
+                                </div>
+                                <button @click="submitFinalRegistration" :disabled="isSubmitting" class="w-full py-4 rounded-xl bg-green-600 hover:bg-green-700 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm flex justify-center items-center gap-2 shadow-lg disabled:opacity-50">
+                                    <i v-if="!isSubmitting" class="ph-bold ph-rocket-launch text-lg"></i>
                                     <i v-else class="ph-bold ph-spinner animate-spin text-lg"></i> 
-                                    <span v-text="isSubmitting ? 'Saving...' : 'Complete Registration'"></span>
+                                    <span v-text="isSubmitting ? 'Finalizing Profile...' : 'Complete Enrollment'"></span>
                                 </button>
-                                <button @click="retakeFace" :disabled="isSubmitting" class="w-full py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 font-bold text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-[#111] transition-colors">Retake Photo</button>
+                                <button @click="retakeFace" :disabled="isSubmitting" class="w-full py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 font-bold text-sm hover:bg-gray-50 dark:hover:bg-[#111] transition-colors">Discard & Rescan</button>
                             </div>
                             
-                            <button @click="registerStep = 2; stopCamera()" :disabled="isSubmitting" class="w-full py-3.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-[#111] dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold transition-all shadow-sm text-sm mt-2 disabled:opacity-50">
-                                Back to Form
+                            <button @click="registerStep = 4; stopCamera()" :disabled="isSubmitting" class="w-full py-3.5 rounded-xl text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-2 disabled:opacity-50">
+                                Abort & Back to Form
                             </button>
                         </div>
                     </div>
@@ -391,11 +606,17 @@
 
                     // REGISTER DATA
                     registerStep: 1,
+                    accountType: '', // 'academic' or 'non-academic'
                     profilePreview: null, coverPreview: null,
                     capturedFace: null, faceCaptured: false,
                     isCameraActive: false, videoStream: null,
                     isSubmitting: false, isSendingPassword: false, 
                     isVerifying: false, countdown: 0, timerInterval: null,
+                    
+                    // 🟢 ENHANCED QUALITY STATE 🟢
+                    qualityStatus: { tooDark: false, tooBright: false, isCentered: false, obstructed: false, noFaceDetail: false, isReady: false },
+                    qualityScore: 0,
+                    validationInterval: null,
                     
                     formData: {
                         full_name: '', student_number: '', birthdate: '',
@@ -444,10 +665,22 @@
                     document.documentElement.classList.toggle('dark', this.isDark);
                     localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
                 },
+                stopCamera() {
+                    if (this.videoStream) {
+                        this.videoStream.getTracks().forEach(track => track.stop());
+                        this.videoStream = null;
+                    }
+                    this.isCameraActive = false;
+                    if (this.validationInterval) {
+                        clearInterval(this.validationInterval);
+                        this.validationInterval = null;
+                    }
+                },
                 switchView(view) {
                     this.stopCamera(); 
                     this.currentView = view;
                     this.registerStep = 1;
+                    this.accountType = '';
                     this.profilePreview = this.coverPreview = this.capturedFace = null;
                     this.faceCaptured = this.isCameraActive = false;
                     this.formData = { full_name: '', student_number: '', birthdate: '', year_level: '', program: '', email_address: '', password: '' };
@@ -466,8 +699,17 @@
                     const formData = new FormData();
                     formData.append('student_number', this.loginData.student_number);
                     formData.append('password', this.loginData.password);
+                    
+                    // Improved CSRF Token Retrieval
+                    let tokenValue = '';
                     const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-                    const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
+                    if (csrfToken) {
+                        tokenValue = csrfToken.split('=')[1];
+                    } else {
+                        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                        if (csrfInput) tokenValue = csrfInput.value;
+                    }
+
                     try {
                         const response = await fetch('/portal/login/', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
                         const data = await response.json();
@@ -501,25 +743,120 @@
                     }
                 },
                 
-                // 🟢 CAMERA PERMISSION ALERT 🟢
+                // 🟢 CAMERA PERMISSION ALERT & START 🟢
                 async startCamera() {
-                    const permit = confirm("Allow PUPUni-CAMS to access your camera for Face ID registration?");
-                    if (!permit) return; // Cancel operation if false
-                    
                     try {
-                        this.videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                        this.$refs.video.srcObject = this.videoStream;
-                        this.isCameraActive = true;
-                    } catch (err) { alert("Camera access denied or unavailable."); }
-                },
+                        // 🟢 GUARD: Secure Context (HTTPS/Localhost) 🟢
+                        if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+                            alert("Security Error: Camera access requires a secure connection (HTTPS). Please use HTTPS or access via localhost.");
+                            return;
+                        }
 
-                stopCamera() {
-                    if (this.videoStream) {
-                        this.videoStream.getTracks().forEach(track => track.stop());
-                        this.videoStream = null; this.isCameraActive = false;
+                        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                            alert("Device Error: Your browser or device does not support camera access.");
+                            return;
+                        }
+
+                        this.isCameraActive = false; 
+                        const stream = await navigator.mediaDevices.getUserMedia({ 
+                            video: { 
+                                facingMode: 'user', 
+                                width: { ideal: 640 }, 
+                                height: { ideal: 640 } 
+                            } 
+                        });
+                        this.videoStream = stream;
+                        if (this.$refs.video) {
+                            this.$refs.video.srcObject = stream;
+                            // Ensure video plays on mobile
+                            this.$refs.video.onloadedmetadata = () => {
+                                this.$refs.video.play();
+                                this.isCameraActive = true;
+                                this.startQualityValidation();
+                            };
+                        }
+                    } catch (err) { 
+                        if (err.name === 'NotAllowedError') {
+                            alert("Permission Denied: Please allow camera access in your browser settings.");
+                        } else {
+                            alert("Camera Error: " + err.message);
+                        }
                     }
                 },
+
+                // 🟢 REVOLUTIONIZED QUALITY VALIDATION (VANILLA JS) 🟢
+                startQualityValidation() {
+                    if (this.validationInterval) clearInterval(this.validationInterval);
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    this.validationInterval = setInterval(() => {
+                        if (!this.isCameraActive || this.faceCaptured || !this.$refs.video) return;
+                        
+                        const video = this.$refs.video;
+                        if (video.videoWidth === 0) return;
+
+                        // Optimized Resolution: 64x64 for much faster processing
+                        canvas.width = 64; canvas.height = 64; 
+                        ctx.drawImage(video, 0, 0, 64, 64);
+                        
+                        const imageData = ctx.getImageData(0, 0, 64, 64);
+                        const data = imageData.data;
+                        let brightness = 0;
+                        let detailLevel = 0;
+                        let variance = 0;
+                        
+                        // 🟢 STEP 1: CALCULATE BRIGHTNESS & CENTER DETAIL 🟢
+                        for (let y = 1; y < 63; y++) {
+                            for (let x = 1; x < 63; x++) {
+                                const idx = (y * 64 + x) * 4;
+                                const val = (data[idx] + data[idx+1] + data[idx+2]) / 3;
+                                brightness += val;
+                                
+                                // Focus high detail detection on the center 60% of the frame
+                                if (y > 12 && y < 52 && x > 12 && x < 52) {
+                                    const left = (data[idx-4] + data[idx-3] + data[idx-2]) / 3;
+                                    detailLevel += Math.abs(val - left);
+                                }
+                            }
+                        }
+                        
+                        const avgBrightness = brightness / (64 * 64);
+                        const centerDetail = detailLevel / (40 * 40); // Detail in the center block
+
+                        for (let i = 0; i < data.length; i += 8) {
+                            const val = (data[i] + data[i+1] + data[i+2]) / 3;
+                            variance += Math.abs(val - avgBrightness);
+                        }
+                        const avgVariance = variance / (data.length / 8);
+
+                        // 🟢 STEP 2: TUNED LOGIC (HIGH SPEED) 🟢
+                        this.qualityStatus.tooDark = avgBrightness < 40; 
+                        this.qualityStatus.tooBright = avgBrightness > 230; 
+                        this.qualityStatus.obstructed = avgVariance < 10 && !this.qualityStatus.tooDark; 
+                        
+                        // Center feature check: Higher detail means features are centered
+                        this.qualityStatus.noFaceDetail = centerDetail < 12; 
+
+                        // 🟢 STEP 3: SCORE & READY STATE 🟢
+                        let score = 0;
+                        if (!this.qualityStatus.tooDark && !this.qualityStatus.tooBright) score += 40;
+                        if (!this.qualityStatus.obstructed) score += 30;
+                        if (!this.qualityStatus.noFaceDetail) score += 30;
+                        
+                        this.qualityScore = score;
+                        this.qualityStatus.isReady = score >= 75; // Even more lenient for speed
+                        
+                    }, 150); // Doubled the polling frequency
+                },
+
                 captureFace() {
+                    // 🟢 FINAL GUARD: Re-check quality before capturing 🟢
+                    if (!this.qualityStatus.isReady || this.qualityStatus.obstructed) {
+                        alert("Biometric alignment failed. Please fix scanner issues.");
+                        return;
+                    }
+
                     const video = this.$refs.video;
                     const canvas = document.createElement('canvas');
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
@@ -561,21 +898,39 @@
                     try {
                         const response = await fetch('/student/verify-password', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
                         const data = await response.json();
-                        if (data.status === 'success') this.registerStep = 3; 
+                        if (data.status === 'success') this.registerStep = 5; 
                         else alert(data.message); 
                     } catch (error) { alert("Verification error."); }
                     finally { this.isVerifying = false; }
                 },
                 async submitFinalRegistration() {
                     this.isSubmitting = true;
+                    
                     const orgMapping = { 'BSIT': 'ITO', 'BSENT': 'YEO', 'BPA': 'PAS', 'BEED': 'FTO', 'DOMT': 'ITS', 'DIT': 'ITS' };
-                    const assignedOrg = orgMapping[this.formData.program] || 'UNKNOWN';
+                    let assignedOrg = '';
+                    let finalProgram = this.formData.program;
+
+                    if (this.accountType === 'academic') {
+                        assignedOrg = orgMapping[this.formData.program] || 'UNKNOWN';
+                    } else {
+                        assignedOrg = this.formData.program; // Value is CAO, NEWSETTE, etc.
+                        finalProgram = 'Non-Academic';
+                    }
+
                     const formData = new FormData();
-                    Object.keys(this.formData).forEach(key => formData.append(key, this.formData[key]));
+                    Object.keys(this.formData).forEach(key => {
+                        if (key !== 'program') {
+                            formData.append(key, this.formData[key]);
+                        }
+                    });
+                    
                     formData.append('organization', assignedOrg); 
+                    formData.append('program', finalProgram);
                     formData.append('facial_registration_data', this.capturedFace); 
+                    
                     if (this.formData.profile_file) formData.append('profile_picture', this.formData.profile_file);
                     if (this.formData.cover_file) formData.append('cover_photo', this.formData.cover_file);
+                    
                     const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
                     const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
                     try {

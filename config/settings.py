@@ -1,5 +1,6 @@
 
 import os
+import socket
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,11 +25,28 @@ CSRF_TRUSTED_ORIGINS = [
     'https://CHEESEC4KE.pythonanywhere.com',
 ]
 
+# Debugging local IP
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    IP_ADDRESS = s.getsockname()[0]
+    s.close()
+    print(f"\n[DEBUG] Local IP detected: {IP_ADDRESS}")
+    print(f"[DEBUG] Use this on your phone: http://{IP_ADDRESS}:8000\n")
+    CSRF_TRUSTED_ORIGINS.append(f'http://{IP_ADDRESS}:8000')
+except Exception as e:
+    print(f"[DEBUG] Could not detect local IP: {e}")
+
 # Development Overrides for Easier Local Testing
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SAMESITE = 'Lax'
+SECURE_SSL_REDIRECT = False
+SECURE_HSTS_SECONDS = 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+SECURE_CONTENT_TYPE_NOSNIFF = False
 
 
 # Application definition
