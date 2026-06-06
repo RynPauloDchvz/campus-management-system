@@ -1340,8 +1340,8 @@ def organizer_analytics(request):
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
 
-    # Fetch all approved events for this org
-    org_events = Event.objects.filter(org_id=org_acronym, event_status='Approved')
+    # 🟢 NEWEST TO OLDEST ORDERING 🟢
+    org_events = Event.objects.filter(org_id=org_acronym, event_status='Approved').order_by('-event_date', '-start_time')
     event_ids = [str(e.id) for e in org_events]
     
     # Fetch evaluations from AuditLog
@@ -1352,9 +1352,6 @@ def organizer_analytics(request):
     # Calculate average rating and sentiment
     total_rating = 0
     positive_count = 0
-    
-    # Response Distribution [1, 2, 3, 4, 5]
-    distribution = [0, 0, 0, 0, 0]
     
     event_analytics_data = []
     for e in org_events:
@@ -1374,7 +1371,6 @@ def organizer_analytics(request):
                     idx = int(round(r)) - 1
                     if 0 <= idx <= 4:
                         e_dist[idx] += 1
-                        distribution[idx] += 1
                     if r >= 4: e_pos += 1
                 except: continue
             
@@ -1732,7 +1728,87 @@ def upload_signed_permit(request):
 
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_feedback_detail(request):
-    return render(request, 'organizer/feedback.html')
+    event_id = request.GET.get('event_id')
+    if not event_id:
+        return redirect('organizer_analytics')
+    
+    try:
+        event = Event.objects.get(id=event_id)
+        org_profile = OrgProfile.objects.get(user=request.user)
+        # Ensure organizer can only view their own org's feedback
+        if event.org_id != org_profile.organization.strip():
+            return redirect('organizer_analytics')
+            
+        # 1. EVALUATION DATA
+        eval_logs = AuditLog.objects.filter(action='EVALUATION', target_id=str(event_id), status='Success')
+        total_evals = eval_logs.count()
+        
+        avg_rating = 0
+        pos_count = 0
+        criteria_scores = [0, 0, 0, 0, 0] # Match labels in template
+        year_dist = {'1st Year': 0, '2nd Year': 0, '3rd Year': 0, '4th Year': 0}
+        comments = []
+
+        for log in eval_logs:
+            try:
+                changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
+                r = float(changes.get('rating', 0))
+                avg_rating += r
+                if r >= 4: pos_count += 1
+                
+                # Criteria logic (mapping detailed_scores if present)
+                details = changes.get('detailed_scores', {})
+                # Template expects: Relevance, Knowledge, Time, Venue, Overall
+                criteria_scores[0] += float(details.get('q1', r))
+                criteria_scores[1] += float(details.get('q2', r))
+                criteria_scores[2] += float(details.get('q3', r))
+                criteria_scores[3] += float(details.get('q4', r))
+                criteria_scores[4] += float(details.get('q5', r))
+                
+                # Qualitative Comments
+                sentiment = 'positive' if r >= 4 else ('negative' if r <= 2 else 'neutral')
+                
+                # Get student year level
+                student = Student.objects.filter(user=log.actor).first()
+                y_level = student.year_level if student else 'Unknown'
+                if y_level in year_dist: year_dist[y_level] += 1
+                
+                comments.append({
+                    'text': changes.get('feedback', 'No feedback provided.'),
+                    'sentiment': sentiment,
+                    'year': y_level
+                })
+            except: continue
+
+        if total_evals > 0:
+            avg_rating /= total_evals
+            criteria_scores = [round(s/total_evals, 1) for s in criteria_scores]
+            pos_sentiment = int((pos_count / total_evals) * 100)
+        else:
+            pos_sentiment = 0
+
+        # 2. ATTENDANCE DATA (For matching)
+        att_count = Attendance.objects.filter(event=event).count()
+
+        # Find highest rated area
+        labels = ['Relevance', 'Knowledge', 'Time', 'Venue', 'Overall']
+        max_idx = criteria_scores.index(max(criteria_scores)) if total_evals > 0 else 0
+        highest_area = labels[max_idx]
+
+        context = {
+            'event': event,
+            'total_evals': total_evals,
+            'att_count': att_count,
+            'avg_rating': round(avg_rating, 1),
+            'pos_sentiment': pos_sentiment,
+            'highest_area': highest_area,
+            'criteria_scores': json.dumps(criteria_scores),
+            'year_dist': json.dumps(list(year_dist.values())),
+            'comments_json': json.dumps(comments)
+        }
+        return render(request, 'organizer/feedback.html', context)
+    except Exception as e:
+        return redirect('organizer_analytics')
 
 # ==========================================
 # 🟢 ADMIN VIEWS (AYOS NA YUNG TIME BUGS!) 🟢
@@ -1859,6 +1935,11 @@ def register_organizer_face(request):
     if request.method == 'POST':
         try:
             org_profile = OrgProfile.objects.get(user=request.user)
+            
+            # 🟢 GUARD: Prevent re-registration if face data already exists 🟢
+            if org_profile.face_encoding:
+                return JsonResponse({'status': 'error', 'message': 'Account already has a registered face identity.'})
+
             face_data = request.POST.get('face_encoding')
             if not face_data:
                 return JsonResponse({'status': 'error', 'message': 'No facial data received.'})

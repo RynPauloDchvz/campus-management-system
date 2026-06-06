@@ -9,6 +9,11 @@
     const textColor = isDark ? '#9ca3af' : '#6b7280';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
 
+    // 🟢 REAL DATA FROM BACKEND 🟢
+    const criteriaData = JSON.parse('{{ criteria_scores|safe|default:"[0,0,0,0,0]" }}');
+    const yearLevelData = JSON.parse('{{ year_dist|safe|default:"[0,0,0,0]" }}');
+    const allComments = JSON.parse('{{ comments_json|safe|default:"[]" }}');
+
     document.addEventListener('DOMContentLoaded', () => {
         // 🟢 BAR CHART: Ratings Per Question 🟢
         const canvasBar = document.getElementById('questionsBarChart');
@@ -18,22 +23,20 @@
                 type: 'bar',
                 data: {
                     labels: [
-                        'Relevance of Topic', 
-                        'Speaker Knowledge', 
+                        'Relevance', 
+                        'Knowledge', 
                         'Time Management', 
-                        'Venue & Facilities', 
-                        'Overall Experience'
+                        'Venue/Platform', 
+                        'Overall'
                     ],
                     datasets: [{
                         label: 'Average Score',
-                        data: [4.9, 4.8, 4.2, 3.8, 4.7], // Example Data
-                        backgroundColor: [
-                            'rgba(37, 99, 235, 0.8)', // Blue
-                            'rgba(37, 99, 235, 0.8)', 
-                            'rgba(245, 158, 11, 0.8)', // Orange (medyo mababa)
-                            'rgba(239, 68, 68, 0.8)',  // Red (mababa)
-                            'rgba(16, 185, 129, 0.8)'  // Green
-                        ],
+                        data: criteriaData,
+                        backgroundColor: criteriaData.map(score => {
+                            if (score >= 4.0) return 'rgba(16, 185, 129, 0.8)'; // Green
+                            if (score >= 3.0) return 'rgba(37, 99, 235, 0.8)';  // Blue
+                            return 'rgba(239, 68, 68, 0.8)'; // Red
+                        }),
                         borderRadius: 6,
                         barPercentage: 0.6
                     }]
@@ -41,7 +44,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    indexAxis: 'y', // Ginawang horizontal para madaling basahin ang tanong
+                    indexAxis: 'y',
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -76,7 +79,7 @@
                 data: {
                     labels: ['1st Year', '2nd Year', '3rd Year', '4th Year'],
                     datasets: [{
-                        data: [45, 30, 25, 20], // Example Data (Total: 120)
+                        data: yearLevelData,
                         backgroundColor: [
                             '#3b82f6', // Blue
                             '#10b981', // Green
@@ -105,53 +108,59 @@
                 }
             });
         }
+
+        // 🟢 COMMENTS FILTER LOGIC 🟢
+        const sentimentFilter = document.getElementById('sentimentFilter');
+        if (sentimentFilter) {
+            sentimentFilter.addEventListener('change', (e) => {
+                renderComments(e.target.value);
+            });
+        }
+
+        renderComments('all');
     });
+
+    function renderComments(filter) {
+        const container = document.getElementById('commentsContainer');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const filtered = filter === 'all' ? allComments : allComments.filter(c => c.sentiment === filter);
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="col-span-2 py-10 text-center text-gray-400 font-bold uppercase tracking-widest text-[10px]">No comments found for this sentiment.</div>`;
+            return;
+        }
+
+        filtered.forEach(c => {
+            let bg, border, accent, icon, label;
+            if (c.sentiment === 'positive') {
+                bg = 'bg-green-50 dark:bg-green-900/10'; border = 'border-green-100 dark:border-green-900/30';
+                accent = 'bg-green-200 dark:bg-green-800'; icon = 'ph-smiley'; label = 'Positive';
+            } else if (c.sentiment === 'negative') {
+                bg = 'bg-red-50 dark:bg-red-900/10'; border = 'border-red-100 dark:border-red-900/30';
+                accent = 'bg-red-200 dark:bg-red-800'; icon = 'ph-smiley-sad'; label = 'Needs Improvement';
+            } else {
+                bg = 'bg-gray-50 dark:bg-gray-800/30'; border = 'border-gray-200 dark:border-gray-700';
+                accent = 'bg-gray-200 dark:bg-gray-700'; icon = 'ph-smiley-meh'; label = 'Neutral';
+            }
+
+            container.innerHTML += `
+                <div class="p-5 rounded-2xl ${bg} border ${border} transition-all hover:shadow-md">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-8 h-8 rounded-full ${accent} flex items-center justify-center"><i class="ph-bold ${icon}"></i></div>
+                        <div>
+                            <span class="block text-xs font-black uppercase">${label}</span>
+                            <span class="block text-[10px] text-gray-500">${c.year} Student</span>
+                        </div>
+                    </div>
+                    <p class="text-sm font-medium text-gray-800 dark:text-gray-300 leading-relaxed">"${c.text}"</p>
+                </div>
+            `;
+        });
+    }
 </script>
 {% endblock extra_js %}
-
-{% block skeleton %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
-    <div class="mb-8 space-y-4">
-        <div class="w-32 h-4 rounded skeleton-shimmer"></div>
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-100 dark:border-gray-800 pb-6">
-            <div class="space-y-3">
-                <div class="w-48 h-3 rounded skeleton-shimmer"></div>
-                <div class="w-72 h-10 rounded-lg skeleton-shimmer"></div>
-                <div class="w-64 h-4 rounded skeleton-shimmer"></div>
-            </div>
-            <div class="w-full md:w-48 h-12 rounded-xl skeleton-shimmer"></div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div v-for="i in 3" :key="i" class="h-28 bg-white dark:bg-[#151515] p-6 rounded-3xl border border-gray-100 dark:border-gray-800 flex items-center gap-5">
-            <div class="w-14 h-14 rounded-full skeleton-shimmer shrink-0"></div>
-            <div class="space-y-2 w-full">
-                <div class="w-20 h-2 rounded skeleton-shimmer"></div>
-                <div class="w-24 h-8 rounded skeleton-shimmer"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="lg:col-span-2 h-[400px] bg-white dark:bg-[#151515] rounded-3xl border border-gray-100 dark:border-gray-800 skeleton-shimmer"></div>
-        <div class="lg:col-span-1 h-[400px] bg-white dark:bg-[#151515] rounded-3xl border border-gray-100 dark:border-gray-800 skeleton-shimmer"></div>
-    </div>
-
-    <div class="bg-white dark:bg-[#151515] rounded-3xl border border-gray-100 dark:border-gray-800 p-6 sm:p-8 h-[500px] flex flex-col space-y-6">
-        <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-4">
-            <div class="space-y-2">
-                <div class="w-64 h-7 rounded skeleton-shimmer"></div>
-                <div class="w-48 h-3 rounded skeleton-shimmer"></div>
-            </div>
-            <div class="w-32 h-10 rounded-xl skeleton-shimmer"></div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div v-for="i in 4" :key="i" class="h-32 rounded-2xl border border-gray-100 dark:border-gray-800 skeleton-shimmer"></div>
-        </div>
-    </div>
-</div>
-{% endblock skeleton %}
 
 {% block content %}
 <div v-pre>
@@ -165,15 +174,15 @@
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
             <div>
                 <span class="text-[10px] font-black tracking-[0.2em] text-blue-600 dark:text-blue-400 uppercase">Detailed Event Report</span>
-                <h1 class="font-black text-3xl sm:text-4xl text-gray-900 dark:text-white mt-1 leading-tight tracking-tight">Seminar: AI Ethics</h1>
+                <h1 class="font-black text-3xl sm:text-4xl text-gray-900 dark:text-white mt-1 leading-tight tracking-tight">{{ event.event_title }}</h1>
                 <p class="text-sm font-bold text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-4">
-                    <span><i class="ph-bold ph-calendar-blank"></i> May 12, 2026</span>
-                    <span><i class="ph-bold ph-users"></i> 120 Respondents</span>
+                    <span><i class="ph-bold ph-calendar-blank"></i> {{ event.event_date|date:"F d, Y" }}</span>
+                    <span><i class="ph-bold ph-users"></i> {{ total_evals }} Respondents</span>
                 </p>
             </div>
             
-            <button class="w-full md:w-auto px-6 py-3 rounded-xl bg-gray-100 dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-[#222] transition-colors flex items-center justify-center gap-2 text-sm shadow-sm">
-                <i class="ph-bold ph-download-simple"></i> Export PDF Report
+            <button onclick="window.print()" class="w-full md:w-auto px-6 py-3 rounded-xl bg-gray-100 dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-[#222] transition-colors flex items-center justify-center gap-2 text-sm shadow-sm">
+                <i class="ph-bold ph-printer"></i> Print Detailed Report
             </button>
         </div>
     </div>
@@ -185,7 +194,7 @@
             </div>
             <div>
                 <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Overall Rating</span>
-                <div class="flex items-baseline gap-1"><span class="text-3xl font-black text-gray-900 dark:text-white">4.8</span><span class="text-sm font-bold text-gray-400">/ 5.0</span></div>
+                <div class="flex items-baseline gap-1"><span class="text-3xl font-black text-gray-900 dark:text-white">{{ avg_rating }}</span><span class="text-sm font-bold text-gray-400">/ 5.0</span></div>
             </div>
         </div>
 
@@ -195,7 +204,7 @@
             </div>
             <div>
                 <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Overall Sentiment</span>
-                <div class="flex items-baseline gap-1"><span class="text-3xl font-black text-gray-900 dark:text-white">92%</span><span class="text-sm font-bold text-gray-400">Positive</span></div>
+                <div class="flex items-baseline gap-1"><span class="text-3xl font-black text-gray-900 dark:text-white">{{ pos_sentiment }}%</span><span class="text-sm font-bold text-gray-400">Positive</span></div>
             </div>
         </div>
 
@@ -205,7 +214,7 @@
             </div>
             <div>
                 <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Highest Rated Area</span>
-                <span class="text-xl font-black text-gray-900 dark:text-white leading-tight">Guest Speaker</span>
+                <span class="text-xl font-black text-gray-900 dark:text-white leading-tight">{{ highest_area }}</span>
             </div>
         </div>
     </div>
@@ -250,49 +259,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="commentsContainer">
-            <div class="p-5 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30">
-                <div class="flex items-center gap-2 mb-3">
-                    <div class="w-8 h-8 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center text-green-700 dark:text-green-300"><i class="ph-bold ph-smiley"></i></div>
-                    <div>
-                        <span class="block text-xs font-black text-green-700 dark:text-green-400 uppercase">Positive</span>
-                        <span class="block text-[10px] text-gray-500">3rd Year Student</span>
-                    </div>
-                </div>
-                <p class="text-sm font-medium text-gray-800 dark:text-gray-300 leading-relaxed">"The speaker was very knowledgeable about AI ethics. I learned a lot especially about the biases in machine learning models. Great job ITO!"</p>
-            </div>
-
-            <div class="p-5 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30">
-                <div class="flex items-center gap-2 mb-3">
-                    <div class="w-8 h-8 rounded-full bg-green-200 dark:bg-green-800 flex items-center justify-center text-green-700 dark:text-green-300"><i class="ph-bold ph-smiley"></i></div>
-                    <div>
-                        <span class="block text-xs font-black text-green-700 dark:text-green-400 uppercase">Positive</span>
-                        <span class="block text-[10px] text-gray-500">4th Year Student</span>
-                    </div>
-                </div>
-                <p class="text-sm font-medium text-gray-800 dark:text-gray-300 leading-relaxed">"Very timely topic. The venue was well-prepared and the registration process was smooth."</p>
-            </div>
-
-            <div class="p-5 rounded-2xl bg-gray-50 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center gap-2 mb-3">
-                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300"><i class="ph-bold ph-smiley-meh"></i></div>
-                    <div>
-                        <span class="block text-xs font-black text-gray-700 dark:text-gray-400 uppercase">Neutral</span>
-                        <span class="block text-[10px] text-gray-500">1st Year Student</span>
-                    </div>
-                </div>
-                <p class="text-sm font-medium text-gray-800 dark:text-gray-300 leading-relaxed">"The seminar was okay. The topic was a bit advanced for us freshmen, but the free snacks were good."</p>
-            </div>
-
-            <div class="p-5 rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30">
-                <div class="flex items-center gap-2 mb-3">
-                    <div class="w-8 h-8 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center text-red-700 dark:text-red-300"><i class="ph-bold ph-smiley-sad"></i></div>
-                    <div>
-                        <span class="block text-xs font-black text-red-700 dark:text-red-400 uppercase">Needs Improvement</span>
-                        <span class="block text-[10px] text-gray-500">2nd Year Student</span>
-                    </div>
-                </div>
-                <p class="text-sm font-medium text-gray-800 dark:text-gray-300 leading-relaxed">"The sound system at the back was terrible. We couldn't hear the speaker clearly during the Q&A portion. Please fix the mics next time."</p>
-            </div>
+            <!-- Injected by JS -->
         </div>
     </div>
 

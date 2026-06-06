@@ -19,6 +19,12 @@
 
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    @keyframes scan {
+        0% { top: 0%; }
+        100% { top: 100%; }
+    }
+    .scan-line { animation: scan 2s linear infinite; }
 </style>
 {% endblock extra_head %}
 
@@ -133,19 +139,69 @@
             </div>
 
             <div id="viewScanner" style="display: none;" class="flex-col items-center justify-start w-full h-full p-8 m-auto">
-                <div id="cameraContainer" class="relative bg-black rounded-[2.5rem] overflow-hidden w-full max-w-md h-[320px] border-4 border-gray-100 dark:border-gray-800 transition-all shadow-2xl mx-auto mb-6 shrink-0">
-                    <video id="videoFeed" class="w-full h-full object-cover transform -scale-x-100" autoplay playsinline></video>
-                    <div class="absolute inset-0 border-[4px] border-white/5 border-dashed m-8 rounded-[2rem] pointer-events-none">
-                        <div id="faceOverlay" class="absolute inset-0 flex items-center justify-center">
-                            <div class="w-48 h-44 border-2 border-pup-gold/20 rounded-[3.5rem] animate-pulse shadow-[0_0_40px_rgba(212,175,55,0.1)]"></div>
-                        </div>
+                <!-- 🟢 QUALITY METER (New) 🟢 -->
+                <div id="qualityMeter" class="w-full max-w-md mb-4 space-y-1.5 mx-auto hidden">
+                    <div class="flex justify-between items-end">
+                        <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Signal Quality</span>
+                        <span id="qualityText" class="text-[10px] font-bold text-amber-500 uppercase">ADJUSTING...</span>
                     </div>
+                    <div class="h-1.5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                        <div id="qualityBar" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="cameraContainer" class="relative bg-black rounded-[2.5rem] overflow-hidden w-full max-w-md h-[320px] border-4 border-gray-100 dark:border-gray-800 transition-all shadow-2xl mx-auto mb-6 shrink-0 group">
+                    <video id="videoFeed" class="w-full h-full object-cover transform -scale-x-100" autoplay playsinline></video>
+                    
+                    <!-- 🟢 BIOMETRIC OVERLAY (Ported from index.html) 🟢 -->
+                    <div id="biometricOverlay" class="absolute inset-0 pointer-events-none">
+                        <!-- Scan Corners -->
+                        <div id="corner-tl" class="absolute top-8 left-8 w-6 h-6 border-t-4 border-l-4 border-pup-gold/60 rounded-tl-lg transition-all duration-300"></div>
+                        <div id="corner-tr" class="absolute top-8 right-8 w-6 h-6 border-t-4 border-r-4 border-pup-gold/60 rounded-tr-lg transition-all duration-300"></div>
+                        <div id="corner-bl" class="absolute bottom-8 left-8 w-6 h-6 border-b-4 border-l-4 border-pup-gold/60 rounded-bl-lg transition-all duration-300"></div>
+                        <div id="corner-br" class="absolute bottom-8 right-8 w-6 h-6 border-b-4 border-r-4 border-pup-gold/60 rounded-br-lg transition-all duration-300"></div>
+
+                        <!-- Central Target -->
+                        <div class="absolute inset-16 border border-white/10 rounded-full flex items-center justify-center">
+                            <div class="w-2 h-2 bg-pup-gold/40 rounded-full animate-ping"></div>
+                        </div>
+
+                        <!-- 🟢 REAL-TIME STATUS ALERTS 🟢 -->
+                        <div class="absolute inset-x-6 bottom-12 flex flex-col items-center gap-2">
+                            <div id="alert-obstructed" class="hidden bg-red-600 text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl animate-bounce backdrop-blur-md">
+                                <i class="ph-bold ph-warning-circle"></i> Detection Blocked
+                            </div>
+                            <div id="alert-tooDark" class="hidden bg-amber-600 text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl backdrop-blur-md">
+                                <i class="ph-bold ph-moon"></i> Increase Lighting
+                            </div>
+                            <div id="alert-noFaceDetail" class="hidden bg-pup-maroon text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl backdrop-blur-md">
+                                <i class="ph-bold ph-user-focus"></i> Position Face Clearly
+                            </div>
+                            <div id="alert-ready" class="hidden bg-green-600 text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl backdrop-blur-md animate-pulse">
+                                <i class="ph-bold ph-fingerprint"></i> Identity Ready
+                            </div>
+                        </div>
+
+                        <div class="absolute top-0 left-0 w-full h-[2px] bg-pup-gold/40 blur-sm scan-line"></div>
+                    </div>
+
                     <div id="scanStatus" class="absolute top-6 left-6 right-6 bg-black/80 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl">
                         Warming Up AI Core...
                     </div>
                 </div>
 
                 <div class="w-full max-w-md mx-auto space-y-5 flex flex-col flex-grow">
+                    <!-- 🟢 PHYSICAL AUDIT (New) 🟢 -->
+                    <div id="physicalAudit" class="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-100 dark:border-gray-900 rounded-2xl p-4 flex items-start gap-4 shadow-sm">
+                        <div class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-amber-600">
+                            <i class="ph-bold ph-eyeglasses text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-tight">Physical Audit Required</p>
+                            <p class="text-[9px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">Please remove <span class="text-pup-maroon dark:text-pup-gold font-bold">glasses, masks, or hats</span> for valid biometric synchronization.</p>
+                        </div>
+                    </div>
+
                     <div id="locationMap" class="w-full h-28 rounded-[1.5rem] border border-gray-100 dark:border-gray-800 z-10 shadow-inner relative overflow-hidden shrink-0"></div>
                     
                     <p id="locStatus" class="text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center w-full gap-3 text-center text-gray-400 bg-gray-50 dark:bg-[#0a0a0a] py-3 rounded-full border border-gray-100 dark:border-gray-900">
@@ -190,6 +246,11 @@
         let stream = null; let map = null; let userLat = null; let userLng = null;
         let currentEvent = null; let isFaceVerified = false; let isLocationVerified = false;
         let modelsLoaded = false; let faceMatcher = null;
+
+        // 🟢 NEW QUALITY STATE 🟢
+        let qualityStatus = { tooDark: false, tooBright: false, obstructed: false, noFaceDetail: false, isReady: false };
+        let qualityScore = 0;
+        let validationInterval = null;
 
         const eventsGrid = document.getElementById('eventsGrid');
         const noResults = document.getElementById('noResults');
@@ -348,7 +409,9 @@
             document.getElementById('participationModal').style.display = 'none';
             document.body.style.overflow = '';
             if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+            if (validationInterval) { clearInterval(validationInterval); validationInterval = null; }
             currentEvent = null; isFaceVerified = isLocationVerified = false;
+            document.getElementById('qualityMeter').classList.add('hidden');
         }
 
         if(searchInput) searchInput.addEventListener('input', () => renderEvents(searchInput.value));
@@ -380,14 +443,47 @@
             switchView('viewScanner');
             const status = document.getElementById('scanStatus');
             status.innerText = "INITIALIZING AI CORE...";
+            
+            // 🟢 ROBUST PERMISSION & ENVIRONMENT CHECK 🟢
+            if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+                alert("Security Error: Camera access requires a secure connection (HTTPS).");
+                closeParticipationModal();
+                return;
+            }
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("Device Error: Your browser or device does not support camera access.");
+                closeParticipationModal();
+                return;
+            }
+
             await loadModels(); await initFaceMatcher();
             status.innerText = "AUTHENTICATING SENSORS...";
 
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                document.getElementById('videoFeed').srcObject = stream;
-                startFaceDetection(document.getElementById('videoFeed'));
-            } catch (err) { alert("Camera Access Denied"); closeParticipationModal(); }
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 640 }, 
+                        height: { ideal: 640 } 
+                    } 
+                });
+                const video = document.getElementById('videoFeed');
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    startQualityValidation();
+                    startFaceDetection(video);
+                };
+            } catch (err) { 
+                if (err.name === 'NotAllowedError') {
+                    alert("Permission Denied: Please allow camera access in your browser settings.");
+                } else {
+                    alert("Camera Error: " + err.message);
+                }
+                closeParticipationModal(); 
+                return;
+            }
 
             if (!map) {
                 map = L.map('locationMap', {zoomControl: false, dragging: false, scrollWheelZoom: false}).setView([13.84615, 121.96955], 16);
@@ -413,24 +509,128 @@
             }
         }
 
+        // 🟢 NEW: QUALITY VALIDATION LOGIC (VANILLA JS PORT) 🟢
+        function startQualityValidation() {
+            if (validationInterval) clearInterval(validationInterval);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const video = document.getElementById('videoFeed');
+            const qualityMeter = document.getElementById('qualityMeter');
+            qualityMeter.classList.remove('hidden');
+            
+            validationInterval = setInterval(() => {
+                if (!stream || !currentEvent || !video) return;
+                if (video.videoWidth === 0) return;
+
+                // 64x64 for fast processing
+                canvas.width = 64; canvas.height = 64; 
+                ctx.drawImage(video, 0, 0, 64, 64);
+                
+                const imageData = ctx.getImageData(0, 0, 64, 64);
+                const data = imageData.data;
+                let brightness = 0;
+                let detailLevel = 0;
+                let variance = 0;
+                
+                for (let y = 1; y < 63; y++) {
+                    for (let x = 1; x < 63; x++) {
+                        const idx = (y * 64 + x) * 4;
+                        const val = (data[idx] + data[idx+1] + data[idx+2]) / 3;
+                        brightness += val;
+                        if (y > 12 && y < 52 && x > 12 && x < 52) {
+                            const left = (data[idx-4] + data[idx-3] + data[idx-2]) / 3;
+                            detailLevel += Math.abs(val - left);
+                        }
+                    }
+                }
+                
+                const avgBrightness = brightness / (64 * 64);
+                const centerDetail = detailLevel / (40 * 40);
+
+                for (let i = 0; i < data.length; i += 8) {
+                    const val = (data[i] + data[i+1] + data[i+2]) / 3;
+                    variance += Math.abs(val - avgBrightness);
+                }
+                const avgVariance = variance / (data.length / 8);
+
+                qualityStatus.tooDark = avgBrightness < 40; 
+                qualityStatus.tooBright = avgBrightness > 230; 
+                qualityStatus.obstructed = avgVariance < 10 && !qualityStatus.tooDark; 
+                qualityStatus.noFaceDetail = centerDetail < 12; 
+
+                let score = 0;
+                if (!qualityStatus.tooDark && !qualityStatus.tooBright) score += 40;
+                if (!qualityStatus.obstructed) score += 30;
+                if (!qualityStatus.noFaceDetail) score += 30;
+                
+                qualityScore = score;
+                qualityStatus.isReady = score >= 75;
+                
+                updateQualityUI();
+            }, 150);
+        }
+
+        function updateQualityUI() {
+            const bar = document.getElementById('qualityBar');
+            const text = document.getElementById('qualityText');
+            const alerts = {
+                obstructed: document.getElementById('alert-obstructed'),
+                tooDark: document.getElementById('alert-tooDark'),
+                noFaceDetail: document.getElementById('alert-noFaceDetail'),
+                ready: document.getElementById('alert-ready')
+            };
+            const corners = {
+                tl: document.getElementById('corner-tl'),
+                tr: document.getElementById('corner-tr'),
+                bl: document.getElementById('corner-bl'),
+                br: document.getElementById('corner-br')
+            };
+
+            bar.style.width = qualityScore + '%';
+            text.innerText = qualityStatus.isReady ? 'OPTIMAL' : 'ADJUSTING...';
+            text.className = `text-[10px] font-bold uppercase ${qualityStatus.isReady ? 'text-green-500' : 'text-amber-500'}`;
+
+            alerts.obstructed.classList.toggle('hidden', !qualityStatus.obstructed);
+            alerts.tooDark.classList.toggle('hidden', !qualityStatus.tooDark);
+            alerts.noFaceDetail.classList.toggle('hidden', qualityStatus.obstructed || qualityStatus.tooDark || !qualityStatus.noFaceDetail);
+            alerts.ready.classList.toggle('hidden', !qualityStatus.isReady);
+
+            const isReady = qualityStatus.isReady;
+            corners.tl.className = `absolute top-8 left-8 w-6 h-6 border-t-4 border-l-4 rounded-tl-lg transition-all duration-300 ${isReady ? 'scale-110 -translate-x-1 -translate-y-1 border-green-500' : 'border-pup-gold/60'}`;
+            corners.tr.className = `absolute top-8 right-8 w-6 h-6 border-t-4 border-r-4 rounded-tr-lg transition-all duration-300 ${isReady ? 'scale-110 translate-x-1 -translate-y-1 border-green-500' : 'border-pup-gold/60'}`;
+            corners.bl.className = `absolute bottom-8 left-8 w-6 h-6 border-b-4 border-l-4 rounded-bl-lg transition-all duration-300 ${isReady ? 'scale-110 -translate-x-1 translate-y-1 border-green-500' : 'border-pup-gold/60'}`;
+            corners.br.className = `absolute bottom-8 right-8 w-6 h-6 border-b-4 border-r-4 rounded-br-lg transition-all duration-300 ${isReady ? 'scale-110 translate-x-1 translate-y-1 border-green-500' : 'border-pup-gold/60'}`;
+        }
+
         async function startFaceDetection(video) {
             const status = document.getElementById('scanStatus');
             const interval = setInterval(async () => {
                 if (!stream || !currentEvent) { clearInterval(interval); return; }
+                
+                if (!qualityStatus.isReady) {
+                    isFaceVerified = false;
+                    status.innerText = "OPTIMIZING SENSOR QUALITY...";
+                    status.className = "absolute top-6 left-6 right-6 bg-amber-600/80 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl";
+                    checkAllVerified();
+                    return;
+                }
+
                 const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                 if (det && faceMatcher) {
                     const match = faceMatcher.findBestMatch(det.descriptor);
                     if (match.label !== 'unknown' && match.distance < 0.5) {
                         isFaceVerified = true;
                         status.innerText = "BIOMETRIC IDENTITY MATCHED! ✅";
-                        status.className = "absolute top-8 left-8 right-8 bg-green-600/90 backdrop-blur-2xl px-6 py-4 rounded-full text-white text-[10px] font-black uppercase tracking-[0.25em] text-center shadow-2xl";
+                        status.className = "absolute top-6 left-6 right-6 bg-green-600/90 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center shadow-2xl";
                     } else {
                         isFaceVerified = false;
-                        status.innerText = "SCANNING... POSITION FACE IN FRAME";
-                        status.className = "absolute top-8 left-8 right-8 bg-black/80 backdrop-blur-2xl px-6 py-4 rounded-full text-white text-[10px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl";
+                        status.innerText = "IDENTITY MISMATCH / SEARCHING...";
+                        status.className = "absolute top-6 left-6 right-6 bg-black/80 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl";
                     }
                 } else {
-                    isFaceVerified = false; status.innerText = "FACE NOT DETECTED";
+                    isFaceVerified = false; 
+                    status.innerText = "FACE NOT DETECTED";
+                    status.className = "absolute top-6 left-6 right-6 bg-pup-maroon/80 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl";
                 }
                 checkAllVerified();
             }, 500);
