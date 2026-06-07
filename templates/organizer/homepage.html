@@ -3,84 +3,171 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/organizer_home.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 <style>
+    /* Reset and Core Styles */
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+    /* Banner Mobile Optimization - Centered Text */
+    @media (max-width: 640px) {
+        .hero-container { border-radius: 0 !important; margin-left: -1.25rem !important; margin-right: -1.25rem !important; width: calc(100% + 2.5rem) !important; }
+    }
+
+    /* Stats Box Optimization - Zero Truncation */
+    @media (max-width: 640px) {
+        .stats-text-label { font-size: 8px !important; line-height: 1 !important; display: block !important; white-space: normal !important; }
+        .stats-text-value { font-size: 18px !important; }
+        .stats-icon-container { width: 36px !important; height: 36px !important; }
+        .stats-box { padding: 0.75rem !important; gap: 0.5rem !important; }
+    }
+
+    /* About Org - Custom Radius Logic */
+    .about-section {
+        background: white;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+    .dark .about-section {
+        background: #151515;
+        border: 1px solid #262626;
+    }
+    .slideshow-container {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        min-height: 300px;
+        /* Desktop: Radius only on the left */
+        border-top-left-radius: 1.5rem;
+        border-bottom-left-radius: 1.5rem;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    @media (max-width: 1024px) {
+        .slideshow-container { 
+            aspect-ratio: 16/9; 
+            min-height: auto;
+            /* Mobile: Radius only on top to be flush with container bottom */
+            border-bottom-left-radius: 0;
+            border-top-right-radius: 1.5rem;
+        }
+    }
+
+    .slide {
+        display: none;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        inset: 0;
+    }
+
+    /* Quick Action Reversion */
+    .action-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 1.5rem;
+        border: 1px solid #f3f4f6;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .dark .action-card { background: #1a1a1a; border-color: #2a2a2a; }
+    .action-card:hover { transform: translateY(-5px); border-color: #800000; }
+    .dark .action-card:hover { border-color: #D4AF37; }
+
+    @media (max-width: 640px) {
+        .action-title { font-size: 10px !important; }
+        .action-desc { font-size: 8px !important; }
+        .action-icon { width: 40px !important; height: 40px !important; }
+        .action-icon i { font-size: 20px !important; }
+        .action-card { padding: 1rem !important; border-radius: 1.25rem !important; }
+    }
+
+    /* University News - Carousel with Focus Effect */
+    .news-carousel {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 1.25rem;
+        padding-bottom: 1.5rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        margin-left: -1rem;
+        margin-right: -1rem;
+    }
+    .news-card {
+        flex: 0 0 85%;
+        scroll-snap-align: center;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        opacity: 0.6;
+        transform: scale(0.9);
+    }
+    @media (min-width: 640px) {
+        .news-carousel { display: grid; grid-template-columns: repeat(2, 1fr); overflow: visible; margin: 0; padding: 0; }
+        .news-card { flex: none; scroll-snap-align: none; opacity: 1; transform: scale(1); }
+    }
+    /* Active Focus Class (Mobile Only) */
+    .news-card.active-focus {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Date Icon Style for Schedule */
+    .date-icon {
+        width: 45px;
+        height: 45px;
+        background: #f9fafb;
+        border: 1px solid #f3f4f6;
+        border-radius: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .dark .date-icon { background: #111; border-color: #222; }
+    .date-month { font-size: 8px; font-weight: 900; color: #800000; text-transform: uppercase; }
+    .dark .date-month { color: #D4AF37; }
+    .date-day { font-size: 14px; font-weight: 900; line-height: 1; }
+
+    /* Full Screen Modals on Mobile */
+    @media (max-width: 640px) {
+        .modal-content-container {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+        }
+        #calendarModalContainer {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+        }
+    }
 </style>
-<!-- Inject Vue App Data early so organizer.js can pick it up -->
+
 <script>
     window.VUE_APP_DATA = Object.assign(window.VUE_APP_DATA || {}, {
         latestNews: {{ latest_news_json|default:"[]"|safe }},
-        managedEvents: {{ managed_events_json|default:"[]"|safe }},
-        actionRequired: {{ action_required_json|default:"null"|safe }}
+        calendarEvents: {{ calendar_events_json|default:"[]"|safe }}
     });
 </script>
 {% endblock extra_head %}
 
 {% block skeleton %}
 <div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
-    <!-- Hero Skeleton -->
-    <div class="w-full h-[200px] sm:h-[250px] md:h-[300px] rounded-3xl skeleton-shimmer mb-8"></div>
-    
-    <!-- Action Cards Skeleton -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-12">
-        <div v-for="i in 4" :key="i" class="h-40 sm:h-48 rounded-2xl sm:rounded-3xl skeleton-shimmer"></div>
-    </div>
-
-    <!-- Two Column Grid Skeleton -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Column -->
-        <div class="lg:col-span-2 flex flex-col gap-8">
-            <!-- University News -->
-            <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-100 dark:border-gray-800 pb-3 mb-6">
-                    <div class="w-8 h-8 rounded-full skeleton-shimmer"></div>
-                    <div class="w-48 h-8 rounded-lg skeleton-shimmer"></div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <div v-for="i in 2" :key="i" class="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 h-64">
-                        <div class="h-40 skeleton-shimmer"></div>
-                        <div class="p-5 space-y-3">
-                            <div class="w-20 h-3 rounded skeleton-shimmer"></div>
-                            <div class="w-full h-6 rounded skeleton-shimmer"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Required -->
-            <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-100 dark:border-gray-800 pb-3 mb-6">
-                    <div class="w-8 h-8 rounded-full skeleton-shimmer"></div>
-                    <div class="w-40 h-8 rounded-lg skeleton-shimmer"></div>
-                </div>
-                <div class="h-28 rounded-2xl skeleton-shimmer"></div>
-            </div>
-        </div>
-
-        <!-- Right Column -->
-        <div class="lg:col-span-1 flex flex-col gap-8">
-            <!-- Managed Events -->
-            <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-100 dark:border-gray-800 pb-3 mb-6">
-                    <div class="w-8 h-8 rounded-full skeleton-shimmer"></div>
-                    <div class="w-40 h-8 rounded-lg skeleton-shimmer"></div>
-                </div>
-                <div class="space-y-4">
-                    <div v-for="i in 3" :key="i" class="h-24 rounded-2xl skeleton-shimmer"></div>
-                </div>
-            </div>
-
-            <!-- Recent Logs -->
-            <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-100 dark:border-gray-800 pb-3 mb-6">
-                    <div class="w-8 h-8 rounded-full skeleton-shimmer"></div>
-                    <div class="w-32 h-8 rounded-lg skeleton-shimmer"></div>
-                </div>
-                <div class="h-64 rounded-3xl skeleton-shimmer"></div>
-            </div>
-        </div>
+    <div class="w-full h-64 rounded-2xl skeleton-shimmer mb-8"></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <div v-for="i in 4" :key="i" class="h-24 rounded-xl skeleton-shimmer"></div>
     </div>
 </div>
 {% endblock skeleton %}
@@ -88,378 +175,361 @@
 {% block content %}
 <div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
 
-    <div class="hero-container relative w-full h-[200px] sm:h-[250px] md:h-[300px] rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl mb-8 bg-gray-900">
-
+    <!-- 1. BANNER (Centered Text) -->
+    <div class="hero-container relative w-full h-[180px] sm:h-[250px] md:h-[300px] rounded-2xl overflow-hidden shadow-lg mb-10 bg-gray-900 transition-all">
         <img src="{% static 'images/banner/banner.jpg' %}" alt="PUP Banner" class="absolute inset-0 w-full h-full object-cover z-0">
-
-        <div class="absolute inset-0 bg-black/30 z-0"></div>
-        <div class="absolute inset-0 bg-gradient-to-r from-pup-maroon/95 via-pup-maroon/60 to-black/80 dark:from-black/95 dark:via-pup-darkcard/80 dark:to-pup-darkbg/90 z-0"></div>
-
-        <div class="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-            <h1 class="font-extrabold text-2xl sm:text-4xl md:text-5xl text-pup-gold mb-2 drop-shadow-lg uppercase tracking-wide">Mabuhay, Organizer!</h1>
-            <p class="text-white/95 text-xs sm:text-sm md:text-lg font-medium tracking-wider md:tracking-widest uppercase text-shadow-md">Ang Iyong Sentro sa Pag-oorganisa ng mga Aktibidad</p>
+        <div class="absolute inset-0 bg-black/40 z-0"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-pup-maroon/60 via-transparent to-transparent z-0"></div>
+        <div class="relative z-10 flex flex-col items-center justify-center text-center h-full px-6">
+            <h1 class="font-black text-2xl sm:text-4xl md:text-5xl text-pup-gold mb-2 drop-shadow-md uppercase tracking-tight">Mabuhay, Organizer!</h1>
+            <p class="text-white/90 text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase">Sentro sa Pag-oorganisa ng mga Aktibidad</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-12">
-        <a href="{% url 'organizer_create_events' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>        
-            <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
-                <i class="ph-fill ph-calendar-plus text-2xl sm:text-3xl"></i>
+    <!-- 2. STATS BOXES -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-10">
+        <div class="stats-box bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 transition-all hover:shadow-md">
+            <div class="stats-icon-container w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                <i class="ph-fill ph-users-three text-xl"></i>
             </div>
-            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Create Event</h3>
-            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Propose & schedule new activities.</p>
-        </a>
-
-        <a href="{% url 'organizer_document_tracking' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>        
-            <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
-                <i class="ph-fill ph-folder-open text-2xl sm:text-3xl"></i>
+            <div class="min-w-0">
+                <p class="stats-text-label text-[9px] font-bold text-gray-500 uppercase tracking-widest">Active Members</p>
+                <h4 class="stats-text-value text-lg sm:text-xl font-black text-gray-900 dark:text-white leading-none mt-1">{{ active_members_count }}</h4>
             </div>
-            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Document Tracking</h3>
-            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Track event proposals & reports.</p>
-        </a>
-
-        <a href="{% url 'organizer_manage_attendance' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>        
-            <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
-                <i class="ph-fill ph-users-three text-2xl sm:text-3xl"></i>
+        </div>
+        <div class="stats-box bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 transition-all hover:shadow-md">
+            <div class="stats-icon-container w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
+                <i class="ph-fill ph-calendar-star text-xl"></i>
             </div>
-            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Manage Attendance</h3>
-            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Monitor real-time participation logs.</p>
-        </a>
-
-        <a href="{% url 'organizer_analytics' %}" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-md border border-gray-100 dark:border-gray-800 hover:border-pup-maroon dark:hover:border-pup-gold flex flex-col items-center text-center overflow-hidden block transition-colors group">  
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-full blur-2xl pointer-events-none group-hover:bg-pup-maroon/10 dark:group-hover:bg-pup-gold/10 transition-colors"></div>        
-            <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-pup-maroon/20 to-pup-maroon/5 dark:from-pup-gold/20 dark:to-pup-gold/5 rounded-full flex items-center justify-center mb-3 sm:mb-4 text-pup-maroon dark:text-pup-gold relative z-10 transition-transform group-hover:scale-110">
-                <i class="ph-fill ph-chart-pie-slice text-2xl sm:text-3xl"></i>
+            <div class="min-w-0">
+                <p class="stats-text-label text-[9px] font-bold text-gray-500 uppercase tracking-widest">Upcoming Events</p>
+                <h4 class="stats-text-value text-lg sm:text-xl font-black text-gray-900 dark:text-white leading-none mt-1">{{ upcoming_events_count }}</h4>
             </div>
-            <h3 class="font-bold text-sm sm:text-lg text-gray-900 dark:text-white mb-1 relative z-10">Analytics Dashboard</h3>
-            <p class="text-[0.65rem] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight relative z-10">Review insights & sentiment reports.</p>
-        </a>
+        </div>
+        <div class="stats-box bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 transition-all hover:shadow-md">
+            <div class="stats-icon-container w-10 h-10 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center text-yellow-600 dark:text-yellow-400 shrink-0">
+                <i class="ph-fill ph-note-pencil text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="stats-text-label text-[9px] font-bold text-gray-500 uppercase tracking-widest">Pending Proposals</p>
+                <h4 class="stats-text-value text-lg sm:text-xl font-black text-gray-900 dark:text-white leading-none mt-1">{{ pending_proposals_count }}</h4>
+            </div>
+        </div>
+        <div class="stats-box bg-white dark:bg-pup-darkcard p-4 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 transition-all hover:shadow-md">
+            <div class="stats-icon-container w-10 h-10 rounded-xl bg-pup-maroon/5 dark:bg-pup-gold/5 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0">
+                <i class="ph-fill ph-clock-counter-clockwise text-xl"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="stats-text-label text-[9px] font-bold text-gray-500 uppercase tracking-widest">History Logs</p>
+                <h4 class="stats-text-value text-lg sm:text-xl font-black text-gray-900 dark:text-white leading-none mt-1">{{ managed_events_count }}</h4>
+            </div>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        <div class="lg:col-span-2 flex flex-col gap-8">
-
-            <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">    
-                    <i class="ph-bold ph-newspaper text-2xl text-pup-maroon dark:text-pup-gold"></i>
-                    <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">University News</h2>
-                </div>
-                <div class="flex sm:grid sm:grid-cols-2 gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-4 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-                    <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news)" class="min-w-[85%] sm:min-w-0 snap-center bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-gray-200 dark:border-gray-800 transition-shadow cursor-pointer group">
-                        <div class="overflow-hidden h-40">
-                            <img :src="getStaticImageUrl(news.image)" :alt="news.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" @error="handleImageError">
-                        </div>
-                        <div class="p-5">
-                            <div class="text-[0.7rem] text-pup-maroon dark:text-pup-gold font-black tracking-wider mb-1 uppercase">[[ news.date ]]</div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white leading-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">[[ news.title ]]</h3>
-                        </div>
-                    </div>
-                    <div v-if="!latestNews || latestNews.length === 0" class="text-gray-500 p-4 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl col-span-2 text-center text-sm font-medium">
-                        No recent news available.
-                    </div>
+    <!-- 3. ABOUT ORG SECTION (Flush logic with specific Radius) -->
+    <div class="about-section mb-10">
+        <div class="flex flex-col lg:flex-row">
+            <!-- Left: Slideshow -->
+            <div class="lg:w-1/2">
+                <div class="slideshow-container bg-gray-100 dark:bg-gray-800">
+                    <img class="slide" src="{% static 'images/org1.jpg' %}">
+                    <img class="slide" src="{% static 'images/org2.jpg' %}">
+                    <img class="slide" src="{% static 'images/org3.jpg' %}">
+                    <img class="slide" src="{% static 'images/org4.jpg' %}">
+                    <img class="slide" src="{% static 'images/org5.jpg' %}">
+                    <img class="slide" src="{% static 'images/PUPLogo.png' %}" style="object-fit: contain; background: white; padding: 2rem;">
                 </div>
             </div>
+            <!-- Right: Content -->
+            <div class="lg:w-1/2 p-8 sm:p-12 flex flex-col justify-center">
+                <div class="mb-6">
+                    <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1">
+                        {{ org_acronym }}
+                    </h2>
+                    <p class="text-pup-maroon dark:text-pup-gold text-xs sm:text-sm font-bold uppercase tracking-widest">{{ full_org_name }}</p>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium italic border-l-4 border-pup-maroon dark:border-pup-gold pl-5">
+                    "{{ about_us_text }}"
+                </p>
+            </div>
+        </div>
+    </div>
 
-            <div>
-                <div class="flex justify-between items-center border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">
-                    <div class="flex items-center gap-3">
-                        <i class="ph-bold ph-warning-circle text-2xl text-red-600 dark:text-pup-gold"></i>
-                        <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Action Required</h2>
+    <!-- 4. QUICK ACTIONS -->
+    <div class="mb-12">
+        <h2 class="text-xs sm:text-sm font-black text-gray-400 dark:text-gray-500 mb-6 uppercase tracking-[0.3em] flex items-center gap-2">
+            <span class="w-8 h-[2px] bg-gray-200 dark:bg-gray-800"></span> Dashboard Console
+        </h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <a href="{% url 'organizer_create_events' %}" class="action-card group">
+                <div class="action-icon w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
+                    <i class="ph-bold ph-calendar-plus text-2xl"></i>
+                </div>
+                <h3 class="action-title font-black text-xs sm:text-sm text-gray-900 dark:text-white uppercase tracking-wide">Create Event</h3>
+                <p class="action-desc text-[9px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Propose activities</p>
+            </a>
+            <a href="{% url 'organizer_document_tracking' %}" class="action-card group">
+                <div class="action-icon w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
+                    <i class="ph-bold ph-file-search text-2xl"></i>
+                </div>
+                <h3 class="action-title font-black text-xs sm:text-sm text-gray-900 dark:text-white uppercase tracking-wide">Tracking</h3>
+                <p class="action-desc text-[9px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Monitor status</p>
+            </a>
+            <a href="{% url 'organizer_manage_attendance' %}" class="action-card group">
+                <div class="action-icon w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
+                    <i class="ph-bold ph-users-three text-2xl"></i>
+                </div>
+                <h3 class="action-title font-black text-xs sm:text-sm text-gray-900 dark:text-white uppercase tracking-wide">Attendance</h3>
+                <p class="action-desc text-[9px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Verify logs</p>
+            </a>
+            <a href="{% url 'organizer_analytics' %}" class="action-card group">
+                <div class="action-icon w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
+                    <i class="ph-bold ph-chart-bar text-2xl"></i>
+                </div>
+                <h3 class="action-title font-black text-xs sm:text-sm text-gray-900 dark:text-white uppercase tracking-wide">Analytics</h3>
+                <p class="action-desc text-[9px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Review data</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- 5. BOTTOM GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        
+        <!-- News (Reverted to Horizontal Carousel on Mobile) -->
+        <div class="lg:col-span-2">
+            <h2 class="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight flex items-center gap-2">
+                <i class="ph-bold ph-newspaper-clipping text-pup-maroon dark:text-pup-gold"></i> University News
+            </h2>
+            <div class="news-carousel hide-scrollbar">
+                <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news)" class="news-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 transition-all cursor-pointer group">
+                    <div class="h-40 overflow-hidden">
+                        <img :src="getStaticImageUrl(news.image)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                    <div class="p-5">
+                        <div class="text-[9px] text-pup-maroon dark:text-pup-gold font-black tracking-widest mb-1 uppercase">[[ news.date ]]</div>
+                        <h3 class="text-sm font-black text-gray-900 dark:text-white leading-tight uppercase truncate">[[ news.title ]]</h3>
                     </div>
                 </div>
+                <div v-if="!latestNews.length" class="text-center py-10 bg-gray-50 dark:bg-white/5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 w-full col-span-2">
+                    <p class="text-gray-400 font-bold text-xs uppercase tracking-widest">No recent updates</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="lg:col-span-1">
+            <h2 class="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight flex items-center gap-2">
+                <i class="ph-bold ph-calendar-blank text-pup-maroon dark:text-pup-gold"></i> Schedule
+            </h2>
+            <div class="bg-white dark:bg-pup-darkcard rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div id="calendar" class="w-full mb-6"></div>
                 
-                <div v-if="actionRequired" class="bg-white dark:bg-pup-darkcard rounded-2xl border border-red-200 dark:border-pup-gold/30 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group hover:shadow-md transition-shadow relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500 dark:bg-pup-gold"></div>
-                    <div class="flex gap-4 items-center pl-2">
-                        <div class="w-12 h-12 bg-red-50 dark:bg-pup-gold/10 rounded-full flex items-center justify-center text-red-500 dark:text-pup-gold">
-                            <i class="ph-fill ph-file-pdf text-2xl"></i>
+                <div class="space-y-3 max-h-[350px] overflow-y-auto hide-scrollbar">
+                    <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="handleCalendarEventClick(evt)" class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-800 group">
+                        <div class="date-icon">
+                            <span class="date-month">[[ getMonth(evt.date) ]]</span>
+                            <span class="date-day text-gray-900 dark:text-white">[[ getDay(evt.date) ]]</span>
                         </div>
-                        <div>
-                            <h4 class="font-bold text-gray-900 dark:text-white text-lg">[[ actionRequired.title ]] Concluded</h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">The event has ended. Please generate the final attendance and evaluation report.</p>
-                        </div>
-                    </div>
-                    <button onclick="generateTerminalReport()" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-pup-darkbg text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer">
-                        <i class="ph-bold ph-download-simple"></i> Generate Report
-                    </button>
-                </div>
-                <div v-else class="text-center p-6 text-gray-500 text-sm border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-                    <i class="ph-fill ph-check-circle text-3xl mb-2 text-green-500/50"></i>
-                    <p>All caught up! No actions required.</p>
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="lg:col-span-1 flex flex-col gap-8">
-
-            <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">    
-                    <i class="ph-bold ph-calendar-star text-2xl text-pup-maroon dark:text-pup-gold"></i>
-                    <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Managed Events</h2>
-                </div>
-                <div class="grid grid-cols-1 gap-4">
-                    
-                    <div v-for="event in managedEvents" :key="event.id" @click="openManagedEventModal(event.id)" class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden group cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all hover:-translate-y-1">
-                        <div class="flex items-center gap-4 p-3">
-                            <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
-                                <img :src="event.image ? getStaticImageUrl(event.image) : '{% static 'images/background.jpg' %}'" alt="Event" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" @error="handleImageError">
-                            </div>
-                            <div class="flex-grow pr-2">
-                                <div class="text-[0.65rem] text-pup-maroon dark:text-pup-gold font-bold mb-0.5 uppercase">[[ event.date ]]</div>
-                                <h4 class="font-bold text-gray-900 dark:text-white text-sm leading-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">[[ event.title ]]</h4>
-                                <div class="flex items-center justify-between mt-1.5">
-                                    <span class="text-[0.65rem] font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded border border-green-200 dark:border-green-800/50">Status: [[ event.status ]]</span>
-                                </div>
-                            </div>
+                        <div class="min-w-0">
+                            <h4 class="font-black text-gray-900 dark:text-white text-xs truncate uppercase tracking-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold">[[ evt.title ]]</h4>
+                            <p class="text-[9px] text-gray-500 font-bold uppercase mt-0.5">[[ evt.start_time ]] • [[ evt.venue || 'Campus' ]]</p>
                         </div>
                     </div>
-                    
-                    <div v-if="!managedEvents || managedEvents.length === 0" class="text-center p-4 text-gray-500 text-sm border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-                        No managed events found.
+                    <div v-if="!filteredCalendarEvents.length" class="text-center py-8">
+                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">No events for this month</p>
                     </div>
-                </div>
-            </div>
-
-            <div>
-                <div class="flex items-center gap-3 border-b-2 border-gray-200 dark:border-gray-800 pb-3 mb-6">    
-                    <i class="ph-bold ph-clock-counter-clockwise text-2xl text-pup-maroon dark:text-pup-gold"></i> 
-                    <h2 class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Recent Logs</h2>
-                </div>
-                <div class="bg-white dark:bg-pup-darkcard rounded-3xl p-6 shadow-sm border border-gray-200 dark:border-gray-800">
-                    <div onclick="openLogModal('eval')" class="event-item flex gap-4 p-3 -ml-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#111] cursor-pointer transition-colors relative group">
-                        <div class="timeline-dot flex-shrink-0 w-10 flex flex-col items-center relative">
-                            <div class="absolute top-8 bottom-[-20px] w-[2px] bg-gray-200 dark:bg-gray-800"></div> 
-                            <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 z-10">
-                                <i class="ph-bold ph-clipboard-text"></i>
-                            </div>
-                        </div>
-                        <div class="pb-2">
-                            <h4 class="font-bold text-gray-900 dark:text-white text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">Evaluation Form Drafted</h4>
-                            <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 mt-1 mb-1">Dec 10, 2025 02:30 PM</p>
-                            <p class="text-xs text-gray-600 dark:text-gray-300">Drafted evaluation template for "Research Colloquium".</p>
-                        </div>
-                    </div>
-                    <div onclick="openLogModal('proposal')" class="event-item flex gap-4 p-3 -ml-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-[#111] cursor-pointer transition-colors relative group mt-2">
-                        <div class="timeline-dot flex-shrink-0 w-10 flex flex-col items-center">
-                            <div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 z-10">
-                                <i class="ph-bold ph-plus-circle"></i>
-                            </div>
-                        </div>
-                        <div class="pb-2">
-                            <h4 class="font-bold text-gray-900 dark:text-white text-sm group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">New Event Proposal</h4>
-                            <p class="text-[0.65rem] text-gray-500 dark:text-gray-400 mt-1 mb-1">Nov 28, 2025 09:15 AM</p>
-                            <p class="text-xs text-gray-600 dark:text-gray-300">Submitted "Tech Summit 2026" for admin approval.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-<transition name="modal">
-    <div v-if="isEventModalOpen" class="fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden" v-cloak>
-        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" @click="closeModal"></div>
-        <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-[90%] sm:w-[80%] md:w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] overflow-hidden transform transition-all border border-gray-200 dark:border-gray-700">
-            <button @click="closeModal" class="absolute top-4 right-4 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
-                <i class="ph-bold ph-x"></i>
-            </button>
-            <div class="overflow-y-auto hide-scrollbar w-full">
-                <div class="h-56 sm:h-72 w-full relative shrink-0">
-                    <img :src="selectedEvent.image ? getStaticImageUrl(selectedEvent.image) : '{% static 'images/background.jpg' %}'" :alt="selectedEvent.title" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
-                    <div class="absolute bottom-6 left-6 right-6">
-                        <div class="text-xs sm:text-sm text-pup-gold font-black tracking-wider mb-1 uppercase">[[ selectedEvent.date ]]</div>
-                        <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight uppercase tracking-tight">[[ selectedEvent.title ]]</h2>
-                    </div>
-                </div>
-                <div class="p-6 sm:p-8 shrink-0 pb-10">
-                    <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300 mb-6 bg-gray-50 dark:bg-black/20 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-                        <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold"></i>
-                        <div>
-                            <div class="text-xs font-bold uppercase text-gray-400">Location</div>
-                            <div class="font-semibold text-gray-900 dark:text-white">[[ selectedEvent.location || 'PUP Unisan Campus' ]]</div>
-                        </div>
-                    </div>
-                    <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-3 tracking-tight">Overview</h3>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium text-justify">[[ selectedEvent.description || 'No detailed description available for this activity.' ]]</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</transition>
-
-<div id="managedEventModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6">     
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeManagedEventModal()"></div>
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors">
-        <button onclick="closeManagedEventModal()" class="absolute top-4 right-4 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors z-[3010]">
-            <i class="ph-bold ph-x"></i>
-        </button>
-        <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-800 shrink-0">
-            <div id="managedModalStatus" class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold text-xs px-3 py-1 rounded-full uppercase mb-2 inline-flex items-center gap-1">
-                <i class="ph-fill ph-info"></i> Status: Pending
-            </div>
-            <h2 id="managedModalTitle" class="text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2 uppercase tracking-tight">Event Title</h2>
-            <p id="managedModalDate" class="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest"><i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37]"></i> Event Date</p>
-        </div>
-        <div class="p-6 sm:p-8 overflow-y-auto hide-scrollbar flex-grow bg-gray-50 dark:bg-[#0a0a0a]">
-            <h3 class="font-black text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Event Brief</h3>
-            <p id="managedModalDesc" class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-8 font-medium text-justify">
-                This event is being managed by your organization. Once approved by the administration, students will be able to register and view it on their portal.
-            </p>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
-                    <i class="ph-fill ph-users-three text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>        
-                    <h4 class="font-black text-gray-900 dark:text-white text-xl">0</h4>
-                    <p class="text-[0.6rem] uppercase font-black text-gray-400 tracking-widest">Registered</p>
-                </div>
-                <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 text-center shadow-sm">
-                    <i class="ph-fill ph-clipboard-text text-3xl text-[#800000] dark:text-[#D4AF37] mb-2"></i>     
-                    <h4 class="font-black text-gray-900 dark:text-white text-xl">Pending</h4>
-                    <p class="text-[0.6rem] uppercase font-black text-gray-400 tracking-widest">Evaluation Form</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div id="recentLogModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6">        
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeLogModal()"></div>
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 text-center p-8">
-        <button onclick="closeLogModal()" class="absolute top-4 right-4 bg-gray-100 dark:bg-[#111] hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
-            <i class="ph-bold ph-x"></i>
-        </button>
-        <div id="logModalIcon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2"></div>
-        <h2 id="logModalTitle" class="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2 uppercase tracking-tight">Log Action</h2>
-        <p id="logModalDate" class="text-[0.7rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-6">Date</p>
-        <div class="bg-gray-50 dark:bg-[#0a0a0a] p-5 rounded-2xl border border-gray-200 dark:border-gray-800">      
-            <p id="logModalDesc" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-medium italic">Description goes here.</p>
+<!-- ========================================== -->
+<!-- MODALS -->
+<!-- ========================================== -->
+
+<!-- Simple Event Modal -->
+<div v-if="isEventModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center px-0 sm:px-4 py-6" v-cloak>
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal"></div>
+    
+    <!-- Fixed Close Button -->
+    <button @click="closeModal" class="fixed top-6 right-6 sm:top-10 sm:right-10 z-[5010] bg-black/60 hover:bg-pup-maroon text-white w-12 h-12 rounded-full flex items-center justify-center transition-all backdrop-blur-md shadow-2xl border border-white/20">
+        <i class="ph-bold ph-x text-xl"></i>
+    </button>
+
+    <div class="modal-content-container relative bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-lg overflow-y-auto max-h-full border border-gray-100 dark:border-gray-800 hide-scrollbar">
+        <div class="h-48 sm:h-64 w-full bg-gray-200 dark:bg-gray-800 relative">
+            <img :src="getStaticImageUrl(selectedEvent.image)" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6">
+                <div class="text-[10px] text-pup-gold font-black uppercase tracking-widest mb-1">[[ selectedEvent.date ]]</div>
+                <h2 class="text-xl sm:text-2xl font-black text-white uppercase leading-tight">[[ selectedEvent.title ]]</h2>
+            </div>
+        </div>
+        <div class="p-6 sm:p-8">
+            <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300 mb-6 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+                <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                <div class="text-xs font-bold uppercase">[[ selectedEvent.location || 'PUP Unisan' ]]</div>
+            </div>
+            <h3 class="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2">Event Overview</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium italic">"[[ selectedEvent.description ]]"</p>
         </div>
     </div>
 </div>
+
+<!-- Calendar Detail Modal -->
+<div id="calendarEventModal" class="hidden fixed inset-0 z-[5000] items-center justify-center px-0 sm:px-4 py-6">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeCalendarModal()"></div>
+
+    <!-- Fixed Close Button -->
+    <button onclick="closeCalendarModal()" class="fixed top-6 right-6 sm:top-10 sm:right-10 z-[5010] bg-black/60 hover:bg-pup-maroon text-white w-12 h-12 rounded-full flex items-center justify-center transition-all backdrop-blur-md shadow-2xl border border-white/20">
+        <i class="ph-bold ph-x text-xl"></i>
+    </button>
+
+    <div id="calendarModalContainer" class="relative bg-white dark:bg-pup-darkcard w-full max-w-2xl rounded-2xl shadow-2xl overflow-y-auto max-h-full border border-gray-100 dark:border-gray-800 hide-scrollbar">
+        <div class="h-64 w-full relative">
+            <img id="calModalImg" src="" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+            <div class="absolute bottom-6 left-6 right-6">
+                <div id="calModalStatus" class="bg-pup-gold text-black font-black text-[9px] px-3 py-1 rounded-full uppercase mb-2 inline-block">Status</div>
+                <h2 id="calModalTitle" class="text-2xl sm:text-3xl font-black text-white uppercase leading-tight">Title</h2>
+            </div>
+        </div>
+        <div class="p-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl">
+                    <i class="ph-fill ph-calendar-blank text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                    <div>
+                        <div class="text-[9px] font-black uppercase text-gray-400">Schedule</div>
+                        <div id="calModalDateTime" class="text-xs font-black text-gray-900 dark:text-white uppercase">Date</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl">
+                    <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                    <div>
+                        <div class="text-[9px] font-black uppercase text-gray-400">Venue</div>
+                        <div id="calModalVenue" class="text-xs font-black text-gray-900 dark:text-white uppercase">Venue</div>
+                    </div>
+                </div>
+            </div>
+            <p id="calModalDesc" class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed mb-10 italic font-medium">Description</p>
+            <a href="{% url 'organizer_school_events' %}" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 rounded-xl text-[10px] flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg transition-transform active:scale-95">
+                <i class="ph-bold ph-planet text-xl"></i> Access Event Hub
+            </a>
+        </div>
+    </div>
+</div>
+
 {% endblock content %}
 
 {% block extra_js %}
 <script>
-    function openManagedEventModal(eventId) {
-        if (!window.VUE_APP_DATA || !window.VUE_APP_DATA.managedEvents) return;
-        
-        const event = window.VUE_APP_DATA.managedEvents.find(e => e.id === eventId);
-        if (!event) return;
+    // 1. Slideshow Logic
+    let slideIndex = 0;
+    function showSlides() {
+        let i;
+        let slides = document.getElementsByClassName("slide");
+        if(!slides.length) return;
+        for (i = 0; i < slides.length; i++) slides[i].style.display = "none";  
+        slideIndex++;
+        if (slideIndex > slides.length) {slideIndex = 1}    
+        slides[slideIndex-1].style.display = "block";  
+        setTimeout(showSlides, 4000); 
+    }
+    showSlides();
 
-        document.getElementById('managedModalTitle').innerText = event.title;
-        document.getElementById('managedModalDate').innerHTML = `<i class="ph-fill ph-calendar text-[#800000] dark:text-[#D4AF37]"></i> ${event.date} • ${event.location || 'PUP Unisan'}`;
-        
-        const statusEl = document.getElementById('managedModalStatus');
-        statusEl.innerHTML = `<i class="ph-fill ph-info"></i> Status: ${event.status}`;
-        
-        if (event.status === 'Approved') {
-            statusEl.className = "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-bold text-xs px-3 py-1 rounded-full uppercase mb-2 inline-flex items-center gap-1";
-            document.getElementById('managedModalDesc').innerText = event.description || `Your proposal for "${event.title}" has been successfully approved by the Higher Administration.`;
-        } else {
-            statusEl.className = "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-bold text-xs px-3 py-1 rounded-full uppercase mb-2 inline-flex items-center gap-1";
-            document.getElementById('managedModalDesc').innerText = event.description || `Your event "${event.title}" is currently pending or undergoing review.`;
-        }
+    // 2. Carousel Focus Effect Logic
+    function initCarouselFocus() {
+        if (window.innerWidth >= 640) return; // Desktop doesn't need this
 
-        const modal = document.getElementById('managedEventModal');
+        const carousel = document.querySelector('.news-carousel');
+        const cards = document.querySelectorAll('.news-card');
+        
+        if (!carousel || !cards.length) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active-focus');
+                } else {
+                    entry.target.classList.remove('active-focus');
+                }
+            });
+        }, {
+            root: carousel,
+            threshold: 0.8,
+            rootMargin: '0px -10% 0px -10%'
+        });
+
+        cards.forEach(card => observer.observe(card));
+    }
+    
+    document.addEventListener('DOMContentLoaded', initCarouselFocus);
+    window.addEventListener('resize', initCarouselFocus);
+
+    // 3. Calendar Integration
+    let calendar;
+    document.addEventListener('DOMContentLoaded', () => {
+        const calendarEl = document.getElementById('calendar');
+        if (!calendarEl) return;
+
+        const rawEvents = window.VUE_APP_DATA.calendarEvents || [];
+        const formattedEvents = rawEvents.map(e => ({
+            id: e.id,
+            title: e.title,
+            start: e.date,
+            backgroundColor: e.status === 'Approved' ? '#800000' : '#EAB308',
+            borderColor: e.status === 'Approved' ? '#800000' : '#EAB308',
+            extendedProps: { ...e }
+        }));
+
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: { left: 'prev,next', center: 'title', right: '' },
+            height: 'auto',
+            events: formattedEvents,
+            datesSet: (info) => updateFilteredEvents(info.view.currentStart),
+            eventClick: (info) => handleCalendarEventClick(info.event.extendedProps)
+        });
+        calendar.render();
+    });
+
+    function handleCalendarEventClick(evt) {
+        document.getElementById('calModalTitle').innerText = evt.title;
+        document.getElementById('calModalStatus').innerText = evt.status;
+        document.getElementById('calModalDateTime').innerText = `${evt.date} • ${evt.start_time}`;
+        document.getElementById('calModalVenue').innerText = evt.venue || 'TBD';
+        document.getElementById('calModalDesc').innerText = evt.description || 'No description provided.';
+        document.getElementById('calModalImg').src = evt.image || '{% static "images/background.jpg" %}';
+
+        const modal = document.getElementById('calendarEventModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
     }
 
-    function closeManagedEventModal() {
-        const modal = document.getElementById('managedEventModal');
+    function closeCalendarModal() {
+        const modal = document.getElementById('calendarEventModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         document.body.style.overflow = '';
     }
 
-    function openLogModal(type) {
-        const modal = document.getElementById('recentLogModal');
-        const iconDiv = document.getElementById('logModalIcon');
-        const title = document.getElementById('logModalTitle');
-        const date = document.getElementById('logModalDate');
-        const desc = document.getElementById('logModalDesc');
-
-        if(type === 'eval') {
-            iconDiv.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2 bg-blue-100 text-blue-600";
-            iconDiv.innerHTML = '<i class="ph-fill ph-clipboard-text text-4xl"></i>';
-            title.innerText = "Evaluation Hub Sync";
-            date.innerText = "LIVE STATUS";
-            desc.innerText = "Evaluation portals are automatically synchronized with event schedules. Feedback data is encrypted and logged to the central university ledger.";
-        } else {
-            iconDiv.className = "w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 mt-2 bg-green-100 text-green-600";
-            iconDiv.innerHTML = '<i class="ph-fill ph-plus-circle text-4xl"></i>';
-            title.innerText = "System Integrity Check";
-            date.innerText = "ACTIVE SESSION";
-            desc.innerText = "All event proposals undergo multi-stage verification. Signatures and location data are cross-referenced to ensure institutional compliance.";
-        }
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeLogModal() {
-        const modal = document.getElementById('recentLogModal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = '';
-    }
-
-    function generateTerminalReport() {
-        const title = window.VUE_APP_DATA?.actionRequired?.title || 'Tech Trends 2026';
+    function updateFilteredEvents(currentDate) {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const allEvts = window.VUE_APP_DATA.calendarEvents || [];
         
-        const content = `
-            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-            <head>
-                <meta charset='utf-8'>
-                <title>Terminal Report</title>
-            </head>
-            <body style="font-family: Arial, sans-serif; padding: 20px;">
-                <h1 style="text-align: center; color: #800000; margin-bottom: 0;">TERMINAL REPORT</h1>
-                <h3 style="text-align: center; color: #555; margin-top: 5px;">PUP Unisan Quezon Campus</h3>        
-                <hr style="border: 1px solid #ccc; margin: 20px 0;">
+        const filtered = allEvts.filter(e => {
+            const d = new Date(e.date);
+            return d.getFullYear() === year && d.getMonth() === month;
+        }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                <h2>I. Event Details</h2>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                    <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Event Name:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">${title}</td></tr>
-                    <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Date Concluded:</strong></td><td style="padding: 8px; border: 1px solid #ddd;">April 06, 2026</td></tr>
-                    <tr><td style="padding: 8px; border: 1px solid #ddd;"><strong>Status:</strong></td><td style="padding: 8px; border: 1px solid #ddd; color: green; font-weight: bold;">Successfully Completed</td></tr>
-                </table>
-
-                <h2>II. Attendance & Participation Summary</h2>
-                <ul style="line-height: 1.8;">
-                    <li><strong>Total Expected Attendees:</strong> 250 students</li>
-                    <li><strong>Actual Attendees / Participants:</strong> 235 students</li>
-                    <li><strong>Participation Rate:</strong> 94%</li>
-                    <li><strong>Evaluation Forms Received:</strong> 230</li>
-                </ul>
-
-                <h2>III. Event Highlights & Executive Summary</h2>
-                <p style="line-height: 1.6; text-align: justify;">
-                    The "${title}" event successfully brought together students to discuss key topics in the academic landscape. Interactive sessions and hands-on workshops were conducted with a high level of engagement from the student body. The overall feedback from the evaluation forms indicates a highly satisfactory rating.
-                </p>
-                <br><br>
-                <p style="text-align: left; font-size: 12px; color: #888;"><em>Document automatically generated via PUPUni-CAMS</em></p>
-            </body>
-            </html>
-        `;
-
-        const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `${title.replace(/ /g, "_")}_Terminal_Report.doc`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const appElement = document.getElementById('app');
+        if (appElement && appElement.__vue_app__) {
+            const vm = appElement.__vue_app__._instance.proxy;
+            vm.filteredCalendarEvents = filtered;
+        }
     }
 </script>
 {% endblock extra_js %}

@@ -43,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedEvent: {}, 
                 latestNews: window.VUE_APP_DATA?.latestNews || [],
                 managedEvents: window.VUE_APP_DATA?.managedEvents || [],
+                calendarEvents: window.VUE_APP_DATA?.calendarEvents || [],
+                filteredCalendarEvents: [],
                 actionRequired: window.VUE_APP_DATA?.actionRequired || null
             }
         },
@@ -56,6 +58,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 'organizer_analytics': 5
             };
             this.activeIndex = urlToIndex[this.currentUrl] !== undefined ? urlToIndex[this.currentUrl] : -1;
+            
+            // Initialize filteredCalendarEvents for current month
+            const now = new Date();
+            this.filteredCalendarEvents = this.calendarEvents.filter(e => {
+                const d = new Date(e.date);
+                return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+            });
         },
         mounted() {
             // Safety: Ensure loading always clears
@@ -143,6 +152,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.selectedEvent = eventData;
                 this.isEventModalOpen = true;
                 document.body.style.overflow = 'hidden'; 
+            },
+            handleCalendarEventClick(evt) {
+                // Call the global function defined in homepage.html
+                if (window.handleCalendarEventClick) {
+                    window.handleCalendarEventClick(evt);
+                }
+            },
+            getMonth(dateStr) {
+                const date = new Date(dateStr);
+                return date.toLocaleString('en-US', { month: 'short' });
+            },
+            getDay(dateStr) {
+                const date = new Date(dateStr);
+                return date.getDate();
             },
             closeModal() {
                 this.isEventModalOpen = false;

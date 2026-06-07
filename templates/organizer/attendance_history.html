@@ -3,6 +3,33 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/event_history.css' %}">
+<style>
+    /* Modal Maximization on Mobile */
+    @media (max-width: 640px) {
+        .mobile-fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+        }
+        .fixed-close-btn {
+            position: fixed !important;
+            top: 1rem !important;
+            right: 1rem !important;
+            z-index: 5010 !important;
+            background: rgba(0, 0, 0, 0.5) !important;
+            color: white !important;
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            border-radius: 9999px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            backdrop-filter: blur(4px) !important;
+        }
+    }
+</style>
 {% endblock extra_head %}
 
 {% block skeleton %}
@@ -30,7 +57,7 @@
 
 {% block content %}
 <div v-pre>
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans min-h-screen">
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
         <div>
@@ -59,12 +86,12 @@
 
 </div>
 
-<div id="historyModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6 font-sans">
+<div id="historyModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-0 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose" onclick="closeHistoryModal()"></div>
     
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors">
+    <div class="mobile-fullscreen relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors">
         
-        <button id="btnTopClose" onclick="closeHistoryModal()" class="absolute top-4 right-4 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+        <button id="btnTopClose" onclick="closeHistoryModal()" class="fixed-close-btn absolute top-4 right-4 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
             <i class="ph-bold ph-x"></i>
         </button>
 

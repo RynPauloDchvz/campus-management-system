@@ -3,6 +3,55 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/manage_students.css' %}">
+<style>
+    /* Modal Animation: Slide Up/Down (Matched with Analytics) */
+    #studentDetailModal.hidden {
+        display: none;
+    }
+    
+    #modalContainer {
+        transition: transform 0.3s ease-out;
+    }
+    
+    .modal-slide-up {
+        transform: translateY(0);
+    }
+    
+    .modal-slide-down {
+        transform: translateY(100%);
+    }
+
+    /* Stylized UI Elements */
+    .cheesecake-title {
+        font-family: 'Arial Black', Gadget, sans-serif;
+        letter-spacing: -2px;
+        opacity: 0.1;
+        user-select: none;
+        pointer-events: none;
+    }
+
+    .name-tag {
+        background-color: #2a211a;
+        border: 2px solid #5a3a2a;
+        color: #e5c7b3;
+        box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+    }
+
+    /* 2x2 Grid Styling (Matched with Profile.html) */
+    .info-box {
+        background-color: #ffffff;
+        border: 1px solid #e5e7eb;
+        transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .dark .info-box {
+        background-color: #151515;
+        border-color: #1f2937;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
 {% endblock extra_head %}
 
 {% block skeleton %}
@@ -50,7 +99,7 @@
     {% if messages %}
         <div class="mb-4">
             {% for message in messages %}
-                <div class="p-4 mb-2 text-sm rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400{% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400{% endif %}">
+                <div class="p-4 mb-2 text-sm rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-green-400{% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400{% endif %}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -100,29 +149,40 @@
 
         <div class="divide-y divide-gray-100 dark:divide-gray-800">
             {% for student in pending_students %}
-            <div class="student-item grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+            <div class="student-item flex flex-row items-start sm:items-center sm:grid sm:grid-cols-12 gap-3 sm:gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
                  data-id="{{ student.id }}"
                  data-name="{{ student.full_name }}"
                  data-search="{{ student.full_name|lower }} {{ student.student_number|lower }}"
                  data-number="{{ student.student_number }}"
                  data-year="{{ student.year_level }}"
-                 data-birth="{{ student.birthdate|date:'M d, Y' }}"
+                 data-birth="{% if student.birthdate %}{{ student.birthdate|date:'M d, Y' }}{% else %}Not Set{% endif %}"
                  data-avatar="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}"
                  data-cover="{% if student.cover_photo %}{{ student.cover_photo.url }}{% else %}{% static 'images/background.jpg' %}{% endif %}"
+                 data-org="{{ student.organization }}"
                  data-status="pending"
                  onclick="handleRowClick(this)">
                 
-                <div class="col-span-5 flex items-center gap-3">
-                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 rounded-full object-cover shrink-0">
+                <!-- IDENTITY: Avatar + Name + Email -->
+                <div class="flex items-center gap-3 flex-1 sm:col-span-5 min-w-0">
+                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover shrink-0">
                     <div class="min-w-0">
-                        <p class="font-bold text-gray-900 dark:text-white leading-tight break-words text-sm sm:text-base">{{ student.full_name }}</p>
-                        <p class="text-xs text-gray-500 truncate">{{ student.email_address }}</p>
+                        <p class="font-bold text-gray-900 dark:text-white leading-tight truncate text-sm sm:text-base">{{ student.full_name }}</p>
+                        <p class="text-[10px] sm:text-xs text-gray-500 truncate mt-0.5">{{ student.email_address }}</p>
                     </div>
                 </div>
-                <div class="col-span-3 text-sm font-bold text-pup-maroon dark:text-pup-gold">{{ student.student_number }}</div>
-                <div class="col-span-2 text-center text-sm text-gray-600 dark:text-gray-400">{{ student.year_level }}</div>
-                <div class="col-span-2 text-center">
+
+                <!-- DESKTOP ONLY: Grid Columns -->
+                <div class="hidden sm:block sm:col-span-3 text-sm font-bold text-pup-maroon dark:text-pup-gold">{{ student.student_number }}</div>
+                <div class="hidden sm:block sm:col-span-2 text-center text-sm text-gray-600 dark:text-gray-400">{{ student.year_level }}</div>
+                <div class="hidden sm:block sm:col-span-2 text-center">
                     <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold shadow-sm">Review</span>
+                </div>
+
+                <!-- MOBILE ONLY: Vertical Stack (Badge, Number, Year) -->
+                <div class="flex flex-col items-end gap-1 sm:hidden shrink-0 mt-0.5">
+                    <span class="inline-block px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-[9px] font-black uppercase tracking-tighter">Review</span>
+                    <div class="text-[10px] font-black text-pup-maroon dark:text-pup-gold leading-none mt-1">{{ student.student_number }}</div>
+                    <div class="text-[9px] font-bold text-gray-500 uppercase leading-none mt-0.5">{{ student.year_level }}</div>
                 </div>
             </div>
             {% empty %}
@@ -146,29 +206,40 @@
 
         <div class="divide-y divide-gray-100 dark:divide-gray-800">
             {% for student in approved_students %}
-            <div class="student-item grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+            <div class="student-item flex flex-row items-start sm:items-center sm:grid sm:grid-cols-12 gap-3 sm:gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
                  data-id="{{ student.id }}"
                  data-name="{{ student.full_name }}"
                  data-search="{{ student.full_name|lower }} {{ student.student_number|lower }}"
                  data-number="{{ student.student_number }}"
                  data-year="{{ student.year_level }}"
-                 data-birth="{{ student.birthdate|date:'M d, Y' }}"
+                 data-birth="{% if student.birthdate %}{{ student.birthdate|date:'M d, Y' }}{% else %}Not Set{% endif %}"
                  data-avatar="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}"
                  data-cover="{% if student.cover_photo %}{{ student.cover_photo.url }}{% else %}{% static 'images/background.jpg' %}{% endif %}"
+                 data-org="{{ student.organization }}"
                  data-status="approved"
                  onclick="handleRowClick(this)">
                 
-                <div class="col-span-5 flex items-center gap-3">
-                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 rounded-full object-cover shrink-0">
+                <!-- IDENTITY: Avatar + Name + Email -->
+                <div class="flex items-center gap-3 flex-1 sm:col-span-5 min-w-0">
+                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover shrink-0">
                     <div class="min-w-0">
-                        <p class="font-bold text-gray-900 dark:text-white leading-tight break-words text-sm sm:text-base">{{ student.full_name }}</p>
-                        <p class="text-xs text-gray-500 truncate">{{ student.email_address }}</p>
+                        <p class="font-bold text-gray-900 dark:text-white leading-tight truncate text-sm sm:text-base">{{ student.full_name }}</p>
+                        <p class="text-[10px] sm:text-xs text-gray-500 truncate mt-0.5">{{ student.email_address }}</p>
                     </div>
                 </div>
-                <div class="col-span-3 text-sm font-bold text-gray-600 dark:text-gray-400">{{ student.student_number }}</div>
-                <div class="col-span-2 text-center text-sm text-gray-600 dark:text-gray-400">{{ student.year_level }}</div>
-                <div class="col-span-2 text-center">
+
+                <!-- DESKTOP ONLY: Grid Columns -->
+                <div class="hidden sm:block sm:col-span-3 text-sm font-bold text-gray-600 dark:text-gray-400">{{ student.student_number }}</div>
+                <div class="hidden sm:block sm:col-span-2 text-center text-sm text-gray-600 dark:text-gray-400">{{ student.year_level }}</div>
+                <div class="hidden sm:block sm:col-span-2 text-center">
                     <span class="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold shadow-sm">Approved</span>
+                </div>
+
+                <!-- MOBILE ONLY: Vertical Stack (Badge, Number, Year) -->
+                <div class="flex flex-col items-end gap-1 sm:hidden shrink-0 mt-0.5">
+                    <span class="inline-block px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-[9px] font-black uppercase tracking-tighter">Approved</span>
+                    <div class="text-[10px] font-black text-gray-600 dark:text-gray-400 leading-none mt-1">{{ student.student_number }}</div>
+                    <div class="text-[9px] font-bold text-gray-500 uppercase leading-none mt-0.5">{{ student.year_level }}</div>
                 </div>
             </div>
             {% empty %}
@@ -181,71 +252,108 @@
     </div>
 </div>
 
-<div id="rawProfileModal" style="display: none;" class="fixed inset-0 z-[5000] flex items-center justify-center p-4 sm:p-6 font-sans">
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="hideModal('rawProfileModal')"></div>
+<!-- ========================================== -->
+<!-- STYLIZED STUDENT MODAL (REFINED DESIGN) -->
+<!-- ========================================== -->
+<div id="studentDetailModal" class="hidden fixed inset-0 z-[5000] flex items-end sm:items-center justify-center p-0 sm:p-4 font-sans">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeStudentModal()"></div>
     
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-lg mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors">
+    <!-- Modal Container -->
+    <div id="modalContainer" class="relative bg-white dark:bg-[#151515] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden border-t sm:border border-gray-200 dark:border-gray-800 transition-colors translate-y-full">
         
-        <button type="button" onclick="hideModal('rawProfileModal')" class="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors z-[5010] backdrop-blur-md">
-            <i class="ph-bold ph-x"></i>
+        <!-- Mobile Handle -->
+        <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-4 sm:hidden shrink-0"></div>
+
+        <!-- Close Button (Always Dark Style) -->
+        <button onclick="closeStudentModal()" class="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-[60] backdrop-blur-md">
+            <i class="ph-bold ph-x text-xl"></i>
         </button>
 
         <div class="overflow-y-auto hide-scrollbar flex-grow">
-            <div class="h-32 sm:h-40 w-full relative bg-gray-200 dark:bg-gray-800">
-                <img id="rawCoverImg" src="" class="w-full h-full object-cover opacity-90">
+            <!-- Cover Photo Area -->
+            <div class="h-40 sm:h-48 w-full relative bg-gray-200 dark:bg-gray-800 shrink-0">
+                <img id="modalCoverImg" src="" class="w-full h-full object-cover opacity-90">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                
+                <!-- Stylized Title Watermark -->
+                <div class="absolute inset-x-0 bottom-4 text-center">
+                    <h3 class="cheesecake-title text-4xl font-black italic tracking-tighter text-white uppercase select-none">
+                        CHEESECAKE
+                    </h3>
+                </div>
             </div>
 
-            <div class="px-6 sm:px-8 pb-8 relative -mt-12">
-                <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white dark:border-[#151515] overflow-hidden bg-gray-100 dark:bg-gray-900 shadow-md mb-4 mx-auto sm:mx-0">
-                    <img id="rawProfileImg" src="" class="w-full h-full object-cover">
+            <!-- Profile Identity Section -->
+            <div class="px-6 sm:px-8 pb-6 relative -mt-12 flex flex-col sm:flex-row items-center sm:items-end gap-5">
+                <!-- Circular Avatar (Killua Style) -->
+                <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-[#151515] overflow-hidden bg-white dark:bg-gray-900 shadow-xl shrink-0 z-20">
+                    <img id="modalProfileImg" src="" class="w-full h-full object-cover">
                 </div>
                 
-                <div class="text-center sm:text-left">
-                    <h2 id="rawNameText" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white font-sans leading-tight mb-1 break-words">Name</h2>
-                    <p id="rawNumberText" class="text-sm font-bold text-pup-maroon dark:text-pup-gold mb-6 tracking-wide">Number</p>
+                <!-- Brown Rectangular Name Tag -->
+                <div class="flex-1 name-tag py-3 px-6 rounded-2xl flex items-center justify-center text-center shadow-lg mb-2 sm:mb-4 w-full sm:w-auto">
+                    <h4 id="modalNameText" class="text-lg sm:text-xl font-black uppercase tracking-tight leading-tight">Juan Dela Cruz</h4>
                 </div>
+            </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-8">
-                    <div class="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border border-gray-200 dark:border-gray-800 text-center">
-                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Year Level</span>
-                        <span id="rawYearText" class="block text-sm font-bold text-gray-900 dark:text-white">--</span>
+            <!-- Info Grid (2x2 Bordered Boxes - Matched with profile.html) -->
+            <div class="px-6 sm:px-8 pb-8">
+                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
+                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Student No.</span>
+                        <span id="modalNumberText" class="block text-sm sm:text-base font-black text-red-600 dark:text-red-500 tracking-tight">--</span>
                     </div>
-                    <div class="bg-gray-50 dark:bg-[#111] p-3 rounded-xl border border-gray-200 dark:border-gray-800 text-center">
+                    
+                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
+                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Organization</span>
+                        <span id="modalOrgText" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
+                    </div>
+                    
+                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
+                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Year Level</span>
+                        <span id="modalYearText" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
+                    </div>
+
+                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
                         <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Birthdate</span>
-                        <span id="rawBirthText" class="block text-sm font-bold text-gray-900 dark:text-white">--</span>
+                        <span id="modalBirthText" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="rawActionButtons" class="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a] flex gap-3 shrink-0">
-            <button type="button" onclick="triggerReject()" class="flex-1 py-3 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 font-bold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-sm">
+        <!-- Action Area (Conditional for Pending Students) -->
+        <div id="modalActionArea" class="p-6 bg-gray-50 dark:bg-[#0a0a0a] border-t border-gray-200 dark:border-gray-800 flex gap-3 shrink-0">
+            <button type="button" onclick="triggerReject()" class="flex-1 py-4 rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 font-bold hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-sm uppercase tracking-widest">
                 Reject
             </button>
-            <button type="button" onclick="triggerApprove()" class="flex-1 py-3 rounded-xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-bold hover:bg-red-950 dark:hover:bg-yellow-500 transition-colors text-sm shadow-md">
-                Approve & Assign
+            <button type="button" onclick="triggerApprove()" class="flex-1 py-4 rounded-2xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black hover:opacity-90 transition-opacity text-sm shadow-md uppercase tracking-widest">
+                Verify Member
             </button>
         </div>
     </div>
 </div>
 
-<div id="rawApproveModal" style="display: none;" class="fixed inset-0 z-[6000] flex items-center justify-center p-4 font-sans">
-    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="hideModal('rawApproveModal')"></div>
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm mx-auto text-center p-8 z-10 border border-gray-200 dark:border-gray-800">
-        <i class="ph-fill ph-check-circle text-6xl text-green-500 mb-4 inline-block"></i>
-        <h2 class="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2 font-sans">Assign to Org?</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Are you sure you want to verify <strong id="rawConfirmNameText" class="text-gray-900 dark:text-white"></strong> and assign them to your organization?</p>
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="hidden fixed inset-0 z-[6000] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="hideConfirm()"></div>
+    <div class="relative bg-white dark:bg-[#151515] rounded-[2.5rem] shadow-2xl w-full max-w-xs mx-auto text-center p-10 z-10 border border-gray-200 dark:border-gray-800">
+        <div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="ph-fill ph-user-circle-plus text-4xl text-green-600 dark:text-green-500"></i>
+        </div>
+        <h2 class="text-xl font-black text-gray-900 dark:text-white leading-tight mb-2 uppercase tracking-tighter">Confirm Member?</h2>
+        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">This will grant access to organization events.</p>
         
-        <form action="{% url 'approve_individual_student' %}" method="POST" class="flex gap-3">
+        <form action="{% url 'approve_individual_student' %}" method="POST" class="flex flex-col gap-3">
             {% csrf_token %}
-            <input type="hidden" name="student_id" id="rawFormStudentId">
-            
-            <button type="button" onclick="hideModal('rawApproveModal')" class="flex-1 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors text-sm">Yes, Assign</button>
+            <input type="hidden" name="student_id" id="confirmStudentId">
+            <button type="submit" class="w-full py-4 rounded-2xl bg-green-600 text-white font-black uppercase tracking-widest text-xs shadow-md">Confirm</button>
+            <button type="button" onclick="hideConfirm()" class="w-full py-4 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-black uppercase tracking-widest text-xs">Cancel</button>
         </form>
     </div>
 </div>
+
 </div>
 {% endblock content %}
 
@@ -253,55 +361,80 @@
 <script>
     let currentId = null;
 
-    // Bagong function: Kinukuha ang data mula sa attributes ng element na na-click
     function handleRowClick(element) {
-        const id = element.getAttribute('data-id');
-        const name = element.getAttribute('data-name');
-        const stdNum = element.getAttribute('data-number');
-        const year = element.getAttribute('data-year');
-        const birth = element.getAttribute('data-birth');
-        const avatar = element.getAttribute('data-avatar');
-        const cover = element.getAttribute('data-cover');
-        const status = element.getAttribute('data-status');
+        const id = element.dataset.id;
+        const name = element.dataset.name;
+        const stdNum = element.dataset.number;
+        const year = element.dataset.year;
+        const birth = element.dataset.birth;
+        const avatar = element.dataset.avatar;
+        const cover = element.dataset.cover;
+        const org = element.dataset.org;
+        const status = element.dataset.status;
         
-        showModal(id, name, stdNum, year, birth, avatar, cover, status);
+        openStudentModal(id, name, stdNum, year, birth, avatar, cover, org, status);
     }
 
-    function showModal(id, name, stdNum, year, birth, avatar, cover, status) {
+    function openStudentModal(id, name, stdNum, year, birth, avatar, cover, org, status) {
         currentId = id;
         
-        document.getElementById('rawNameText').innerText = name;
-        document.getElementById('rawNumberText').innerText = stdNum;
-        document.getElementById('rawYearText').innerText = year;
-        document.getElementById('rawBirthText').innerText = birth || 'Not Provided';
-        document.getElementById('rawProfileImg').src = avatar;
-        document.getElementById('rawCoverImg').src = cover;
+        // Populate Modal Data
+        document.getElementById('modalNameText').innerText = name;
+        document.getElementById('modalNumberText').innerText = stdNum;
+        document.getElementById('modalYearText').innerText = year;
+        document.getElementById('modalBirthText').innerText = birth;
+        document.getElementById('modalProfileImg').src = avatar;
+        document.getElementById('modalCoverImg').src = cover;
+        document.getElementById('modalOrgText').innerText = org || '{{ org_acronym }}';
 
+        // Action Buttons logic (Only for Pending)
+        const actionArea = document.getElementById('modalActionArea');
         if(status === 'approved') {
-            document.getElementById('rawActionButtons').style.display = 'none';
+            actionArea.classList.add('hidden');
         } else {
-            document.getElementById('rawActionButtons').style.display = 'flex';
+            actionArea.classList.remove('hidden');
         }
 
-        document.getElementById('rawProfileModal').style.display = 'flex';
+        // Show Modal with Animation
+        const modal = document.getElementById('studentDetailModal');
+        const box = document.getElementById('modalContainer');
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        setTimeout(() => {
+            box.classList.remove('translate-y-full');
+            box.classList.add('translate-y-0');
+        }, 10);
+        
+        document.body.style.overflow = 'hidden';
     }
 
-    function hideModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
+    function closeStudentModal() {
+        const modal = document.getElementById('studentDetailModal');
+        const box = document.getElementById('modalContainer');
+        
+        box.classList.remove('translate-y-0');
+        box.classList.add('translate-y-full');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }, 300);
     }
 
     function triggerApprove() {
-        const name = document.getElementById('rawNameText').innerText;
-        document.getElementById('rawConfirmNameText').innerText = name;
-        document.getElementById('rawFormStudentId').value = currentId;
-        
-        hideModal('rawProfileModal');
-        document.getElementById('rawApproveModal').style.display = 'flex';
+        document.getElementById('confirmStudentId').value = currentId;
+        document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    function hideConfirm() {
+        document.getElementById('confirmModal').classList.add('hidden');
     }
 
     function triggerReject() {
-        hideModal('rawProfileModal');
-        alert("Reject functionality can be added here.");
+        alert("Reject functionality can be configured in the admin panel.");
     }
 
     function filterTable() {
@@ -310,17 +443,13 @@
         const items = document.querySelectorAll('.student-item');
 
         items.forEach(item => {
-            const textToSearch = item.getAttribute('data-search');
-            const itemYear = item.getAttribute('data-year');
+            const textToSearch = item.dataset.search;
+            const itemYear = item.dataset.year;
 
             const matchesQuery = textToSearch.includes(query);
             const matchesYear = (yearFilter === 'All' || itemYear === yearFilter);
 
-            if(matchesQuery && matchesYear) {
-                item.style.display = '';
-            } else {
-                item.style.display = 'none';
-            }
+            item.style.display = (matchesQuery && matchesYear) ? '' : 'none';
         });
     }
 </script>

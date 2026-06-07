@@ -25,6 +25,32 @@
     .print-hide { display: none !important; }
     /* Custom Select Arrow Hiding fallback */
     select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+
+    /* Modal Maximization on Mobile */
+    @media (max-width: 640px) {
+        .mobile-fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+        }
+        .fixed-close-btn {
+            position: fixed !important;
+            top: 1rem !important;
+            right: 1rem !important;
+            z-index: 5010 !important;
+            background: rgba(0, 0, 0, 0.5) !important;
+            color: white !important;
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            border-radius: 9999px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            backdrop-filter: blur(4px) !important;
+        }
+    }
 </style>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full min-h-screen">
@@ -161,13 +187,13 @@
 </div>
 
 <!-- VIEW SUBMITTED PROPOSAL MODAL (FIXED TO READ EXCUSE/RESCHEDULE) -->
-<div id="viewModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-4 sm:p-6 font-sans">
+<div id="viewModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-0 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeViewModal()"></div>
-    <div class="relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+    <div class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
         
         <div class="bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
             <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="ph-fill ph-eye text-pup-maroon dark:text-pup-gold text-xl"></i> View Submitted Proposal</h3>
-            <button type="button" onclick="closeViewModal()" class="text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
+            <button type="button" onclick="closeViewModal()" class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
         </div>
 
         <div class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed" style="color: #000 !important; font-family: Arial, sans-serif !important; max-height: none;">
@@ -228,14 +254,80 @@
         </div>
 </div>
 
-<div id="letterModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 sm:p-6 font-sans">
+<div id="letterModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm print-hide" onclick="closeLetterModal()"></div>
     
-    <div class="relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+    <div class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
         <div class="print-hide bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
             <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold text-xl"></i> Official Document Preview</h3>
-            <button type="button" onclick="closeLetterModal()" class="text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
+            <button type="button" onclick="closeLetterModal()" class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
         </div>
+
+        <div id="printPaper" class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed" style="color: #000 !important; font-family: Arial, sans-serif !important; max-height: none;">
+            <p id="letDate" class="mb-6 font-bold"></p>
+            <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
+            <p class="mb-6 leading-tight">Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus</p>
+            
+            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong id="letReText">Approval of Organizational Student Activity</strong></p>
+            
+            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
+            <p class="mb-4">Greetings!</p>
+            
+            <div id="contentApproval" class="hidden">
+                <p class="mb-4 text-justify indent-8">
+                    To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, <span id="orgFullApp"></span> will be conducting a seminar entitled <strong>"<span id="titleApp"></span>"</strong>. <span id="descApp"></span>
+                </p>
+                <p class="mb-8 text-justify indent-8">
+                    The activity will be held on <strong><span id="dateApp"></span></strong>, <strong><span id="timeApp"></span></strong> at <strong><span id="venueApp"></span></strong>.
+                </p>
+            </div>
+
+            <div id="contentExcuse" class="hidden">
+                <p class="mb-4 text-justify indent-8">
+                    <span id="orgFullExc"></span> is organizing an event with the theme <strong>"<span id="titleExc"></span>"</strong> to be held on <strong><span id="dateExc"></span></strong>, <strong><span id="timeExc"></span></strong> at <strong><span id="venueExc"></span></strong>. <span id="descExc"></span>
+                </p>
+                <p class="mb-8 text-justify indent-8">
+                    In line with this, we respectfully request the excusal of <strong><span id="targetExc"></span></strong> whose classes will be affected to allow full participation without academic conflicts, and we also request usage of the aforementioned hall, together with <strong><span id="equipExc"></span></strong>.
+                </p>
+            </div>
+
+            <div id="contentReschedule" class="hidden">
+                <p class="mb-4 text-justify indent-8">
+                    We hope this letter finds you well and in good health. <span id="orgFullRes"></span> respectfully requests a rescheduling of our upcoming event entitled <strong>"<span id="titleRes"></span>"</strong>. The event is currently set for <strong id="origDateRes"></strong>.
+                </p>
+                <p class="mb-4 text-justify indent-8">
+                    We propose moving the event to <strong><span id="dateRes"></span></strong>, from <strong><span id="timeRes"></span></strong> at <strong><span id="venueRes"></span></strong>.
+                </p>
+                <p class="mb-8 text-justify indent-8">
+                    This request is made <span id="reasonRes"></span>. To ensure that our participants have an adequate venue and preparation, we believe this adjustment is necessary.
+                </p>
+            </div>
+
+            <p id="outroA" class="mb-12 hidden">Thank you for your kind consideration and usual support.</p>
+            <p id="outroB" class="mb-12 hidden">We look forward to your response. Thank you for your kind consideration and usual support!</p>
+            <p id="outroC" class="mb-12 hidden">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
+            
+            <p class="mb-8">Respectfully yours,</p>
+            <div class="mb-8">
+                <p class="font-bold uppercase mb-0 whitespace-nowrap"><span id="sigName"></span></p>
+                <p class="mt-0"><span id="sigOrg"></span> President</p>
+            </div>
+            <div>
+                <p class="mb-6">Noted by:</p>
+                <p class="font-bold uppercase mb-0 whitespace-nowrap"><span id="sigAdviser"></span></p>
+                <p class="mt-0"><span id="sigOrg2"></span> Adviser / Program Chair</p>
+            </div>
+        </div>
+
+        <div class="print-hide bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
+            <button type="button" data-url="{% url 'download_event_proposal_doc' %}" onclick="downloadWord(this)" class="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md"><i class="ph-bold ph-file-doc"></i> Download Word Doc</button>
+            <button type="button" onclick="closeLetterModal()" class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">Edit Form</button>
+            <button type="button" data-url="{% url 'submit_event_proposal' %}" onclick="submitToAdviser(this)" id="btnSubmitToAdviser" class="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
+                <i class="ph-bold ph-paper-plane-right"></i> Send to Adviser
+            </button>
+        </div>
+    </div>
+</div>
 
         <div id="printPaper" class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed" style="color: #000 !important; font-family: Arial, sans-serif !important; max-height: none;">
             <p id="letDate" class="mb-6 font-bold"></p>

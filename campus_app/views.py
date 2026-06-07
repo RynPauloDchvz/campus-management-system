@@ -22,6 +22,7 @@ from docxtpl import DocxTemplate
 from .models import OrgProfile, Student, Attendance, Event, LoginLockout, AuditLog
 from .utils import log_audit_event
 from .middleware import get_current_request
+from .ai_utils import verify_face, get_sentiment, get_rating_sentiment
 
 # ==========================================
 # 🟢 4 STRICT RBAC GUARDS (PAM-BLOCK SA MALING URL ACCESS) 🟢
@@ -924,6 +925,20 @@ def student_event_history(request):
 # ORGANIZER VIEWS
 # ==========================================
 
+ORG_ABOUT_US = {
+    "ITO": "Home for tech enthusiasts. We bridge theory and practice through bootcamps and seminars.",
+    "YEO": "Cultivating business leaders. We provide a platform for startups and financial literacy.",
+    "ITS": "Uniting DOMT and DIT. We bridge administrative efficiency with digital innovation.",
+    "FTO": "Molding tomorrow's leaders. We prepare educators through demos and outreach.",
+    "PAS": "Training leaders in service. We offer a platform for governance and reforms.",
+    "CAO": "Heartbeat of campus creativity. We showcase talent through theater, dance, and music.",
+    "PRIDEVerse": "Advocacy for LGBTQIA+. We promote equality and a safe campus environment.",
+    "SSC": "Voice of the student body. We protect rights through leadership and initiatives.",
+    "ROTC": "Instilling discipline and duty. We provide military science and disaster training.",
+    "NEWSETTE": "Official student publication. Delivering timely news and fearless journalism.",
+    "PUSO": "Driving athletic endeavors. We promote sportsmanship and physical wellness."
+}
+
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_homepage(request):
     try:
@@ -932,36 +947,19 @@ def organizer_homepage(request):
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
 
-    managed_events = Event.objects.filter(org_id=org_acronym).order_by('-created_at')[:5]
-    
-    def get_img(e):
-        if e.event_cover_photo: return e.event_cover_photo.url
-        if e.cover_photo: return e.cover_photo.url
-        if e.thumbnail: return e.thumbnail.url
-        return '/static/images/PUPLogo.png'
-
-    managed_data = []
-    for e in managed_events:
-        managed_data.append({
-            'id': e.id,
-            'title': e.event_title,
-            'date': e.event_date.strftime('%b %d, %Y').upper(),
-            'status': e.event_status,
-            'image': get_img(e),
-            'description': e.description or 'No description provided.',
-            'location': e.venue or 'PUP Unisan'
-        })
-
-    # Action Required: Find events that just ended but haven't had a terminal report generated (placeholder logic)
-    action_required = Event.objects.filter(org_id=org_acronym, event_status='Approved', event_date__lte=timezone.now().date()).first()
-    
-    # 🟢 RBAC Filtered Latest News: Own Org + Global Events
+    # 🟢 Latest News: Own Org + Global Events
     latest_news = Event.objects.filter(
         Q(org_id=org_acronym) | 
         Q(event_title__icontains='Flag Raising') | 
         Q(event_title__icontains='General Assembly') | 
         Q(event_title__icontains='Student Week')
     ).filter(event_status='Approved').order_by('-created_at')[:4]
+
+    def get_img(e):
+        if e.event_cover_photo: return e.event_cover_photo.url
+        if e.cover_photo: return e.cover_photo.url
+        if e.thumbnail: return e.thumbnail.url
+        return '/static/images/PUPLogo.png'
 
     news_data = []
     for e in latest_news:
@@ -974,15 +972,39 @@ def organizer_homepage(request):
             'location': e.venue or 'PUP Unisan'
         })
 
+    # Stats Calculation
+    today = timezone.now().date()
+    active_members_count = Student.objects.filter(organization=org_acronym, is_verified=True).count()
+    upcoming_events_count = Event.objects.filter(org_id=org_acronym, event_status='Approved', event_date__gte=today).count()
+    pending_proposals_count = Event.objects.filter(org_id=org_acronym).exclude(event_status__in=['Approved', 'Rejected']).count()
+    managed_events_count = Event.objects.filter(org_id=org_acronym, event_status='Approved', event_date__lt=today).count()
+
+    # All Events for Calendar (Ordered NEW to OLD for the list view below calendar)
+    all_events = Event.objects.filter(org_id=org_acronym).order_by('-event_date')
+    calendar_data = []
+    for e in all_events:
+        calendar_data.append({
+            'id': e.id,
+            'title': e.event_title,
+            'date': e.event_date.strftime('%Y-%m-%d'),
+            'status': e.event_status,
+            'venue': e.venue,
+            'description': e.description,
+            'start_time': e.start_time.strftime('%I:%M %p') if e.start_time else "",
+            'end_time': e.end_time.strftime('%I:%M %p') if e.end_time else "",
+            'image': get_img(e)
+        })
+
     context = {
         'org_acronym': org_acronym, 
         'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
-        'managed_events_json': json.dumps(managed_data),
-        'action_required_json': json.dumps({
-            'title': action_required.event_title,
-            'id': action_required.id
-        }) if action_required else None,
-        'latest_news_json': json.dumps(news_data)
+        'about_us_text': ORG_ABOUT_US.get(org_acronym, "Welcome to our organization! We are dedicated to serving the student body."),
+        'latest_news_json': json.dumps(news_data),
+        'calendar_events_json': json.dumps(calendar_data),
+        'active_members_count': active_members_count,
+        'upcoming_events_count': upcoming_events_count,
+        'pending_proposals_count': pending_proposals_count,
+        'managed_events_count': managed_events_count,
     }
     return render(request, 'organizer/homepage.html', context)
 
@@ -1351,7 +1373,7 @@ def organizer_analytics(request):
     
     # Calculate average rating and sentiment
     total_rating = 0
-    positive_count = 0
+    positive_count = 0 # This will now be based on VADER if available
     
     event_analytics_data = []
     for e in org_events:
@@ -1371,7 +1393,13 @@ def organizer_analytics(request):
                     idx = int(round(r)) - 1
                     if 0 <= idx <= 4:
                         e_dist[idx] += 1
-                    if r >= 4: e_pos += 1
+                    
+                    # 🟢 AI-BASED SENTIMENT CHECK 🟢
+                    # If AI sentiment exists, use it. Otherwise fallback to rating.
+                    if 'sentiment' in changes:
+                        if changes['sentiment'].get('label') == 'positive': e_pos += 1
+                    else:
+                        if r >= 4: e_pos += 1
                 except: continue
             
             e_rating = e_total_rating / e_count
@@ -1875,7 +1903,7 @@ def record_attendance(request):
                 return JsonResponse({'status': 'error', 'message': 'Account not authorized for attendance.'})
 
             event_id = request.POST.get('event_id')
-            face_matched = request.POST.get('face_matched') == 'true'
+            live_face_b64 = request.POST.get('face_image') # Receives live capture from frontend
             is_valid_location = request.POST.get('is_valid_location') == 'true'
             lat = request.POST.get('latitude')
             lng = request.POST.get('longitude')
@@ -1907,6 +1935,16 @@ def record_attendance(request):
                 if Attendance.objects.filter(organizer=organizer, event=event).exists():
                     return JsonResponse({'status': 'error', 'message': 'Attendance already recorded for this event.'})
 
+            # 🟢 SERVER-SIDE DEEPFACE VERIFICATION 🟢
+            face_matched = False
+            anchor_b64 = student.face_encoding if student else (organizer.face_encoding if organizer else None)
+            
+            if live_face_b64 and anchor_b64:
+                face_matched, distance = verify_face(live_face_b64, anchor_b64)
+            else:
+                # Fallback if no face data, but for production this should be a fail
+                face_matched = request.POST.get('face_matched') == 'true'
+
             attendance = Attendance.objects.create(
                 student=student,
                 organizer=organizer,
@@ -1917,13 +1955,17 @@ def record_attendance(request):
                 longitude=lng
             )
             
-            log_audit_event(request, 'ATTENDANCE', target_model='Event', target_id=str(event.id), status='Success', changes={
+            log_audit_event(request, 'ATTENDANCE', target_model='Event', target_id=str(event.id), status='Success' if face_matched else 'Issue', changes={
                 'event': event.event_title,
                 'user': student.full_name if student else organizer.user.username,
                 'face_match': face_matched,
-                'location': is_valid_location
+                'location': is_valid_location,
+                'ai_verified': True
             })
             
+            if not face_matched:
+                return JsonResponse({'status': 'issue', 'message': 'Attendance recorded, but Face Recognition MISMATCH detected.'})
+
             return JsonResponse({'status': 'success', 'message': 'Attendance recorded successfully!'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
@@ -2002,10 +2044,25 @@ def submit_evaluation(request):
             if not rating:
                 return JsonResponse({'status': 'error', 'message': 'Please provide a rating.'})
 
+            # 🟢 VADER SENTIMENT ANALYSIS 🟢
+            feedback_sentiment = get_sentiment(feedback)
+            
+            # Map detailed scores to synthetic sentiment
+            synthetic_scores = {}
+            if detailed_scores:
+                try:
+                    scores_dict = json.loads(detailed_scores)
+                    for key, val in scores_dict.items():
+                        synthetic_scores[key] = get_rating_sentiment(val)
+                except: pass
+
             changes = {
                 'event': event_title, 
                 'rating': rating,
-                'feedback': feedback
+                'feedback': feedback,
+                'sentiment': feedback_sentiment, # Store full VADER result
+                'detailed_sentiments': synthetic_scores,
+                'ai_analyzed': True
             }
             if detailed_scores:
                 try:
@@ -2319,6 +2376,10 @@ def admin_dashboard(request):
     ratings_data = [0, 0, 0, 0, 0] # [1 Star, 2 Star, 3 Star, 4 Star, 5 Star]
     eval_logs = AuditLog.objects.filter(action='EVALUATION', status='Success')
     
+    pos_count = 0
+    neu_count = 0
+    neg_count = 0
+
     for log in eval_logs:
         try:
             # log.changes might be a dict or a JSON string depending on how it was saved
@@ -2327,15 +2388,22 @@ def admin_dashboard(request):
             idx = int(round(rating)) - 1
             if 0 <= idx <= 4:
                 ratings_data[idx] += 1
+            
+            # 🟢 AI-BASED SENTIMENT CHECK FOR ADMIN 🟢
+            if 'sentiment' in changes:
+                lbl = changes['sentiment'].get('label')
+                if lbl == 'positive': pos_count += 1
+                elif lbl == 'negative': neg_count += 1
+                else: neu_count += 1
+            else:
+                # Fallback to rating
+                if rating >= 4: pos_count += 1
+                elif rating <= 2: neg_count += 1
+                else: neu_count += 1
         except: continue
 
-    # 4. Chart Data: Sentiment (Derived from Ratings)
-    # Negative: 1-2, Neutral: 3, Positive: 4-5
-    sentiment_data = [
-        ratings_data[3] + ratings_data[4], # Positive
-        ratings_data[2],                   # Neutral
-        ratings_data[0] + ratings_data[1]  # Negative
-    ]
+    # 4. Chart Data: Sentiment
+    sentiment_data = [pos_count, neu_count, neg_count]
 
     # 5. Chart Data: Event Frequency (Last 6 Months)
     event_freq_labels = []

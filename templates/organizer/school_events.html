@@ -842,10 +842,19 @@
             const btn = document.getElementById('btnSubmitScan');
             btn.disabled = true; btn.innerText = "COMMITTING ENTRY...";
             
+            // 🟢 CAPTURE CURRENT FRAME FOR SERVER-SIDE DEEPFACE 🟢
+            const video = document.getElementById('videoFeed');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const faceImage = canvas.toDataURL('image/jpeg', 0.8);
+
             const fd = new FormData();
             fd.append('event_id', currentEvent.id);
-            fd.append('face_matched', 'true');
-            fd.append('is_valid_location', 'true');
+            fd.append('face_image', faceImage); // 🟢 Send raw image instead of just flag
+            fd.append('face_matched', isFaceVerified); // Legacy support
+            fd.append('is_valid_location', isLocationVerified);
             fd.append('latitude', userLat);
             fd.append('longitude', userLng);
             fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
@@ -853,11 +862,15 @@
             try {
                 const res = await fetch('/record-attendance/', { method: 'POST', body: fd });
                 const data = await res.json();
-                if (data.status === 'success') {
-                    alert("Attendance Recorded Successfully!");
+                if (data.status === 'success' || data.status === 'issue') {
+                    if (data.status === 'issue') {
+                        alert(data.message);
+                    } else {
+                        alert("Attendance Recorded Successfully!");
+                    }
                     location.reload();
                 } else {
-                    alert(data.message);
+                    alert(data.message || "Submission error.");
                     btn.disabled = false; btn.innerText = "Submit Entry";
                 }
             } catch (e) { alert("Submission error."); btn.disabled = false; }
