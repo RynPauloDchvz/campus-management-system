@@ -78,9 +78,8 @@
                         <label class="block text-[0.7rem] font-bold text-pup-maroon dark:text-pup-gold uppercase tracking-wider mb-1.5">Select Document Type</label>
                         <div class="relative">
                             <select id="letterType" onchange="toggleFormFields()" class="appearance-none w-full bg-maroon-50 dark:bg-gray-800 border-2 border-pup-maroon dark:border-pup-gold rounded-xl pl-4 pr-10 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none cursor-pointer transition-colors shadow-sm">
-                                <option value="approval">Letter for Activity Approval (Main Event)</option>
-                                <option value="excuse">Excuse & Request Usage Letter</option>
-                                <option value="reschedule">Letter for Rescheduling</option>
+                                <option value="new_event">New Event Proposal (Request Letter + Excuse/Usage)</option>
+                                <option value="reschedule_event">Reschedule Event (Reschedule Letter Only)</option>
                             </select>
                             <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-700 dark:text-gray-300 pointer-events-none"></i>
                         </div>
@@ -186,209 +185,127 @@
 
 </div>
 
-<!-- VIEW SUBMITTED PROPOSAL MODAL (FIXED TO READ EXCUSE/RESCHEDULE) -->
+<!-- VIEW SUBMITTED PROPOSAL MODAL (DOCUMENT HUB STYLE) -->
 <div id="viewModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-0 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeViewModal()"></div>
-    <div class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+    <div class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
         
+        <!-- Header -->
         <div class="bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
-            <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="ph-fill ph-eye text-pup-maroon dark:text-pup-gold text-xl"></i> View Submitted Proposal</h3>
-            <button type="button" onclick="closeViewModal()" class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
+            <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <i class="ph-fill ph-eye text-pup-maroon dark:text-pup-gold text-xl"></i> View Submitted Proposal
+            </h3>
+            <button type="button" onclick="closeViewModal()" class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
         </div>
 
-        <div class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed" style="color: #000 !important; font-family: Arial, sans-serif !important; max-height: none;">
-            <p id="viewDate" class="mb-6 font-bold"></p>
-            <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
-            <p class="mb-6 leading-tight">Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus</p>
-            
-            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong id="viewReText">Approval of Organizational Student Activity</strong></p>
-            
-            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-            <p class="mb-4">Greetings!</p>
-            
-            <div id="viewContentApproval" class="hidden">
-                <p class="mb-4 text-justify indent-8">
-                    To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong id="viewOrgApp"></strong> will be conducting a seminar entitled <strong>"<span id="viewTitleApp"></span>"</strong>. <span id="viewDescApp"></span>
-                </p>
-                <p class="mb-8 text-justify indent-8">
-                    The activity will be held on <strong><span id="viewEvtDateApp"></span></strong>, <strong><span id="viewStartTimeApp"></span></strong> to <strong><span id="viewEndTimeApp"></span></strong> at <strong><span id="viewVenueApp"></span></strong>.
-                </p>
+        <!-- Document Hub Tabs -->
+        <div class="p-4 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4">
+            <div id="view-tab-main" onclick="switchDocTab('main', 'view')" class="cursor-pointer p-4 rounded-2xl border-2 border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10 transition-all flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg">
+                    <i class="ph-fill ph-certificate"></i>
+                </div>
+                <div>
+                    <h4 id="view-tab-main-label" class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Request Letter</h4>
+                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Main Event Proposal</p>
+                </div>
             </div>
 
-            <div id="viewContentExcuse" class="hidden">
-                <p class="mb-4 text-justify indent-8">
-                    <strong id="viewOrgExc"></strong> is organizing an event with the theme <strong>"<span id="viewTitleExc"></span>"</strong> to be held on <strong><span id="viewEvtDateExc"></span></strong>, <strong><span id="viewStartTimeExc"></span></strong> to <strong><span id="viewEndTimeExc"></span></strong> at <strong><span id="viewVenueExc"></span></strong>. <span id="viewDescExc"></span>
-                </p>
-                <p class="mb-8 text-justify indent-8">
-                    In line with this, we respectfully request the excusal of <strong><span id="viewTargetExc"></span></strong> whose classes will be affected to allow full participation without academic conflicts, and we also request usage of the aforementioned hall, together with <strong><span id="viewEquipExc"></span></strong>.
-                </p>
-            </div>
-
-            <div id="viewContentReschedule" class="hidden">
-                <p class="mb-4 text-justify indent-8">
-                    We hope this letter finds you well and in good health. <strong id="viewOrgRes"></strong> respectfully requests a rescheduling of our upcoming event entitled <strong>"<span id="viewTitleRes"></span>"</strong>. The event is currently set for <strong id="viewOrigDateRes"></strong>.
-                </p>
-                <p class="mb-4 text-justify indent-8">
-                    We propose moving the event to <strong><span id="viewEvtDateRes"></span></strong>, from <strong><span id="viewStartTimeRes"></span></strong> to <strong><span id="viewEndTimeRes"></span></strong> at <strong><span id="viewVenueRes"></span></strong>.
-                </p>
-                <p class="mb-8 text-justify indent-8">
-                    This request is made <span id="viewReasonRes"></span>. To ensure that our participants have an adequate venue and preparation, we believe this adjustment is necessary.
-                </p>
-            </div>
-
-            <p id="viewOutroA" class="mb-12 hidden">Thank you for your kind consideration and usual support.</p>
-            <p id="viewOutroB" class="mb-12 hidden">We look forward to your response. Thank you for your kind consideration and usual support!</p>
-            <p id="viewOutroC" class="mb-12 hidden">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
-
-            <p class="mb-8">Respectfully yours,</p>
-            <div class="mb-8">
-                <p id="viewReqName" class="font-bold uppercase mb-0 whitespace-nowrap"></p>
-                <p class="mt-0"><span id="viewOrgPres"></span> President</p>
-            </div>
-            <div>
-                <p class="mb-6">Noted by:</p>
-                <p id="viewAdvName" class="font-bold uppercase mb-0 whitespace-nowrap"></p>
-                <p class="mt-0"><span id="viewOrgAdv"></span> Adviser</p>
+            <div id="view-tab-excuse" onclick="switchDocTab('excuse', 'view')" class="cursor-pointer p-4 rounded-2xl border-2 border-gray-200 dark:border-gray-800 hover:border-pup-maroon/50 transition-all flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg">
+                    <i class="ph-fill ph-users-four"></i>
+                </div>
+                <div>
+                    <h4 class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Excuse & Equipment</h4>
+                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Participants & Logistics</p>
+                </div>
             </div>
         </div>
+
+        <!-- Preview Paper -->
+        <div class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed font-serif" style="color: #000 !important; font-family: 'Times New Roman', serif !important;">
+            
+            <div id="view-content-main" class="document-preview">
+                <!-- Content injected via JS -->
+            </div>
+
+            <div id="view-content-excuse" class="document-preview hidden">
+                <!-- Content injected via JS -->
+            </div>
+
         </div>
+
+        <!-- Footer -->
+        <div class="bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex justify-end font-sans">
+            <button type="button" onclick="closeViewModal()" class="px-8 py-2.5 rounded-lg bg-pup-maroon text-white font-bold hover:bg-red-900 transition-colors text-sm shadow-md">
+                Close Viewer
+            </button>
+        </div>
+    </div>
+</div>
 </div>
 
 <div id="letterModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm print-hide" onclick="closeLetterModal()"></div>
     
-    <div class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+    <div class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+        
+        <!-- Header -->
         <div class="print-hide bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
-            <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2"><i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold text-xl"></i> Official Document Preview</h3>
-            <button type="button" onclick="closeLetterModal()" class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
-        </div>
-
-        <div id="printPaper" class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed" style="color: #000 !important; font-family: Arial, sans-serif !important; max-height: none;">
-            <p id="letDate" class="mb-6 font-bold"></p>
-            <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
-            <p class="mb-6 leading-tight">Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus</p>
-            
-            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong id="letReText">Approval of Organizational Student Activity</strong></p>
-            
-            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-            <p class="mb-4">Greetings!</p>
-            
-            <div id="contentApproval" class="hidden">
-                <p class="mb-4 text-justify indent-8">
-                    To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, <span id="orgFullApp"></span> will be conducting a seminar entitled <strong>"<span id="titleApp"></span>"</strong>. <span id="descApp"></span>
-                </p>
-                <p class="mb-8 text-justify indent-8">
-                    The activity will be held on <strong><span id="dateApp"></span></strong>, <strong><span id="timeApp"></span></strong> at <strong><span id="venueApp"></span></strong>.
-                </p>
-            </div>
-
-            <div id="contentExcuse" class="hidden">
-                <p class="mb-4 text-justify indent-8">
-                    <span id="orgFullExc"></span> is organizing an event with the theme <strong>"<span id="titleExc"></span>"</strong> to be held on <strong><span id="dateExc"></span></strong>, <strong><span id="timeExc"></span></strong> at <strong><span id="venueExc"></span></strong>. <span id="descExc"></span>
-                </p>
-                <p class="mb-8 text-justify indent-8">
-                    In line with this, we respectfully request the excusal of <strong><span id="targetExc"></span></strong> whose classes will be affected to allow full participation without academic conflicts, and we also request usage of the aforementioned hall, together with <strong><span id="equipExc"></span></strong>.
-                </p>
-            </div>
-
-            <div id="contentReschedule" class="hidden">
-                <p class="mb-4 text-justify indent-8">
-                    We hope this letter finds you well and in good health. <span id="orgFullRes"></span> respectfully requests a rescheduling of our upcoming event entitled <strong>"<span id="titleRes"></span>"</strong>. The event is currently set for <strong id="origDateRes"></strong>.
-                </p>
-                <p class="mb-4 text-justify indent-8">
-                    We propose moving the event to <strong><span id="dateRes"></span></strong>, from <strong><span id="timeRes"></span></strong> at <strong><span id="venueRes"></span></strong>.
-                </p>
-                <p class="mb-8 text-justify indent-8">
-                    This request is made <span id="reasonRes"></span>. To ensure that our participants have an adequate venue and preparation, we believe this adjustment is necessary.
-                </p>
-            </div>
-
-            <p id="outroA" class="mb-12 hidden">Thank you for your kind consideration and usual support.</p>
-            <p id="outroB" class="mb-12 hidden">We look forward to your response. Thank you for your kind consideration and usual support!</p>
-            <p id="outroC" class="mb-12 hidden">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
-            
-            <p class="mb-8">Respectfully yours,</p>
-            <div class="mb-8">
-                <p class="font-bold uppercase mb-0 whitespace-nowrap"><span id="sigName"></span></p>
-                <p class="mt-0"><span id="sigOrg"></span> President</p>
-            </div>
-            <div>
-                <p class="mb-6">Noted by:</p>
-                <p class="font-bold uppercase mb-0 whitespace-nowrap"><span id="sigAdviser"></span></p>
-                <p class="mt-0"><span id="sigOrg2"></span> Adviser / Program Chair</p>
-            </div>
-        </div>
-
-        <div class="print-hide bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
-            <button type="button" data-url="{% url 'download_event_proposal_doc' %}" onclick="downloadWord(this)" class="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md"><i class="ph-bold ph-file-doc"></i> Download Word Doc</button>
-            <button type="button" onclick="closeLetterModal()" class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">Edit Form</button>
-            <button type="button" data-url="{% url 'submit_event_proposal' %}" onclick="submitToAdviser(this)" id="btnSubmitToAdviser" class="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
-                <i class="ph-bold ph-paper-plane-right"></i> Send to Adviser
+            <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold text-xl"></i> Official Document Hub
+            </h3>
+            <button type="button" onclick="closeLetterModal()" class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors">
+                <i class="ph-bold ph-x text-xl"></i>
             </button>
         </div>
-    </div>
-</div>
 
-        <div id="printPaper" class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed" style="color: #000 !important; font-family: Arial, sans-serif !important; max-height: none;">
-            <p id="letDate" class="mb-6 font-bold"></p>
-            <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
-            <p class="mb-6 leading-tight">Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus</p>
-            
-            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong id="letReText">Approval of Organizational Student Activity</strong></p>
-            
-            <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-            <p class="mb-4">Greetings!</p>
-            
-            <div id="contentApproval" class="hidden">
-                <p class="mb-4 text-justify indent-8">
-                    To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, <span id="orgFullApp"></span> will be conducting a seminar entitled <strong>"<span id="titleApp"></span>"</strong>. <span id="descApp"></span>
-                </p>
-                <p class="mb-8 text-justify indent-8">
-                    The activity will be held on <strong><span id="dateApp"></span></strong>, <strong><span id="timeApp"></span></strong> at <strong><span id="venueApp"></span></strong>.
-                </p>
+        <!-- Document Hub Tabs (The "Boxes") -->
+        <div class="print-hide p-4 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4">
+            <div id="tab-main" onclick="switchDocTab('main')" class="cursor-pointer p-4 rounded-2xl border-2 border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10 transition-all flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg">
+                    <i class="ph-fill ph-certificate"></i>
+                </div>
+                <div>
+                    <h4 id="tab-main-label" class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Request Letter</h4>
+                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Main Event Proposal</p>
+                </div>
             </div>
 
-            <div id="contentExcuse" class="hidden">
-                <p class="mb-4 text-justify indent-8">
-                    <span id="orgFullExc"></span> is organizing an event with the theme <strong>"<span id="titleExc"></span>"</strong> to be held on <strong><span id="dateExc"></span></strong>, <strong><span id="timeExc"></span></strong> at <strong><span id="venueExc"></span></strong>. <span id="descExc"></span>
-                </p>
-                <p class="mb-8 text-justify indent-8">
-                    In line with this, we respectfully request the excusal of <strong><span id="targetExc"></span></strong> whose classes will be affected to allow full participation without academic conflicts, and we also request usage of the aforementioned hall, together with <strong><span id="equipExc"></span></strong>.
-                </p>
-            </div>
-
-            <div id="contentReschedule" class="hidden">
-                <p class="mb-4 text-justify indent-8">
-                    We hope this letter finds you well and in good health. <span id="orgFullRes"></span> respectfully requests a rescheduling of our upcoming event entitled <strong>"<span id="titleRes"></span>"</strong>. The event is currently set for <strong id="origDateRes"></strong>.
-                </p>
-                <p class="mb-4 text-justify indent-8">
-                    We propose moving the event to <strong><span id="dateRes"></span></strong>, from <strong><span id="timeRes"></span></strong> at <strong><span id="venueRes"></span></strong>.
-                </p>
-                <p class="mb-8 text-justify indent-8">
-                    This request is made <span id="reasonRes"></span>. To ensure that our participants have an adequate venue and preparation, we believe this adjustment is necessary.
-                </p>
-            </div>
-
-            <p id="outroA" class="mb-12 hidden">Thank you for your kind consideration and usual support.</p>
-            <p id="outroB" class="mb-12 hidden">We look forward to your response. Thank you for your kind consideration and usual support!</p>
-            <p id="outroC" class="mb-12 hidden">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
-            
-            <p class="mb-8">Respectfully yours,</p>
-            <div class="mb-8">
-                <p class="font-bold uppercase mb-0 whitespace-nowrap"><span id="sigName"></span></p>
-                <p class="mt-0"><span id="sigOrg"></span> President</p>
-            </div>
-            <div>
-                <p class="mb-6">Noted by:</p>
-                <p class="font-bold uppercase mb-0 whitespace-nowrap"><span id="sigAdviser"></span></p>
-                <p class="mt-0"><span id="sigOrg2"></span> Adviser / Program Chair</p>
+            <div id="tab-excuse" onclick="switchDocTab('excuse')" class="cursor-pointer p-4 rounded-2xl border-2 border-gray-200 dark:border-gray-800 hover:border-pup-maroon/50 transition-all flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg">
+                    <i class="ph-fill ph-users-four"></i>
+                </div>
+                <div>
+                    <h4 class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Excuse & Equipment</h4>
+                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Participants & Logistics</p>
+                </div>
             </div>
         </div>
 
+        <!-- Preview Paper -->
+        <div id="printPaper" class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed font-serif" style="color: #000 !important; font-family: 'Times New Roman', serif !important;">
+            
+            <div id="content-main" class="document-preview">
+                <!-- Content injected via JS -->
+            </div>
+
+            <div id="content-excuse" class="document-preview hidden">
+                <!-- Content injected via JS -->
+            </div>
+
+        </div>
+
+        <!-- Footer -->
         <div class="print-hide bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
-            <button type="button" data-url="{% url 'download_event_proposal_doc' %}" onclick="downloadWord(this)" class="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md"><i class="ph-bold ph-file-doc"></i> Download Word Doc</button>
-            <button type="button" onclick="closeLetterModal()" class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">Edit Form</button>
-            <button type="button" data-url="{% url 'submit_event_proposal' %}" onclick="submitToAdviser(this)" id="btnSubmitToAdviser" class="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
+            <button type="button" onclick="downloadWord(this)" id="btnDownloadDocs" class="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
+                <i class="ph-bold ph-file-zip"></i> Download Word Docs (ZIP)
+            </button>
+            <button type="button" onclick="closeLetterModal()" class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">
+                Edit Form
+            </button>
+            <button type="button" onclick="submitToAdviser(this)" id="btnSubmitToAdviser" class="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
                 <i class="ph-bold ph-paper-plane-right"></i> Send to Adviser
             </button>
         </div>
@@ -400,17 +317,41 @@
     <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm mx-auto text-center p-8 z-10 border border-gray-200 dark:border-gray-800">
         <i class="ph-fill ph-check-circle text-6xl text-green-500 mb-4 inline-block"></i>
         <h2 class="text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2 font-sans">Proposal Sent!</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Your event document has been successfully saved and sent.</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Your event documents (Main Letter + Excuse/Usage) have been successfully saved and sent.</p>
         <button onclick="window.location.reload()" class="w-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-bold py-3 rounded-xl transition-colors shadow-md">Done</button>
     </div>
 </div>
 
 {{ events_json|json_script:"events-data" }}
 
+<style>
+    .document-preview-container {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        padding-top: 0;
+        padding-bottom: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.8s ease, max-height 0.8s ease-in-out, transform 0.8s ease-out, padding 0.8s ease-in-out;
+    }
+    .document-preview-container.active {
+        opacity: 1;
+        max-height: 3000px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        transform: translateY(0);
+    }
+    @media (min-width: 640px) {
+        .document-preview-container.active {
+            padding-top: 3rem;
+            padding-bottom: 3rem;
+        }
+    }
+</style>
+
 <script>
     const CSRF_TOKEN = "{{ csrf_token }}";
     
-    // 🟢 DICTIONARY NG 11 ORGS AT PROGRAMS NILA PARA SA LETTER TEMPLATE 🟢
     const ORG_DETAILS = {
         "ITO": { program: "Bachelor of Science in Information Technology (BSIT) Program", fullname: "Information Technology Organization" },
         "YEO": { program: "Bachelor of Science in Entrepreneurship (BSEntrep) Program", fullname: "Young Entrepreneurship Organization" },
@@ -436,176 +377,56 @@
                 renderEvents(allEvents);
             }
         } catch(e) { console.error("Error loading events", e); }
+        toggleFormFields(); 
     });
 
     function toggleFormFields() {
         const type = document.getElementById('letterType').value;
         const reschedFields = document.getElementById('rescheduleFields');
         const excuseFields = document.getElementById('excuseFields');
-        const descDiv = document.getElementById('standardDescDiv');
+        const downloadBtn = document.getElementById('btnDownloadDocs');
 
-        reschedFields.classList.add('hidden');
-        excuseFields.classList.add('hidden');
-        descDiv.classList.remove('hidden');
-
-        if(type === 'reschedule') {
+        if(type === 'reschedule_event') {
             reschedFields.classList.remove('hidden');
-        } else if(type === 'excuse') {
-            excuseFields.classList.remove('hidden');
-        }
-    }
-
-    function renderEvents(eventsToRender) {
-        const container = document.getElementById('eventsList');
-        if(!container) return;
-
-        if(eventsToRender.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-16 bg-gray-50 dark:bg-[#111] border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl my-auto">
-                    <i class="ph-fill ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
-                    <p class="text-base font-bold text-gray-500 uppercase tracking-widest text-[10px]">No events found</p>
-                </div>
-            `;
-            return;
-        }
-
-        let html = '';
-        eventsToRender.forEach(ev => {
-            html += `
-                <div onclick="openViewModal(${ev.id})" class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 p-5 rounded-xl cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all group">
-                    <div class="flex justify-between items-start mb-2 gap-2">
-                        <h4 class="font-black text-sm text-gray-900 dark:text-white truncate group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">${ev.title || 'No Title'}</h4>
-                        <span class="bg-gray-200 text-gray-700 border border-gray-300 dark:bg-gray-800 dark:text-gray-300 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold whitespace-nowrap">${ev.status || ''}</span>
-                    </div>
-                    <p class="text-xs font-bold text-gray-500 flex items-center gap-1.5"><i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold"></i> ${ev.date || ''}</p>
-                    <p class="text-xs font-bold text-gray-500 flex items-center gap-1.5 mt-1 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> ${ev.venue || ''}</p>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-    }
-
-    function handleSearch() {
-        const query = document.getElementById('eventSearch').value.toLowerCase();
-        const filtered = allEvents.filter(ev => 
-            (ev.title && ev.title.toLowerCase().includes(query)) ||
-            (ev.venue && ev.venue.toLowerCase().includes(query)) ||
-            (ev.date && ev.date.toLowerCase().includes(query)) ||
-            (ev.status && ev.status.toLowerCase().includes(query))
-        );
-        renderEvents(filtered);
-    }
-
-    function openViewModal(id) {
-        const ev = allEvents.find(e => e.id === id);
-        if(!ev) return;
-        
-        let desc = ev.description || "";
-        
-        // Hide all specific content sections first
-        document.getElementById('viewContentApproval').classList.add('hidden');
-        document.getElementById('viewContentExcuse').classList.add('hidden');
-        document.getElementById('viewContentReschedule').classList.add('hidden');
-        document.getElementById('viewOutroA').classList.add('hidden');
-        document.getElementById('viewOutroB').classList.add('hidden');
-        document.getElementById('viewOutroC').classList.add('hidden');
-
-        // Logic to parse different document types from description
-        if (desc.includes("[RESCHEDULE REQUEST]")) {
-            let reasonStr = "";
-            let origDateStr = "";
-            let origDescStr = "";
-
-            let parts = desc.split("|");
-            parts.forEach(part => {
-                if(part.includes("Reason:")) reasonStr = part.replace("[RESCHEDULE REQUEST]", "").replace("Reason:", "").trim();
-                if(part.includes("Original Date:")) origDateStr = part.replace("Original Date:", "").trim();
-                if(part.includes("Original Desc:")) origDescStr = part.replace("Original Desc:", "").trim();
-            });
-
-            document.getElementById('viewReText').innerText = "Scheduling of Organizational Student Activity";
-            document.getElementById('viewContentReschedule').classList.remove('hidden');
-            document.getElementById('viewOutroC').classList.remove('hidden');
-            
-            document.getElementById('viewOrgRes').innerText = ev.org || "";
-            document.getElementById('viewTitleRes').innerText = ev.title || "";
-            document.getElementById('viewOrigDateRes').innerText = origDateStr || "(Original Date)";
-            document.getElementById('viewEvtDateRes').innerText = ev.date || "";
-            document.getElementById('viewStartTimeRes').innerText = ev.start_time || "";
-            document.getElementById('viewEndTimeRes').innerText = ev.end_time || "Finish";
-            document.getElementById('viewVenueRes').innerText = ev.venue || "";
-            document.getElementById('viewReasonRes').innerText = reasonStr || "due to unforeseen circumstances";
-
-        } else if (desc.includes("[EXCUSE & EQUIPMENT REQUEST]")) {
-            let targetStr = "";
-            let equipStr = "";
-            let origDescStr = "";
-
-            let parts = desc.split("|");
-            parts.forEach(part => {
-                if(part.includes("Target:")) targetStr = part.replace("[EXCUSE & EQUIPMENT REQUEST]", "").replace("Target:", "").trim();
-                if(part.includes("Equipment:")) equipStr = part.replace("Equipment:", "").trim();
-                if(part.includes("Desc:")) origDescStr = part.replace("Desc:", "").trim();
-            });
-
-            document.getElementById('viewReText').innerText = "Excuse and Request Usage of Equipment/Facility";
-            document.getElementById('viewContentExcuse').classList.remove('hidden');
-            document.getElementById('viewOutroB').classList.remove('hidden');
-            
-            document.getElementById('viewOrgExc').innerText = ev.org || "";
-            document.getElementById('viewTitleExc').innerText = ev.title || "";
-            document.getElementById('viewEvtDateExc').innerText = ev.date || "";
-            document.getElementById('viewStartTimeExc').innerText = ev.start_time || "";
-            document.getElementById('viewEndTimeExc').innerText = ev.end_time || "Finish";
-            document.getElementById('viewVenueExc').innerText = ev.venue || "";
-            document.getElementById('viewDescExc').innerText = origDescStr ? "This activity aims to " + origDescStr : "";
-            document.getElementById('viewTargetExc').innerText = targetStr || "all affected students";
-            document.getElementById('viewEquipExc').innerText = equipStr || "the necessary equipment";
-
+            excuseFields.classList.add('hidden'); // Hide excuse fields for reschedule
+            if (downloadBtn) downloadBtn.innerHTML = '<i class="ph-bold ph-file-doc"></i> Download Word Doc';
         } else {
-            // Default Standard Approval Letter
-            document.getElementById('viewReText').innerText = "Approval of Organizational Student Activity";
-            document.getElementById('viewContentApproval').classList.remove('hidden');
-            document.getElementById('viewOutroA').classList.remove('hidden');
-            
-            document.getElementById('viewOrgApp').innerText = ev.org || "";
-            document.getElementById('viewTitleApp').innerText = ev.title || "";
-            document.getElementById('viewDescApp').innerText = desc;
-            document.getElementById('viewEvtDateApp').innerText = ev.date || "";
-            document.getElementById('viewStartTimeApp').innerText = ev.start_time || "";
-            document.getElementById('viewEndTimeApp').innerText = ev.end_time || "Finish";
-            document.getElementById('viewVenueApp').innerText = ev.venue || "";
+            reschedFields.classList.add('hidden');
+            excuseFields.classList.remove('hidden');
+            if (downloadBtn) downloadBtn.innerHTML = '<i class="ph-bold ph-file-zip"></i> Download Word Docs (ZIP)';
         }
-
-        // Common Modal Header and Signatories
-        document.getElementById('viewDate').innerText = ev.date || "";
-        document.getElementById('viewReqName').innerText = ev.requester_name || "";
-        document.getElementById('viewOrgPres').innerText = ev.org || "";
-        document.getElementById('viewAdvName').innerText = ev.adviser_name || "(Adviser Name)";
-        document.getElementById('viewOrgAdv').innerText = ev.org || "";
-
-        document.getElementById('viewModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
     }
 
-    function closeViewModal() {
-        document.getElementById('viewModal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
+    function switchDocTab(tab, mode = 'preview') {
+        const prefix = mode === 'view' ? 'view-' : '';
+        const mainTab = document.getElementById(`${prefix}tab-main`);
+        const excuseTab = document.getElementById(`${prefix}tab-excuse`);
+        const mainContent = document.getElementById(`${prefix}content-main`);
+        const excuseContent = document.getElementById(`${prefix}content-excuse`);
+        const paperContainer = mainContent.parentElement;
 
-    function cancelEdit() {
-        document.getElementById('createEventForm').reset();
-        document.getElementById('evtId').value = "";
-        document.getElementById('origDate').value = "";
-        document.getElementById('editBadge').classList.add('hidden');
-        document.getElementById('btnCancelEdit').classList.add('hidden');
-        
-        document.getElementById('reqName').value = "{{ request.user.first_name|escapejs }}";
-        document.getElementById('reqOrg').value = "{{ org_acronym|escapejs }}";
-        
-        // Reset dropdown
-        document.getElementById('letterType').value = 'approval';
-        toggleFormFields();
+        // Reset visibility
+        mainContent.classList.add('hidden');
+        excuseContent.classList.add('hidden');
+        paperContainer.classList.remove('active');
+
+        // Small delay to trigger animation
+        setTimeout(() => {
+            if (tab === 'main') {
+                mainTab.classList.add('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
+                mainTab.classList.remove('border-gray-200', 'dark:border-gray-800');
+                excuseTab.classList.remove('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
+                excuseTab.classList.add('border-gray-200', 'dark:border-gray-800');
+                mainContent.classList.remove('hidden');
+            } else {
+                excuseTab.classList.add('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
+                excuseTab.classList.remove('border-gray-200', 'dark:border-gray-800');
+                mainTab.classList.remove('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
+                mainTab.classList.add('border-gray-200', 'dark:border-gray-800');
+                excuseContent.classList.remove('hidden');
+            }
+            paperContainer.classList.add('active');
+        }, 50);
     }
 
     function formatTime(timeInput) {
@@ -618,8 +439,36 @@
     }
 
     function getOrgFullName(acronym) {
-        const details = ORG_DETAILS[acronym] || ORG_DETAILS["SSC"]; // Fallback to SSC
+        const details = ORG_DETAILS[acronym] || ORG_DETAILS["SSC"];
         return `The ${details.program}, through the ${details.fullname} (${acronym})`;
+    }
+
+    function renderEvents(eventsToRender) {
+        const container = document.getElementById('eventsList');
+        if(!container) return;
+        if(eventsToRender.length === 0) {
+            container.innerHTML = `<div class="text-center py-16 opacity-50"><p>No events found</p></div>`;
+            return;
+        }
+        let html = '';
+        eventsToRender.forEach(ev => {
+            html += `
+                <div onclick="openViewModal(${ev.id})" class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 p-5 rounded-xl cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all group">
+                    <div class="flex justify-between items-start mb-2 gap-2">
+                        <h4 class="font-black text-sm text-gray-900 dark:text-white truncate group-hover:text-pup-maroon transition-colors">${ev.title || 'No Title'}</h4>
+                        <span class="bg-gray-200 dark:bg-gray-800 text-[9px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">${ev.status || ''}</span>
+                    </div>
+                    <p class="text-xs font-bold text-gray-500"><i class="ph-fill ph-calendar"></i> ${ev.date || ''}</p>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function handleSearch() {
+        const query = document.getElementById('eventSearch').value.toLowerCase();
+        const filtered = allEvents.filter(ev => (ev.title && ev.title.toLowerCase().includes(query)));
+        renderEvents(filtered);
     }
 
     function generateLetter() {
@@ -628,157 +477,190 @@
         const fullOrgText = getOrgFullName(orgAcr);
         
         const title = document.getElementById('evtTitle').value;
+        const venue = document.getElementById('evtVenue').value;
         const dateRaw = document.getElementById('evtDate').value;
         const sTime = formatTime(document.getElementById('evtStartTime').value);
         const eTime = formatTime(document.getElementById('evtEndTime').value);
-        const venue = document.getElementById('evtVenue').value;
         const desc = document.getElementById('evtDesc').value;
         
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         const today = new Date().toLocaleDateString('en-US', options); 
         const formattedDate = new Date(dateRaw).toLocaleDateString('en-US', options);
 
-        // Hide all contents first
-        document.getElementById('contentApproval').classList.add('hidden');
-        document.getElementById('contentExcuse').classList.add('hidden');
-        document.getElementById('contentReschedule').classList.add('hidden');
-        document.getElementById('outroA').classList.add('hidden');
-        document.getElementById('outroB').classList.add('hidden');
-        document.getElementById('outroC').classList.add('hidden');
+        const commonHeader = `
+            <p class="mb-6 font-bold">${today}</p>
+            <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
+            <p class="mb-6 leading-tight">Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus</p>
+        `;
 
-        if(type === 'approval') {
-            document.getElementById('letReText').innerText = "Approval of Organizational Student Activity";
-            document.getElementById('contentApproval').classList.remove('hidden');
-            document.getElementById('outroA').classList.remove('hidden');
-            
-            document.getElementById('orgFullApp').innerText = fullOrgText;
-            document.getElementById('titleApp').innerText = title;
-            document.getElementById('descApp').innerText = desc;
-            document.getElementById('dateApp').innerText = formattedDate;
-            document.getElementById('timeApp').innerText = `${sTime} to ${eTime}`;
-            document.getElementById('venueApp').innerText = venue;
-        } 
-        else if (type === 'excuse') {
-            document.getElementById('letReText').innerText = "Excuse and Request Usage of Equipment/Facility";
-            document.getElementById('contentExcuse').classList.remove('hidden');
-            document.getElementById('outroB').classList.remove('hidden');
-            
-            document.getElementById('orgFullExc').innerText = fullOrgText;
-            document.getElementById('titleExc').innerText = title;
-            document.getElementById('dateExc').innerText = formattedDate;
-            document.getElementById('timeExc').innerText = `${sTime} to ${eTime}`;
-            document.getElementById('venueExc').innerText = venue;
-            document.getElementById('descExc').innerText = desc ? "This activity aims to " + desc : "";
-            
-            document.getElementById('targetExc').innerText = document.getElementById('excuseClasses').value || "all affected students";
-            document.getElementById('equipExc').innerText = document.getElementById('reqEquipment').value || "the necessary equipment";
-        }
-        else if (type === 'reschedule') {
-            document.getElementById('letReText').innerText = "Scheduling of Organizational Student Activity";
-            document.getElementById('contentReschedule').classList.remove('hidden');
-            document.getElementById('outroC').classList.remove('hidden');
-            
-            document.getElementById('orgFullRes').innerText = fullOrgText;
-            document.getElementById('titleRes').innerText = title;
-            
+        const commonFooter = `
+            <p class="mb-8">Respectfully yours,</p>
+            <div class="mb-8">
+                <p class="font-bold uppercase mb-0">${document.getElementById('reqName').value}</p>
+                <p class="mt-0">${orgAcr} President</p>
+            </div>
+            <div>
+                <p class="mb-6">Noted by:</p>
+                <p class="font-bold uppercase mb-0">${document.getElementById('advName').value}</p>
+                <p class="mt-0">${orgAcr} Adviser / Program Chair</p>
+            </div>
+        `;
+
+        let mainBody = "";
+        if(type === 'reschedule_event') {
             const origDateRaw = document.getElementById('origDate').value;
             const formattedOrigDate = origDateRaw ? new Date(origDateRaw).toLocaleDateString('en-US', options) : "(Original Date)";
-            document.getElementById('origDateRes').innerText = formattedOrigDate;
+            const reason = document.getElementById('reschedReason').value || "unforeseen circumstances";
+            document.getElementById('tab-main-label').innerText = "Reschedule Letter";
             
-            document.getElementById('dateRes').innerText = formattedDate;
-            document.getElementById('timeRes').innerText = `${sTime} to ${eTime}`;
-            document.getElementById('venueRes').innerText = venue;
-            document.getElementById('reasonRes').innerText = document.getElementById('reschedReason').value || "due to unforeseen circumstances";
+            mainBody = `
+                <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong></p>
+                <p class="mb-4 text-justify indent-8">We hope this letter finds you well. ${fullOrgText} respectfully requests a rescheduling of our upcoming event entitled <strong>"${title}"</strong>. The event was originally set for ${formattedOrigDate}.</p>
+                <p class="mb-4 text-justify indent-8">We propose moving the event to <strong>${formattedDate}</strong>, from <strong>${sTime} to ${eTime}</strong> at <strong>${venue}</strong>.</p>
+                <p class="mb-8 text-justify indent-8">This request is made ${reason}. ${desc}</p>
+            `;
+        } else {
+            document.getElementById('tab-main-label').innerText = "Request Letter";
+            mainBody = `
+                <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong></p>
+                <p class="mb-4 text-justify indent-8">To comply with the commitment to UPHOLD E2E Program, ${fullOrgText} will be conducting an activity entitled <strong>"${title}"</strong>.</p>
+                <p class="mb-4 text-justify indent-8">The activity is scheduled for <strong>${formattedDate}</strong>, <strong>${sTime} to ${eTime}</strong> at <strong>${venue}</strong>.</p>
+                <p class="mb-8 text-justify indent-8">${desc}</p>
+            `;
         }
 
-        // Common Signatories
-        document.getElementById('letDate').innerText = today;
-        document.getElementById('sigName').innerText = document.getElementById('reqName').value;
-        document.getElementById('sigOrg').innerText = orgAcr;
-        document.getElementById('sigAdviser').innerText = document.getElementById('advName').value;
-        document.getElementById('sigOrg2').innerText = orgAcr;
+        const target = document.getElementById('excuseClasses').value || "all affected students";
+        const equipment = document.getElementById('reqEquipment').value || "the necessary equipment";
+        const excuseBody = `
+            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong></p>
+            <p class="mb-4 text-justify indent-8">${fullOrgText} is organizing an event <strong>"${title}"</strong> on ${formattedDate} at ${venue}.</p>
+            <p class="mb-8 text-justify indent-8">We respectfully request the excusal of <strong>${target}</strong> whose classes will be affected, and we also request usage of the aforementioned facility, together with <strong>${equipment}</strong>.</p>
+        `;
+
+        document.getElementById('content-main').innerHTML = commonHeader + mainBody + commonFooter;
+        document.getElementById('content-excuse').innerHTML = commonHeader + excuseBody + commonFooter;
+
+        // Reset tab styles and hide content completely via classes
+        const mainTab = document.getElementById(`tab-main`);
+        const excuseTab = document.getElementById(`tab-excuse`);
+        mainTab.classList.remove('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
+        mainTab.classList.add('border-gray-200', 'dark:border-gray-800');
+        excuseTab.classList.remove('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
+        excuseTab.classList.add('border-gray-200', 'dark:border-gray-800');
+        
+        const paperContainer = document.getElementById('printPaper');
+        paperContainer.classList.add('document-preview-container');
+        paperContainer.classList.remove('active');
+        paperContainer.style.opacity = ""; // Let CSS handle it
+        paperContainer.style.transform = ""; // Let CSS handle it
+        document.getElementById('content-main').classList.add('hidden');
+        document.getElementById('content-excuse').classList.add('hidden');
+
+        if(type === 'reschedule_event') {
+            excuseTab.classList.add('hidden'); // Hide Excuse tab for reschedules
+            mainTab.classList.add('col-span-2'); // Make main tab span full width
+        } else {
+            excuseTab.classList.remove('hidden');
+            mainTab.classList.remove('col-span-2');
+        }
 
         document.getElementById('letterModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        
+        // Auto-open the main letter tab
+        switchDocTab('main', 'preview');
     }
 
-    function closeLetterModal() {
-        document.getElementById('letterModal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
+    function closeLetterModal() { document.getElementById('letterModal').classList.add('hidden'); document.body.style.overflow = ''; }
 
-    async function downloadWord(btnElement) {
-        const originalText = btnElement.innerHTML;
-        btnElement.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
-        btnElement.disabled = true;
-
+    async function downloadWord(btn) {
+        if(!btn) btn = document.getElementById('btnDownloadDocs');
+        const originalText = btn.innerHTML;
         const type = document.getElementById('letterType').value;
+        
+        if (type === 'reschedule_event') {
+            btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
+        } else {
+            btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Zipping...';
+        }
+        btn.disabled = true;
+
         const orgAcr = document.getElementById('reqOrg').value;
         const fullOrgText = getOrgFullName(orgAcr);
+        const sTime = formatTime(document.getElementById('evtStartTime').value);
+        const eTime = formatTime(document.getElementById('evtEndTime').value);
         
-        const evtDateObj = new Date(document.getElementById('evtDate').value);
-        const formattedEvtDate = evtDateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        const fullTimeStr = `${formatTime(document.getElementById('evtStartTime').value)} to ${formatTime(document.getElementById('evtEndTime').value)}`;
-
         const payload = {
             docType: type,
-            letDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-            letName: document.getElementById('reqName').value,
-            letOrg: document.getElementById('reqOrg').value,
             fullOrgName: fullOrgText,
+            letDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
             letTitle: document.getElementById('evtTitle').value,
             letDesc: document.getElementById('evtDesc').value,
-            letEvtDate: formattedEvtDate,
-            letEvtTime: fullTimeStr,
+            letEvtDate: document.getElementById('evtDate').value ? new Date(document.getElementById('evtDate').value).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "",
+            letEvtTime: `${sTime} to ${eTime}`,
             letVenue: document.getElementById('evtVenue').value,
             sigName: document.getElementById('reqName').value,
             sigOrg: document.getElementById('reqOrg').value,
             sigAdviser: document.getElementById('advName').value,
-            targetClasses: document.getElementById('excuseClasses') ? document.getElementById('excuseClasses').value : "",
-            reqEquipment: document.getElementById('reqEquipment') ? document.getElementById('reqEquipment').value : "",
-            origDate: document.getElementById('origDate') ? document.getElementById('origDate').value : "",
-            reschedReason: document.getElementById('reschedReason') ? document.getElementById('reschedReason').value : ""
+            targetClasses: document.getElementById('excuseClasses').value,
+            reqEquipment: document.getElementById('reqEquipment').value,
+            origDate: document.getElementById('origDate').value ? new Date(document.getElementById('origDate').value).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "",
+            reschedReason: document.getElementById('reschedReason').value
         };
 
         try {
-            const response = await fetch(btnElement.getAttribute('data-url'), {
+            const response = await fetch('/organizer/download-proposal-doc/', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': CSRF_TOKEN
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
                 body: JSON.stringify(payload)
             });
 
             if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${type.toUpperCase()}_Document_${payload.letOrg}.docx`; 
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-            } else {
-                const errorData = await response.json();
-                alert("Failed to generate document: " + (errorData.message || "Unknown error"));
-            }
-        } catch (error) {
-            alert("System error! Check your connection.");
-        } finally {
-            btnElement.innerHTML = originalText;
-            btnElement.disabled = false;
-        }
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const data = await response.json();
+                    alert("Error: " + data.message);
+                } else {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    if (type === 'reschedule_event') {
+                        a.download = `Reschedule_Letter_${payload.sigOrg}.docx`; 
+                    } else {
+                        a.download = `Event_Documents_${payload.sigOrg}.zip`; 
+                    }
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                }
+            } else { alert("Error generating document. Server returned an error."); }
+        } catch (e) { alert("Connection error."); }
+        finally { btn.innerHTML = originalText; btn.disabled = false; }
     }
 
-    async function submitToAdviser(btnElement) {
-        btnElement.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Sending...';
-        btnElement.disabled = true;
+    async function submitToAdviser(btn) {
+        if(!btn || !btn.innerHTML) btn = document.getElementById('btnSubmitToAdviser');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Sending...';
+        btn.disabled = true;
+
+        const type = document.getElementById('letterType').value;
+        const descBase = document.getElementById('evtDesc').value || "No description provided.";
+        const target = document.getElementById('excuseClasses').value || "None";
+        const equip = document.getElementById('reqEquipment').value || "None";
+        
+        let finalDesc = "";
+        if(type === 'reschedule_event') {
+            const reason = document.getElementById('reschedReason').value || "unforeseen circumstances";
+            const orig = document.getElementById('origDate').value || "Unknown Date";
+            finalDesc = `[RESCHEDULE] Reason: ${reason} | Original: ${orig} | Target: ${target} | Equipment: ${equip} | Desc: ${descBase}`;
+        } else {
+            finalDesc = `[NEW EVENT] Target: ${target} | Equipment: ${equip} | Desc: ${descBase}`;
+        }
 
         let formData = new FormData();
         formData.append('csrfmiddlewaretoken', CSRF_TOKEN); 
-        formData.append('event_id', ""); 
         formData.append('requester_name', document.getElementById('reqName').value);
         formData.append('adviser_name', document.getElementById('advName').value);
         formData.append('title', document.getElementById('evtTitle').value);
@@ -786,38 +668,109 @@
         formData.append('start_time', document.getElementById('evtStartTime').value);
         formData.append('end_time', document.getElementById('evtEndTime').value);
         formData.append('venue', document.getElementById('evtVenue').value);
-        
-        const type = document.getElementById('letterType').value;
-        let finalDesc = document.getElementById('evtDesc').value;
-        if(type === 'reschedule') {
-            const origDateRaw = document.getElementById('origDate').value;
-            const formattedOrigDate = origDateRaw ? new Date(origDateRaw).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "(Original Date)";
-            finalDesc = `[RESCHEDULE REQUEST] Reason: ${document.getElementById('reschedReason').value} | Original Date: ${formattedOrigDate} | Original Desc: ${finalDesc}`;
-        } else if(type === 'excuse') {
-            finalDesc = `[EXCUSE & EQUIPMENT REQUEST] Target: ${document.getElementById('excuseClasses').value} | Equipment: ${document.getElementById('reqEquipment').value} | Desc: ${finalDesc}`;
-        }
         formData.append('description', finalDesc);
 
         try {
-            const response = await fetch(btnElement.getAttribute('data-url'), {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-            
-            if(data.status === 'success') {
-                closeLetterModal();
-                document.getElementById('successModal').classList.remove('hidden');
+            const response = await fetch('/organizer/api/submit-proposal/', { method: 'POST', body: formData });
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await response.json();
+                if(data.status === 'success') {
+                    closeLetterModal();
+                    document.getElementById('successModal').classList.remove('hidden');
+                } else { alert("Error: " + data.message); btn.innerHTML = originalText; btn.disabled = false; }
             } else {
-                alert("Error saving: " + data.message);
-                btnElement.innerHTML = '<i class="ph-bold ph-paper-plane-right"></i> Send to Adviser';
-                btnElement.disabled = false;
+                alert("Server Error. Please check console.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
-        } catch (error) {
-            alert("Connection error! Please check your internet connection.");
-            btnElement.innerHTML = '<i class="ph-bold ph-paper-plane-right"></i> Send to Adviser';
-            btnElement.disabled = false;
+        } catch (error) { 
+            alert("Connection error."); 
+            btn.innerHTML = originalText; 
+            btn.disabled = false; 
         }
     }
+
+    function openViewModal(id) {
+        const ev = allEvents.find(e => e.id === id);
+        if(!ev) return;
+        
+        const rawDesc = ev.description || "";
+        const type = rawDesc.includes("[RESCHEDULE]") ? 'reschedule_event' : 'new_event';
+        
+        const data = {};
+        rawDesc.split(' | ').forEach(p => {
+            const [k, ...v] = p.split(': ');
+            if (v.length > 0) data[k.trim()] = v.join(': ').trim();
+        });
+
+        const actualDesc = data['Desc'] || rawDesc;
+        const target = data['Target'] || "N/A";
+        const equipment = data['Equipment'] || "N/A";
+        const reason = data['Reason'] || "N/A";
+        const origDate = data['Original'] || "N/A";
+
+        const commonHeader = `
+            <p class="mb-6 font-bold">${ev.date}</p>
+            <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
+        `;
+
+        const commonFooter = `
+            <p class="mt-8">Respectfully yours,</p>
+            <p class="font-bold uppercase">${ev.requester_name}</p>
+            <p class="mb-6">${ev.org} President</p>
+            <p>Noted by:</p>
+            <p class="font-bold uppercase">${ev.adviser_name}</p>
+            <p>${ev.org} Adviser</p>
+        `;
+
+        let mainBody = "";
+        if (type === 'reschedule_event') {
+            document.getElementById('view-tab-main-label').innerText = "Reschedule Letter";
+            mainBody = `<p class="mb-4"><strong>Re: Scheduling of Activity</strong></p><p class="mb-4">We request rescheduling "${ev.title}" originally set for ${origDate}.</p><p class="mb-4">New Schedule: ${ev.date} at ${formatTime(ev.start_time)}</p><p>Reason: ${reason}</p><p>${actualDesc}</p>`;
+        } else {
+            document.getElementById('view-tab-main-label').innerText = "Request Letter";
+            mainBody = `<p class="mb-4"><strong>Re: Approval of Activity</strong></p><p class="mb-4">Proposal for "${ev.title}" on ${ev.date} at ${ev.venue}.</p><p>${actualDesc}</p>`;
+        }
+
+        const excuseBody = `<p class="mb-4"><strong>Re: Excuse & Usage</strong></p><p class="mb-4">Requesting excuse for: <strong>${target}</strong></p><p>Equipment: <strong>${equipment}</strong></p>`;
+
+        document.getElementById('view-content-main').innerHTML = commonHeader + mainBody + commonFooter;
+        document.getElementById('view-content-excuse').innerHTML = commonHeader + excuseBody + commonFooter;
+
+        // Reset tab styles and hide content for view modal
+        const mainTab = document.getElementById(`view-tab-main`);
+        const excuseTab = document.getElementById(`view-tab-excuse`);
+        mainTab.classList.remove('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
+        mainTab.classList.add('border-gray-200', 'dark:border-gray-800');
+        excuseTab.classList.remove('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
+        excuseTab.classList.add('border-gray-200', 'dark:border-gray-800');
+        
+        const paperContainer = document.getElementById('view-content-main').parentElement;
+        paperContainer.classList.add('document-preview-container');
+        paperContainer.classList.remove('active');
+        paperContainer.style.opacity = "";
+        paperContainer.style.transform = "";
+        document.getElementById('view-content-main').classList.add('hidden');
+        document.getElementById('view-content-excuse').classList.add('hidden');
+
+        if(type === 'reschedule_event') {
+            excuseTab.classList.add('hidden');
+            mainTab.classList.add('col-span-2');
+        } else {
+            excuseTab.classList.remove('hidden');
+            mainTab.classList.remove('col-span-2');
+        }
+
+        document.getElementById('viewModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        // Auto-open the main letter tab
+        switchDocTab('main', 'view');
+    }
+
+    function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); document.body.style.overflow = ''; }
+    
+    function cancelEdit() { window.location.reload(); }
 </script>
 {% endblock content %}

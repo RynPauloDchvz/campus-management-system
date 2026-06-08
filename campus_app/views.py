@@ -18,6 +18,8 @@ import json
 import string 
 import random 
 import os 
+import io
+import zipfile
 from docxtpl import DocxTemplate 
 from .models import OrgProfile, Student, Attendance, Event, LoginLockout, AuditLog
 from .utils import log_audit_event
@@ -1088,9 +1090,9 @@ def organizer_create_events(request):
         events_data.append({
             'id': e.id,
             'title': e.event_title or "",
-            'date': e.event_date.strftime('%B %d, %Y') if e.event_date else '', # Formatted neatly
-            'start_time': e.start_time.strftime('%H:%M') if e.start_time else '', # Keep 24-hr format specifically for <input type="time">
-            'end_time': e.end_time.strftime('%H:%M') if getattr(e, 'end_time', None) else '', # Keep 24-hr format
+            'date': e.event_date.strftime('%Y-%m-%d') if e.event_date else '', # Fix format for JS new Date()
+            'start_time': e.start_time.strftime('%H:%M') if e.start_time else '', 
+            'end_time': e.end_time.strftime('%H:%M') if getattr(e, 'end_time', None) else '', 
             'venue': e.venue or "",
             'description': e.description or "",
             'requester_name': getattr(e, 'requester_name', '') or "",
@@ -1165,7 +1167,7 @@ def submit_event_proposal(request):
             return JsonResponse({"status": "error", "message": str(e)})
     return JsonResponse({"status": "error", "message": "Invalid request"})
 
-# 🟢 DYNAMIC DOCX GENERATOR (HANDLES ALL 3 TEMPLATES) 🟢
+# 🟢 DYNAMIC DOCX GENERATOR (HANDLES ZIP FOR MULTIPLE DOCUMENTS) 🟢
 @user_passes_test(is_organizer_strictly, login_url='/')
 def download_event_proposal_doc(request):
     if request.method == 'POST':
@@ -1173,22 +1175,29 @@ def download_event_proposal_doc(request):
             data = json.loads(request.body)
             doc_type = data.get('docType', 'approval')
             
-            # Pipili ng Template depende sa Request
-            if doc_type == 'excuse':
-                template_name = 'TEMPLATE_EXCUSE.docx'
-            elif doc_type == 'reschedule':
-                template_name = 'TEMPLATE_RESCHEDULE.docx'
+            # Map of docTypes to template sets
+            # new_event -> [Approval, Excuse]
+            # reschedule_event -> [Reschedule, Excuse]
+            # legacy/single -> [Original logic]
+            
+            templates_to_render = []
+            if doc_type == 'new_event':
+                templates_to_render = [
+                    {'tpl': 'TEMPLATE_APPROVAL.docx', 'name': '1_Request_Letter.docx'},
+                    {'tpl': 'TEMPLATE_EXCUSE.docx', 'name': '2_Excuse_and_Usage_Letter.docx'}
+                ]
+            elif doc_type == 'reschedule_event':
+                templates_to_render = [
+                    {'tpl': 'TEMPLATE_RESCHEDULE.docx', 'name': 'Reschedule_Letter.docx'}
+                ]
             else:
-                template_name = 'TEMPLATE_APPROVAL.docx'
-                
-            template_path = os.path.join(settings.BASE_DIR, 'static', 'templates', template_name)
-            
-            if not os.path.exists(template_path):
-                return JsonResponse({'status': 'error', 'message': f'Word Template {template_name} missing on server! Please check folder.'})
+                # Fallback for single doc requests (backward compatibility)
+                tpl = 'TEMPLATE_APPROVAL.docx'
+                if doc_type == 'excuse': tpl = 'TEMPLATE_EXCUSE.docx'
+                elif doc_type == 'reschedule': tpl = 'TEMPLATE_RESCHEDULE.docx'
+                templates_to_render = [{'tpl': tpl, 'name': f'{doc_type.capitalize()}_Letter.docx'}]
 
-            doc = DocxTemplate(template_path)
-            
-            # Buong Context ng Letter
+            # Context for rendering (shared across all docs in the set)
             context = {
                 'letDate': data.get('letDate', ''),
                 'fullOrgName': data.get('fullOrgName', ''),
@@ -1200,21 +1209,46 @@ def download_event_proposal_doc(request):
                 'sigName': data.get('sigName', '').upper(),
                 'sigOrg': data.get('sigOrg', '').upper(),
                 'sigAdviser': data.get('sigAdviser', '').upper(),
-                # Variables para sa Excuse Letter
                 'targetClasses': data.get('targetClasses', ''),
                 'reqEquipment': data.get('reqEquipment', ''),
-                # Variables para sa Reschedule
                 'origDate': data.get('origDate', ''),
                 'reschedReason': data.get('reschedReason', ''),
             }
-            
-            doc.render(context)
-            
-            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-            response['Content-Disposition'] = f'attachment; filename="{doc_type.capitalize()}_Document_{data.get("sigOrg", "Request")}.docx"'
-            doc.save(response)
-            
+
+            # If only one document, return directly as docx
+            if len(templates_to_render) == 1:
+                item = templates_to_render[0]
+                template_path = os.path.join(settings.BASE_DIR, 'static', 'templates', item['tpl'])
+                if not os.path.exists(template_path):
+                    return JsonResponse({'status': 'error', 'message': f'Template missing: {item["tpl"]}'})
+                
+                doc = DocxTemplate(template_path)
+                doc.render(context)
+                response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+                response['Content-Disposition'] = f'attachment; filename="{item["name"]}"'
+                doc.save(response)
+                return response
+                return response
+
+            # If multiple documents, package in a ZIP
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                for item in templates_to_render:
+                    template_path = os.path.join(settings.BASE_DIR, 'static', 'templates', item['tpl'])
+                    if os.path.exists(template_path):
+                        doc = DocxTemplate(template_path)
+                        doc.render(context)
+                        doc_io = io.BytesIO()
+                        doc.save(doc_io)
+                        doc_io.seek(0)
+                        zip_file.writestr(item['name'], doc_io.read())
+
+            zip_buffer.seek(0)
+            response = HttpResponse(zip_buffer.read(), content_type='application/zip')
+            org_acr = data.get('sigOrg', 'Request')
+            response['Content-Disposition'] = f'attachment; filename="Event_Documents_{org_acr}.zip"'
             return response
+
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request'})
