@@ -345,13 +345,33 @@
                 const pBtn = document.getElementById('btnParticipateNow');
                 const lockMsg = document.getElementById('participationLockMsg');
                 
-                if (currentEvent.already_attended) {
+                // 🟢 NEW: TIME OUT LOGIC 🟢
+                if (currentEvent.has_timed_out) {
                     label.innerText = "AUTHORIZATION STATUS";
-                    modalCD.innerText = "IDENTITY LOGGED";
+                    modalCD.innerText = "ACTIVITY COMPLETE";
                     pBtn.disabled = true;
-                    pBtn.innerHTML = `<i class="ph-fill ph-check-circle text-2xl"></i> Authorization Record Exists`;
-                    lockMsg.innerText = "Entry already authorized for this activity.";
+                    pBtn.innerHTML = `<i class="ph-fill ph-check-circle text-2xl"></i> Record Finalized`;
+                    lockMsg.innerText = "Time In and Time Out recorded for this activity.";
                     lockMsg.classList.remove('hidden');
+                } else if (currentEvent.already_attended) {
+                    const endISO = currentEvent.end_time_iso ? `${currentEvent.date}T${currentEvent.end_time_iso}` : null;
+                    const endDt = endISO ? new Date(endISO) : null;
+                    const timeoutStart = endDt ? new Date(endDt.getTime() - (15 * 60000)) : null;
+
+                    if (timeoutStart && now < timeoutStart) {
+                        label.innerText = "NEXT STEP";
+                        modalCD.innerText = "WAITING FOR TIME OUT";
+                        pBtn.disabled = true;
+                        pBtn.innerHTML = `<i class="ph-bold ph-timer text-2xl"></i> UNLOCKS AT ${currentEvent.end_time}`;
+                        lockMsg.innerText = "Time In recorded. Please wait for the event to conclude.";
+                        lockMsg.classList.remove('hidden');
+                    } else {
+                        label.innerText = "AUTHORIZATION STATUS";
+                        modalCD.innerText = "READY FOR TIME OUT";
+                        pBtn.disabled = false;
+                        pBtn.innerHTML = `<i class="ph-bold ph-sign-out text-2xl"></i> Initialize Time Out`;
+                        lockMsg.classList.add('hidden');
+                    }
                 } else if (diffStart > 0) {
                     label.innerText = "AUTHORIZING IN";
                     modalCD.innerText = formatTimeDiff(diffStart);
@@ -497,7 +517,7 @@
                     L.marker([userLat, userLng]).addTo(map);
                     const target = L.latLng(currentEvent.target_lat, currentEvent.target_lng);
                     const dist = L.latLng(userLat, userLng).distanceTo(target);
-                    if (dist <= 150) {
+                    if (dist <= 300) {
                         isLocationVerified = true;
                         document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-check-circle text-green-500"></i> GEOFENCE VERIFIED (WITHIN PUP UNISAN)`;
                     } else {

@@ -14,6 +14,109 @@
     /* Custom Transitions */
     .modal-backdrop { transition: opacity 0.3s ease-in-out; }
     .modal-content { transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
+
+    /* Vault Dropdown Styles */
+    .vault-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    .vault-dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        min-width: 220px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 50;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        margin-top: 4px;
+    }
+    .dark .vault-dropdown-content {
+        background-color: #1a1a1a;
+        border-color: #2d2d2d;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+    }
+    .vault-dropdown-content button {
+        width: 100%;
+        text-align: left;
+        padding: 12px 16px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        transition: all 0.2s;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .dark .vault-dropdown-content button {
+        border-bottom-color: #2d2d2d;
+        color: #e2e8f0;
+    }
+    .vault-dropdown-content button:hover {
+        background-color: #f8fafc;
+        color: #800000;
+    }
+    .dark .vault-dropdown-content button:hover {
+        background-color: #2d2d2d;
+        color: #D4AF37;
+    }
+    .dark .vault-dropdown:hover .vault-dropdown-content {
+        display: block;
+    }
+
+    /* Modal Maximization on Mobile */
+    @media (max-width: 640px) {
+        .mobile-fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+        }
+        .fixed-close-btn {
+            position: fixed !important;
+            top: 1rem !important;
+            right: 1rem !important;
+            z-index: 5010 !important;
+            background: rgba(0, 0, 0, 0.5) !important;
+            color: white !important;
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            border-radius: 9999px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            backdrop-filter: blur(4px) !important;
+        }
+    }
+
+    .document-preview-container {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        padding-top: 0;
+        padding-bottom: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.8s ease, max-height 0.8s ease-in-out, transform 0.8s ease-out, padding 0.8s ease-in-out;
+    }
+    .document-preview-container.active {
+        opacity: 1;
+        max-height: 3000px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        transform: translateY(0);
+    }
+    @media (min-width: 640px) {
+        .document-preview-container.active {
+            padding-top: 3rem;
+            padding-bottom: 3rem;
+        }
+    }
 </style>
 {% endblock extra_head %}
 
@@ -134,7 +237,7 @@
     </div>
 </div>
 
-<!-- MODAL: UPLOADER SETUP -->
+<!-- MODAL: UPLOADER SETUP (DROPDOWN REMOVED) -->
 <div id="upload-modal" class="hidden fixed inset-0 bg-black/70 z-[50] flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
     <div class="absolute inset-0 z-0 backdrop-click-area"></div>
     <div class="relative z-10 bg-white dark:bg-gray-900 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh] border border-gray-200 dark:border-gray-800 overflow-hidden modal-content">
@@ -152,18 +255,6 @@
 
         <!-- Modal Body -->
         <div class="flex-1 overflow-y-auto custom-scroll p-6 md:p-8">
-            <div class="mb-8 max-w-sm">
-                <label class="block text-[10px] font-black text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-widest">Requirement Mode</label>
-                <div class="relative">
-                    <select id="requirement-mode" class="w-full border border-gray-300 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 text-xs font-black focus:outline-none focus:ring-1 focus:ring-[#800000] dark:focus:ring-[#D4AF37] transition cursor-pointer appearance-none shadow-inner">
-                        <option value="4">4 Documents (Complete Attachments)</option>
-                        <option value="2">2 Documents (Reschedule Request)</option>
-                    </select>
-                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
-                        <i class="ph-bold ph-caret-down"></i>
-                    </div>
-                </div>
-            </div>
             <div id="upload-slots-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
                 <!-- Slots Injected via JS -->
             </div>
@@ -174,6 +265,59 @@
             <button onclick="hideModal()" class="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition">Cancel</button>
             <button id="submit-upload-btn" class="flex-1 py-4 text-xs font-black uppercase tracking-widest bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black rounded-xl hover:opacity-90 transition shadow-lg flex items-center justify-center gap-2">
                 Submit & Save to Vault
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW SUBMITTED PROPOSAL MODAL (DOCUMENT HUB STYLE) -->
+<div id="viewModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-0 sm:p-6 font-sans">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeViewModal()"></div>
+    <div class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+        
+        <!-- Header -->
+        <div class="bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
+            <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <i class="ph-fill ph-eye text-[#800000] dark:text-[#D4AF37] text-xl"></i> View Generated Softcopy
+            </h3>
+            <button type="button" onclick="closeViewModal()" class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Document Hub Tabs -->
+        <div class="p-4 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4">
+            <div id="view-tab-main" onclick="switchDocTab('main')" class="cursor-pointer p-4 rounded-2xl border-2 border-[#800000] bg-red-50 dark:bg-red-900/10 transition-all flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl bg-[#800000] text-white flex items-center justify-center text-2xl shadow-lg">
+                    <i class="ph-fill ph-certificate"></i>
+                </div>
+                <div>
+                    <h4 id="view-tab-main-label" class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Request Letter</h4>
+                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Main Event Proposal</p>
+                </div>
+            </div>
+
+            <div id="view-tab-excuse" onclick="switchDocTab('excuse')" class="cursor-pointer p-4 rounded-2xl border-2 border-gray-200 dark:border-gray-800 hover:border-[#800000]/50 transition-all flex items-center gap-4 group">
+                <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg">
+                    <i class="ph-fill ph-users-four"></i>
+                </div>
+                <div>
+                    <h4 class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Excuse & Equipment</h4>
+                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Participants & Logistics</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Paper -->
+        <div id="viewPrintPaper" class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed font-serif" style="color: #000 !important; font-family: 'Times New Roman', serif !important;">
+            <div id="view-content-main" class="document-preview"></div>
+            <div id="view-content-excuse" class="document-preview hidden"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex justify-end font-sans">
+            <button type="button" onclick="closeViewModal()" class="px-8 py-2.5 rounded-lg bg-[#800000] text-white font-bold hover:bg-red-900 transition-colors text-sm shadow-md">
+                Close Viewer
             </button>
         </div>
     </div>
@@ -232,7 +376,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchVault = document.getElementById('search-vault');
     
     const uploaderModal = document.getElementById('upload-modal');
-    const reqMode = document.getElementById('requirement-mode');
     const slotsContainer = document.getElementById('upload-slots-container');
     const submitBtn = document.getElementById('submit-upload-btn');
     const toast = document.getElementById('success-toast');
@@ -241,8 +384,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewImg = document.getElementById('preview-image-element');
     const closePreviewBtn = document.getElementById('close-preview-btn');
 
-    let activeEventId = null;
-    let selectedFiles = {};
+    const viewModal = document.getElementById('viewModal');
+    const viewContentMain = document.getElementById('view-content-main');
+    const viewContentExcuse = document.getElementById('view-content-excuse');
+    const viewTabMain = document.getElementById('view-tab-main');
+    const viewTabExcuse = document.getElementById('view-tab-excuse');
+    const viewTabMainLabel = document.getElementById('view-tab-main-label');
+
+    const ORG_DETAILS = {
+        "ITO": { program: "Bachelor of Science in Information Technology (BSIT) Program", fullname: "Information Technology Organization" },
+        "YEO": { program: "Bachelor of Science in Entrepreneurship (BSEntrep) Program", fullname: "Young Entrepreneurship Organization" },
+        "ITS": { program: "Diploma in Information Technology (DIT) Program", fullname: "Institute of Technology Society" },
+        "FTO": { program: "Bachelor of Elementary and Secondary Education Program", fullname: "Future Teachers Organization" },
+        "PAS": { program: "Bachelor of Public Administration (BPA) Program", fullname: "Public Administration Society" },
+        "CAO": { program: "Student Body", fullname: "Culture and Arts Organization" },
+        "PRIDEVerse": { program: "Student Body", fullname: "PRIDEVerse Organization" },
+        "SSC": { program: "Student Body", fullname: "Supreme Student Council" },
+        "ROTC": { program: "National Service Training Program", fullname: "Reserve Officers' Training Corps" },
+        "NEWSETTE": { program: "Student Body", fullname: "The Newsette Publication" },
+        "PUSO": { program: "Student Body", fullname: "PUP Unisan Sports Organization" }
+    };
+
+    function getOrgFullName(acronym) {
+        const details = ORG_DETAILS[acronym] || ORG_DETAILS["SSC"];
+        return `The ${details.program}, through the ${details.fullname} (${acronym})`;
+    }
+
+    function formatTime(timeInput) {
+        if(!timeInput) return "";
+        if(timeInput.includes('AM') || timeInput.includes('PM')) return timeInput;
+        let [hours, minutes] = timeInput.split(':');
+        hours = parseInt(hours, 10);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${hours}:${minutes} ${ampm}`;
+    }
 
     // 3. RENDER PENDING EVENTS
     function renderPending() {
@@ -259,14 +435,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h3 class="text-lg font-black text-gray-900 dark:text-gray-100 uppercase leading-tight line-clamp-2 mb-1 group-hover:text-[#800000] dark:group-hover:text-[#D4AF37] transition-colors">${e.eventName}</h3>
                 <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-6 italic">${e.orgName}</p>
                 <button class="w-full bg-[#800000] hover:bg-red-900 text-white text-[10px] font-black tracking-widest uppercase py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95" 
-                    onclick="showModal(${e.id}, '${e.eventName.replace(/'/g, "\\'")}')">
+                    onclick="showModal(${e.id}, '${e.eventName.replace(/'/g, "\\'")}', '${e.mode}')">
                     <i class="ph-bold ph-upload-simple"></i> UPLOAD SIGNED DOCUMENTS
                 </button>
             </div>
         `).join('');
     }
 
-    // 4. RENDER DOCUMENT VAULT (RESPONSIVE HEADER FIX)
+    // 4. RENDER DOCUMENT VAULT
     function renderVault() {
         if (vaultRecords.length === 0) {
             vaultList.innerHTML = `<div class="text-center py-20 text-gray-400 uppercase font-black text-[10px] italic">Archive is empty</div>`;
@@ -279,15 +455,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h3 class="truncate font-black text-lg text-gray-900 dark:text-gray-100 uppercase min-w-0 pr-2">${r.eventName || r.title}</h3>
                     </div>
                     <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-start sm:justify-end mt-2 sm:mt-0">
-                        <button class="download-records-btn border border-[#800000] text-[#800000] hover:bg-[#800000] hover:text-white dark:border-[#D4AF37] dark:text-[#D4AF37] dark:hover:bg-[#D4AF37] dark:hover:text-black px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors" 
+                        <button class="border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors" 
+                            onclick="openPreviewModal(${r.id})">
+                            <i class="ph-bold ph-eye"></i> Preview Letter
+                        </button>
+                        <button class="download-records-btn shrink-0 border border-[#800000] text-[#800000] hover:bg-[#800000] hover:text-white dark:border-[#D4AF37] dark:text-[#D4AF37] dark:hover:bg-[#D4AF37] dark:hover:text-black px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors" 
                             onclick="handleVaultDownload(this)">
                             <i class="ph-bold ph-download-simple"></i> Download Records
                         </button>
-                        <span class="border border-red-500 dark:border-red-400 text-red-700 dark:text-red-400 text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest bg-red-50 dark:bg-red-950/20 whitespace-nowrap">${r.docs.length} FILES</span>
                     </div>
                 </div>
                 <p class="text-green-600 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-2 mb-6 uppercase tracking-widest">
                     <i class="ph-bold ph-check-circle"></i> Uploaded: ${r.date}
+                    <span class="ml-auto border border-red-500 dark:border-red-400 text-red-700 dark:text-red-400 text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest bg-red-50 dark:bg-red-950/20 whitespace-nowrap">${r.docs.length} FILES</span>
                 </p>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 vault-files-grid">
                     ${r.docs.map(doc => `
@@ -309,11 +489,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 5. MODAL LOGIC
-    window.showModal = (id, title) => {
+    window.showModal = (id, title, mode) => {
         activeEventId = id;
+        activeMode = mode || "4";
         document.getElementById('modal-event-title').textContent = title;
-        reqMode.value = "4";
-        renderSlots("4");
+        renderSlots(activeMode);
         uploaderModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     };
@@ -329,11 +509,11 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: "letter_image", label: "1. Letter of Approval" },
             { id: "permit_image", label: "2. Permit to Conduct Activity" },
             { id: "equipment_image", label: "3. Excuse Letter & Equipment" },
-            { id: "other_attachments", label: "4. Event Cover Photo" }
+            { id: "event_cover_photo", label: "4. Event Cover Photo" }
         ],
         "2": [
             { id: "letter_image", label: "1. Letter of Reschedule" },
-            { id: "other_attachments", label: "2. Event Reschedule Cover Photo" }
+            { id: "reschedule_cover_photo", label: "2. Event Reschedule Cover Photo" }
         ]
     };
 
@@ -365,8 +545,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
     }
 
-    reqMode.addEventListener('change', (e) => renderSlots(e.target.value));
-
     window.handleFile = (e, id) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -389,6 +567,137 @@ document.addEventListener('DOMContentLoaded', () => {
         const st = document.getElementById(`st-${id}`);
         st.textContent = 'Status: Pending';
         st.classList.replace('text-emerald-500', 'text-gray-400');
+    };
+
+    // --- PREVIEW LETTER LOGIC (EXACTLY MATCHING CREATE_EVENTS.HTML) ---
+    window.openPreviewModal = (id) => {
+        const ev = vaultRecords.find(e => e.id === id);
+        if(!ev) return;
+        
+        const rawDesc = ev.description || "";
+        const isResched = rawDesc.includes("[RESCHEDULE]");
+        const fullOrgText = getOrgFullName(ev.org);
+        
+        const data = {};
+        rawDesc.split(' | ').forEach(p => {
+            const [k, ...v] = p.split(': ');
+            if (v.length > 0) data[k.trim()] = v.join(': ').trim();
+        });
+
+        const actualDesc = data['Desc'] || rawDesc;
+        const target = data['Target'] || "all affected students";
+        const equipment = data['Equipment'] || "the necessary equipment";
+        const reason = data['Reason'] || "unforeseen circumstances";
+        const origDate = data['Original'] || "(Original Date)";
+
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = ev.event_date ? new Date(ev.event_date).toLocaleDateString('en-US', options) : "";
+
+        const commonHeader = `
+            <p class="mb-6 font-bold">${ev.date}</p>
+            <p class="mb-6 leading-tight"><strong>Dr. EDWIN G. MALABUYOC</strong><br>Director<br>This Campus</p>
+            <p class="mb-6 leading-tight">Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus</p>
+        `;
+
+        const commonFooter = `
+            <p class="mb-8">Respectfully yours,</p>
+            <div class="mb-8">
+                <p class="font-bold uppercase mb-0">${ev.requester_name}</p>
+                <p class="mt-0">${ev.org} President</p>
+            </div>
+            <div>
+                <p class="mb-6">Noted by:</p>
+                <p class="font-bold uppercase mb-0">${ev.adviser_name}</p>
+                <p class="mt-0">${ev.org} Adviser / Program Chair</p>
+            </div>
+        `;
+
+        let mainBody = "";
+        if (isResched) {
+            viewTabMainLabel.innerText = "Reschedule Letter";
+            mainBody = `
+                <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong></p>
+                <p class="mb-4 text-justify indent-8">We hope this letter finds you well. ${fullOrgText} respectfully requests a rescheduling of our upcoming event entitled <strong>"${ev.eventName}"</strong>. The event was originally set for ${origDate}.</p>
+                <p class="mb-4 text-justify indent-8">We propose moving the event to <strong>${formattedDate}</strong>, from <strong>${formatTime(ev.start_time)}</strong> at <strong>${ev.venue}</strong>.</p>
+                <p class="mb-8 text-justify indent-8">This request is made ${reason}. ${actualDesc}</p>
+            `;
+        } else {
+            viewTabMainLabel.innerText = "Request Letter";
+            mainBody = `
+                <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong></p>
+                <p class="mb-4 text-justify indent-8">To comply with the commitment to UPHOLD E2E Program, ${fullOrgText} will be conducting an activity entitled <strong>"${ev.eventName}"</strong>.</p>
+                <p class="mb-4 text-justify indent-8">The activity is scheduled for <strong>${formattedDate}</strong>, <strong>${formatTime(ev.start_time)}</strong> at <strong>${ev.venue}</strong>.</p>
+                <p class="mb-8 text-justify indent-8">${actualDesc}</p>
+            `;
+        }
+
+        const excuseBody = `
+            <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong></p>
+            <p class="mb-4 text-justify indent-8">${fullOrgText} is organizing an event <strong>"${ev.eventName}"</strong> on ${formattedDate} at ${ev.venue}.</p>
+            <p class="mb-8 text-justify indent-8">We respectfully request the excusal of <strong>${target}</strong> whose classes will be affected, and we also request usage of the aforementioned facility, together with <strong>${equipment}</strong>.</p>
+        `;
+
+        viewContentMain.innerHTML = commonHeader + mainBody + commonFooter;
+        viewContentExcuse.innerHTML = commonHeader + excuseBody + commonFooter;
+
+        // Reset tab styles and hide content
+        viewTabMain.classList.remove('border-[#800000]', 'bg-red-50', 'dark:bg-red-900/10');
+        viewTabMain.classList.add('border-gray-200', 'dark:border-gray-800');
+        viewTabExcuse.classList.remove('border-[#800000]', 'bg-red-50', 'dark:bg-red-900/10');
+        viewTabExcuse.classList.add('border-gray-200', 'dark:border-gray-800');
+        
+        const paperContainer = document.getElementById('viewPrintPaper');
+        paperContainer.classList.add('document-preview-container');
+        paperContainer.classList.remove('active');
+        viewContentMain.classList.add('hidden');
+        viewContentExcuse.classList.add('hidden');
+
+        // Setup Tab Visibility
+        if(isResched) {
+            viewTabExcuse.classList.add('hidden');
+            viewTabMain.classList.add('col-span-2');
+        } else {
+            viewTabExcuse.classList.remove('hidden');
+            viewTabMain.classList.remove('col-span-2');
+        }
+
+        viewModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        // Auto-open main tab
+        setTimeout(() => switchDocTab('main'), 50);
+    };
+
+    window.closeViewModal = () => {
+        viewModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    };
+
+    window.switchDocTab = (tab) => {
+        const paperContainer = document.getElementById('viewPrintPaper');
+        
+        // Reset visibility
+        viewContentMain.classList.add('hidden');
+        viewContentExcuse.classList.add('hidden');
+        paperContainer.classList.remove('active');
+
+        // Small delay to trigger animation
+        setTimeout(() => {
+            if (tab === 'main') {
+                viewTabMain.classList.add('border-[#800000]', 'bg-red-50', 'dark:bg-red-900/10');
+                viewTabMain.classList.remove('border-gray-200', 'dark:border-gray-800');
+                viewTabExcuse.classList.remove('border-[#800000]', 'bg-red-50', 'dark:bg-red-900/10');
+                viewTabExcuse.classList.add('border-gray-200', 'dark:border-gray-800');
+                viewContentMain.classList.remove('hidden');
+            } else {
+                viewTabExcuse.classList.add('border-[#800000]', 'bg-red-50', 'dark:bg-red-900/10');
+                viewTabExcuse.classList.remove('border-gray-200', 'dark:border-gray-800');
+                viewTabMain.classList.remove('border-[#800000]', 'bg-red-50', 'dark:bg-red-900/10');
+                viewTabMain.classList.add('border-gray-200', 'dark:border-gray-800');
+                viewContentExcuse.classList.remove('hidden');
+            }
+            paperContainer.classList.add('active');
+        }, 50);
     };
 
     // 6. SEARCH LOGIC (WITH EMPTY STATES)
@@ -446,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const closePreview = () => {
         previewModal.classList.add('hidden');
-        if (uploaderModal.classList.contains('hidden')) {
+        if (uploaderModal.classList.contains('hidden') && viewModal.classList.contains('hidden')) {
             document.body.style.overflow = '';
         }
     };
@@ -463,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 10. SUBMISSION & TOAST
     submitBtn.addEventListener('click', () => {
-        const mode = reqMode.value;
+        const mode = activeMode;
         const expected = slotConfigs[mode].map(s => s.id);
         const missing = expected.filter(id => !selectedFiles[id]);
         

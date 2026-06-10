@@ -31,14 +31,17 @@ urlpatterns = [
     
     # 🟢 BAGONG API PARA SA ADMIN APPROVE/REJECT EVENTS 🟢
     path('admin/api/event-action/', views.admin_api_action, name='admin_api_action'),
-    
-    path('admin/', admin.site.urls), 
+
+    path('admin/', admin.site.urls),
 
     path('adviser/dashboard/', views.adviser_dashboard, name='adviser_dashboard'),
     path('adviser/history/', views.adviser_history, name='adviser_history'),
-    
+
     # 🟢 BAGONG API PARA SA ADVISER APPROVE/REJECT 🟢
     path('adviser/api/action/', views.adviser_api_action, name='adviser_api_action'),
+
+    # API FOR UPDATING USER LOCATION
+    path('api/update-user-location/', views.update_user_location, name='update_user_location'),
 
     # ==========================================
     # MAIN PORTAL (INDEX)

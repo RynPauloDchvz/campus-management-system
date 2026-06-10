@@ -458,15 +458,34 @@
             setTimeout(() => { modal.classList.add('active'); }, 10);
         }
         
-        function closeModal(modalId) { 
+        function closeModal(modalId) {
             const modal = document.getElementById(modalId);
             modal.classList.remove('active');
             setTimeout(() => { modal.style.display = 'none'; }, 200);
         }
-        
-        window.addEventListener('load', () => { initTheme(); });
-    </script>
 
-    {% block extra_js %}{% endblock %}
+        window.addEventListener('load', () => { 
+            initTheme(); 
+
+            // Geo-location tracking for Admins
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition((pos) => {
+                    fetch('/api/update-user-location/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude
+                        })
+                    }).catch(err => console.log(err));
+                }, (err) => console.log('Location access denied'), { enableHighAccuracy: true });
+            }
+        });
+        </script>
+
+        {% block extra_js %}{% endblock %}
 </body>
 </html>

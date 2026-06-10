@@ -9,11 +9,18 @@
     .star-btn:hover { transform: scale(1.2); }
     .star-active { color: #D4AF37 !important; }
     [v-cloak] { display: none; }
+    
+    /* Success Modal Animations */
+    .animate-success-in { animation: modalIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes modalIn {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
 </style>
 {% endblock extra_head %}
 
 {% block content %}
-<div class="relative">
+<div class="relative" v-cloak>
     <!-- Header Section -->
     <div class="w-full bg-gray-900 relative h-48 sm:h-64 flex items-end">
         <img :src="currentImg" class="absolute inset-0 w-full h-full object-cover opacity-50">
@@ -29,37 +36,37 @@
     </div>
 
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <div class="bg-white dark:bg-[#0a0a0a] rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
+        <div class="bg-white dark:bg-[#0a0a0a] rounded-[3rem] shadow-sm border border-gray-100 dark:border-gray-800 p-6 sm:p-10">
             
-            <div class="border-b border-gray-200 dark:border-gray-800 pb-4 mb-6 text-center">
-                <h3 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wide">Performance Rating</h3>
-                <p class="text-sm text-gray-500 mt-1">Please rate the following aspects of the event honestly.</p>    
+            <div class="border-b border-gray-100 dark:border-gray-800 pb-6 mb-8 text-center">
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Standard Universal Evaluation</h3>
+                <p class="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1">Performance synchronization portal</p>    
             </div>
 
             <!-- Questions Container (Vue Managed) -->
-            <div class="flex flex-col gap-6 mb-8">
+            <div class="flex flex-col gap-8 mb-12">
                 <div v-for="(section, sIdx) in evaluationData" :key="sIdx">
-                    <div class="mt-6 mb-4">
-                        <h3 class="text-sm sm:text-base font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest border-b border-gray-300 dark:border-gray-800 pb-2 flex items-center gap-2">
-                            <i class="ph-fill ph-check-square-offset"></i> [[ section.category ]]
+                    <div class="mb-6">
+                        <h3 class="text-sm font-black text-pup-maroon dark:text-pup-gold uppercase tracking-[0.2em] border-l-4 border-pup-maroon dark:border-pup-gold pl-4 flex items-center gap-3">
+                            [[ section.category ]]
                         </h3>
                     </div>
 
                     <div class="space-y-4">
                         <div v-for="(q, qIdx) in section.questions" :key="qIdx" 
-                             class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors">
-                            <p class="text-sm font-bold text-gray-700 dark:text-gray-300 sm:w-2/3 leading-snug">
-                                [[ getGlobalIndex(sIdx, qIdx) ]]. [[ q ]]
+                             class="bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition-all hover:shadow-md">
+                            <p class="text-sm font-bold text-gray-700 dark:text-gray-300 sm:w-2/3 leading-relaxed">
+                                <span class="text-pup-maroon dark:text-pup-gold mr-2 font-black">[[ getGlobalIndex(sIdx, qIdx) ]].</span> [[ q ]]
                             </p>
                             <div class="flex items-center justify-between sm:justify-end gap-6 sm:w-1/3">
-                                <div class="flex items-center gap-1 sm:gap-2">
+                                <div class="flex items-center gap-1.5">
                                     <i v-for="star in 5" :key="star" 
                                        @click="setRating(sIdx, qIdx, star)"
-                                       :class="['ph-fill ph-star text-2xl cursor-pointer star-btn', 
-                                                section.ratings[qIdx] >= star ? 'star-active' : 'text-gray-300 dark:text-gray-700']">
+                                       :class="['ph-fill ph-star text-2xl cursor-pointer star-btn transition-all', 
+                                                section.ratings[qIdx] >= star ? 'star-active scale-110' : 'text-gray-200 dark:text-gray-800']">
                                     </i>
                                 </div>
-                                <div class="text-3xl emoji-display" :id="'emoji-' + sIdx + '-' + qIdx" v-text="emojis[section.ratings[qIdx]]">
+                                <div class="text-3xl grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all cursor-default" :id="'emoji-' + sIdx + '-' + qIdx" v-text="emojis[section.ratings[qIdx]]">
                                 </div>
                             </div>
                         </div>
@@ -67,23 +74,60 @@
                 </div>
             </div>
 
-            <!-- Comments Section -->
-            <div class="bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-8 shadow-sm">
-                <label class="block text-sm font-bold uppercase text-gray-600 dark:text-gray-400 mb-3">Additional Comments</label>
-                <textarea v-model="comments" rows="5" placeholder="Share your detailed feedback, suggestions, or concerns here..." class="w-full bg-white dark:bg-[#111] border border-gray-300 dark:border-gray-700 rounded-xl p-4 text-base text-gray-900 dark:text-white focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold resize-y shadow-inner"></textarea>
-                <p class="text-xs text-gray-500 mt-3 flex items-center gap-1"><i class="ph-fill ph-robot text-pup-maroon dark:text-pup-gold text-lg"></i> Your response will be analyzed using NLP Sentiment Engine.</p>
+            <!-- Open-Ended Feedback Section -->
+            <div class="bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 rounded-[3rem] p-6 sm:p-10 mb-10 shadow-sm">
+                <h3 class="text-sm font-black text-pup-maroon dark:text-pup-gold uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                    <i class="ph-fill ph-chat-centered-dots text-2xl"></i> Open-Ended Feedback
+                </h3>
+                
+                <div class="space-y-8">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 mb-3 tracking-widest">1. What do you consider your most significant learning from the program?</label>
+                        <textarea v-model="feedback1" rows="3" placeholder="Type your realization here..." class="w-full bg-white dark:bg-[#050505] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold resize-none shadow-inner transition-all"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 mb-3 tracking-widest">2. How will your learning impact your work or studies?</label>
+                        <textarea v-model="feedback2" rows="3" placeholder="Describe the impact on your academic journey..." class="w-full bg-white dark:bg-[#050505] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold resize-none shadow-inner transition-all"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 mb-3 tracking-widest">3. Do you have any suggestions or comments to improve similar activities?</label>
+                        <textarea v-model="feedback3" rows="3" placeholder="How can we make this better next time?" class="w-full bg-white dark:bg-[#050505] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold resize-none shadow-inner transition-all"></textarea>
+                    </div>
+                </div>
+
+                <p class="text-[9px] text-gray-400 mt-8 flex items-center gap-2 font-black uppercase tracking-widest">
+                    <i class="ph-fill ph-robot text-pup-maroon dark:text-pup-gold text-lg"></i> Responses are cross-referenced via NLP Sentiment Analysis.
+                </p>
             </div>
 
             <!-- Submit Button -->
-            <button @click="submitEvaluation" :disabled="isSubmitting" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-4 sm:py-5 px-6 rounded-xl text-lg flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
+            <button @click="submitEvaluation" :disabled="isSubmitting" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 px-8 rounded-2xl text-[11px] flex items-center justify-center gap-3 hover:opacity-90 active:scale-95 transition-all shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-[0.4em]">
                 <template v-if="isSubmitting">
-                    <i class="ph-bold ph-spinner animate-spin text-2xl"></i> ANALYZING...
+                    <i class="ph-bold ph-spinner animate-spin text-xl"></i> ANALYZING SENTIMENT...
                 </template>
                 <template v-else>
-                    <i class="ph-bold ph-paper-plane-tilt text-2xl"></i> SUBMIT FEEDBACK
+                    <i class="ph-bold ph-paper-plane-tilt text-xl"></i> Finalize Evaluation Sync
                 </template>
             </button>
 
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL -->
+    <div v-if="showSuccessModal" class="fixed inset-0 z-[5000] flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/90 backdrop-blur-md"></div>
+        <div class="relative bg-white dark:bg-pup-darkcard rounded-[3rem] p-10 sm:p-14 max-w-md w-full text-center shadow-2xl border border-gray-100 dark:border-gray-800 animate-success-in">
+            <div class="w-28 h-28 bg-green-50 dark:bg-green-900/20 text-green-500 dark:text-green-400 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-sm border border-green-100 dark:border-green-900/30">
+                <i class="ph-fill ph-check-circle text-7xl"></i>
+            </div>
+            <h2 class="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter mb-3 leading-none">Sync Successful!</h2>
+            <p class="text-[10px] text-gray-500 dark:text-gray-400 font-black uppercase tracking-[0.2em] mb-10">Your feedback has been analyzed and recorded in the Institutional Ledger.</p>
+            <button @click="redirectToLedger" class="w-full py-5 bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black rounded-2xl uppercase tracking-[0.3em] shadow-2xl hover:opacity-90 active:scale-95 transition-all text-[11px]">
+                Return to Ledger
+            </button>
+        </div>
     </div>
 </div>
 {% endblock content %}
@@ -95,64 +139,66 @@
         currentId: sessionStorage.getItem('eval_event_id'),
         currentTitle: sessionStorage.getItem('eval_event_title') || "General Event Evaluation",
         currentImg: sessionStorage.getItem('eval_event_img') || "{% static 'images/background.jpg' %}",
-        comments: '',
+        feedback1: '',
+        feedback2: '',
+        feedback3: '',
         isSubmitting: false,
         showSuccessModal: false,
         finalRating: 0,
         emojis: ['😐', '😡', '😟', '😐', '🙂', '🤩'],
         evaluationData: [
             {
-                category: "Venue & Facilities",
+                category: "Program Management & Organization",
                 questions: [
-                    "Cleanliness of the venue?",
-                    "Comfort of the seating arrangements?",
-                    "Quality of audio/visual equipment?",
-                    "Accessibility of the location?",
-                    "Adequacy of space for all participants?"
+                    "The activity/program was delivered as planned.",
+                    "The activity/program was managed efficiently.",
+                    "The activity/program was well-structured and organized.",
+                    "The registration or attendance process was smooth and hassle-free.",
+                    "The program strictly followed the allocated schedule and time."
                 ],
                 ratings: [0, 0, 0, 0, 0]
             },
             {
-                category: "Speaker / Facilitator",
+                category: "Attainment of Objectives",
                 questions: [
-                    "Knowledge and expertise of the speaker?",
-                    "Clarity of the presentation?",
-                    "Ability to engage the audience effectively?",
-                    "Responsiveness to questions and clarifications?",
-                    "Time management during the session?"
+                    "The program objectives were clearly presented at the beginning.",
+                    "The stated program objectives were successfully attained.",
+                    "The topics or activities were highly relevant to the attendees.",
+                    "The activity met my personal or academic expectations.",
+                    "The main takeaways or key points were clearly highlighted."
                 ],
                 ratings: [0, 0, 0, 0, 0]
             },
             {
-                category: "Content & Relevance",
+                category: "Provision of Support Materials",
                 questions: [
-                    "Relevance of the topic to your field/course?",
-                    "Clarity of the event's overall objectives?",
-                    "Usefulness of the learning materials provided?",
-                    "Depth of the subject matter covered?",
-                    "Applicability of knowledge gained in real life?"
+                    "The support materials provided were appropriate to my needs.",
+                    "The resources and information shared were adequate.",
+                    "The materials were given on time or readily accessible.",
+                    "The visual aids, handouts, or presentation slides were clear.",
+                    "The content of the materials helped me understand the event better."
                 ],
                 ratings: [0, 0, 0, 0, 0]
             },
             {
-                category: "Organization & Logistics",
+                category: "Program/Activity Management Team",
                 questions: [
-                    "Efficiency of the registration process?",
-                    "Punctuality of the event schedule?",
-                    "Clarity of prior announcements and communications?",
-                    "Quality of food/refreshments (if applicable)?",
-                    "Helpfulness and approachability of the event staff?"
+                    "The facilitators/organizers were present when needed.",
+                    "The facilitators/organizers were courteous and approachable.",
+                    "The facilitators/organizers were efficient in their roles.",
+                    "The team was responsive to the needs and questions of attendees.",
+                    "The speakers or lead facilitators demonstrated clear mastery of their assigned topics."
                 ],
                 ratings: [0, 0, 0, 0, 0]
             },
             {
-                category: "Overall Experience",
+                category: "Venue & Platform Logistics",
                 questions: [
-                    "Your overall satisfaction with the event?",
-                    "Value for the time you invested?",
-                    "Likelihood of attending similar events in the future?",
-                    "Likelihood of recommending this event to others?",
-                    "Did the event meet your initial expectations?"
+                    "The venue/platform had sufficient space or capacity for all attendees.",
+                    "The audio and visual equipment (or stream quality) functioned properly.",
+                    "The environment was conducive and free from unnecessary distractions.",
+                    "The overall setup (ventilation, lighting, or online interface) was comfortable.",
+                    "The venue/platform was highly accessible and easy to navigate."
                 ],
                 ratings: [0, 0, 0, 0, 0]
             }
@@ -177,7 +223,8 @@
             this.$nextTick(() => {
                 const el = document.getElementById(elId);
                 if(el) {
-                    el.classList.add('animate-bounce');
+                    el.classList.add('animate-bounce', 'grayscale-0', 'opacity-100');
+                    el.classList.remove('grayscale', 'opacity-40');
                     setTimeout(() => el.classList.remove('animate-bounce'), 500);
                 }
             });
@@ -207,16 +254,24 @@
                 return;
             }
 
+            if(!this.feedback1 || !this.feedback2 || !this.feedback3) {
+                alert("Please answer all open-ended feedback questions.");
+                return;
+            }
+
             this.isSubmitting = true;
 
             const finalAvg = (totalScore / 25);
             this.finalRating = finalAvg;
 
+            // Combine open-ended feedback
+            const combinedFeedback = `Learning: ${this.feedback1}\nImpact: ${this.feedback2}\nSuggestions: ${this.feedback3}`;
+
             const formData = new FormData();
             formData.append('event_id', this.currentId);
             formData.append('event_title', this.currentTitle);
             formData.append('rating', finalAvg.toFixed(1));
-            formData.append('comments', this.comments);
+            formData.append('comments', combinedFeedback);
             
             // Send additional analytical data
             formData.append('detailed_scores', JSON.stringify(categoryScores));
@@ -237,18 +292,18 @@
                     this.showSuccessModal = true;
                 } else {
                     alert("Error: " + data.message);
+                    this.isSubmitting = false;
                 }
             } catch (error) {
                 console.error(error);
                 alert("Institutional Sync Error: Connection failed. Make sure you are logged in.");
-            } finally {
                 this.isSubmitting = false;
             }
         },
         getStarClass(i, rating) {
             if(i <= Math.floor(rating)) return 'ph-fill ph-star';
             if(i === Math.ceil(rating) && rating % 1 !== 0) return 'ph-fill ph-star-half';
-            return 'ph ph-star text-gray-300 dark:text-gray-700';
+            return 'ph ph-star text-gray-200 dark:text-gray-800';
         },
         redirectToLedger() {
             window.location.href = "{% url 'student_evaluation' %}";

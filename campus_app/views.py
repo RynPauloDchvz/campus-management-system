@@ -664,7 +664,7 @@ def student_homepage(request):
                     action_required = {
                         'id': e.id,
                         'title': e.event_title,
-                        'message': 'Submit feedback to claim E-Certificate.'
+                        'message': 'Submit feedback to complete your Institutional Record.'
                     }
                     break
 
@@ -691,8 +691,9 @@ def student_school_events(request):
         Q(event_title__icontains='Student Week')
     ).filter(event_status='Approved').order_by('-event_date', '-start_time')
     
-    # 🟢 ID-BASED TRACKING 🟢
-    attended_ids = [str(eid) for eid in list(Attendance.objects.filter(student=student).values_list('event_id', flat=True))]
+    # 🟢 DETAILED ATTENDANCE TRACKING 🟢
+    attendance_qs = Attendance.objects.filter(student=student)
+    attendance_map = {str(att.event_id): att for att in attendance_qs}
 
     events_data = []
     for e in all_events:
@@ -701,6 +702,8 @@ def student_school_events(request):
         elif e.cover_photo: img_url = e.cover_photo.url
         elif e.thumbnail: img_url = e.thumbnail.url
         else: img_url = '/static/images/PUPLogo.png'
+
+        att_record = attendance_map.get(str(e.id))
 
         events_data.append({
             'id': e.id,
@@ -716,7 +719,8 @@ def student_school_events(request):
             'description': e.description,
             'target_lat': float(e.target_latitude) if e.target_latitude else 13.84615,
             'target_lng': float(e.target_longitude) if e.target_longitude else 121.96955,
-            'already_attended': str(e.id) in attended_ids
+            'already_attended': att_record is not None,
+            'has_timed_out': att_record.time_out is not None if att_record else False,
         })
     
     student_data = {
@@ -803,7 +807,10 @@ def student_evaluation(request):
         Q(event_title__icontains='Student Week')
     ).filter(event_status='Approved').order_by('-event_date', '-start_time')
     
-    # 🟢 ID-BASED TRACKING 🟢
+    # 🟢 ATTENDANCE CHECK FOR EVALUATION (Must have timed out) 🟢
+    attendance_qs = Attendance.objects.filter(student=student)
+    attendance_map = {str(att.event_id): att for att in attendance_qs}
+
     evaluated_ids = [str(eid) for eid in list(AuditLog.objects.filter(
         actor=request.user, 
         action='EVALUATION', 
@@ -818,6 +825,9 @@ def student_evaluation(request):
         elif e.thumbnail: img_url = e.thumbnail.url
         else: img_url = '/static/images/PUPLogo.png'
 
+        att_record = attendance_map.get(str(e.id))
+        is_eligible = att_record is not None and att_record.time_out is not None
+
         events_data.append({
             'id': e.id,
             'title': e.event_title,
@@ -830,24 +840,31 @@ def student_evaluation(request):
             'venue': e.venue,
             'image': img_url,
             'org': e.org_id,
-            'already_evaluated': str(e.id) in evaluated_ids
+            'already_evaluated': str(e.id) in evaluated_ids,
+            'is_eligible': is_eligible,
+            'att_status': 'No Time In' if not att_record else ('Pending Time Out' if not att_record.time_out else 'Ready')
         })
 
     history_logs = AuditLog.objects.filter(actor=request.user, action='EVALUATION').order_by('-timestamp')
     history_data = []
     for log in history_logs:
-        changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
-        history_data.append({
-            'title': changes.get('event', 'Unknown Event'),
-            'date': log.timestamp.strftime('%b %d, %Y'),
-            'rating': changes.get('rating', '0'),
-            'feedback': changes.get('feedback', 'No feedback provided.')
-        })
+        try:
+            changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
+            history_data.append({
+                'title': changes.get('event', 'Unknown Event'),
+                'date': log.timestamp.strftime('%b %d, %Y'),
+                'time': log.timestamp.strftime('%I:%M %p'),
+                'rating': changes.get('rating', '0'),
+                'feedback': changes.get('feedback', 'No feedback provided.'),
+                'sentiment': changes.get('sentiment', None)
+            })
+        except: continue
 
     return render(request, 'student/evaluation.html', {
         'events_json': json.dumps(events_data),
         'history_json': json.dumps(history_data)
     })
+
 
 @user_passes_test(is_student_strictly, login_url='/')
 def student_evaluation_form(request): return render(request, 'student/evaluation_form.html')
@@ -911,6 +928,7 @@ def student_event_history(request):
             'details': {
                 'rating': changes.get('rating', '0'),
                 'feedback': changes.get('feedback', 'No feedback provided.'),
+                'sentiment': changes.get('sentiment', None),
                 'total_raw_score': changes.get('total_raw_score', '0'),
                 'detailed_scores': changes.get('detailed_scores', {})
             }
@@ -1027,10 +1045,11 @@ def organizer_school_events(request):
         Q(event_title__icontains='Student Week')
     ).filter(event_status='Approved').order_by('-event_date', '-start_time')
     
-    # 🟢 ID-BASED TRACKING 🟢
-    attended_ids = []
+    # 🟢 DETAILED ATTENDANCE TRACKING 🟢
+    attendance_map = {}
     if org_profile:
-        attended_ids = [str(eid) for eid in list(Attendance.objects.filter(organizer=org_profile).values_list('event_id', flat=True))]
+        attendance_qs = Attendance.objects.filter(organizer=org_profile)
+        attendance_map = {str(att.event_id): att for att in attendance_qs}
 
     events_data = []
     for e in all_events:
@@ -1043,6 +1062,8 @@ def organizer_school_events(request):
         # 🟢 ADD COUNTS FOR ORGANIZER MONITORING 🟢
         att_count = Attendance.objects.filter(event=e).count()
         eval_count = AuditLog.objects.filter(action='EVALUATION', target_id=str(e.id)).count()
+
+        att_record = attendance_map.get(str(e.id))
 
         events_data.append({
             'id': e.id,
@@ -1060,7 +1081,8 @@ def organizer_school_events(request):
             'evaluation_count': eval_count,
             'target_lat': float(e.target_latitude) if e.target_latitude else 13.84615,
             'target_lng': float(e.target_longitude) if e.target_longitude else 121.96955,
-            'already_attended': str(e.id) in attended_ids
+            'already_attended': att_record is not None,
+            'has_timed_out': att_record.time_out is not None if att_record else False,
         })
 
     organizer_data = {
@@ -1085,6 +1107,22 @@ def organizer_create_events(request):
         
     events = Event.objects.filter(org_id=org_acronym).order_by('-created_at')
     events_data = []
+    docs_data = []
+
+    # 📍 Campus Landmarks for PUP Unisan (Kalilayan Ibaba) - Wider Spread
+    HUB_COORDS = [13.84545, 121.96885]    # Student Center (SW)
+    ADVISER_COORDS = [13.84575, 121.96915] # Faculty Lounge (Middle)
+    ADMIN_COORDS = [13.84615, 121.96955]   # Academic Bldg (NE)
+
+    # 🟢 REAL-TIME LOCATION LOGIC 🟢
+    from .models import UserLocation
+    adviser_loc = UserLocation.objects.filter(user__is_staff=True, user__is_superuser=False).order_by('-last_updated').first()
+    if adviser_loc and adviser_loc.latitude and adviser_loc.longitude:
+        ADVISER_COORDS = [float(adviser_loc.latitude), float(adviser_loc.longitude)]
+
+    admin_loc = UserLocation.objects.filter(user__is_superuser=True).order_by('-last_updated').first()
+    if admin_loc and admin_loc.latitude and admin_loc.longitude:
+        ADMIN_COORDS = [float(admin_loc.latitude), float(admin_loc.longitude)]
     
     for e in events:
         events_data.append({
@@ -1101,10 +1139,65 @@ def organizer_create_events(request):
             'org': org_acronym
         })
 
+        if e.event_status == 'Pending Adviser':
+            loc = "Office of the Org Adviser (Initial Review)"
+            coords = ADVISER_COORDS
+            progress = 1 
+        elif e.event_status == 'Pending Admin':
+            loc = "Office of the Admin (Initial Clearance)"
+            coords = ADMIN_COORDS
+            progress = 2 
+        elif e.event_status == 'Admin Approved':
+            loc = "Student Organization Office (Gathering Signatures)"
+            coords = HUB_COORDS
+            progress = 3 
+        elif e.event_status == 'Permit Verification':
+            loc = "Office of the Org Adviser (Signature Verification)"
+            coords = ADVISER_COORDS
+            progress = 4 
+        elif e.event_status == 'Final Admin Review':
+            loc = "Office of the Admin (Final Clearance)"
+            coords = ADMIN_COORDS
+            progress = 5 
+        elif e.event_status == 'Approved':
+            loc = "Live in Portal (PUP Unisan Student Org Hub)"
+            coords = HUB_COORDS
+            progress = 6 
+        elif e.event_status == 'Rejected':
+            loc = "Returned to Organizer (Correction Required)"
+            coords = HUB_COORDS
+            
+            # Deduce step index for rejection timeline display
+            curr_loc = str(e.current_location).lower()
+            if "adviser" in curr_loc:
+                progress = 4 if ("verify" in curr_loc or "signature" in curr_loc) else 1
+            elif "admin" in curr_loc:
+                progress = 5 if ("final" in curr_loc or "clearance" in curr_loc) else 2
+            else:
+                progress = 1
+        else:
+            loc = "PUP Unisan, Kalilayan Ibaba, Unisan, Quezon"
+            coords = ADVISER_COORDS
+            progress = 0
+
+        docs_data.append({
+            'id': e.id,
+            'eventName': e.event_title,       
+            'orgName': e.org_id,              
+            'status': e.event_status,
+            'date': str(e.event_date),
+            'currentLoc': loc,                
+            'docType': 'Activity Proposal',
+            'coords': coords,
+            'progress': progress,
+            'rejectReason': str(e.remarks) if e.remarks else 'No reason provided.'
+        })
+
     return render(request, 'organizer/create_events.html', {
         'org_acronym': org_acronym, 
         'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
-        'events_json': json.dumps(events_data)
+        'events_json': json.dumps(events_data),
+        'documents_json': json.dumps(docs_data)
     })
 
 @user_passes_test(is_organizer_strictly, login_url='/')
@@ -1631,6 +1724,16 @@ def organizer_document_tracking(request):
     ADVISER_COORDS = [13.84575, 121.96915] # Faculty Lounge (Middle)
     ADMIN_COORDS = [13.84615, 121.96955]   # Academic Bldg (NE)
 
+    # 🟢 REAL-TIME LOCATION LOGIC 🟢
+    from .models import UserLocation
+    adviser_loc = UserLocation.objects.filter(user__is_staff=True, user__is_superuser=False).order_by('-last_updated').first()
+    if adviser_loc and adviser_loc.latitude and adviser_loc.longitude:
+        ADVISER_COORDS = [float(adviser_loc.latitude), float(adviser_loc.longitude)]
+
+    admin_loc = UserLocation.objects.filter(user__is_superuser=True).order_by('-last_updated').first()
+    if admin_loc and admin_loc.latitude and admin_loc.longitude:
+        ADMIN_COORDS = [float(admin_loc.latitude), float(admin_loc.longitude)]
+
     for e in events:
         if e.event_status == 'Pending Adviser':
             loc = "Office of the Org Adviser (Initial Review)"
@@ -1707,17 +1810,23 @@ def organizer_event_vault(request):
     pending_events = Event.objects.filter(org_id=org_acronym, event_status='Admin Approved').order_by('-id')
     pending_data = []
     for e in pending_events:
+        # Detect mode if not set
+        mode = e.requirement_mode
+        if not mode:
+            mode = 2 if e.description and "[RESCHEDULE]" in e.description else 4
+
         pending_data.append({
             'id': e.id,
             'eventName': e.event_title,
-            'orgName': e.org_id
+            'orgName': e.org_id,
+            'mode': mode
         })
 
     vault_events = Event.objects.filter(org_id=org_acronym, event_status__in=['Permit Verification', 'Final Admin Review', 'Approved']).order_by('-id')
     vault_data = []
     for e in vault_events:
         docs = []
-        mode = e.requirement_mode if getattr(e, 'requirement_mode', None) else 4
+        mode = e.requirement_mode if getattr(e, 'requirement_mode', None) else (2 if e.description and "[RESCHEDULE]" in e.description else 4)
 
         if mode == 2:
             if e.letter_image: docs.append({'title': '1. Letter of Reschedule', 'preview': e.letter_image.url})
@@ -1735,8 +1844,16 @@ def organizer_event_vault(request):
             'id': e.id,
             'eventName': e.event_title,
             'date': e.created_at.strftime("%b %d, %Y") if e.created_at else "",
-            'mode': str(e.requirement_mode) if e.requirement_mode else str(len(docs)),
-            'docs': docs
+            'mode': str(mode),
+            'docs': docs,
+            # Extra data for Preview Letter
+            'description': e.description,
+            'requester_name': e.requester_name,
+            'adviser_name': e.adviser_name,
+            'org': e.org_id,
+            'event_date': e.event_date.strftime("%B %d, %Y") if e.event_date else "",
+            'start_time': e.start_time.strftime("%I:%M %p") if e.start_time else "",
+            'venue': e.venue
         })
 
     context = {
@@ -1946,12 +2063,57 @@ def record_attendance(request):
             if not event:
                 return JsonResponse({'status': 'error', 'message': 'Event not found or not yet approved.'})
 
-            # 🟢 ENFORCE TIME WINDOW (Start Time to End Time + 1 Hour)
+            # Check for existing attendance
+            attendance = None
+            if student:
+                attendance = Attendance.objects.filter(student=student, event=event).first()
+            elif organizer:
+                attendance = Attendance.objects.filter(organizer=organizer, event=event).first()
+
             now = timezone.now()
             start_dt = timezone.make_aware(datetime.combine(event.event_date, event.start_time))
-            
+            end_dt = None
             if event.end_time:
                 end_dt = timezone.make_aware(datetime.combine(event.event_date, event.end_time))
+
+            # 🟢 TIME OUT LOGIC 🟢
+            if attendance:
+                if attendance.time_out:
+                    return JsonResponse({'status': 'error', 'message': 'Attendance (Time Out) already recorded for this event.'})
+                
+                # Validation for Time Out (Starting from 15 minutes before end_time)
+                if end_dt:
+                    timeout_start = end_dt - timedelta(minutes=15)
+                    timeout_expiry = end_dt + timedelta(hours=3) # Allow time out up to 3 hours after end_time
+                    
+                    if now < timeout_start:
+                        return JsonResponse({'status': 'error', 'message': f'Time Out window hasn\'t opened yet. Available at {timeout_start.strftime("%I:%M %p")}.'})
+                    if now > timeout_expiry:
+                        return JsonResponse({'status': 'error', 'message': 'Time Out window has closed for this event.'})
+                else:
+                    # Fallback if no end_time
+                    timeout_start = start_dt + timedelta(hours=2)
+                    if now < timeout_start:
+                        return JsonResponse({'status': 'error', 'message': 'Time Out not yet available.'})
+
+                # Update for Time Out
+                attendance.time_out = now
+                attendance.latitude_out = lat
+                attendance.longitude_out = lng
+                attendance.is_valid_location_out = is_valid_location
+                attendance.save()
+
+                log_audit_event(request, 'ATTENDANCE', target_model='Event', target_id=str(event.id), status='Success', changes={
+                    'type': 'Time Out',
+                    'event': event.event_title,
+                    'user': student.full_name if student else organizer.user.username,
+                    'location': is_valid_location
+                })
+
+                return JsonResponse({'status': 'success', 'message': 'Time Out recorded successfully! You can now evaluate this activity.'})
+
+            # 🟢 TIME IN LOGIC 🟢
+            if end_dt:
                 expiry_dt = end_dt + timedelta(hours=1)
             else:
                 expiry_dt = start_dt + timedelta(hours=4)
@@ -1961,14 +2123,6 @@ def record_attendance(request):
             if now > expiry_dt:
                 return JsonResponse({'status': 'error', 'message': 'Attendance window has closed for this event.'})
 
-            # 🟢 PREVENT DUPLICATE ATTENDANCE
-            if student:
-                if Attendance.objects.filter(student=student, event=event).exists():
-                    return JsonResponse({'status': 'error', 'message': 'Attendance already recorded for this event.'})
-            elif organizer:
-                if Attendance.objects.filter(organizer=organizer, event=event).exists():
-                    return JsonResponse({'status': 'error', 'message': 'Attendance already recorded for this event.'})
-
             # 🟢 SERVER-SIDE DEEPFACE VERIFICATION 🟢
             face_matched = False
             anchor_b64 = student.face_encoding if student else (organizer.face_encoding if organizer else None)
@@ -1976,7 +2130,6 @@ def record_attendance(request):
             if live_face_b64 and anchor_b64:
                 face_matched, distance = verify_face(live_face_b64, anchor_b64)
             else:
-                # Fallback if no face data, but for production this should be a fail
                 face_matched = request.POST.get('face_matched') == 'true'
 
             attendance = Attendance.objects.create(
@@ -1990,6 +2143,7 @@ def record_attendance(request):
             )
             
             log_audit_event(request, 'ATTENDANCE', target_model='Event', target_id=str(event.id), status='Success' if face_matched else 'Issue', changes={
+                'type': 'Time In',
                 'event': event.event_title,
                 'user': student.full_name if student else organizer.user.username,
                 'face_match': face_matched,
@@ -1998,9 +2152,9 @@ def record_attendance(request):
             })
             
             if not face_matched:
-                return JsonResponse({'status': 'issue', 'message': 'Attendance recorded, but Face Recognition MISMATCH detected.'})
+                return JsonResponse({'status': 'issue', 'message': 'Time In recorded, but Face Recognition MISMATCH detected.'})
 
-            return JsonResponse({'status': 'success', 'message': 'Attendance recorded successfully!'})
+            return JsonResponse({'status': 'success', 'message': 'Time In recorded successfully!'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
@@ -2047,7 +2201,12 @@ def submit_evaluation(request):
             if not event:
                 return JsonResponse({'status': 'error', 'message': 'Event not found.'})
 
-            # 🟢 ENFORCE EVALUATION WINDOW (End Time - 1 Hour to End Time + 1 Hour)
+            # 🟢 ENFORCE TIME OUT BEFORE EVALUATION 🟢
+            attendance = Attendance.objects.filter(student=student, event=event).first()
+            if not attendance or not attendance.time_out:
+                return JsonResponse({'status': 'error', 'message': 'You must Time Out from the event before submitting an evaluation.'})
+
+            # 🟢 ENFORCE EVALUATION WINDOW (End Time - 1 Hour to 24 Hours after)
             now = timezone.now()
             if event.end_time:
                 end_dt = timezone.make_aware(datetime.combine(event.event_date, event.end_time))
@@ -2575,5 +2734,27 @@ def debug_database_view(request):
             "Organizers": json.loads(serialize('json', org_profiles))
         }
     }, safe=False, json_dumps_params={'indent': 4})
+
+
+from .models import UserLocation
+
+def update_user_location(request):
+    if request.method == 'POST' and request.user.is_authenticated:
+        try:
+            data = json.loads(request.body)
+            lat = data.get('latitude')
+            lng = data.get('longitude')
+            
+            if lat is not None and lng is not None:
+                # Update or create location
+                location, created = UserLocation.objects.get_or_create(user=request.user)
+                location.latitude = lat
+                location.longitude = lng
+                location.save()
+                return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
 
 

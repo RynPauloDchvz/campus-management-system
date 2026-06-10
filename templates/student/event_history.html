@@ -99,9 +99,9 @@
                 
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
-                        <div class="text-[0.65rem] font-black uppercase text-gray-400 mb-2 tracking-widest">Average Rating</div>
+                        <div class="text-[0.65rem] font-black uppercase text-gray-400 mb-2 tracking-widest">Synchronization Score</div>
                         <div id="modalEvalStars" class="flex text-pup-gold text-xl gap-0.5 mb-1">
-                            <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+                            <!-- Stars -->
                         </div>
                         <div class="text-[0.7rem] font-black text-gray-900 dark:text-white" id="modalEvalAvgLabel">5.0 / 5.0</div>
                     </div>
@@ -117,13 +117,13 @@
 
                 <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4 relative overflow-hidden">
                     <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Student Feedback</span>
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Sentiment Analysis</span>
                         <div id="modalSentimentBadge" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
                             <i class="ph-fill ph-smiley"></i> Positive
                         </div>
                     </div>
                     <p class="text-sm text-gray-600 dark:text-gray-400 italic leading-relaxed relative z-10" id="modalEvalComment">"No feedback provided."</p>
-                    <i class="ph-fill ph-quotes absolute -bottom-2 -right-2 text-6xl text-gray-200/50 dark:text-white/5 pointer-events-none"></i>
+                    <i class="ph-fill ph-quotes absolute -top-4 -left-4 text-6xl text-gray-200/50 dark:text-white/5 pointer-events-none"></i>
                 </div>
             </div>
 
@@ -181,23 +181,6 @@ function initHistoryLogic() {
         });
     }
 
-    function analyzeSentiment(text) {
-        if (!text || text.toLowerCase() === 'no feedback provided.') return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
-        
-        const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'helpful', 'informative', 'learned', 'well', 'organized', 'maganda', 'mahusay', 'sulit', 'maraming natutunan', 'salamat', 'thank', 'nice', 'ayos', 'the best'];
-        const negativeWords = ['bad', 'poor', 'boring', 'waste', 'disorganized', 'late', 'rude', 'confusing', 'pangit', 'sayang', 'mabagal', 'maingay', 'gulo', 'hindi maganda', 'failed'];
-        
-        const lowerText = text.toLowerCase();
-        let score = 0;
-        
-        positiveWords.forEach(word => { if (lowerText.includes(word)) score++; });
-        negativeWords.forEach(word => { if (lowerText.includes(word)) score--; });
-        
-        if (score > 0) return { label: 'Positive', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: 'ph-smiley' };
-        if (score < 0) return { label: 'Negative', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: 'ph-smiley-sad' };
-        return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
-    }
-
     window.openHistoryModal = function(id) {
         const item = historyData.find(i => i.id === id);
         if(!item) return;
@@ -238,6 +221,7 @@ function initHistoryLogic() {
             document.getElementById('viewAttendanceProof').classList.add('hidden');
             document.getElementById('viewEvaluationProof').classList.remove('hidden');
             
+            // 🟢 ACCURACY FIX: Correct calculation for 25 questions (max 125 raw)
             const rawScore = parseInt(item.details.total_raw_score) || 0;
             const avgRating = (rawScore / 25).toFixed(1);
             const percent = Math.round((rawScore / 125) * 100);
@@ -245,37 +229,48 @@ function initHistoryLogic() {
             // Render Star Icons
             const starsContainer = document.getElementById('modalEvalStars');
             let starsHtml = '';
-            const fullStars = Math.floor(avgRating);
+            const r = parseFloat(avgRating);
             for(let i=1; i<=5; i++) {
-                if (i <= fullStars) {
-                    starsHtml += '<i class="ph-fill ph-star"></i>';
-                } else if (i === fullStars + 1 && (avgRating % 1) >= 0.5) {
-                    starsHtml += '<i class="ph-fill ph-star-half"></i>';
-                } else {
-                    starsHtml += '<i class="ph ph-star"></i>'; // Empty star
-                }
+                if (i <= Math.floor(r)) starsHtml += '<i class="ph-fill ph-star"></i>';
+                else if (i === Math.ceil(r) && r % 1 !== 0) starsHtml += '<i class="ph-fill ph-star-half"></i>';
+                else starsHtml += '<i class="ph ph-star text-gray-200 dark:text-gray-800"></i>';
             }
             starsContainer.innerHTML = starsHtml;
             document.getElementById('modalEvalAvgLabel').innerText = `${avgRating} / 5.0`;
-            
-            document.getElementById('modalEvalPercent').innerText = `${percent}%`;
+            document.getElementById('modalEvalPercent').innerText = `${percent}% Match`;
             
             // Emoji & Grade Logic
             const emojiEl = document.getElementById('modalEvalEmoji');
             const gradeEl = document.getElementById('modalEvalGrade');
-            if (percent >= 90) { emojiEl.innerText = '😍'; gradeEl.innerText = 'Excellent'; gradeEl.className = 'text-[0.65rem] font-bold text-green-600 dark:text-green-400 mt-1 uppercase tracking-tighter'; }
-            else if (percent >= 75) { emojiEl.innerText = '😊'; gradeEl.innerText = 'Very Good'; gradeEl.className = 'text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 mt-1 uppercase tracking-tighter'; }
-            else if (percent >= 50) { emojiEl.innerText = '😐'; gradeEl.innerText = 'Satisfactory'; gradeEl.className = 'text-[0.65rem] font-bold text-yellow-600 dark:text-yellow-400 mt-1 uppercase tracking-tighter'; }
-            else { emojiEl.innerText = '😡'; gradeEl.innerText = 'Needs Improvement'; gradeEl.className = 'text-[0.65rem] font-bold text-red-600 dark:text-red-400 mt-1 uppercase tracking-tighter'; }
+            if (percent >= 90) { emojiEl.innerText = '🤩'; gradeEl.innerText = 'Outstanding'; gradeEl.className = 'text-[0.65rem] font-black text-green-600 dark:text-green-400 mt-1 uppercase tracking-tighter'; }
+            else if (percent >= 75) { emojiEl.innerText = '😊'; gradeEl.innerText = 'Satisfactory'; gradeEl.className = 'text-[0.65rem] font-black text-blue-600 dark:text-blue-400 mt-1 uppercase tracking-tighter'; }
+            else if (percent >= 50) { emojiEl.innerText = '😐'; gradeEl.innerText = 'Average'; gradeEl.className = 'text-[0.65rem] font-black text-yellow-600 dark:text-yellow-400 mt-1 uppercase tracking-tighter'; }
+            else { emojiEl.innerText = '😡'; gradeEl.innerText = 'Needs Improvement'; gradeEl.className = 'text-[0.65rem] font-black text-red-600 dark:text-red-400 mt-1 uppercase tracking-tighter'; }
 
             // Sentiment Analysis for Feedback
             const feedback = item.details.feedback || "No feedback provided.";
             document.getElementById('modalEvalComment').innerText = `"${feedback}"`;
             
-            const sentiment = analyzeSentiment(feedback);
+            const sentiment = item.details.sentiment;
             const badge = document.getElementById('modalSentimentBadge');
-            badge.className = `px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 ${sentiment.class}`;
-            badge.innerHTML = `<i class="ph-fill ${sentiment.icon}"></i> ${sentiment.label}`;
+            
+            if (sentiment && sentiment.label) {
+                const label = sentiment.label.toUpperCase();
+                if (label === 'POSITIVE') {
+                    badge.className = "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+                    badge.innerHTML = `<i class="ph-fill ph-smiley"></i> ${label}`;
+                } else if (label === 'NEUTRAL') {
+                    badge.className = "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+                    badge.innerHTML = `<i class="ph-fill ph-smiley-meh"></i> ${label}`;
+                } else {
+                    badge.className = "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+                    badge.innerHTML = `<i class="ph-fill ph-smiley-sad"></i> ${label}`;
+                }
+            } else {
+                // Fallback to basic calculation
+                badge.className = "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400";
+                badge.innerHTML = `<i class="ph-fill ph-meh"></i> ANALYZED`;
+            }
         }
 
         modal.classList.remove('hidden');

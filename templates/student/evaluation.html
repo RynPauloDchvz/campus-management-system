@@ -20,11 +20,11 @@
 
     <div class="text-center mb-12">
         <h1 class="font-black text-4xl sm:text-6xl text-pup-maroon dark:text-pup-gold mb-4 uppercase tracking-tighter">Evaluation Ledger</h1>
-        <p class="text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-[0.4em]">Synchronize feedback to unlock institutional certificates</p>
+        <p class="text-gray-500 dark:text-gray-400 text-[11px] font-black uppercase tracking-[0.4em]">Synchronize feedback to complete official institutional records</p>
     </div>
 
     <!-- MAIN PANEL: Open Sessions -->
-    <div class="bg-white dark:bg-pup-darkcard rounded-[3rem] p-6 sm:p-10 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col min-h-[700px]">
+    <div class="bg-white dark:bg-pup-darkcard rounded-[3rem] p-6 sm:p-10 border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col min-h-[700px] mb-12">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 pb-6 border-b border-gray-100 dark:border-gray-800">
             <div class="flex items-center gap-4">
                 <div class="w-14 h-14 bg-red-50 dark:bg-red-900/20 rounded-[1.5rem] flex items-center justify-center text-pup-maroon dark:text-pup-gold shadow-sm border border-red-100 dark:border-red-900/30">
@@ -54,7 +54,7 @@
 
 </div>
 
-<!-- HISTORY DETAIL MODAL -->
+<!-- HISTORY DETAIL MODAL (Maintained for UI compatibility) -->
 <div id="historyDetailModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-0 sm:p-6">
     <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="closeHistoryModal()"></div>
     <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-100 dark:border-gray-800 z-10 transition-all">
@@ -140,16 +140,19 @@
             const now = new Date();
             
             const activeEvents = EVENTS_DATA.filter(e => {
+                const matchesSearch = e.title.toLowerCase().includes(query.toLowerCase());
+                if (!matchesSearch) return false;
+
                 const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
                 if (!end) return false;
                 
-                const evalOpenTime = new Date(end.getTime() - (60 * 60 * 1000));
-                const evalCloseTime = new Date(end.getTime() + (60 * 60 * 1000)); 
+                const evalCloseTime = new Date(end.getTime() + (24 * 60 * 60 * 1000)); // Allow eval for 24h
                 
-                const matchesSearch = e.title.toLowerCase().includes(query.toLowerCase());
                 const isToday = e.date === now.toISOString().split('T')[0];
+                const inWindow = now <= evalCloseTime;
                 
-                return (now <= evalCloseTime && matchesSearch) || (isToday && matchesSearch);
+                // Show if already evaluated, or if it's today/in window
+                return e.already_evaluated || inWindow || isToday;
             });
 
             if (activeEvents.length === 0) {
@@ -164,7 +167,7 @@
                 
                 const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
                 const evalOpenTime = end ? new Date(end.getTime() - (60 * 60 * 1000)) : null;
-                const evalCloseTime = end ? new Date(end.getTime() + (60 * 60 * 1000)) : null;
+                const evalCloseTime = end ? new Date(end.getTime() + (24 * 60 * 60 * 1000)) : null;
 
                 const isOpen = end && now >= evalOpenTime && now <= evalCloseTime;
                 const isUpcoming = end && now < evalOpenTime;
@@ -177,6 +180,12 @@
                     btnHtml = `<button disabled class="mt-auto w-full py-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                         <i class="ph-fill ph-check-circle text-green-500 text-lg"></i> Feedback Synchronized
                       </button>`;
+                } else if (!e.is_eligible) {
+                    statusLabel = "RESTRICTED";
+                    btnHtml = `<button disabled class="mt-auto w-full py-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] flex flex-col items-center justify-center gap-1">
+                        <span class="flex items-center gap-2"><i class="ph-bold ph-lock-key"></i> ${e.att_status}</span>
+                        <span class="text-[7px] opacity-60">TIME OUT REQUIRED TO EVALUATE</span>
+                      </button>`;
                 } else if (isUpcoming) {
                     const diff = evalOpenTime - now;
                     statusLabel = `OPENS IN ${formatTimeDiffShort(diff)}`;
@@ -185,7 +194,7 @@
                       </button>`;
                 } else if (isOpen) {
                     const diff = evalCloseTime - now;
-                    statusLabel = `CLOSES IN ${formatTimeDiffShort(diff)}`;
+                    statusLabel = `OPEN FOR EVALUATION`;
                     btnHtml = `<button onclick="startEvaluation('${e.id}', '${e.title.replace(/'/g, "\\'")}', '${e.image}')" class="mt-auto w-full py-5 rounded-2xl bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:opacity-90 active:scale-95 transition-all">
                         Initialize Sync Portal
                       </button>`;
@@ -296,10 +305,18 @@
             window.location.href = "{% url 'student_evaluation_form' %}";
         };
 
-        if (openSearch) openSearch.addEventListener('input', () => renderActive(openSearch.value));
+        if (openSearch) {
+            openSearch.addEventListener('input', () => {
+                renderActive(openSearch.value);
+            });
+        }
 
         renderActive();
-        setInterval(renderActive, 1000); 
+        // 🟢 FIX: Call renderActive with current search value to avoid resetting UI
+        setInterval(() => {
+            const currentQuery = openSearch ? openSearch.value : '';
+            renderActive(currentQuery);
+        }, 1000); 
     }
 
     document.addEventListener('DOMContentLoaded', () => {

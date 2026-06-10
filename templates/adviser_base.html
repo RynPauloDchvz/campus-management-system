@@ -338,6 +338,25 @@
         };
 
         window.baseApp = createApp(baseAppConfig).mount('#base-app');
+
+        // Geo-location tracking for Advisers
+        window.addEventListener('load', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition((pos) => {
+                    fetch('/api/update-user-location/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude
+                        })
+                    }).catch(err => console.log(err));
+                }, (err) => console.log('Location access denied'), { enableHighAccuracy: true });
+            }
+        });
     </script>
 
     {% block extra_js %}{% endblock %}

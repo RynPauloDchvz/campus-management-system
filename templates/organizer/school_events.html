@@ -467,7 +467,36 @@
                 const btnParticipate = document.getElementById('btnParticipate');
                 const attendedNotice = document.getElementById('attendedNotice');
                 
-                if (diffStart > 0) {
+                if (currentEvent.has_timed_out) {
+                    if(label) label.innerText = "LEDGER STATUS";
+                    if(modalCD) modalCD.innerText = "RECORD COMPLETE";
+                    if(icon) icon.className = "ph-fill ph-check-circle text-4xl text-green-500";
+                    participationArea.style.display = 'block';
+                    btnParticipate.style.display = 'none';
+                    attendedNotice.style.display = 'block';
+                    attendedNotice.innerHTML = `<i class="ph-fill ph-check-circle"></i> ATTENDANCE FINALIZED`;
+                } else if (currentEvent.already_attended) {
+                    const endISO = currentEvent.end_time_iso ? `${currentEvent.date}T${currentEvent.end_time_iso}` : null;
+                    const endDt = endISO ? new Date(endISO) : null;
+                    const timeoutStart = endDt ? new Date(endDt.getTime() - (15 * 60000)) : null;
+
+                    participationArea.style.display = 'block';
+                    if (timeoutStart && now < timeoutStart) {
+                        if(label) label.innerText = "LEDGER STATUS";
+                        if(modalCD) modalCD.innerText = "WAITING FOR TIME OUT";
+                        if(icon) icon.className = "ph-fill ph-timer text-4xl text-amber-500";
+                        btnParticipate.style.display = 'none';
+                        attendedNotice.style.display = 'block';
+                        attendedNotice.innerHTML = `<i class="ph-fill ph-check-circle"></i> TIME IN LOGGED`;
+                    } else {
+                        if(label) label.innerText = "LEDGER STATUS";
+                        if(modalCD) modalCD.innerText = "READY FOR TIME OUT";
+                        if(icon) icon.className = "ph-fill ph-sign-out text-4xl text-blue-500";
+                        btnParticipate.style.display = 'flex';
+                        btnParticipate.innerHTML = `<i class="ph-bold ph-sign-out text-2xl"></i> START TIME OUT`;
+                        attendedNotice.style.display = 'none';
+                    }
+                } else if (diffStart > 0) {
                     if(label) label.innerText = "UPCOMING IN";
                     if(modalCD) modalCD.innerText = formatTimeDiff(diffStart);
                     if(icon) icon.className = "ph-fill ph-clock text-4xl";
@@ -478,13 +507,8 @@
                     if(icon) icon.className = "ph-fill ph-broadcast text-4xl animate-pulse";
                     
                     participationArea.style.display = 'block';
-                    if (currentEvent.already_attended) {
-                        btnParticipate.style.display = 'none';
-                        attendedNotice.style.display = 'block';
-                    } else {
-                        btnParticipate.style.display = 'flex';
-                        attendedNotice.style.display = 'none';
-                    }
+                    btnParticipate.style.display = 'flex';
+                    attendedNotice.style.display = 'none';
                 } else {
                     if(label) label.innerText = "LEDGER STATUS";
                     if(modalCD) modalCD.innerText = "ARCHIVED";
@@ -806,7 +830,7 @@
                 
                 const dist = calculateDistance(userLat, userLng, targetLat, targetLng);
                 
-                if (dist <= 150) { // 150 meters
+                if (dist <= 300) { // 300 meters
                     isLocationVerified = true;
                     locLabel.innerText = "GEOFENCE VERIFIED";
                     locLabel.className = "status-label text-[10px] font-black text-green-500 uppercase tracking-widest";

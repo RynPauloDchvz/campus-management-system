@@ -1,6 +1,9 @@
 {% extends 'organizer_base.html' %} 
 {% load static %}
 
+{% block extra_head %}
+{% endblock %}
+
 {% block skeleton %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full min-h-screen">
     <div class="mb-10 border-b border-gray-100 dark:border-gray-800 pb-6 space-y-3 text-center sm:text-left">
@@ -71,7 +74,12 @@
                 <div class="flex flex-col gap-5">
                     <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3 flex justify-between items-center">
                         <span id="formTitle">Document Form</span>
-                        <span id="editBadge" class="hidden bg-yellow-100 text-yellow-700 border border-yellow-300 text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-black shadow-sm animate-pulse">Edit Mode</span>
+                        <div class="flex items-center gap-3">
+                            <a href="{% url 'organizer_event_vault' %}" class="text-[10px] bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-200 dark:border-blue-800 px-3 py-1 rounded-full uppercase tracking-widest font-black hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all flex items-center gap-2">
+                                <i class="ph-bold ph-file-arrow-up text-xs"></i> Upload Permits
+                            </a>
+                            <span id="editBadge" class="hidden bg-yellow-100 text-yellow-700 border border-yellow-300 text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-black shadow-sm animate-pulse">Edit Mode</span>
+                        </div>
                     </h3>
 
                     <div>
@@ -163,26 +171,81 @@
             </form>
         </div>
 
-        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 relative font-sans h-full flex flex-col min-h-[600px]">
+        <!-- Document Tracking Right Panel -->
+        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 relative font-sans flex flex-col h-fit">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-pup-maroon dark:bg-pup-gold"></div>
             
-            <div class="flex flex-col sm:flex-row justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-3 mb-4 gap-3">
-                <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white truncate">
-                    Submitted Proposals
+            <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-3 mb-6">
+                <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="ph-fill ph-file-search text-pup-maroon dark:text-pup-gold"></i> Proposal Status
                 </h3>
-                <div class="relative w-full sm:w-48">
-                    <input type="text" id="eventSearch" oninput="handleSearch()" placeholder="Search events..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-lg pl-8 pr-3 py-1.5 text-[10px] font-bold outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors text-gray-900 dark:text-white">
-                    <i class="ph-bold ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+            </div>
+
+            <!-- Current Location Box -->
+            <div id="currentLocBox" class="hidden flex items-start gap-3 mb-6 bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                <div class="w-10 h-10 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center shrink-0">
+                    <i class="ph-fill ph-map-pin text-xl text-pup-maroon dark:text-pup-gold animate-bounce"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[0.65rem] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Current Office Location</span>
+                    <strong id="infoCurrentLoc" class="text-gray-900 dark:text-white text-sm leading-tight">Office Name</strong>
                 </div>
             </div>
-            
-            <div id="eventsList" class="flex flex-col gap-3 overflow-y-auto max-h-[700px] pr-2 flex-grow" style="-ms-overflow-style: none; scrollbar-width: none;">
-                <!-- Events populated by JS -->
+
+            <!-- Selected Document Info -->
+            <div id="docInfo" class="mb-6 hidden">
+                <h4 id="infoEventName" class="font-black text-lg text-gray-900 dark:text-white leading-tight">Select a Document</h4>
+                <div class="flex gap-2 mt-2 flex-wrap">
+                    <span id="infoStatus" class="bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">Status</span>
+                    <span id="infoType" class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">Type</span>
+                </div>
+                
+                <!-- Rejection Alert -->
+                <div id="rejectAlert" class="hidden mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+                    <p class="text-xs font-bold text-red-800 mb-1 flex items-center gap-1.5"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection:</p>
+                    <p id="rejectReasonText" class="text-xs text-red-600 leading-snug"></p>
+                </div>
             </div>
+
+            <!-- Timeline -->
+            <div class="relative flex-grow mb-8">
+                <!-- Vertical Line -->
+                <div class="absolute left-[11px] top-2 bottom-6 w-0.5 bg-gray-200 dark:bg-gray-800"></div>
+
+                <div class="space-y-6 relative z-10" id="timelineContainer">
+                    <!-- Steps injected via JS -->
+                </div>
+            </div>
+
+            <!-- Redirect Button -->
+            <div class="mt-auto border-t border-gray-100 dark:border-gray-800 pt-6">
+                <a href="{% url 'organizer_document_tracking' %}" class="w-full bg-gray-900 hover:bg-black dark:bg-gray-100 dark:hover:bg-white text-white dark:text-gray-900 font-bold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-all shadow-md text-center">
+                    <i class="ph-bold ph-map-trifold text-lg"></i> VIEW FULL TRACKING DETAILS
+                </a>
+            </div>
+
         </div>
         
     </div>
 
+</div>
+
+<!-- List of Trackable Documents Modal (Mobile/Overlay) -->
+<button onclick="document.getElementById('docsListModal').classList.remove('hidden')" class="fixed bottom-6 right-6 lg:hidden z-40 bg-pup-maroon text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl border-4 border-white dark:border-gray-900">
+    <i class="ph-fill ph-files"></i>
+</button>
+
+<div id="docsListModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 lg:p-0 font-sans">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm lg:hidden" onclick="document.getElementById('docsListModal').classList.add('hidden')"></div>
+    <div class="relative bg-white dark:bg-[#151515] lg:bg-transparent lg:shadow-none lg:border-none rounded-3xl shadow-2xl w-full max-w-sm lg:max-w-none mx-auto p-6 lg:p-0 z-10 border border-gray-200 dark:border-gray-800 lg:static lg:block h-[80vh] lg:h-auto flex flex-col">
+        <div class="flex justify-between items-center mb-4 lg:hidden">
+            <h3 class="font-black text-lg text-gray-900 dark:text-white">Your Documents</h3>
+            <button onclick="document.getElementById('docsListModal').classList.add('hidden')" class="text-gray-500"><i class="ph-bold ph-x text-xl"></i></button>
+        </div>
+        <div id="trackableList" class="flex flex-col gap-3 overflow-y-auto flex-grow" style="-ms-overflow-style: none; scrollbar-width: none;">
+            <!-- List injected via JS -->
+        </div>
+    </div>
 </div>
 
 <!-- VIEW SUBMITTED PROPOSAL MODAL (DOCUMENT HUB STYLE) -->
@@ -204,7 +267,7 @@
         <div class="p-4 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4">
             <div id="view-tab-main" onclick="switchDocTab('main', 'view')" class="cursor-pointer p-4 rounded-2xl border-2 border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10 transition-all flex items-center gap-4 group">
                 <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg">
-                    <i class="ph-fill ph-certificate"></i>
+                    <i class="ph-fill ph-seal-check"></i>
                 </div>
                 <div>
                     <h4 id="view-tab-main-label" class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Request Letter</h4>
@@ -265,7 +328,7 @@
         <div class="print-hide p-4 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4">
             <div id="tab-main" onclick="switchDocTab('main')" class="cursor-pointer p-4 rounded-2xl border-2 border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10 transition-all flex items-center gap-4 group">
                 <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg">
-                    <i class="ph-fill ph-certificate"></i>
+                    <i class="ph-fill ph-seal-check"></i>
                 </div>
                 <div>
                     <h4 id="tab-main-label" class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Request Letter</h4>
@@ -323,6 +386,7 @@
 </div>
 
 {{ events_json|json_script:"events-data" }}
+{{ documents_json|json_script:"documents-data" }}
 
 <style>
     .document-preview-container {
@@ -367,18 +431,58 @@
     };
 
     let allEvents = [];
-    
+    let allDocuments = [];
+
     document.addEventListener("DOMContentLoaded", function() {
         try {
             const dataNode = document.getElementById('events-data');
             if(dataNode) {
                 const parsed = JSON.parse(dataNode.textContent);
                 allEvents = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
-                renderEvents(allEvents);
             }
-        } catch(e) { console.error("Error loading events", e); }
+
+            const docsNode = document.getElementById('documents-data');
+            if(docsNode) {
+                const parsedDocs = JSON.parse(docsNode.textContent);
+                allDocuments = typeof parsedDocs === 'string' ? JSON.parse(parsedDocs) : parsedDocs;
+                
+                // Show latest document in the panel
+                if (allDocuments.length > 0) {
+                    showTrackingDetails(allDocuments[0].id);
+                }
+            }
+        } catch(e) { console.error("Error loading data", e); }
+        
         toggleFormFields(); 
     });
+
+    function renderDocuments(docsToRender) {
+        // Function disabled on this page as the list has been moved to document_tracking.html
+    }
+
+    let currentDocCoords = null;
+    function showTrackingDetails(docId) {
+        const doc = allDocuments.find(d => d.id === docId);
+        if(!doc) return;
+
+        currentDocCoords = doc.coords;
+
+        // UI Updates
+        document.getElementById('docInfo').classList.remove('hidden');
+        document.getElementById('currentLocBox').classList.remove('hidden');
+        document.getElementById('infoEventName').innerText = doc.eventName;
+        document.getElementById('infoStatus').innerText = doc.status;
+        document.getElementById('infoType').innerText = doc.docType;
+        document.getElementById('infoCurrentLoc').innerText = doc.currentLoc;
+
+        const alertBox = document.getElementById('rejectAlert');
+        if (doc.status === 'Rejected') {
+            alertBox.classList.remove('hidden');
+            document.getElementById('rejectReasonText').innerText = doc.rejectReason;
+        } else {
+            alertBox.classList.add('hidden');
+        }
+    }
 
     function toggleFormFields() {
         const type = document.getElementById('letterType').value;

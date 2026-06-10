@@ -13,6 +13,15 @@ class OrgProfile(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.organization}"
 
+class UserLocation(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} Location"
+
 # 2. EVENT MODEL (UPDATED PARA SA 6-STEP APPROVAL AT DOCUMENT TRACKING)
 class Event(models.Model):
     STATUS_CHOICES = [
@@ -125,12 +134,20 @@ class Attendance(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True, blank=True)
     organizer = models.ForeignKey(OrgProfile, on_delete=models.CASCADE, null=True, blank=True)
-    time_in = models.DateTimeField(auto_now_add=True)
     
+    # Time In Data
+    time_in = models.DateTimeField(auto_now_add=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    is_valid_location = models.BooleanField(default=False)
+    
+    # Time Out Data
+    time_out = models.DateTimeField(null=True, blank=True)
+    latitude_out = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude_out = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    is_valid_location_out = models.BooleanField(default=False)
+    
     face_matched = models.BooleanField(default=False) 
-    is_valid_location = models.BooleanField(default=False) 
     
     def __str__(self):
         target = self.student.student_number if self.student else (self.organizer.user.username if self.organizer else "Unknown")

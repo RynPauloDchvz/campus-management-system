@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     const messagesData = [
         { id: 1, title: 'Welcome to PUPUni-CAMS!', sender: 'System Admin', date: 'Oct 25, 2026 • 08:00 AM', body: 'Mabuhay Iskolar ng Bayan! Welcome sa bagong Campus Activities Management System. Please make sure to complete your profile information and check the Event Calendar regularly for upcoming activities.', read: false },
-        { id: 2, title: 'Evaluation Reminder', sender: 'SSC Organization', date: 'Oct 23, 2026 • 05:30 PM', body: 'Do not forget to submit your evaluation for the Mental Health Talk event. Failing to submit within 24 hours will forfeit your e-certificate.', read: true },
+        { id: 2, title: 'Evaluation Reminder', sender: 'SSC Organization', date: 'Oct 23, 2026 • 05:30 PM', body: 'Do not forget to submit your evaluation for the Mental Health Talk event. Your feedback is required for institutional documentation.', read: true },
         { id: 3, title: 'Attendance Verified', sender: 'System Admin', date: 'Sep 05, 2026 • 10:15 AM', body: 'Your attendance for the E-Sports Tournament has been successfully verified via Face Capture and Location GPS. Thank you for participating!', read: true },
         { id: 4, title: 'New Event: Leadership Seminar', sender: 'CAMS Admin', date: 'Sep 01, 2026 • 09:00 AM', body: 'A new event has been posted! The Leadership Seminar is now open for registration. Limited slots only so register early.', read: true }
     ];

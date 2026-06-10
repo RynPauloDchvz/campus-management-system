@@ -457,7 +457,7 @@
                             <td style="color: var(--text-muted); font-weight: 700;">[[ event.date ]]</td>
                             <td>
                                 <span v-if="event.status === 'PENDING ADMIN'" class="badge badge-pending"><i class="ph-bold ph-file-text"></i> Initial Clearance</span>
-                                <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review"><i class="ph-bold ph-certificate"></i> Final Publication</span>
+                                <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review"><i class="ph-bold ph-seal-check"></i> Final Publication</span>
                             </td>
                             <td style="text-align: center;">
                                 <button @click="openModal(event, false)" class="action-btn" style="background: var(--pup-maroon); color: white; padding: 10px 20px;">
