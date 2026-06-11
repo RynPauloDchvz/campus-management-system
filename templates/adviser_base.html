@@ -7,7 +7,6 @@
     <title>{% block title %}Adviser Panel | PUPUni-CAMS{% endblock %}</title>
     
     <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="{% static 'css/adviser.css' %}">
@@ -23,13 +22,7 @@
             theme: {
                 extend: {
                     colors: {
-                        pup: { 
-                            maroon: '#800000', 
-                            gold: '#D4AF37', 
-                            dark: '#121212', 
-                            darkcard: '#1e1e1e',
-                            darkbg: '#0a0a0a'
-                        },
+                        pup: { maroon: '#800000', gold: '#D4AF37', dark: '#121212', darkcard: '#1e1e1e', darkbg: '#0a0a0a' },
                         bglight: '#f4f6f8',
                     },
                     fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
@@ -39,60 +32,58 @@
     </script>
     <style>
         [v-cloak] { display: none !important; }
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         
-        /* 🟢 Elevated Magic Box System 🟢 */
-        .indicator-box {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none;
+        @keyframes bell-ring {
+            0%, 100% { transform: rotate(0); }
+            10%, 30%, 50%, 70%, 90% { transform: rotate(10deg); }
+            20%, 40%, 60%, 80% { transform: rotate(-10deg); }
         }
-        .active-unit-elevated {
-            transform: translateY(-20px);
-        }
-        .transition-all-custom { 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        .notify-active { animation: bell-ring 1.5s infinite; }
+        
+        .indicator-box { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
+        .active-unit-elevated { transform: translateY(-20px); }
+        .transition-all-custom { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        .notification-banner-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .notification-banner { pointer-events: auto; width: 320px; background: white; border-left: 5px solid #800000; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 12px; padding: 15px; display: flex; gap: 12px; cursor: pointer; transition: all 0.3s ease; }
+        .dark .notification-banner { background: #1e1e1e; border-left-color: #D4AF37; }
+        .notification-banner:hover { transform: translateX(-5px); }
 
         @media (max-width: 767px) {
             .sidebar { display: none !important; }
             .main-wrapper { margin-left: 0 !important; width: 100% !important; }
-            header { padding: 1rem !important; flex-direction: row !important; align-items: center !important; }
-            .content-area { padding: 1rem !important; }
+            header { padding: 1rem !important; }
+            .content-area { padding: 1rem !important; padding-bottom: 100px !important; }
+            .notification-banner-container { top: auto; bottom: 100px; right: 15px; left: 15px; width: calc(100% - 30px); }
+            .notification-banner { width: 100%; padding: 12px 18px; }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 
-<body class="bg-bglight dark:bg-pup-dark text-gray-800 dark:text-gray-200 font-sans antialiased overflow-hidden transition-colors duration-300 sidebar-expanded">
+<body class="bg-bglight dark:bg-pup-dark text-gray-800 dark:text-gray-200 font-sans antialiased transition-colors duration-300 sidebar-expanded min-h-screen">
 
-    <!-- Global Layout Managed by Base Vue Instance -->
-    <div id="base-app" v-cloak>
-        <!-- Skeleton Loading Overlay -->
-        <div v-if="isLoading" class="fixed inset-0 z-[9999] bg-[#f4f6f8] dark:bg-pup-darkbg flex flex-col overflow-hidden">
-            <div class="w-full flex justify-between items-center px-6 py-4 bg-white dark:bg-pup-darkcard border-b border-gray-200 dark:border-white/10 shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full skeleton-shimmer"></div>
-                    <div class="w-32 h-6 rounded skeleton-shimmer"></div>
+    <!-- 🔔 Notification Banners 🔔 -->
+    <div id="banner-app" class="notification-banner-container" v-cloak>
+        <transition-group name="banner" enter-active-class="transition ease-out duration-300 transform" enter-from-class="translate-x-full opacity-0" enter-to-class="translate-x-0 opacity-100" leave-active-class="transition ease-in duration-200 transform" leave-from-class="translate-x-0 opacity-100" leave-to-class="translate-x-full opacity-0">
+            <div v-for="banner in notificationBanners" :key="banner.id" @click="handleNotificationClick(banner)" class="notification-banner shadow-2xl">
+                <div class="w-10 h-10 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center shrink-0">
+                    <i :class="getNotifIcon(banner.type)" class="text-xl text-pup-maroon dark:text-pup-gold"></i>
                 </div>
-                <div class="flex gap-4">
-                    <div class="w-10 h-10 rounded-full skeleton-shimmer"></div>
-                    <div class="w-10 h-10 rounded-lg skeleton-shimmer"></div>
+                <div class="flex-grow overflow-hidden">
+                    <h4 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">${ banner.title }</h4>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 font-medium leading-tight line-clamp-2">${ banner.message }</p>
                 </div>
+                <button @click.stop="removeBanner(banner.id)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="ph-bold ph-x text-sm"></i></button>
             </div>
-            <div class="max-w-7xl mx-auto px-8 py-8 w-full flex-grow overflow-y-auto">
-                <div class="space-y-8 animate-pulse">
-                    <div class="w-64 h-10 rounded-lg skeleton-shimmer"></div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <div v-for="i in 6" :key="i" class="h-48 rounded-2xl skeleton-shimmer"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </transition-group>
+    </div>
 
-        <!-- Sidebar (Desktop Only) -->
-        <nav class="sidebar hidden md:flex" id="sidebar">
+    <div class="flex flex-col md:flex-row min-h-screen relative">
+        <!-- Sidebar App -->
+        <nav class="sidebar hidden md:flex flex-col shrink-0" id="sidebar-app" v-cloak>
             <i class="ph-bold ph-list toggle-btn" @click="toggleSidebar"></i>
-
             <div class="brand">
                 <img src="{% static 'images/PUPLogo.png' %}" class="logo-img" alt="PUP Logo">
                 <div class="brand-text-wrapper">
@@ -100,154 +91,177 @@
                     <span class="brand-subtitle">PUPUni-CAMS</span>
                 </div>
             </div>
-
-        <div class="menu-label">Main Menu</div>
-        
-        <a href="{% url 'adviser_dashboard' %}" data-title="Event Approvals" class="nav-link {% if request.path == '/adviser/dashboard/' %}active{% endif %}" :class="{ 'active': currentUrl === 'adviser_dashboard' }">
-            <i class="ph-bold ph-check-circle"></i>
-            <span class="nav-text">Event Approvals</span>
-        </a>
-        
-        <a href="{% url 'adviser_history' %}" data-title="History" class="nav-link {% if request.path == '/adviser/history/' %}active{% endif %}" :class="{ 'active': currentUrl === 'adviser_history' }">
-            <i class="ph-bold ph-clock-counter-clockwise"></i>
-            <span class="nav-text">History</span>
-        </a>
-
-        <div class="logout-btn-container">
-            <button @click="openLogoutModal" data-title="Logout" class="logout-btn">
-                <i class="ph-bold ph-sign-out"></i>
-                <span class="nav-text">Logout</span>
-            </button>
-        </div>
+            <div class="menu-label">Main Menu</div>
+            <a href="{% url 'adviser_dashboard' %}" data-title="Event Approvals" class="nav-link {% if request.path == '/adviser/dashboard/' %}active{% endif %}" :class="{ 'active': currentUrl === 'adviser_dashboard' }">
+                <i class="ph-bold ph-check-circle"></i>
+                <span class="nav-text">Event Approvals</span>
+            </a>
+            <a href="{% url 'adviser_history' %}" data-title="History" class="nav-link {% if request.path == '/adviser/history/' %}active{% endif %}" :class="{ 'active': currentUrl === 'adviser_history' }">
+                <i class="ph-bold ph-clock-counter-clockwise"></i>
+                <span class="nav-text">History</span>
+            </a>
+            <div class="logout-btn-container flex-col !items-start px-2 gap-2">
+                <!-- Sidebar Name Tag (Visible when expanded) -->
+                <div class="brand-text-wrapper w-full mb-2">
+                    <div class="flex items-center gap-3 p-3 bg-white/5 dark:bg-black/5 rounded-2xl border border-white/10 dark:border-black/5">
+                        <div class="w-10 h-10 bg-white/10 dark:bg-black/10 text-white dark:text-black rounded-full flex items-center justify-center text-sm font-black shrink-0 border border-white/10">AD</div>
+                        <div class="overflow-hidden leading-tight">
+                            <p class="text-[11px] font-black text-white dark:text-black truncate uppercase">{{ request.user.username|default:"Adviser" }}</p>
+                            <p class="text-[9px] font-bold text-white/40 dark:text-black/40 truncate uppercase">Org Adviser</p>
+                        </div>
+                    </div>
+                </div>
+                <button @click="openLogoutModal" class="logout-btn" data-title="Logout">
+                    <i class="ph-bold ph-sign-out"></i>
+                    <span class="nav-text">Logout</span>
+                </button>
+            </div>
         </nav>
 
-        <!-- 📱 Floating Bottom Navigation Bar (Mobile Only) 📱 -->
-        <div class="md:hidden fixed bottom-0 left-0 right-0 z-[1000] w-full px-4 pb-4 pointer-events-none">
-            <div class="relative w-full h-16 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex shadow-2xl pointer-events-auto transition-colors border border-white/5 overflow-visible">
-                <div class="indicator-box absolute h-[70px] transition-all duration-400 ease-out flex justify-center items-center pointer-events-none z-10"
-                    :style="{ left: indicatorOffset + 'px', width: indicatorWidth + 'px', opacity: (activeIndex >= 0 && activeIndex <= 1 && indicatorWidth > 0) ? 1 : 0, top: '-20px' }">
-                    <div class="w-full h-full bg-black dark:bg-white rounded-2xl shadow-2xl border-2 border-white/10 dark:border-black/5"></div>
+        <!-- Main Wrapper -->
+        <div class="main-wrapper flex flex-col flex-1 min-h-screen relative overflow-x-hidden">
+            <!-- Header App -->
+            <header id="header-app" class="bg-bglight dark:bg-pup-dark px-4 md:px-8 py-4 md:py-6 flex justify-between items-center shrink-0 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-[100]" v-cloak>
+                <div class="md:hidden flex items-center gap-2">
+                    <img src="{% static 'images/PUPLogo.png' %}" class="h-8 w-8 object-contain" alt="PUP Logo">
+                    <span class="font-black text-pup-maroon dark:text-pup-gold tracking-tighter uppercase text-sm">PUPUni-CAMS</span>
                 </div>
+                <div class="hidden md:block">
+                    <h2 class="text-3xl font-extrabold text-pup-maroon dark:text-pup-gold tracking-tight mb-1">{% block page_title %}Event Approvals{% endblock %}</h2>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">{% block page_subtitle %}Review proposals and verify permits.{% endblock %}</p>
+                </div>
+                
+                <div class="flex items-center gap-4 md:gap-6">
+                    <!-- Notification Bell -->
+                    <div class="relative">
+                        <button @click.stop="toggleNotifications" class="relative flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold transition p-2 rounded-xl hover:bg-white dark:hover:bg-pup-darkcard shadow-sm border border-transparent hover:border-gray-100 dark:hover:border-white/5" :class="{ 'notify-active': unreadNotifCount > 0 }">
+                            <i class="ph-bold ph-bell text-2xl"></i>
+                            <span v-if="unreadNotifCount > 0" class="absolute top-1 right-1 bg-red-600 text-white text-[9px] font-black px-1 py-0.5 rounded-full border-2 border-bglight dark:border-pup-dark min-w-[18px] text-center">${ unreadNotifCount }</span>
+                        </button>
 
-                <div v-for="(item, index) in navItems" :key="index" :ref="(el) => { if (el) setNavRef(index, el) }" @click="handleNavClick(item, index)"
-                    class="relative flex-1 h-full flex flex-col items-center justify-center cursor-pointer z-20 transition-all-custom"
-                    :class="{ 'active-unit-elevated': activeIndex === index && item.name !== 'Theme' && item.name !== 'Logout' }">
-                    <div class="flex flex-col items-center justify-center gap-0.5">
-                        <div class="transition-colors duration-300 flex justify-center items-center" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'">
-                            <i v-if="item.name === 'Theme'" :class="[isDark ? 'ph-fill ph-sun' : 'ph-bold ph-moon', 'text-2xl']"></i>
-                            <i v-else :class="[activeIndex === index ? item.iconActive : item.icon, 'text-2xl']"></i>
+                        <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 translate-y-2 scale-95" enter-to-class="opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 translate-y-2 scale-95">
+                            <div v-if="showNotifications" class="absolute right-0 mt-3 w-80 bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden z-[4000]">
+                                <div class="p-4 bg-gray-50 dark:bg-[#111] border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
+                                    <h4 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">Notifications</h4>
+                                    <span class="text-[9px] font-bold bg-pup-maroon/10 dark:bg-pup-gold/10 text-pup-maroon dark:text-pup-gold px-2 py-0.5 rounded-full uppercase">${ unreadNotifCount } New</span>
+                                </div>
+                                <div class="max-h-[350px] overflow-y-auto custom-scrollbar">
+                                    <div v-if="state.notifications.length === 0" class="p-8 text-center">
+                                        <i class="ph-bold ph-bell-slash text-4xl text-gray-300 mb-2 block"></i>
+                                        <p class="text-[10px] text-gray-500 font-bold uppercase">No notifications yet</p>
+                                    </div>
+                                    <div v-for="notif in state.notifications" :key="notif.id" @click="handleNotificationClick(notif)" class="p-4 border-b border-gray-50 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors flex gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center shrink-0">
+                                            <i :class="getNotifIcon(notif.type)" class="text-lg text-pup-maroon dark:text-pup-gold"></i>
+                                        </div>
+                                        <div class="overflow-hidden">
+                                            <h5 class="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">${ notif.title }</h5>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400 font-medium leading-tight mb-1 line-clamp-2">${ notif.message }</p>
+                                            <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">${ notif.date }</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-gray-50 dark:bg-[#111] text-center border-t border-gray-100 dark:border-white/5">
+                                    <a href="{% url 'adviser_history' %}" class="text-[9px] font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest hover:underline">View All History</a>
+                                </div>
+                            </div>
+                        </transition>
+                    </div>
+
+                    <button @click="toggleTheme" class="hidden md:block text-gray-500 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold transition p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5">
+                        <i :class="isDark ? 'ph-fill ph-sun text-pup-gold' : 'ph-fill ph-moon'" class="text-2xl"></i>
+                    </button>
+                    
+                    <div @click="handleHeaderProfileClick" class="flex items-center gap-3 cursor-pointer group p-1 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5">
+                        <div class="hidden md:block text-right leading-tight">
+                            <p class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition">{{ request.user.username|default:"Adviser" }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Org Adviser</p>
                         </div>
-                        <span class="text-[7px] font-black transition-colors duration-300 w-full text-center uppercase tracking-tighter" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'">
-                            [[ item.label ]]
-                        </span>
+                        <div class="w-9 h-9 md:w-10 md:h-10 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black rounded-full flex items-center justify-center text-sm font-bold shadow-md border-2 border-transparent group-hover:border-pup-maroon dark:group-hover:border-pup-gold transition">AD</div>
+                    </div>
+                </div>
+            </header>
+
+            <div id="app" v-cloak class="flex-1 px-4 md:px-8 py-6 grow content-area overflow-y-visible">
+                {% block content %}{% endblock %}
+                {% block modals %}{% endblock %}
+            </div>
+
+            <!-- Mobile Bottom Nav -->
+            <div id="mobile-nav-app" class="md:hidden fixed bottom-0 left-0 right-0 z-[500] w-full px-4 pb-4 pointer-events-none" v-cloak>
+                <div class="relative w-full h-16 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex shadow-2xl pointer-events-auto transition-colors border border-white/5 overflow-visible">
+                    <div class="indicator-box absolute h-[70px] transition-all duration-400 ease-out flex justify-center items-center pointer-events-none z-10" :style="{ left: indicatorOffset + 'px', width: indicatorWidth + 'px', opacity: (activeIndex >= 0 && activeIndex <= 1 && indicatorWidth > 0) ? 1 : 0, top: '-20px' }">
+                        <div class="w-full h-full bg-black dark:bg-white rounded-2xl shadow-2xl border-2 border-white/10 dark:border-black/5"></div>
+                    </div>
+                    <div v-for="(item, index) in navItems" :key="index" :ref="(el) => { if (el) setNavRef(index, el) }" @click="handleNavClick(item, index)" class="relative flex-1 h-full flex flex-col items-center justify-center cursor-pointer z-20 transition-all-custom" :class="{ 'active-unit-elevated': activeIndex === index && item.name !== 'Theme' && item.name !== 'Logout' }">
+                        <div class="flex flex-col items-center justify-center gap-0.5">
+                            <div class="transition-colors duration-300 flex justify-center items-center" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'">
+                                <i v-if="item.name === 'Theme'" :class="[isDark ? 'ph-fill ph-sun' : 'ph-bold ph-moon', 'text-2xl']"></i>
+                                <i v-else :class="[activeIndex === index ? item.iconActive : item.icon, 'text-2xl']"></i>
+                            </div>
+                            <span class="text-[7px] font-black transition-colors duration-300 uppercase tracking-tighter" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'">${ item.label }</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 🫧 Profile Bubble Modal (Mobile Only) 🫧 -->
-        <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 translate-y-[-10px] scale-95" enter-to-class="opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 translate-y-[-10px] scale-95">
-            <div v-if="showProfileBubble" class="md:hidden fixed top-20 right-4 z-[2000] w-[280px] bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-white/10 font-sans">
-                <div class="h-20 w-full relative bg-pup-maroon">
-                    <img src="{% static 'images/banner/banner.jpg' %}" class="w-full h-full object-cover opacity-80">
-                    <button @click="showProfileBubble = false" class="absolute top-2 right-2 text-white/80 hover:text-white"><i class="ph-bold ph-x text-lg"></i></button>
-                </div>
-                <div class="px-5 pb-8 pt-10 relative text-center">
-                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full border-4 border-white dark:border-pup-darkcard overflow-hidden bg-white shadow-md flex items-center justify-center">
-                        <div class="w-full h-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black flex items-center justify-center text-2xl font-bold">AD</div>
+        <!-- Shared Modals App -->
+        <div id="modal-app" v-cloak>
+            <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 translate-y-[-10px] scale-95" enter-to-class="opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 translate-y-[-10px] scale-95">
+                <div v-if="showProfileBubble" class="md:hidden fixed top-20 right-4 z-[2000] w-[280px] bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-white/10 font-sans">
+                    <div class="h-20 w-full relative bg-pup-maroon"><img src="{% static 'images/banner/banner.jpg' %}" class="w-full h-full object-cover opacity-80"><button @click="showProfileBubble = false" class="absolute top-2 right-2 text-white/80"><i class="ph-bold ph-x text-lg"></i></button></div>
+                    <div class="px-5 pb-8 pt-10 relative text-center">
+                        <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full border-4 border-white dark:border-pup-darkcard overflow-hidden bg-white shadow-md flex items-center justify-center"><div class="w-full h-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black flex items-center justify-center text-2xl font-bold">AD</div></div>
+                        <h3 class="font-black text-gray-900 dark:text-white text-lg uppercase">{{ request.user.username|default:"Adviser" }}</h3>
+                        <p class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold uppercase tracking-wider mb-2">Organization Adviser</p>
                     </div>
-                    <h3 class="font-black text-gray-900 dark:text-white text-lg leading-tight uppercase px-2 break-words text-center">{{ request.user.username|default:"Adviser" }}</h3>
-                    <p class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold uppercase tracking-wider mb-2">Organization Adviser</p>
-                    <p class="text-[9px] text-gray-500 dark:text-gray-400 font-medium px-4 leading-tight">Faculty member overseeing student organization activities.</p>
                 </div>
-            </div>
-        </transition>
-        <div v-if="showProfileBubble" @click="showProfileBubble = false" class="md:hidden fixed inset-0 z-[1999] bg-black/20 dark:bg-black/40 backdrop-blur-[2px]"></div>
+            </transition>
+            <div v-if="showProfileBubble" @click="showProfileBubble = false" class="md:hidden fixed inset-0 z-[1999] bg-black/20 backdrop-blur-[2px]"></div>
 
-        <!-- Logout Modal -->
-        <div v-show="isLogoutModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-            <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gray-200 dark:border-gray-800 transform scale-100 transition-transform font-sans">
-                <div class="text-center mb-6">
-                    <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200 dark:border-red-900/40">
-                        <i class="ph-fill ph-sign-out text-3xl text-pup-maroon dark:text-red-500"></i>
+            <div v-show="isLogoutModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+                <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-gray-200 dark:border-gray-800">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4"><i class="ph-fill ph-sign-out text-3xl text-pup-maroon dark:text-red-500"></i></div>
+                        <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase">Sign Out?</h3>
+                        <p class="text-gray-500 text-sm">Are you sure you want to securely log out?</p>
                     </div>
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">Sign Out?</h3>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium leading-relaxed px-2">Are you sure you want to securely log out?</p>
-                </div>
-                <div class="flex gap-3 w-full">
-                    <button type="button" @click="closeLogoutModal" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold transition-colors uppercase text-[10px] tracking-widest border border-gray-200 dark:border-gray-700">Cancel</button>
-                    <form action="{% url 'admin_logout' %}" method="post" class="flex-1 m-0">
-                        {% csrf_token %}
-                        <button type="submit" class="w-full py-3 px-4 bg-pup-maroon hover:bg-red-900 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 text-center flex items-center justify-center uppercase text-[10px] tracking-widest border-none cursor-pointer">Yes, Sign Out</button>
-                    </form>
+                    <div class="flex gap-3 w-full">
+                        <button @click="closeLogoutModal" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-colors">Cancel</button>
+                        <form action="{% url 'admin_logout' %}" method="post" class="flex-1 m-0">{% csrf_token %}<button type="submit" class="w-full py-3 bg-pup-maroon hover:bg-red-900 text-white rounded-xl font-bold uppercase text-[10px] tracking-widest border-none transition-all">Yes, Sign Out</button></form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Wrapper Outside base-app to allow independent Vue mounting in child templates -->
-    <main class="main-wrapper flex flex-col min-h-screen">
-        <!-- Header -->
-        <header class="bg-bglight dark:bg-pup-dark px-4 md:px-8 py-4 md:py-6 flex justify-between items-center md:items-end shrink-0 transition-colors duration-300 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
-            <!-- Mobile Logo -->
-            <div class="md:hidden flex items-center gap-2">
-                <img src="{% static 'images/PUPLogo.png' %}" class="h-8 w-8 object-contain" alt="PUP Logo">
-                <span class="font-black text-pup-maroon dark:text-pup-gold tracking-tighter uppercase text-sm">PUPUni-CAMS</span>
-            </div>
-
-            <!-- Page Title (Desktop Only) -->
-            <div class="hidden md:block">
-                <h2 class="text-3xl font-extrabold text-pup-maroon dark:text-pup-gold tracking-tight mb-1">
-                    {% block page_title %}Event Approvals{% endblock %}
-                </h2>
-                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">
-                    {% block page_subtitle %}Review proposals, modify details, and verify permits.{% endblock %}
-                </p>
-            </div>
-            
-            <div class="flex items-center gap-4 md:gap-6">
-                <!-- Theme toggle triggered via Base Vue but visually here -->
-                <button onclick="window.baseApp.toggleTheme()" class="hidden md:block text-gray-500 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold transition">
-                    <i id="theme-icon-desktop" class="ph-fill ph-moon text-2xl"></i>
-                </button>
-                
-                <!-- Profile Trigger -->
-                <div onclick="window.baseApp.handleHeaderProfileClick()" class="flex items-center gap-3 cursor-pointer group">
-                    <div class="hidden md:block text-right leading-tight">
-                        <p class="font-bold text-sm text-gray-900 dark:text-white group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition">{{ request.user.username|default:"Adviser" }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Org Adviser</p>
-                    </div>
-                    <div class="w-9 h-9 md:w-10 md:h-10 bg-pup-maroon dark:bg-pup-gold text-white dark:text-black rounded-full flex items-center justify-center text-sm font-bold shadow-md border-2 border-transparent group-hover:border-pup-maroon dark:group-hover:border-pup-gold transition">
-                        AD
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <div id="app" v-cloak class="flex-1 overflow-y-auto px-4 md:px-8 py-6 grow content-area">
-            <!-- 🟢 ACTUAL PAGE CONTENT 🟢 -->
-            {% block content %}{% endblock %}
-            
-            {% block modals %}{% endblock %}
-        </div>
-    </main>
-
     <script>
-        const { createApp } = Vue;
+        const { createApp, reactive } = Vue;
+        const sharedState = reactive({ 
+            notifications: [], 
+            readNotifications: JSON.parse(localStorage.getItem('adviser_read_notifs') || '[]'),
+            isDark: localStorage.getItem('theme') === 'dark',
+            showProfileBubble: false,
+            isLogoutModalOpen: false
+        });
 
-        const baseAppConfig = {
-            delimiters: ['[[', ']]'],
+        const fetchNotifs = () => {
+            fetch('/adviser/api/notifications/').then(r => r.json()).then(data => {
+                if (data.status === 'success') { sharedState.notifications = data.notifications; }
+            }).catch(e => console.error(e));
+        };
+
+        const baseConfig = {
+            delimiters: ['${', '}'],
             data() {
                 return {
-                    isLoading: true,
-                    isDark: false,
-                    isLogoutModalOpen: false,
-                    showProfileBubble: false,
+                    state: sharedState,
+                    showNotifications: false,
+                    notificationBanners: [],
+                    isFirstLoad: true,
                     currentUrl: "{{ request.resolver_match.url_name }}",
-                    navRefs: [],
-                    indicatorOffset: 0,
-                    indicatorWidth: 0,
-                    activeIndex: -1,
+                    navRefs: [], indicatorOffset: 0, indicatorWidth: 0, activeIndex: -1,
                     navItems: [
                         { name: 'Approvals', label: 'Approvals', icon: 'ph ph-check-circle', iconActive: 'ph-fill ph-check-circle', url: "{% url 'adviser_dashboard' %}" },
                         { name: 'History', label: 'History', icon: 'ph ph-clock-counter-clockwise', iconActive: 'ph-fill ph-clock-counter-clockwise', url: "{% url 'adviser_history' %}" },
@@ -256,110 +270,78 @@
                     ]
                 }
             },
-            created() {
-                const urlToIndex = { 'adviser_dashboard': 0, 'adviser_history': 1 };
-                this.activeIndex = urlToIndex[this.currentUrl] !== undefined ? urlToIndex[this.currentUrl] : -1;
+            computed: {
+                unreadNotifCount() { return this.state.notifications.filter(n => !this.state.readNotifications.includes(n.id)).length; },
+                isDark() { return this.state.isDark; },
+                showProfileBubble: { get() { return this.state.showProfileBubble; }, set(v) { this.state.showProfileBubble = v; } },
+                isLogoutModalOpen: { get() { return this.state.isLogoutModalOpen; }, set(v) { this.state.isLogoutModalOpen = v; } }
             },
             mounted() {
-                setTimeout(() => { this.isLoading = false; }, 800);
-                const savedTheme = localStorage.getItem('theme');
-                if (savedTheme === 'dark') {
-                    this.isDark = true;
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.classList.remove('light');
-                    this.updateDesktopIcon(true);
-                }
+                if (this.state.isDark) { document.documentElement.classList.add('dark'); document.documentElement.classList.remove('light'); }
                 const sidebarState = localStorage.getItem('adviserSidebarState');
                 if(sidebarState === 'collapsed') { document.body.classList.remove('sidebar-expanded'); }
+                
+                const urlToIndex = { 'adviser_dashboard': 0, 'adviser_history': 1 };
+                this.activeIndex = urlToIndex[this.currentUrl] !== undefined ? urlToIndex[this.currentUrl] : -1;
+                
                 this.initIndicator();
                 window.addEventListener('resize', () => this.calculatePosition(this.activeIndex));
+                
+                if (this.$el.id === 'header-app') { fetchNotifs(); setInterval(fetchNotifs, 15000); }
+                window.addEventListener('click', (e) => { if (!e.target.closest('.relative')) this.showNotifications = false; });
             },
             methods: {
-                setNavRef(index, el) { this.navRefs[index] = el; },
-                initIndicator() {
-                    if (this.activeIndex === -1) return;
-                    this.$nextTick(() => { setTimeout(() => this.calculatePosition(this.activeIndex), 150); });
+                addBanner(notif) { if (this.notificationBanners.length >= 5) this.notificationBanners.shift(); this.notificationBanners.push(notif); setTimeout(() => { this.removeBanner(notif.id); }, 6000); },
+                removeBanner(id) { this.notificationBanners = this.notificationBanners.filter(b => b.id !== id); },
+                toggleNotifications() { this.showNotifications = !this.showNotifications; },
+                handleNotificationClick(notif) {
+                    if (!this.state.readNotifications.includes(notif.id)) { this.state.readNotifications.push(notif.id); localStorage.setItem('adviser_read_notifs', JSON.stringify(this.state.readNotifications)); }
+                    this.showNotifications = false; this.removeBanner(notif.id); window.location.href = notif.url;
                 },
-                calculatePosition(index) {
-                    if (index === -1 || index >= 2) { this.indicatorWidth = 0; return; }
-                    const el = this.navRefs[index];
-                    if (el) {
-                        const offsetLeft = el.offsetLeft;
-                        const width = el.offsetWidth;
-                        this.indicatorWidth = width - 10;
-                        this.indicatorOffset = offsetLeft + 5;
-                    }
+                getNotifIcon(type) { 
+                    if (type === 'proposal') return 'ph-fill ph-file-plus';
+                    if (type === 'verification') return 'ph-fill ph-certificate';
+                    if (type === 'rejection') return 'ph-fill ph-warning-circle';
+                    if (type === 'approval') return 'ph-fill ph-check-circle';
+                    return 'ph-fill ph-bell';
                 },
-                toggleTheme() {
-                    this.isDark = !this.isDark;
-                    if (this.isDark) {
-                        document.documentElement.classList.add('dark');
-                        document.documentElement.classList.remove('light');
-                        localStorage.setItem('theme', 'dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                        document.documentElement.classList.add('light');
-                        localStorage.setItem('theme', 'light');
-                    }
-                    this.updateDesktopIcon(this.isDark);
-                },
-                updateDesktopIcon(isDark) {
-                    const icon = document.getElementById('theme-icon-desktop');
-                    if (icon) {
-                        if (isDark) {
-                            icon.classList.replace('ph-moon', 'ph-sun');
-                            icon.classList.add('text-pup-gold');
-                        } else {
-                            icon.classList.replace('ph-sun', 'ph-moon');
-                            icon.classList.remove('text-pup-gold');
-                        }
-                    }
-                },
-                toggleSidebar() {
-                    const body = document.body;
-                    body.classList.toggle('sidebar-expanded');
-                    localStorage.setItem('adviserSidebarState', body.classList.contains('sidebar-expanded') ? 'expanded' : 'collapsed');
-                },
-                handleHeaderProfileClick() {
-                    if (window.innerWidth < 768) { this.showProfileBubble = !this.showProfileBubble; }
-                },
+                toggleTheme() { this.state.isDark = !this.state.isDark; document.documentElement.classList.toggle('dark', this.state.isDark); document.documentElement.classList.toggle('light', !this.isDark); localStorage.setItem('theme', this.state.isDark ? 'dark' : 'light'); },
+                toggleSidebar() { document.body.classList.toggle('sidebar-expanded'); localStorage.setItem('adviserSidebarState', document.body.classList.contains('sidebar-expanded') ? 'expanded' : 'collapsed'); },
+                handleHeaderProfileClick() { if (window.innerWidth < 768) { this.state.showProfileBubble = !this.state.showProfileBubble; } },
                 handleNavClick(item, index) {
                     if (item.name === 'Theme') { this.toggleTheme(); } 
                     else if (item.name === 'Logout') { this.openLogoutModal(); } 
-                    else {
-                        this.activeIndex = index;
-                        this.calculatePosition(index);
-                        if (item.url) { setTimeout(() => { window.location.href = item.url; }, 250); }
-                    }
+                    else { this.activeIndex = index; this.calculatePosition(index); if (item.url) { setTimeout(() => { window.location.href = item.url; }, 250); } }
                 },
-                openLogoutModal() { this.isLogoutModalOpen = true; document.body.style.overflow = 'hidden'; },
-                closeLogoutModal() { this.isLogoutModalOpen = false; document.body.style.overflow = ''; }
+                openLogoutModal() { this.state.isLogoutModalOpen = true; },
+                closeLogoutModal() { this.state.isLogoutModalOpen = false; },
+                setNavRef(index, el) { this.navRefs[index] = el; },
+                initIndicator() { if (this.activeIndex === -1) return; this.$nextTick(() => { setTimeout(() => this.calculatePosition(this.activeIndex), 150); }); },
+                calculatePosition(index) {
+                    if (index === -1 || index >= 2) { this.indicatorWidth = 0; return; }
+                    const el = this.navRefs[index]; if (el) { this.indicatorWidth = el.offsetWidth - 10; this.indicatorOffset = el.offsetLeft + 5; }
+                }
             }
         };
 
-        window.baseApp = createApp(baseAppConfig).mount('#base-app');
+        createApp(baseConfig).mount('#header-app');
+        createApp(baseConfig).mount('#sidebar-app');
+        createApp(baseConfig).mount('#banner-app');
+        createApp(baseConfig).mount('#mobile-nav-app');
+        createApp(baseConfig).mount('#modal-app');
 
-        // Geo-location tracking for Advisers
         window.addEventListener('load', () => {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition((pos) => {
                     fetch('/api/update-user-location/', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify({
-                            latitude: pos.coords.latitude,
-                            longitude: pos.coords.longitude
-                        })
-                    }).catch(err => console.log(err));
-                }, (err) => console.log('Location access denied'), { enableHighAccuracy: true });
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                        body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude })
+                    }).catch(e => {});
+                }, null, { enableHighAccuracy: true });
             }
         });
     </script>
-
     {% block extra_js %}{% endblock %}
-
 </body>
 </html>

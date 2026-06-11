@@ -5,7 +5,7 @@
 {% block page_title %}Event History{% endblock %}
 {% block page_subtitle %}View and search previously approved, verified, or rejected event proposals.{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
     .animate-fade-in {
         animation: fadeIn 0.3s ease-in-out;
@@ -15,7 +15,60 @@
         to { opacity: 1; transform: translateY(0); }
     }
     [v-cloak] { display: none !important; }
+
+    /* 📄 Professional Document Preview System 📄 */
+    .document-wrapper {
+        width: 100%;
+        min-height: 400px;
+        background: #f0f0f0;
+        border-radius: 0.75rem;
+        overflow: hidden; 
+        display: block;
+        position: relative;
+    }
+    .dark .document-wrapper {
+        background: #222;
+    }
+    .document-page {
+        width: 800px !important; 
+        min-height: 1000px;
+        background: white !important;
+        color: black !important;
+        font-family: 'Times New Roman', serif !important;
+        padding: 2rem !important; /* Standard padding for updated letters */
+        border: 1px solid #e5e7eb;
+        transform-origin: top left; 
+        transition: transform 0.2s ease;
+        position: relative;
+        display: block;
+        margin: 0;
+    }
+    
+    .document-preview-container {
+        opacity: 1;
+        max-height: none;
+        overflow: visible;
+        transform: none;
+        transition: opacity 0.5s ease, max-height 0.5s ease-in-out, transform 0.5s ease-out;
+    }
+    .document-preview-container.active {
+        opacity: 1;
+        max-height: 5000px;
+        transform: translateY(0);
+    }
+
+    .modal-scroll::-webkit-scrollbar { width: 4px; }
+    .modal-scroll::-webkit-scrollbar-track { background: transparent; }
+    .modal-scroll::-webkit-scrollbar-thumb { background: #80000033; border-radius: 10px; }
+
+    @media (max-width: 640px) {
+        .document-wrapper { margin: 0 !important; border-radius: 0.5rem; }
+        .document-page { margin: 0 !important; border: none !important; }
+    }
 </style>
+{% endblock %}
+
+{% block content %}
 
 <!-- Filter & Search Bar -->
 <div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col lg:flex-row justify-between items-center gap-4 mb-6 transition-colors duration-300">
@@ -123,7 +176,7 @@
 {% block modals %}
 <!-- Event Details Modal -->
 <div v-if="isModalOpen" v-cloak class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity" @click="closeModal">
-    <div class="bg-gray-100 dark:bg-[#151515] rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-in fade-in zoom-in duration-200 max-h-[95vh]" @click.stop>
+    <div class="bg-gray-100 dark:bg-[#151515] rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-in fade-in zoom-in duration-200 max-h-[95vh]" @click.stop>
         
         <!-- Modal Header -->
         <div class="p-5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#111] shrink-0">
@@ -209,51 +262,149 @@
                 </p>
             </div>
 
-            <!-- Formal Letter Preview -->
-            <div class="bg-white text-black text-sm sm:text-base leading-relaxed p-8 sm:p-12 border border-gray-300 shadow-sm rounded-lg" style="color: #000 !important; font-family: Arial, sans-serif !important;">
-                <p class="mb-6 font-bold">[[ selectedEvent.date ]]</p>
-                
-                <p class="mb-6 leading-tight">
-                    <strong>Dr. EDWIN G. MALABUYOC</strong><br>
-                    Director<br>
-                    This Campus
-                </p>
-
-                <p class="mb-6 leading-tight">
-                    Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
-                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
-                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
-                </p>
-
-                <p class="mb-6">
-                    Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
-                </p>
-
-                <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-
-                <p class="mb-4">Greetings!</p>
-
-                <p class="mb-4 text-justify indent-8">
-                    To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.org ]]</strong> will be conducting a seminar entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ selectedEvent.description ]]
-                </p>
-
-                <p class="mb-8 text-justify indent-8">
-                    The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
-                </p>
-
-                <p class="mb-12">Thank you for your kind consideration and usual support.</p>
-
-                <p class="mb-8">Respectfully yours,</p>
-
-                <div class="mb-8">
-                    <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
-                    <p class="mt-0">[[ selectedEvent.org ]] President</p>
+            <!-- Modern Tab Layout (Organizer Style) -->
+            <div v-if="selectedEvent.status !== 'REJECTED'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div @click="switchDocTab('main')" :class="activeTab === 'main' ? 'border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10' : 'border-gray-200 dark:border-gray-800'" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg shrink-0">
+                        <i class="ph-fill ph-seal-check"></i>
+                    </div>
+                    <div class="truncate">
+                        <h4 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-tight">[[ activeTabLabel ]]</h4>
+                        <p class="text-[8px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400">Main Generated Document</p>
+                    </div>
                 </div>
 
-                <div>
-                    <p class="mb-6">Noted by:</p>
-                    <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
-                    <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
+                <div v-if="currentDocCount != 2" @click="switchDocTab('excuse')" :class="activeTab === 'excuse' ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/10' : 'border-gray-200 dark:border-gray-800'" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm">
+                    <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg shrink-0">
+                        <i class="ph-fill ph-users-four"></i>
+                    </div>
+                    <div class="truncate">
+                        <h4 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-tight">Excuse & Equipment</h4>
+                        <p class="text-[8px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400">Logistics & Participants</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formal Letter Preview Container -->
+            <div v-if="selectedEvent.status !== 'REJECTED'" class="document-preview-container active" id="document-preview-container">
+                <div class="document-wrapper mx-auto">
+                    <div class="document-page mx-auto shadow-2xl" id="document-preview-card">
+                        
+                        <!-- Main Document Content -->
+                        <div v-if="activeTab === 'main'">
+                            <p class="mb-10 font-bold">[[ selectedEvent.date ]]</p>
+                            
+                            <p class="mb-8 leading-tight">
+                                <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+                                Director<br>
+                                This Campus
+                            </p>
+
+                            <p class="mb-10 leading-tight">
+                                Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+                                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+                                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
+                            </p>
+
+                            <div v-if="parsedDescription">
+                                <!-- STANDARD / INITIAL PROPOSAL -->
+                                <div v-if="parsedDescription.type === 'standard' || parsedDescription.type === 'new_event'">
+                                    <p class="mb-8">
+                                        Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
+                                    </p>
+                                    <p class="mb-6">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                    <p class="mb-6">Greetings!</p>
+                                    <p class="mb-6 text-justify indent-10 leading-relaxed">
+                                        To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.full_org || selectedEvent.org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
+                                    </p>
+                                    <p class="mb-10 text-justify indent-10 leading-relaxed">
+                                        The activity is scheduled for <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                                    </p>
+                                    <p class="mb-12">Thank you for your kind consideration and usual support.</p>
+                                </div>
+
+                                <!-- RESCHEDULE LETTER -->
+                                <div v-if="parsedDescription.type === 'reschedule'">
+                                    <p class="mb-8">
+                                        Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong>
+                                    </p>
+                                    <p class="mb-6">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                    <p class="mb-6">Greetings!</p>
+                                    
+                                    <p class="mb-6 text-justify indent-10 leading-relaxed">
+                                        We hope this letter finds you well. <strong>[[ selectedEvent.full_org || selectedEvent.org ]]</strong> respectfully requests a rescheduling of our upcoming event entitled <strong>"[[ selectedEvent.title ]]"</strong>. The event was originally set for <strong>[[ parsedDescription.origDate || '(Original Date)' ]]</strong>.
+                                    </p>
+                                    <p class="mb-6 text-justify indent-10 leading-relaxed">
+                                        We propose moving the event to <strong>[[ selectedEvent.date ]]</strong>, from <strong>[[ selectedEvent.time ]] to [[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                                    </p>
+                                    <p class="mb-10 text-justify indent-10 leading-relaxed">
+                                        This request is made due to [[ parsedDescription.reason ]]. [[ parsedDescription.originalDesc ]]
+                                    </p>
+                                    <p class="mb-12">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
+                                </div>
+                            </div>
+
+                            <p class="mb-10">Respectfully yours,</p>
+
+                            <div class="mb-12">
+                                <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+                                <p class="mt-0">[[ selectedEvent.org ]] President</p>
+                            </div>
+
+                            <div class="mb-8">
+                                <p class="mb-8">Noted by:</p>
+                                <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+                                <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
+                            </div>
+                        </div>
+
+                        <!-- Excuse & Equipment Document Content -->
+                        <div v-if="activeTab === 'excuse'">
+                            <p class="mb-10 font-bold">[[ selectedEvent.date ]]</p>
+                            
+                            <p class="mb-8 leading-tight">
+                                <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+                                Director<br>
+                                This Campus
+                            </p>
+
+                            <p class="mb-10 leading-tight">
+                                Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+                                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+                                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
+                            </p>
+
+                            <p class="mb-8">
+                                Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong>
+                            </p>
+                            <p class="mb-6">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                            <p class="mb-6">Greetings!</p>
+                            
+                            <p class="mb-6 text-justify indent-10 leading-relaxed">
+                                The <strong>[[ selectedEvent.full_org || selectedEvent.org ]]</strong> is organizing an event entitled <strong>"[[ selectedEvent.title ]]"</strong> on <strong>[[ selectedEvent.date ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>. 
+                            </p>
+                            <p class="mb-6 text-justify indent-10 leading-relaxed" v-if="parsedDescription.type === 'new_event'">
+                                We respectfully request the excusal of <strong>[[ parsedDescription.target || 'all affected students' ]]</strong> whose classes will be affected, and we also request usage of the aforementioned facility, together with <strong>[[ parsedDescription.equipment || 'the necessary equipment' ]]</strong>.
+                            </p>
+                            <p class="mb-10 text-justify indent-10 leading-relaxed" v-else>
+                                We respectfully request the usage of the facility and aforementioned equipment for the success of this event.
+                            </p>
+                            <p class="mb-12">We look forward to your response. Thank you for your kind consideration and usual support!</p>
+
+                            <p class="mb-10">Respectfully yours,</p>
+
+                            <div class="mb-12">
+                                <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+                                <p class="mt-0">[[ selectedEvent.org ]] President</p>
+                            </div>
+
+                            <div class="mb-8">
+                                <p class="mb-8">Noted by:</p>
+                                <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+                                <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -301,12 +452,12 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const { createApp, ref, computed, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted, nextTick } = Vue;
 
-        createApp({
+        window.appInstance = createApp({
             delimiters: ['[[', ']]'],
             setup() {
                 const isLoading = ref(true);
@@ -314,6 +465,7 @@
                 const statusFilter = ref('All');
                 const isModalOpen = ref(false);
                 const selectedEvent = ref(null);
+                const activeTab = ref('main');
 
                 const isDocViewerOpen = ref(false);
                 const viewedDocTitle = ref('');
@@ -321,51 +473,122 @@
 
                 let parsedData = [];
                 try {
-                    parsedData = window.DJANGO_HISTORY_DATA || [];
-                    if (typeof parsedData === 'string') {
-                        parsedData = JSON.parse(parsedData);
-                    }
+                    const rawData = window.DJANGO_HISTORY_DATA;
+                    parsedData = typeof rawData === 'string' ? JSON.parse(rawData) : (rawData || []);
                 } catch(e) {
-                    console.error("Error loading history data");
+                    console.error("Error loading history data:", e);
                 }
                 
                 const historyEvents = ref(parsedData);
 
+                const activeTabLabel = computed(() => {
+                    if (!selectedEvent.value) return 'Request Letter';
+                    const desc = selectedEvent.value.description || "";
+                    if (desc.includes("[RESCHEDULE]")) return 'Reschedule Letter';
+                    return 'Request Letter';
+                });
+
+                const switchDocTab = (tab) => {
+                    activeTab.value = tab;
+                    setTimeout(updateMobileScale, 50);
+                };
+
+                // --- 📱 Responsive Document Scaling Logic 📱 ---
+                const updateMobileScale = () => {
+                    const wrapper = document.querySelector('.document-wrapper');
+                    const page = document.getElementById('document-preview-card');
+                    if (!wrapper || !page) return;
+
+                    if (window.innerWidth <= 640) {
+                        const wrapperWidth = wrapper.offsetWidth;
+                        const availableWidth = wrapperWidth - 64; 
+                        const pageWidth = 800; 
+                        const scale = availableWidth / pageWidth;
+                        
+                        page.style.transform = `scale(${scale})`;
+                        page.style.width = `${pageWidth}px`;
+                        
+                        const scaledHeight = (page.offsetHeight * scale) + 64;
+                        if (scaledHeight > 100) {
+                            wrapper.style.height = `${scaledHeight}px`;
+                            wrapper.style.minHeight = `${scaledHeight}px`;
+                        }
+                    } else {
+                        page.style.transform = 'none';
+                        page.style.width = '800px'; 
+                        wrapper.style.height = 'auto';
+                        wrapper.style.minHeight = '500px';
+                    }
+                };
+
                 onMounted(() => {
                     setTimeout(() => {
                         isLoading.value = false;
+                        window.addEventListener('resize', updateMobileScale);
+
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const eventId = urlParams.get('id');
+                        if (eventId) {
+                            const event = historyEvents.value.find(e => e.id == eventId);
+                            if (event) openModal(event);
+                        }
                     }, 800);
                 });
 
                 const filteredEvents = computed(() => {
                     return historyEvents.value.filter(event => {
                         const sQuery = searchQuery.value.toLowerCase();
-                        const matchSearch = event.title.toLowerCase().includes(sQuery) || 
-                                            event.org.toLowerCase().includes(sQuery) ||
-                                            (event.venue && event.venue.toLowerCase().includes(sQuery));
+                        const matchSearch = (event.title || "").toLowerCase().includes(sQuery) || 
+                                            (event.org || "").toLowerCase().includes(sQuery) ||
+                                            (event.venue || "").toLowerCase().includes(sQuery);
                                             
-                        let checkStatus = event.status;
+                        let checkStatus = (event.status || "").toUpperCase();
                         let mappedStatus = 'In Progress';
                         
-                        if(checkStatus === 'APPROVED') {
-                            mappedStatus = 'Approved';
-                        } else if (checkStatus === 'REJECTED') {
-                            mappedStatus = 'Rejected';
-                        }
+                        if(checkStatus === 'APPROVED') mappedStatus = 'Approved';
+                        else if (checkStatus === 'REJECTED') mappedStatus = 'Rejected';
 
                         const matchStatus = statusFilter.value === 'All' || mappedStatus === statusFilter.value;
-
                         return matchSearch && matchStatus;
                     });
                 });
 
-                // Compute requirement mode (4 or 2)
+                const parsedDescription = computed(() => {
+                    if (!selectedEvent.value) return { type: 'standard', originalDesc: '' };
+                    let desc = selectedEvent.value.description || "";
+
+                    if (desc.includes("[RESCHEDULE]")) {
+                        let reasonStr = "Unforeseen circumstances";
+                        let origDateStr = "N/A";
+                        let origDescStr = "";
+                        desc.split('|').forEach(part => {
+                            if(part.includes("Reason:")) reasonStr = part.split('Reason:')[1]?.trim() || reasonStr;
+                            if(part.includes("Original:")) origDateStr = part.split('Original:')[1]?.trim() || origDateStr;
+                            if(part.includes("Desc:")) origDescStr = part.split('Desc:')[1]?.trim() || origDescStr;
+                        });
+                        return { type: 'reschedule', reason: reasonStr, origDate: origDateStr, originalDesc: origDescStr };
+                    }
+                    else if (desc.includes("[NEW EVENT]")) {
+                        let targetStr = "N/A";
+                        let equipStr = "N/A";
+                        let origDescStr = "";
+                        desc.split('|').forEach(part => {
+                            if(part.includes("Target:")) targetStr = part.split('Target:')[1]?.trim() || targetStr;
+                            if(part.includes("Equipment:")) equipStr = part.split('Equipment:')[1]?.trim() || equipStr;
+                            if(part.includes("Desc:")) origDescStr = part.split('Desc:')[1]?.trim() || origDescStr;
+                        });
+                        return { type: 'new_event', target: targetStr, equipment: equipStr, originalDesc: origDescStr }; 
+                    }
+                    else {
+                        return { type: 'standard', originalDesc: desc };
+                    }
+                });
+
                 const currentDocCount = computed(() => {
                     if (!selectedEvent.value) return 0;
                     return selectedEvent.value.requirement_mode ? parseInt(selectedEvent.value.requirement_mode) : 4;
                 });
 
-                // Compute active documents to display in grid
                 const activeDocs = computed(() => {
                     if (!selectedEvent.value) return [];
                     const e = selectedEvent.value;
@@ -388,8 +611,12 @@
 
                 const openModal = (event) => {
                     selectedEvent.value = event;
+                    activeTab.value = 'main';
                     isModalOpen.value = true;
                     document.body.style.overflow = 'hidden';
+                    // Double check scaling with a bit more delay to ensure DOM is ready
+                    setTimeout(updateMobileScale, 100);
+                    setTimeout(updateMobileScale, 500);
                 };
 
                 const closeModal = () => {
@@ -412,7 +639,8 @@
                     isLoading, searchQuery, statusFilter, filteredEvents,
                     isModalOpen, selectedEvent, openModal, closeModal,
                     isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
-                    currentDocCount, activeDocs
+                    currentDocCount, activeDocs, activeTab, activeTabLabel, 
+                    switchDocTab, updateMobileScale, parsedDescription
                 }
             }
         }).mount('#app');

@@ -52,6 +52,12 @@
             90% { transform: rotate(-5deg); }
         }
         .notify-shake { animation: notification-shake 3s infinite ease-in-out; }
+
+        /* ?? Pop-up Banners System ?? */
+        .banner-enter-active, .banner-leave-active { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .banner-enter-from { opacity: 0; transform: translateX(50px) scale(0.9); }
+        .banner-leave-to { opacity: 0; transform: translateX(50px) scale(0.9); }
+        .banner-move { transition: transform 0.4s ease; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -116,8 +122,19 @@
                 <a href="{% url 'organizer_analytics' %}" class="font-bold uppercase text-sm transition-colors {% if request.resolver_match.url_name == 'organizer_analytics' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Analytics</a>
             </div>
 
-            <div class="flex items-center gap-4">
-                <div class="relative" :class="{ 'notify-shake': hasNotification }">
+            <div class="flex items-center gap-3 sm:gap-4">
+                <!-- ?? Notification Icon (Desktop & Mobile) ?? -->
+                <div class="relative" :class="{ 'notify-shake': unreadNotifCount > 0 }">
+                    <button @click="openNotifications" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-transparent hover:border-pup-maroon dark:hover:border-pup-gold flex items-center justify-center transition-all group" title="Notifications">
+                        <i class="ph-fill ph-bell text-xl text-pup-maroon dark:text-pup-gold group-hover:scale-110 transition-transform"></i>
+                    </button>
+                    <span v-if="unreadNotifCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-red-600 border-2 border-white dark:border-pup-darkcard rounded-full flex items-center justify-center shadow-sm text-[10px] font-black text-white leading-none z-50 animate-pulse">
+                        [[ unreadNotifCount > 9 ? '9+' : unreadNotifCount ]]
+                    </span>
+                </div>
+
+                <!-- ?? Profile Icon ?? -->
+                <div class="relative">
                     <button @click="handleHeaderProfileClick" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-all overflow-hidden flex items-center justify-center {% if request.resolver_match.url_name == 'organizer_profile' %}bg-pup-maroon/10 dark:bg-pup-gold/10 border-pup-maroon dark:border-pup-gold{% else %}bg-gray-100 dark:bg-gray-800 border-transparent hover:border-pup-maroon dark:hover:border-pup-gold{% endif %}" title="My Profile">
                         {% if request.user.orgprofile.profile_picture %}
                             <img src="{{ request.user.orgprofile.profile_picture.url }}" class="w-full h-full object-cover">
@@ -127,7 +144,6 @@
                             </div>
                         {% endif %}
                     </button>
-                    <span v-if="hasNotification" class="absolute top-0 right-0 w-3 h-3 bg-red-600 border-2 border-white dark:border-pup-darkcard rounded-full animate-pulse shadow-sm z-50"></span>
                 </div>
                 
                 <button @click="toggleTheme" class="hidden lg:block text-2xl p-1 text-gray-600 dark:text-gray-400 hover:text-pup-gold hover:rotate-12 transition-all">
@@ -135,6 +151,33 @@
                 </button>
             </div>
         </nav>
+
+        <!-- ?? Pop-up Notifications Banner System ?? -->
+        <div class="fixed top-24 right-4 sm:right-6 md:right-10 z-[3000] flex flex-col gap-3 pointer-events-none w-full max-w-[320px]">
+            <transition-group name="banner">
+                <div v-for="banner in popupBanners" :key="banner.id" 
+                    @click="handleBannerClick(banner)"
+                    class="pointer-events-auto bg-white/90 dark:bg-[#1a1a1a]/95 backdrop-blur-md border-l-4 rounded-r-xl rounded-l-md shadow-2xl p-4 flex items-start gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#222] transition-all border border-gray-100 dark:border-gray-800 group"
+                    :class="getNotifBorderClass(banner.type, banner.status)">
+                    
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-sm transition-transform group-hover:scale-110" :class="getIconBgClass(banner.type)">
+                        <i class="ph-fill text-xl" :class="getIconClass(banner.type)"></i>
+                    </div>
+
+                    <div class="flex-grow min-w-0 py-0.5">
+                        <div class="flex justify-between items-start mb-0.5">
+                            <h4 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight truncate pr-2">[[ banner.title ]]</h4>
+                            <span class="text-[8px] font-bold text-gray-400 uppercase shrink-0 mt-0.5">[[ banner.time || 'JUST NOW' ]]</span>
+                        </div>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 font-medium leading-snug line-clamp-2">[[ banner.message ]]</p>
+                    </div>
+
+                    <button @click.stop="closeBanner(banner.id)" class="text-gray-400 hover:text-red-500 transition-colors shrink-0 mt-0.5">
+                        <i class="ph-bold ph-x text-sm"></i>
+                    </button>
+                </div>
+            </transition-group>
+        </div>
 
         <!-- 📱 Floating Bottom Navigation Bar (Mobile Only) 📱 -->
         <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40 w-full px-4 pb-4 pointer-events-none">

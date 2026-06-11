@@ -3,7 +3,7 @@
 
 {% block title %}Event Approvals | PUPUni-CAMS{% endblock %}
 {% block page_title %}Event Approvals{% endblock %}
-{% block page_subtitle %}Review incoming proposals and verify permits from Student Organizations.{% endblock %}
+{% block page_subtitle %}Review incoming proposals and verify permits for {{ assigned_org }}.{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -22,7 +22,7 @@
         min-height: 400px;
         background: #f0f0f0;
         border-radius: 0.75rem;
-        overflow: hidden; /* CRITICAL: Prevent overflow */
+        overflow: hidden; 
         display: block;
         position: relative;
     }
@@ -30,26 +30,39 @@
         background: #222;
     }
     .document-page {
-        width: 800px !important; /* Fixed width to preserve desktop layout */
+        width: 800px !important; 
         min-height: 1000px;
         background: white !important;
         color: black !important;
-        font-family: Arial, sans-serif !important;
-        padding: 4rem !important;
-        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        transform-origin: top left; /* Scale from top-left for easier positioning */
+        font-family: 'Times New Roman', serif !important;
+        padding: 2rem !important; /* Reduced padding since header is removed */
+        border: 1px solid #e5e7eb; /* Light border */
+        transform-origin: top left; 
         transition: transform 0.2s ease;
         position: relative;
         display: block;
         margin: 0;
     }
+    
+    .document-preview-container {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        transform: translateY(-10px);
+        transition: opacity 0.5s ease, max-height 0.5s ease-in-out, transform 0.5s ease-out;
+    }
+    .document-preview-container.active {
+        opacity: 1;
+        max-height: 3000px;
+        transform: translateY(0);
+    }
+
     @media (max-width: 640px) {
         .document-wrapper {
             margin: 0 !important;
             border-radius: 0.5rem;
         }
         .document-page {
-            /* Transform will be precisely set via JS */
             margin: 0 !important;
             border: none !important;
         }
@@ -58,8 +71,44 @@
 {% endblock %}
 
 {% block content %}
-<!-- Action Bar Skeleton & Real Content -->
-<div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex justify-between items-center mb-6 transition-colors duration-300">
+<!-- Stats Dashboard Section -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Monthly Approved -->
+    <div class="bg-white dark:bg-pup-darkcard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-5 transition-all hover:shadow-md">
+        <div class="w-14 h-14 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
+            <i class="ph-fill ph-check-circle text-3xl"></i>
+        </div>
+        <div>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Approved This Month</span>
+            <h3 class="text-3xl font-black text-gray-900 dark:text-white leading-none">{{ monthly_approved_count }}</h3>
+        </div>
+    </div>
+
+    <!-- Currently with Admin -->
+    <div class="bg-white dark:bg-pup-darkcard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-5 transition-all hover:shadow-md">
+        <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+            <i class="ph-fill ph-paper-plane-right text-3xl"></i>
+        </div>
+        <div>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Pending Admin Review</span>
+            <h3 class="text-3xl font-black text-gray-900 dark:text-white leading-none">{{ pending_admin_count }}</h3>
+        </div>
+    </div>
+
+    <!-- Total Assigned Org -->
+    <div class="bg-white dark:bg-pup-darkcard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-5 transition-all hover:shadow-md">
+        <div class="w-14 h-14 rounded-2xl bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0">
+            <i class="ph-fill ph-users-three text-3xl"></i>
+        </div>
+        <div>
+            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Assigned Organization</span>
+            <h3 class="text-2xl font-black text-pup-maroon dark:text-pup-gold leading-none">[[ assignedOrgAcronym ]]</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Action Bar -->
+<div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center mb-6 transition-colors duration-300 gap-4">
     <div v-if="isLoading" class="flex justify-between items-center w-full">
         <div class="w-40 h-6 skeleton-shimmer rounded-lg"></div>
         <div class="w-72 h-10 skeleton-shimmer rounded-xl"></div>
@@ -68,7 +117,7 @@
         <div class="flex items-center gap-3">
             <span class="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2 uppercase tracking-widest"><i class="ph-bold ph-clock"></i> Action Required</span>
         </div>
-        <div class="relative w-full sm:w-80 mt-3 sm:mt-0">
+        <div class="relative w-full sm:w-80">
             <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
             <input type="text" v-model="searchQuery" placeholder="Search event or org..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
         </div>
@@ -133,159 +182,198 @@
 {% endblock %}
 
 {% block modals %}
-    <div v-if="isModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
-        <div class="bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+    <div v-if="isModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+        <div class="bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-screen sm:max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
             
+            <!-- Header -->
             <div class="p-4 border-b border-gray-300 dark:border-gray-800 flex justify-between items-center bg-gray-100 dark:bg-[#111] shrink-0">
                 <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
                     <i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold text-xl"></i> 
-                    [[ selectedEvent.status === 'PERMIT VERIFICATION' ? 'Verify Signed Documents' : 'Review Event Proposal' ]]
+                    [[ selectedEvent.status === 'PERMIT VERIFICATION' ? 'Document Verification Hub' : 'Event Proposal Review' ]]
                 </h3>
                 <button @click="closeModal" class="text-gray-500 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
             </div>
 
-            <div class="p-4 sm:p-8 flex flex-col gap-6 overflow-y-auto grow" v-if="selectedEvent">
+            <!-- Content Area -->
+            <div class="flex-grow overflow-y-auto bg-gray-50 dark:bg-[#0a0a0a]">
                 
-                <div v-if="selectedEvent.status === 'PERMIT VERIFICATION'" class="bg-blue-50 dark:bg-gray-800 p-5 rounded-xl border border-blue-200 dark:border-[#D4AF37] animate-fade-in shrink-0">
-                    <div class="flex justify-between items-center mb-4">
-                        <h4 class="text-sm font-black text-blue-800 dark:text-[#D4AF37] uppercase tracking-wide flex items-center gap-2">
-                            <i class="ph-bold ph-folder-open text-lg"></i> Uploaded Documents Verification
-                        </h4>
-                        <span id="file-count-badge" class="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-2 py-1 rounded text-xs font-bold uppercase">X FILES UPLOADED</span>
-                    </div>
-                    <div id="verification-files-grid" class="grid gap-4">
-                        <!-- Dynamic Grid populated via Vanilla JS -->
-                    </div>
-                </div>
-
-                <div v-if="selectedEvent.status !== 'PERMIT VERIFICATION'" class="document-wrapper">
-                    <div class="document-page" id="document-preview-card">
-                        <p class="mb-6 font-bold">[[ selectedEvent.date ]]</p>
+                <div class="p-4 sm:p-8 flex flex-col gap-8">
+                    
+                    <!-- File Grid (Only shown in PERMIT VERIFICATION status) -->
+                    <div v-if="selectedEvent.status === 'PERMIT VERIFICATION'" class="bg-white dark:bg-pup-darkcard p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm animate-fade-in">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                <i class="ph-bold ph-folder-open text-lg"></i> Uploaded Signed Files
+                            </h4>
+                            <span class="bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                [[ selectedEvent.requirement_mode ]] Files Detected
+                            </span>
+                        </div>
                         
-                        <p class="mb-6 leading-tight">
-                            <strong>Dr. EDWIN G. MALABUYOC</strong><br>
-                            Director<br>
-                            This Campus
-                        </p>
-
-                        <p class="mb-6 leading-tight">
-                            Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
-                            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
-                            &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
-                        </p>
-
-                        <template v-if="parsedDescription">
-                            <template v-if="parsedDescription.type === 'standard'">
-                                <p class="mb-6">
-                                    Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
-                                </p>
-                                <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-                                <p class="mb-4">Greetings!</p>
-                                <p class="mb-4 text-justify indent-8">
-                                    To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.org ]]</strong> will be conducting a seminar entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
-                                </p>
-                                <p class="mb-8 text-justify indent-8">
-                                    The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
-                                </p>
-                                <p class="mb-12">Thank you for your kind consideration and usual support.</p>
-                            </template>
-
-                            <template v-if="parsedDescription.type === 'excuse'">
-                                <p class="mb-6">
-                                    Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong>
-                                </p>
-                                <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-                                <p class="mb-4">Greetings!</p>
-                                
-                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6 text-sm">
-                                    <p class="text-blue-800 font-bold mb-2 uppercase tracking-wider text-xs"><i class="ph-bold ph-info"></i> Specific Requests:</p>
-                                    <p class="text-blue-900 mb-1"><strong>Target Participants:</strong> [[ parsedDescription.target ]]</p>
-                                    <p class="text-blue-900"><strong>Equipment Needed:</strong> [[ parsedDescription.equipment ]]</p>
-                                </div>
-
-                                <p class="mb-4 text-justify indent-8">
-                                    The <strong>[[ selectedEvent.org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
-                                </p>
-                                <p class="mb-8 text-justify indent-8">
-                                    The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
-                                </p>
-                                <p class="mb-12">We look forward to your response. Thank you for your kind consideration and usual support!</p>
-                            </template>
-
-                            <template v-if="parsedDescription.type === 'reschedule'">
-                                <p class="mb-6">
-                                    Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong>
-                                </p>
-                                <p class="mb-4">Dear <strong>Dr. Malabuyoc</strong>:</p>
-                                <p class="mb-4">Greetings!</p>
-                                
-                                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-6 text-sm">
-                                    <p class="text-yellow-800 font-bold mb-2 uppercase tracking-wider text-xs"><i class="ph-bold ph-warning-circle"></i> Reschedule Details:</p>
-                                    <p class="text-yellow-900 mb-1"><strong>Reason:</strong> [[ parsedDescription.reason ]]</p>
-                                </div>
-
-                                <p class="mb-4 text-justify indent-8">
-                                    We respectfully request a rescheduling for the event entitled <strong>"[[ selectedEvent.title ]]"</strong>. We propose moving the event to <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
-                                </p>
-                                <p class="mb-8 text-justify indent-8">
-                                    [[ parsedDescription.originalDesc ]]
-                                </p>
-                                <p class="mb-12">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
-                            </template>
-                        </template>
-
-                        <p class="mb-8">Respectfully yours,</p>
-
-                        <div class="mb-8">
-                            <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
-                            <p class="mt-0">[[ selectedEvent.org ]] President</p>
-                        </div>
-
-                        <div>
-                            <p class="mb-6">Noted by:</p>
-                            <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
-                            <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="verification-files-grid">
+                            <!-- Dynamic Content Rendered via Vue/JS -->
                         </div>
                     </div>
-                </div>
 
-                <div v-if="isRejecting" class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-200 dark:border-red-900/40 animate-fade-in shrink-0">
-                    <label class="block text-xs font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest mb-1.5"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection (Required)</label>
-                    <textarea v-model="rejectReason" rows="3" placeholder="Please explain why this event proposal is being rejected..." class="w-full bg-white dark:bg-[#151515] border border-red-300 dark:border-red-800 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-red-500 text-gray-900 dark:text-white transition-colors resize-none"></textarea>
-                </div>
+                    <!-- Modern Tab Layout (Organizer Style) - NOW BELOW FILES -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div @click="switchDocTab('main')" :class="activeTab === 'main' ? 'border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10' : 'border-gray-200 dark:border-gray-800'" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm">
+                            <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg shrink-0">
+                                <i class="ph-fill ph-seal-check"></i>
+                            </div>
+                            <div class="truncate">
+                                <h4 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-tight">[[ activeTabLabel ]]</h4>
+                                <p class="text-[8px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400">Main Document</p>
+                            </div>
+                        </div>
 
-                <div v-if="actionLoading" class="text-center py-2 text-pup-maroon dark:text-pup-gold font-bold text-sm shrink-0">
-                    <i class="ph-bold ph-spinner animate-spin"></i> Processing decision...
+                        <div v-if="selectedEvent.requirement_mode != 2" @click="switchDocTab('excuse')" :class="activeTab === 'excuse' ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/10' : 'border-gray-200 dark:border-gray-800'" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm">
+                            <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg shrink-0">
+                                <i class="ph-fill ph-users-four"></i>
+                            </div>
+                            <div class="truncate">
+                                <h4 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-tight">Excuse & Equipment</h4>
+                                <p class="text-[8px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400">Logistics & Participants</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modern Document Preview (Bottom Section) -->
+                    <div class="document-preview-container active" id="document-preview-container">
+                        <div class="document-wrapper mx-auto">
+                            <div class="document-page mx-auto shadow-2xl" id="document-preview-card">
+                                
+                                <!-- Main Document Content -->
+                                <div v-if="activeTab === 'main'">
+                                    <p class="mb-10 font-bold">[[ selectedEvent.date ]]</p>
+                                    
+                                    <p class="mb-8 leading-tight">
+                                        <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+                                        Director<br>
+                                        This Campus
+                                    </p>
+
+                                    <p class="mb-10 leading-tight">
+                                        Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+                                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+                                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
+                                    </p>
+
+                                    <div v-if="parsedDescription">
+                                        <!-- STANDARD / INITIAL PROPOSAL -->
+                                        <div v-if="parsedDescription.type === 'standard' || parsedDescription.type === 'new_event'">
+                                            <p class="mb-8">
+                                                Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
+                                            </p>
+                                            <p class="mb-6">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                            <p class="mb-6">Greetings!</p>
+                                            <p class="mb-6 text-justify indent-10 leading-relaxed">
+                                                To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.full_org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
+                                            </p>
+                                            <p class="mb-10 text-justify indent-10 leading-relaxed">
+                                                The activity is scheduled for <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                                            </p>
+                                            <p class="mb-12">Thank you for your kind consideration and usual support.</p>
+                                        </div>
+
+                                        <!-- RESCHEDULE LETTER -->
+                                        <div v-if="parsedDescription.type === 'reschedule'">
+                                            <p class="mb-8">
+                                                Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong>
+                                            </p>
+                                            <p class="mb-6">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                            <p class="mb-6">Greetings!</p>
+                                            
+                                            <p class="mb-6 text-justify indent-10 leading-relaxed">
+                                                We hope this letter finds you well. <strong>[[ selectedEvent.full_org ]]</strong> respectfully requests a rescheduling of our upcoming event entitled <strong>"[[ selectedEvent.title ]]"</strong>. The event was originally set for <strong>[[ parsedDescription.origDate || '(Original Date)' ]]</strong>.
+                                            </p>
+                                            <p class="mb-6 text-justify indent-10 leading-relaxed">
+                                                We propose moving the event to <strong>[[ selectedEvent.date ]]</strong>, from <strong>[[ selectedEvent.time ]] to [[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                                            </p>
+                                            <p class="mb-10 text-justify indent-10 leading-relaxed">
+                                                This request is made due to [[ parsedDescription.reason ]]. [[ parsedDescription.originalDesc ]]
+                                            </p>
+                                            <p class="mb-12">We look forward to your response and understanding regarding this proposed change. Thank you for your usual support!</p>
+                                        </div>
+                                    </div>
+
+                                    <p class="mb-10">Respectfully yours,</p>
+
+                                    <div class="mb-12">
+                                        <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+                                        <p class="mt-0">[[ selectedEvent.org ]] President</p>
+                                    </div>
+
+                                    <div class="mb-8">
+                                        <p class="mb-8">Noted by:</p>
+                                        <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+                                        <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
+                                    </div>
+                                </div>
+
+                                <!-- Excuse & Equipment Document Content -->
+                                <div v-if="activeTab === 'excuse'">
+                                    <p class="mb-10 font-bold">[[ selectedEvent.date ]]</p>
+                                    
+                                    <p class="mb-8 leading-tight">
+                                        <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+                                        Director<br>
+                                        This Campus
+                                    </p>
+
+                                    <p class="mb-10 leading-tight">
+                                        Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+                                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+                                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;This Campus
+                                    </p>
+
+                                    <p class="mb-8">
+                                        Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong>
+                                    </p>
+                                    <p class="mb-6">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                    <p class="mb-6">Greetings!</p>
+                                    
+                                    <p class="mb-6 text-justify indent-10 leading-relaxed">
+                                        The <strong>[[ selectedEvent.full_org ]]</strong> is organizing an event entitled <strong>"[[ selectedEvent.title ]]"</strong> on <strong>[[ selectedEvent.date ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>. 
+                                    </p>
+                                    <p class="mb-6 text-justify indent-10 leading-relaxed" v-if="parsedDescription.type === 'new_event'">
+                                        We respectfully request the excusal of <strong>[[ parsedDescription.target || 'all affected students' ]]</strong> whose classes will be affected, and we also request usage of the aforementioned facility, together with <strong>[[ parsedDescription.equipment || 'the necessary equipment' ]]</strong>.
+                                    </p>
+                                    <p class="mb-10 text-justify indent-10 leading-relaxed" v-else>
+                                        We respectfully request the usage of the facility and aforementioned equipment for the success of this event.
+                                    </p>
+                                    <p class="mb-12">We look forward to your response. Thank you for your kind consideration and usual support!</p>
+
+                                    <p class="mb-10">Respectfully yours,</p>
+
+                                    <div class="mb-12">
+                                        <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+                                        <p class="mt-0">[[ selectedEvent.org ]] President</p>
+                                    </div>
+
+                                    <div class="mb-8">
+                                        <p class="mb-8">Noted by:</p>
+                                        <p class="font-bold uppercase mb-0 whitespace-nowrap">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+                                        <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rejection Form -->
+                    <div v-if="isRejecting" class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-200 dark:border-red-900/40 animate-fade-in shrink-0">
+                        <label class="block text-xs font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest mb-1.5"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection (Required)</label>
+                        <textarea v-model="rejectReason" rows="3" placeholder="Please explain why this event proposal is being rejected..." class="w-full bg-white dark:bg-[#151515] border border-red-300 dark:border-red-800 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-red-500 text-gray-900 dark:text-white transition-colors resize-none"></textarea>
+                    </div>
+
+                    <div v-if="actionLoading" class="text-center py-2 text-pup-maroon dark:text-pup-gold font-bold text-sm shrink-0">
+                        <i class="ph-bold ph-spinner animate-spin"></i> Processing decision...
+                    </div>
                 </div>
             </div>
 
-            <div class="p-5 bg-gray-100 dark:bg-[#111] border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
-                <template v-if="!isRejecting">
-                    <button @click="initiateReject" :disabled="actionLoading" class="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold text-sm rounded-lg transition-colors disabled:opacity-50">Reject</button>
-                    <button id="verify-forward-btn" @click="approveEvent" :disabled="actionLoading" class="px-6 py-2.5 bg-[#16a34a] text-white hover:bg-green-700 font-bold text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md">
-                        <i class="ph-bold ph-check-circle"></i>
-                        [[ selectedEvent.status === 'PERMIT VERIFICATION' ? 'Verify Signatures & Forward' : 'Approve & Forward to Admin' ]]
-                    </button>
-                </template>
-                
-                <template v-else>
-                    <button @click="cancelReject" :disabled="actionLoading" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50">Cancel</button>
-                    <button @click="confirmReject" :disabled="actionLoading" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-md"><i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection</button>
-                </template>
-            </div>
-        </div>
-    </div>
-
-                <div v-if="isRejecting" class="bg-red-50 dark:bg-red-900/10 p-4 rounded-xl border border-red-200 dark:border-red-900/40 animate-fade-in shrink-0">
-                    <label class="block text-xs font-extrabold text-red-600 dark:text-red-400 uppercase tracking-widest mb-1.5"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection (Required)</label>
-                    <textarea v-model="rejectReason" rows="3" placeholder="Please explain why this event proposal is being rejected..." class="w-full bg-white dark:bg-[#151515] border border-red-300 dark:border-red-800 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-red-500 text-gray-900 dark:text-white transition-colors resize-none"></textarea>
-                </div>
-
-                <div v-if="actionLoading" class="text-center py-2 text-pup-maroon dark:text-pup-gold font-bold text-sm shrink-0">
-                    <i class="ph-bold ph-spinner animate-spin"></i> Processing decision...
-                </div>
-            </div>
-
+            <!-- Modal Footer -->
             <div class="p-5 bg-gray-100 dark:bg-[#111] border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
                 <template v-if="!isRejecting">
                     <button @click="initiateReject" :disabled="actionLoading" class="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold text-sm rounded-lg transition-colors disabled:opacity-50">Reject</button>
@@ -322,7 +410,7 @@
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Restore Lightbox logic ---
+        // --- Lightbox logic ---
         document.addEventListener('click', (e) => {
             const viewImgBtn = e.target.closest('.view-image-btn');
             if (viewImgBtn) {
@@ -351,13 +439,10 @@
                 imagePreviewModalClick.classList.add('hidden');
             }
         });
-        // --- End Restore ---
 
         const { createApp, ref, computed, onMounted } = Vue;
         
-        console.log("Adviser Dashboard: Initializing with data:", window.DJANGO_EVENTS_DATA);
-
-        createApp({
+        window.appInstance = createApp({
             delimiters: ['[[', ']]'],
             setup() {
                 const isLoading = ref(true);
@@ -365,9 +450,11 @@
                 const selectedEvent = ref(null);
                 const actionLoading = ref(false);
                 const searchQuery = ref('');
+                const activeTab = ref('main');
 
                 const isRejecting = ref(false);
                 const rejectReason = ref('');
+                const assignedOrgAcronym = ref('{{ assigned_org }}' || 'All Organizations');
 
                 let parsedData = [];
                 try {
@@ -381,6 +468,19 @@
 
                 const events = ref(parsedData);
 
+                const activeTabLabel = computed(() => {
+                    if (!selectedEvent.value) return 'Request Letter';
+                    const desc = selectedEvent.value.description || "";
+                    if (desc.includes("[RESCHEDULE]")) return 'Reschedule Letter';
+                    return 'Request Letter';
+                });
+
+                const switchDocTab = (tab) => {
+                    activeTab.value = tab;
+                    // Force scaling update after tab switch
+                    setTimeout(updateMobileScale, 100);
+                };
+
                 // --- 📱 Responsive Document Scaling Logic 📱 ---
                 const updateMobileScale = () => {
                     const wrapper = document.querySelector('.document-wrapper');
@@ -390,14 +490,12 @@
 
                     if (window.innerWidth <= 640) {
                         const wrapperWidth = wrapper.offsetWidth;
-                        const pageWidth = 800; // Fixed width base
+                        const pageWidth = 800; 
                         const scale = wrapperWidth / pageWidth;
                         
                         page.style.transform = `scale(${scale})`;
                         page.style.width = `${pageWidth}px`;
                         
-                        // Set wrapper height to the scaled height of the document
-                        // This forces the parent to respect the shrunken size
                         const scaledHeight = page.offsetHeight * scale;
                         wrapper.style.height = `${scaledHeight}px`;
                         wrapper.style.minHeight = `${scaledHeight}px`;
@@ -413,7 +511,17 @@
                     setTimeout(() => {
                         isLoading.value = false;
                         window.addEventListener('resize', updateMobileScale);
-                    }, 800);
+                        
+                        // Check for URL parameter to open specific event
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const eventId = urlParams.get('id');
+                        if (eventId) {
+                            const event = events.value.find(e => e.id == eventId);
+                            if (event) {
+                                openModal(event);
+                            }
+                        }
+                    }, 500);
                 });
 
                 const filteredEvents = computed(() => {
@@ -428,31 +536,31 @@
                     if (!selectedEvent.value) return null;
                     let desc = selectedEvent.value.description || "";
 
-                    if (desc.includes("[RESCHEDULE REQUEST]")) {
-                        let reasonStr = "";
+                    if (desc.includes("[RESCHEDULE]")) {
+                        let reasonStr = "Unforeseen circumstances";
+                        let origDateStr = "N/A";
                         let origDescStr = "";
 
-                        let parts = desc.split("|");
-                        parts.forEach(part => {
-                            if(part.includes("Reason:")) reasonStr = part.replace("[RESCHEDULE REQUEST]", "").replace("Reason:", "").trim();
-                            if(part.includes("Original Desc:")) origDescStr = part.replace("Original Desc:", "").trim();
+                        desc.split('|').forEach(part => {
+                            if(part.includes("Reason:")) reasonStr = part.split('Reason:')[1].trim();
+                            if(part.includes("Original:")) origDateStr = part.split('Original:')[1].trim();
+                            if(part.includes("Desc:")) origDescStr = part.split('Desc:')[1].trim();
                         });
 
-                        return { type: 'reschedule', reason: reasonStr, originalDesc: origDescStr };
+                        return { type: 'reschedule', reason: reasonStr, origDate: origDateStr, originalDesc: origDescStr };
                     }
-                    else if (desc.includes("[EXCUSE & EQUIPMENT REQUEST]")) {
-                        let targetStr = "";
-                        let equipStr = "";
+                    else if (desc.includes("[NEW EVENT]")) {
+                        let targetStr = "N/A";
+                        let equipStr = "N/A";
                         let origDescStr = "";
 
-                        let parts = desc.split("|");
-                        parts.forEach(part => {
-                            if(part.includes("Target:")) targetStr = part.replace("[EXCUSE & EQUIPMENT REQUEST]", "").replace("Target:", "").trim();
-                            if(part.includes("Equipment:")) equipStr = part.replace("Equipment:", "").trim();
-                            if(part.includes("Desc:")) origDescStr = part.replace("Desc:", "").trim();
+                        desc.split('|').forEach(part => {
+                            if(part.includes("Target:")) targetStr = part.split('Target:')[1].trim();
+                            if(part.includes("Equipment:")) equipStr = part.split('Equipment:')[1].trim();
+                            if(part.includes("Desc:")) origDescStr = part.split('Desc:')[1].trim();
                         });
 
-                        return { type: 'excuse', target: targetStr, equipment: equipStr, originalDesc: origDescStr }; 
+                        return { type: 'new_event', target: targetStr, equipment: equipStr, originalDesc: origDescStr }; 
                     }
                     else {
                         return { type: 'standard', originalDesc: desc };
@@ -461,76 +569,50 @@
 
                 const openModal = (event) => {
                     selectedEvent.value = event;
+                    activeTab.value = 'main';
                     isRejecting.value = false;
                     rejectReason.value = '';
                     isModalOpen.value = true;
                     document.body.style.overflow = 'hidden';
 
-                    // Trigger scaling and grid rendering
                     setTimeout(() => {
-                        updateMobileScale(); // Initial attempt
+                        updateMobileScale();
                         
-                        // Second attempt to ensure heights are captured correctly after render
-                        setTimeout(updateMobileScale, 100); 
-
                         const verificationFilesGrid = document.getElementById('verification-files-grid');
-                        const fileCountBadge = document.getElementById('file-count-badge');
-
                         if(verificationFilesGrid && selectedEvent.value.status === 'PERMIT VERIFICATION') {
-                             const eventData = selectedEvent.value;
-                             const count = eventData.requirement_mode ? eventData.requirement_mode.toString() : (eventData.description && eventData.description.includes('[RESCHEDULE REQUEST]') ? '2' : '4');
+                             const e = selectedEvent.value;
+                             const mode = e.requirement_mode || 4;
 
                              verificationFilesGrid.innerHTML = '';
 
-                             if (count === '4') {
-                                verificationFilesGrid.className = 'grid grid-cols-2 lg:grid-cols-4 gap-4';
-                                if(fileCountBadge) fileCountBadge.textContent = '4 FILES UPLOADED';
-
-                                const files = [
-                                    { label: 'Letter of Approval', icon: 'ph-file-text', url: eventData.letter_url }, 
-                                    { label: 'Permit to Conduct Activity', icon: 'ph-certificate', url: eventData.permit_url },
-                                    { label: 'Excuse Letter & Equipment', icon: 'ph-toolbox', url: eventData.equipment_url },
-                                    { label: 'Event Cover Photo', icon: 'ph-image', url: eventData.event_cover_photo }
+                             let files = [];
+                             if (mode == 2) {
+                                files = [
+                                    { label: 'Letter of Reschedule', icon: 'ph-file-text', url: e.letter_url },
+                                    { label: 'Event Reschedule Cover Photo', icon: 'ph-image', url: e.reschedule_cover_photo }
                                 ];
-
-                                files.forEach(f => {
-                                    verificationFilesGrid.innerHTML += `
-                                        <div class="view-image-btn bg-white dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center cursor-pointer hover:border-[#800000] dark:hover:border-[#D4AF37] hover:shadow-md transition-all flex flex-col items-center justify-center group" data-img-src="${f.url || ''}">      
-                                            <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
-                                                <i class="ph-fill ${f.icon} text-4xl text-gray-300 dark:text-gray-500 transition-opacity"></i>
-                                                <div class="absolute inset-0 flex items-center justify-center">
-                                                    <i class="ph-bold ph-eye text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#800000] dark:text-[#D4AF37]"></i>
-                                                </div>
-                                            </div>
-                                            <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-300 uppercase">${f.label}</span>
-                                            <span class="text-[9px] text-blue-500 dark:text-[#D4AF37] mt-1 block">Click to view image</span>
-                                        </div>
-                                    `;
-                                });
-                            } else {
-                                verificationFilesGrid.className = 'grid grid-cols-2 gap-4';
-                                if(fileCountBadge) fileCountBadge.textContent = '2 FILES UPLOADED';
-
-                                const files = [
-                                    { label: 'Letter of Reschedule', icon: 'ph-file-text', url: eventData.letter_of_reschedule || eventData.letter_url },
-                                    { label: 'Event Reschedule Cover Photo', icon: 'ph-image', url: eventData.reschedule_cover_photo || eventData.event_cover_photo }
+                             } else {
+                                files = [
+                                    { label: 'Request Letter', icon: 'ph-file-text', url: e.letter_url }, 
+                                    { label: 'Event Permit', icon: 'ph-certificate', url: e.permit_url },
+                                    { label: 'Excuse Letter & Equipment', icon: 'ph-toolbox', url: e.equipment_url },
+                                    { label: 'Event Cover Photo', icon: 'ph-image', url: e.event_cover_photo }
                                 ];
+                             }
 
-                                files.forEach(f => {
-                                    verificationFilesGrid.innerHTML += `
-                                        <div class="view-image-btn bg-white dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600 text-center cursor-pointer hover:border-[#800000] dark:hover:border-[#D4AF37] hover:shadow-md transition-all flex flex-col items-center justify-center group" data-img-src="${f.url || ''}">      
-                                            <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
-                                                <i class="ph-fill ${f.icon} text-4xl text-gray-300 dark:text-gray-500 transition-opacity"></i>
-                                                <div class="absolute inset-0 flex items-center justify-center">       
-                                                    <i class="ph-bold ph-eye text-4xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[#800000] dark:text-[#D4AF37]"></i>
-                                                </div>
+                             files.forEach(f => {
+                                verificationFilesGrid.innerHTML += `
+                                    <div class="view-image-btn bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all flex flex-col items-center justify-center group" data-img-src="${f.url || ''}">      
+                                        <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
+                                            <i class="ph-fill ${f.icon} text-4xl text-gray-300 dark:text-gray-500 transition-opacity"></i>
+                                            <div class="absolute inset-0 flex items-center justify-center">
+                                                <i class="ph-bold ph-eye text-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-pup-maroon dark:text-pup-gold"></i>
                                             </div>
-                                            <span class="block text-[10px] font-extrabold text-gray-600 dark:text-gray-300 uppercase">${f.label}</span>
-                                            <span class="text-[9px] text-blue-500 dark:text-[#D4AF37] mt-1 block">Click to view image</span>
                                         </div>
-                                    `;
-                                });
-                            }
+                                        <span class="block text-[8px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">${f.label}</span>
+                                    </div>
+                                `;
+                             });
                         }
                     }, 50);
                 };
@@ -541,33 +623,17 @@
                     setTimeout(() => { selectedEvent.value = null; }, 300);
                 };
 
-                const getCookie = (name) => {
-                    let cookieValue = null;
-                    if (document.cookie && document.cookie !== '') {
-                        const cookies = document.cookie.split(';');
-                        for (let i = 0; i < cookies.length; i++) {
-                            const cookie = cookies[i].trim();
-                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break;
-                            }
-                        }
-                    }
-                    return cookieValue;
-                };
-
                 const updateEventStatus = async (status, remarks = "") => {
                     actionLoading.value = true;
                     try {
                         const response = await fetch("{% url 'adviser_api_action' %}", {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },   
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },   
                             body: JSON.stringify({ event_id: selectedEvent.value.id, action: status, remarks: remarks })
                         });
                         const data = await response.json();
                         if(data.status === 'success') {
                             events.value = events.value.filter(e => e.id !== selectedEvent.value.id);
-
-                            // Show toast via Vue before closing modal if it was an approval
                             if (status === 'approve') {
                                  const toast = document.getElementById('approval-success-toast');
                                  if (toast) {
@@ -576,8 +642,11 @@
                                     setTimeout(() => {
                                         toast.classList.remove('translate-y-0', 'opacity-100');
                                         toast.classList.add('translate-y-20', 'opacity-0');
-                                    }, 3000);
+                                        window.location.reload(); // Reload to update stats
+                                    }, 2000);
                                  }
+                            } else {
+                                window.location.reload();
                             }
                             closeModal();
                         } else { alert(data.message); }
@@ -586,29 +655,18 @@
                 };
 
                 const approveEvent = () => updateEventStatus('approve');
-
-                const initiateReject = () => {
-                    isRejecting.value = true;
-                };
-
-                const cancelReject = () => {
-                    isRejecting.value = false;
-                    rejectReason.value = '';
-                };
-
+                const initiateReject = () => { isRejecting.value = true; };
+                const cancelReject = () => { isRejecting.value = false; rejectReason.value = ''; };
                 const confirmReject = () => {
-                    if(rejectReason.value.trim() === '') {
-                        alert("Please provide a reason before confirming the rejection.");
-                        return;
-                    }
+                    if(rejectReason.value.trim() === '') { alert("Please provide a reason."); return; }
                     updateEventStatus('reject', rejectReason.value);
                 };
 
                 return {
                     isLoading, events, filteredEvents, searchQuery, isModalOpen, selectedEvent,
-                    actionLoading, isRejecting, rejectReason,
+                    actionLoading, isRejecting, rejectReason, activeTab, activeTabLabel,
                     openModal, closeModal, approveEvent, initiateReject, cancelReject, confirmReject,
-                    parsedDescription
+                    parsedDescription, switchDocTab, assignedOrgAcronym
                 }
             }
         }).mount('#app');

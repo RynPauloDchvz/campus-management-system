@@ -233,8 +233,17 @@
                 <a href="{% url 'student_evaluation' %}" class="font-bold uppercase text-sm transition-colors {% if request.resolver_match.url_name == 'student_evaluation' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Evaluation</a>
             </div>
 
-            <div class="flex items-center gap-4">
-                <div class="relative" :class="{ 'notify-shake': hasNotification }">
+            <div class="flex items-center gap-3 sm:gap-4">
+                <div class="relative flex items-center justify-center">
+                    <button @click="openNotifications" class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-pup-darkcard shadow-sm flex items-center justify-center transition-transform active:scale-90 hover:bg-gray-50 dark:hover:bg-gray-800" :class="{ 'notify-shake': unreadNotifCount > 0 }">
+                        <i class="ph-fill ph-bell text-xl text-pup-maroon dark:text-pup-gold"></i>
+                    </button>
+                    <span v-if="unreadNotifCount > 0" class="absolute -top-1 -right-1 w-4 h-4 bg-red-600 border-2 border-white dark:border-pup-darkcard rounded-full flex items-center justify-center shadow-sm text-[9px] font-black text-white leading-none">
+                        [[ unreadNotifCount > 9 ? '9+' : unreadNotifCount ]]
+                    </span>
+                </div>
+
+                <div class="relative">
                     <button @click="handleHeaderProfileClick" class="w-10 h-10 rounded-full border-2 border-pup-maroon dark:border-pup-gold overflow-hidden shadow-md flex items-center justify-center transition-transform active:scale-90">
                         {% if request.user.student.profile_picture %}
                             <img src="{{ request.user.student.profile_picture.url }}" class="w-full h-full object-cover">
@@ -244,7 +253,6 @@
                             </div>
                         {% endif %}
                     </button>
-                    <span v-if="hasNotification" class="absolute top-0 right-0 w-3 h-3 bg-red-600 border-2 border-white dark:border-pup-darkcard rounded-full animate-pulse shadow-sm"></span>
                 </div>
                 
                 <button @click="toggleTheme" class="hidden md:block text-2xl p-1 text-gray-600 dark:text-gray-400 hover:text-pup-gold hover:rotate-12 transition-all">
@@ -252,6 +260,35 @@
                 </button>
             </div>
         </nav>
+
+        <!-- Pop-up Notifications Banner -->
+        <div class="fixed top-24 right-4 sm:right-6 md:right-10 z-[3000] flex flex-col gap-3 pointer-events-none w-full max-w-[320px]">
+            <transition-group 
+                enter-active-class="transition-all duration-400 ease-out" 
+                enter-from-class="opacity-0 translate-x-12 scale-95" 
+                enter-to-class="opacity-100 translate-x-0 scale-100" 
+                leave-active-class="transition-all duration-300 ease-in absolute" 
+                leave-from-class="opacity-100 translate-x-0 scale-100" 
+                leave-to-class="opacity-0 translate-x-12 scale-95"
+                move-class="transition-all duration-400 ease-in-out"
+            >
+                <div v-for="banner in popupBanners" :key="banner.id" 
+                    @click="handleBannerClick(banner)"
+                    class="pointer-events-auto bg-white dark:bg-[#1a1a1a] border-l-4 rounded-r-xl rounded-l-md shadow-xl p-4 flex items-start gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#222] transition-all border border-gray-100 dark:border-gray-800 backdrop-blur-md"
+                    :class="getNotifBorderClass(banner.type, banner.status)">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border" :class="getModalIconWrapperClass(banner.type)">
+                        <i class="ph-fill text-lg" :class="getIconClass(banner.type)"></i>
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <h4 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">[[ banner.title ]]</h4>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 font-medium leading-tight mt-1 line-clamp-2">[[ banner.message ]]</p>
+                    </div>
+                    <button @click.stop="closeBanner(banner.id)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0">
+                        <i class="ph-bold ph-x text-sm"></i>
+                    </button>
+                </div>
+            </transition-group>
+        </div>
 
         <!-- 📱 Floating Bottom Navigation Bar (Mobile Only) 📱 -->
         <div class="md:hidden fixed bottom-0 left-0 right-0 z-[1000] w-full px-4 pb-4 pointer-events-none">
@@ -508,7 +545,6 @@
                     isDark: false,
                     isLogoutModalOpen: false,
                     showProfileBubble: false,
-                    hasNotification: false,
                     studentNum: "{{ request.user.username }}",
                     currentUrl: "{{ request.resolver_match.url_name }}",
                     
@@ -535,6 +571,12 @@
                     isMsgModalOpen: false,
                     currentMsg: {},
                     isLoading: true, // 🟢 Start with loading state
+
+                    // --- Notification System ---
+                    unreadNotifCount: 0,
+                    popupBanners: [],
+                    shownBannerIds: JSON.parse(sessionStorage.getItem('shown_banners') || '[]'),
+
                     ...window.VUE_APP_DATA
                 }
             },
@@ -563,14 +605,86 @@
                     document.documentElement.classList.add('dark');
                 }
 
-                this.checkUnreadStatus();
-                setInterval(this.checkUnreadStatus, 3000);
+                this.fetchNotifications();
+                setInterval(this.fetchNotifications, 10000);
 
                 this.initIndicator();
                 window.addEventListener('resize', () => this.calculatePosition(this.activeIndex));
+                
+                // Global logic to handle search redirection from banner
+                if (this.currentUrl === 'student_school_events') {
+                    const searchQuery = sessionStorage.getItem('eventSearchQuery');
+                    if (searchQuery) {
+                        setTimeout(() => {
+                            const searchInput = document.getElementById('eventSearch');
+                            if (searchInput) {
+                                searchInput.value = searchQuery;
+                                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            sessionStorage.removeItem('eventSearchQuery');
+                        }, 500);
+                    }
+                }
             },
             methods: {
                 ...window.VUE_APP_METHODS,
+                async fetchNotifications() {
+                    try {
+                        const response = await fetch("{% url 'student_api_notifications' %}");
+                        const data = await response.json();
+                        if (data.status === 'success') {
+                            this.allNotifs = data.notifications;
+                            this.updateNotificationState();
+                        }
+                    } catch (error) {
+                        console.error('Error fetching notifications:', error);
+                    }
+                },
+                updateNotificationState() {
+                    const unread = this.allNotifs.filter(n => !this.readNotifs.includes(n.id));
+                    this.unreadNotifCount = unread.length;
+
+                    // New unread that haven't been shown as banners
+                    const newNotifs = unread.filter(n => !this.shownBannerIds.includes(n.id));
+                    
+                    if (newNotifs.length > 0) {
+                        // Add to banners (at the top), max 5
+                        this.popupBanners = [...newNotifs, ...this.popupBanners].slice(0, 5);
+                        
+                        // Mark as shown
+                        newNotifs.forEach(n => this.shownBannerIds.push(n.id));
+                        sessionStorage.setItem('shown_banners', JSON.stringify(this.shownBannerIds));
+
+                        // Auto-hide banners after 8 seconds
+                        newNotifs.forEach(n => {
+                            setTimeout(() => {
+                                this.closeBanner(n.id);
+                            }, 8000);
+                        });
+                    }
+                },
+                closeBanner(id) {
+                    this.popupBanners = this.popupBanners.filter(b => b.id !== id);
+                },
+                openNotifications() {
+                    window.location.href = "{% url 'student_messages' %}";
+                },
+                handleBannerClick(banner) {
+                    let searchTitle = banner.title;
+                    if (banner.title.startsWith('Upcoming: ')) {
+                        searchTitle = banner.title.replace('Upcoming: ', '');
+                    } else if (banner.title.startsWith('Attendance Issue: ')) {
+                        searchTitle = banner.title.replace('Attendance Issue: ', '');
+                    }
+                    
+                    if (!this.readNotifs.includes(banner.id)) {
+                        this.readNotifs.push(banner.id);
+                        localStorage.setItem('student_read_notifs', JSON.stringify(this.readNotifs));
+                    }
+                    
+                    sessionStorage.setItem('eventSearchQuery', searchTitle.trim());
+                    window.location.href = "{% url 'student_school_events' %}";
+                },
                 setNavRef(index, el) {
                     this.navRefs[index] = el;
                 },
@@ -621,9 +735,7 @@
                     }
                 },
                 checkUnreadStatus() {
-                    const notifKey = "welcome_read_" + this.studentNum;
-                    const isRead = localStorage.getItem(notifKey) === 'true';
-                    this.hasNotification = !isRead;
+                    // Deprecated: Replaced by API fetching in fetchNotifications()
                 },
                 openLogoutModal() {
                     this.isLogoutModalOpen = true;

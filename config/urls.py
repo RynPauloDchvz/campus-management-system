@@ -36,6 +36,7 @@ urlpatterns = [
 
     path('adviser/dashboard/', views.adviser_dashboard, name='adviser_dashboard'),
     path('adviser/history/', views.adviser_history, name='adviser_history'),
+    path('adviser/api/notifications/', views.get_adviser_notifications_api, name='adviser_api_notifications'),
 
     # 🟢 BAGONG API PARA SA ADVISER APPROVE/REJECT 🟢
     path('adviser/api/action/', views.adviser_api_action, name='adviser_api_action'),
@@ -62,6 +63,7 @@ urlpatterns = [
     path('student/update-password', views.update_student_password, name='update_student_password'),
     path('student/update-profile', views.update_student_profile, name='update_student_profile'),
     path('student/update-notif-preference', views.update_notification_preference, name='update_notification_preference'),
+    path('student/api/notifications', views.get_student_notifications_api, name='student_api_notifications'),
     path('student/record-attendance', views.record_attendance, name='record_attendance_student'),
     path('record-attendance/', views.record_attendance, name='record_attendance'),
     path('student/submit-evaluation', views.submit_evaluation, name='submit_evaluation'),
@@ -83,6 +85,7 @@ urlpatterns = [
     path('organizer/create-events', views.organizer_create_events, name='organizer_create_events'),
     
     # 🟢 DITO YUNG API PARA MA-SAVE YUNG GINAWANG EVENT PROPOSAL SA DATABASE 🟢
+    path('organizer/api/notifications/', views.get_organizer_notifications_api, name='organizer_api_notifications'),
     path('organizer/api/submit-proposal/', views.submit_event_proposal, name='submit_event_proposal'),
     
     # 🟢 BAGONG API PARA SA PAG-DOWNLOAD NG WORD TEMPLATE 🟢

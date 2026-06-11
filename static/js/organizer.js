@@ -15,28 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 isLoading: true,
                 showProfileBubble: false,
                 isLogoutModalOpen: false,
-                hasNotification: true, 
-                isMobileMenuOpen: false,
-                currentUrl: window.VUE_APP_DATA?.currentUrl || '',
-                
-                // --- ?? Bottom Nav Configuration ?? ---
-                navItems: [
-                    { name: 'Home', label: 'Home', icon: 'ph-bold ph-house', iconActive: 'ph-fill ph-house', url: window.VUE_APP_DATA?.urls?.homepage },
-                    { name: 'Events', label: 'Events', icon: 'ph-bold ph-ticket', iconActive: 'ph-fill ph-ticket', url: window.VUE_APP_DATA?.urls?.school_events },
-                    { name: 'Create', label: 'Create', icon: 'ph-bold ph-plus-circle', iconActive: 'ph-fill ph-plus-circle', url: window.VUE_APP_DATA?.urls?.create_events },
-                    { name: 'Students', label: 'Students', icon: 'ph-bold ph-users', iconActive: 'ph-fill ph-users', url: window.VUE_APP_DATA?.urls?.manage_students },
-                    { name: 'Attendance', label: 'Attendance', icon: 'ph-bold ph-bounding-box', iconActive: 'ph-fill ph-bounding-box', url: window.VUE_APP_DATA?.urls?.manage_attendance },
-                    { name: 'Analytics', label: 'Analytics', icon: 'ph-bold ph-chart-bar', iconActive: 'ph-fill ph-chart-bar', url: window.VUE_APP_DATA?.urls?.analytics },
-                    { name: 'Theme', label: 'Mode', icon: 'ph-bold ph-moon', iconActive: 'ph-fill ph-sun', url: null }
-                ],
-                
-                // --- ?? Bottom Nav State ?? ---
-                navRefs: [],
-                indicatorOffset: 0,
-                indicatorWidth: 0,
-                activeIndex: -1,
-                showLeftArrow: false,
-                showRightArrow: true,
+                // --- ?? Notification System ?? ---
+                unreadNotifCount: 0,
+                allNotifs: [],
+                readNotifs: JSON.parse(localStorage.getItem('organizer_read_notifs') || '[]'),
+                popupBanners: [],
+                shownBannerIds: JSON.parse(sessionStorage.getItem('organizer_shown_banners') || '[]'),
+                isMsgModalOpen: false,
+                currentMsg: {},
 
                 // --- ?? State ?? ---
                 isEventModalOpen: false,
@@ -76,12 +62,121 @@ document.addEventListener('DOMContentLoaded', () => {
             this.isDark = (savedTheme === 'dark');
             document.documentElement.classList.toggle('dark', this.isDark);
 
+            this.fetchNotifications();
+            setInterval(this.fetchNotifications, 10000);
+
             this.initIndicator();
             window.addEventListener('resize', () => {
                 if (this.activeIndex !== -1) this.calculatePosition(this.activeIndex);
             });
+
+            // Global logic to handle search redirection from banner
+            if (this.currentUrl === 'organizer_school_events') {
+                const searchQuery = sessionStorage.getItem('eventSearchQuery');
+                if (searchQuery) {
+                    setTimeout(() => {
+                        const searchInput = document.getElementById('eventSearch');
+                        if (searchInput) {
+                            searchInput.value = searchQuery;
+                            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        sessionStorage.removeItem('eventSearchQuery');
+                    }, 500);
+                }
+            }
         },
         methods: {
+            async fetchNotifications() {
+                try {
+                    const response = await fetch('/organizer/api/notifications/');
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        this.allNotifs = data.notifications;
+                        
+                        // Kung nasa message history page, i-mark lahat bilang read automatic
+                        if (this.currentUrl === 'organizer_message_history') {
+                            this.markAllAsRead();
+                        }
+                        
+                        this.updateNotificationState();
+                    }
+                } catch (error) {
+                    console.error('Error fetching notifications:', error);
+                }
+            },
+            updateNotificationState() {
+                const unread = this.allNotifs.filter(n => !this.readNotifs.includes(n.id));
+                this.unreadNotifCount = unread.length;
+
+                // New unread that haven't been shown as banners
+                const newNotifs = unread.filter(n => !this.shownBannerIds.includes(n.id));
+                
+                if (newNotifs.length > 0) {
+                    this.popupBanners = [...newNotifs, ...this.popupBanners].slice(0, 5);
+                    newNotifs.forEach(n => this.shownBannerIds.push(n.id));
+                    sessionStorage.setItem('organizer_shown_banners', JSON.stringify(this.shownBannerIds));
+
+                    newNotifs.forEach(n => {
+                        setTimeout(() => { this.closeBanner(n.id); }, 8000);
+                    });
+                }
+            },
+            markAllAsRead() {
+                const allIds = this.allNotifs.map(n => n.id);
+                // Merge current readNotifs with allIds to ensure everything is marked
+                this.readNotifs = [...new Set([...this.readNotifs, ...allIds])];
+                localStorage.setItem('organizer_read_notifs', JSON.stringify(this.readNotifs));
+                this.unreadNotifCount = 0;
+            },
+            closeBanner(id) {
+                this.popupBanners = this.popupBanners.filter(b => b.id !== id);
+            },
+            handleBannerClick(banner) {
+                if (!this.readNotifs.includes(banner.id)) {
+                    this.readNotifs.push(banner.id);
+                    localStorage.setItem('organizer_read_notifs', JSON.stringify(this.readNotifs));
+                }
+                this.unreadNotifCount = this.allNotifs.filter(n => !this.readNotifs.includes(n.id)).length;
+                
+                // Logic based on title for redirection
+                const title = banner.title.toLowerCase();
+                const msg = banner.message.toLowerCase();
+                
+                if (title.includes('attendance') || msg.includes('attendance')) {
+                    let eventName = '';
+                    const match = banner.message.match(/for "(.*?)"/);
+                    if (match) eventName = match[1];
+                    if (eventName) sessionStorage.setItem('eventSearchQuery', eventName);
+                    window.location.href = window.VUE_APP_DATA?.urls?.school_events || '/organizer/school-events/';
+                } else if (title.includes('student') || msg.includes('student')) {
+                    window.location.href = window.VUE_APP_DATA?.urls?.manage_students || '/organizer/manage-students/';
+                } else if (title.includes('event') || msg.includes('event')) {
+                    window.location.href = window.VUE_APP_DATA?.urls?.school_events || '/organizer/school-events/';
+                } else {
+                    window.location.href = window.VUE_APP_DATA?.urls?.messages || '/organizer/messages/';
+                }
+                
+                this.closeBanner(banner.id);
+            },
+            openNotifications() {
+                this.markAllAsRead();
+                window.location.href = window.VUE_APP_DATA?.urls?.messages || '/organizer/messages/';
+            },
+            getNotifBorderClass(type, status) {
+                if (status === 'Approved') return 'border-l-green-500';
+                if (status === 'Rejected' || type === 'alert') return 'border-l-red-500';
+                return 'border-l-blue-500';
+            },
+            getIconClass(type) {
+                if (type === 'event') return 'ph-calendar-star';
+                if (type === 'alert') return 'ph-warning-circle';
+                return 'ph-megaphone';
+            },
+            getIconBgClass(type) {
+                if (type === 'event') return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800';
+                if (type === 'alert') return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800';
+                return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800';
+            },
             handleHeaderProfileClick() {
                 if (window.innerWidth >= 1024) {
                     window.location.href = window.VUE_APP_DATA?.urls?.profile || '#';

@@ -32,10 +32,37 @@
     </div>
 
     <div class="bg-white dark:bg-pup-darkcard p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 mb-6 flex flex-col lg:flex-row gap-4 items-center justify-between">
-        <div class="relative w-full lg:w-96 shrink-0">
-            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-            <input type="text" id="searchInput" onkeyup="searchStudent()" placeholder="Search by student name or number..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-all">
+        <div class="flex flex-col lg:flex-row gap-4 items-center w-full lg:w-auto">
+            <div class="relative w-full lg:w-72 shrink-0">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" id="searchInput" onkeyup="searchStudent()" placeholder="Search student or activity..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-all">
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <!-- Status Filter -->
+                <div class="relative w-full sm:w-40">
+                    <select id="typeFilter" onchange="searchStudent()" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white appearance-none cursor-pointer transition-all">
+                        <option value="ALL">All Status</option>
+                        <option value="TIME_IN">Time In Only</option>
+                        <option value="TIME_OUT">Time Out Only</option>
+                    </select>
+                    <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+
+                <!-- Year Filter -->
+                <div class="relative w-full sm:w-40">
+                    <select id="yearFilter" onchange="searchStudent()" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white appearance-none cursor-pointer transition-all">
+                        <option value="ALL">All Years</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option id="year4Option" value="4th Year">4th Year</option>
+                    </select>
+                    <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+            </div>
         </div>
+
         <div class="flex items-center gap-3">
             <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Live Count:</span>
             <span class="text-xl font-black text-pup-maroon dark:text-pup-gold" id="studentCount">0</span>
@@ -133,22 +160,34 @@
             const isVerified = item.status === 'Verified';
             const statusClass = isVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
             
+            const isOrganizer = item.role === 'ORGANIZER';
+            const rowStyle = isOrganizer ? 'bg-pup-maroon/5 dark:bg-pup-gold/5 border-l-4 border-pup-maroon dark:border-pup-gold' : '';
+            const roleBadge = isOrganizer ? '<span class="ml-2 px-2 py-0.5 rounded-md bg-pup-maroon dark:bg-pup-gold text-white dark:text-black text-[8px] font-black uppercase tracking-widest animate-pulse">ORGANIZER</span>' : '';
+            const yearDisplay = isOrganizer ? 'OFFICIAL MEMBER' : `${item.program} • YEAR ${item.year}`;
+            
+            const timeDisplay = item.has_timed_out ? 
+                `<div class="flex flex-col"><span class="text-green-600 dark:text-green-400">IN: ${item.time}</span><span class="text-blue-600 dark:text-blue-400">OUT: ${item.time_out}</span></div>` : 
+                `IN: ${item.time}`;
+
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="hover:bg-gray-50 dark:hover:bg-[#111] transition-colors cursor-pointer group" onclick="openProofModal(${item.id})">
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-[#111]/50 transition-colors cursor-pointer group ${rowStyle}" onclick="openProofModal(${item.id})">
                     <td class="p-5 pl-8">
                         <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-gray-100 dark:border-gray-800">
+                            <div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 border-2 ${isOrganizer ? 'border-pup-maroon dark:border-pup-gold shadow-md' : 'border-gray-100 dark:border-gray-800'}">
                                 <img src="${item.img}" class="w-full h-full object-cover">
                             </div>
                             <div>
-                                <h4 class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm leading-none mb-1">${item.name}</h4>
+                                <h4 class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm leading-none mb-1 flex items-center">
+                                    ${item.name}
+                                    ${roleBadge}
+                                </h4>
                                 <p class="text-[10px] text-pup-maroon dark:text-pup-gold font-black uppercase tracking-widest">${item.number}</p>
                             </div>
                         </div>
                     </td>
-                    <td class="p-5 text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight">${item.program} • YEAR ${item.year}</td>
+                    <td class="p-5 text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight">${yearDisplay}</td>
                     <td class="p-5 text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate max-w-[200px]">${item.event}</td>
-                    <td class="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">${item.time} • ${item.date}</td>
+                    <td class="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">${timeDisplay}</td>
                     <td class="p-5 pr-8">
                         <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-current opacity-80 ${statusClass}">${item.status}</span>
                     </td>
@@ -160,9 +199,29 @@
 
     function searchStudent() {
         const query = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = attendanceData.filter(item => 
-            item.name.toLowerCase().includes(query) || item.number.toLowerCase().includes(query) || item.event.toLowerCase().includes(query)
-        );
+        const typeFilter = document.getElementById('typeFilter').value;
+        const yearFilter = document.getElementById('yearFilter').value;
+
+        const filtered = attendanceData.filter(item => {
+            const matchesSearch = item.name.toLowerCase().includes(query) || 
+                                 item.number.toLowerCase().includes(query) || 
+                                 item.event.toLowerCase().includes(query);
+            
+            let matchesType = true;
+            if (typeFilter === 'TIME_IN') matchesType = true; // Everyone has time in
+            if (typeFilter === 'TIME_OUT') matchesType = item.has_timed_out;
+
+            let matchesYear = true;
+            if (yearFilter !== 'ALL') {
+                if (item.role === 'ORGANIZER') {
+                    matchesYear = false; // If filtering by specific year, hide organizers unless they match? (Usually organizers don't have year in this view)
+                } else {
+                    matchesYear = item.year === yearFilter;
+                }
+            }
+
+            return matchesSearch && matchesType && matchesYear;
+        });
         renderTable(filtered);
     }
 
@@ -198,6 +257,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        const orgAcr = document.getElementById('currentOrgAcronym').value;
+        if (orgAcr === 'ITS') {
+            const year4 = document.getElementById('year4Option');
+            if (year4) year4.remove();
+        }
         renderTable(attendanceData);
     });
 </script>
