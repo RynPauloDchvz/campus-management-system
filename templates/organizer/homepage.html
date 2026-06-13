@@ -10,12 +10,12 @@
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
 
-    /* Banner Mobile Optimization - Centered Text */
+    /* Banner Mobile Optimization */
     @media (max-width: 640px) {
         .hero-container { border-radius: 0 !important; margin-left: -1.25rem !important; margin-right: -1.25rem !important; width: calc(100% + 2.5rem) !important; }
     }
 
-    /* Stats Box Optimization - Zero Truncation */
+    /* Stats Box Optimization */
     @media (max-width: 640px) {
         .stats-text-label { font-size: 8px !important; line-height: 1 !important; display: block !important; white-space: normal !important; }
         .stats-text-value { font-size: 18px !important; }
@@ -23,34 +23,29 @@
         .stats-box { padding: 0.75rem !important; gap: 0.5rem !important; }
     }
 
-    /* About Org - Custom Radius Logic */
+    /* About Org - Layout & Slideshow Refinement */
     .about-section {
         background: white;
         border-radius: 1.5rem;
         overflow: hidden;
         border: 1px solid #e5e7eb;
     }
-    .dark .about-section {
-        background: #151515;
-        border: 1px solid #262626;
-    }
+    .dark .about-section { background: #151515; border: 1px solid #262626; }
+    
     .slideshow-container {
         position: relative;
         overflow: hidden;
         width: 100%;
         height: 100%;
-        min-height: 300px;
-        /* Desktop: Radius only on the left */
+        min-height: 250px;
+        background: #000;
         border-top-left-radius: 1.5rem;
         border-bottom-left-radius: 1.5rem;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
     }
     @media (max-width: 1024px) {
         .slideshow-container { 
             aspect-ratio: 16/9; 
             min-height: auto;
-            /* Mobile: Radius only on top to be flush with container bottom */
             border-bottom-left-radius: 0;
             border-top-right-radius: 1.5rem;
         }
@@ -63,43 +58,23 @@
         object-fit: cover;
         position: absolute;
         inset: 0;
+        animation: fadeEffect 1s;
     }
-
-    /* Quick Action Reversion */
-    .action-card {
-        background: white;
-        border-radius: 1.5rem;
-        padding: 1.5rem;
-        border: 1px solid #f3f4f6;
-        transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
+    .logo-slide {
+        object-fit: contain !important;
+        background: white !important;
+        padding: 2.5rem;
     }
-    .dark .action-card { background: #1a1a1a; border-color: #2a2a2a; }
-    .action-card:hover { transform: translateY(-5px); border-color: #800000; }
-    .dark .action-card:hover { border-color: #D4AF37; }
+    @keyframes fadeEffect { from {opacity: 0.4;} to {opacity: 1;} }
 
-    @media (max-width: 640px) {
-        .action-title { font-size: 10px !important; }
-        .action-desc { font-size: 8px !important; }
-        .action-icon { width: 40px !important; height: 40px !important; }
-        .action-icon i { font-size: 20px !important; }
-        .action-card { padding: 1rem !important; border-radius: 1.25rem !important; }
-    }
-
-    /* University News - Carousel with Focus Effect */
+    /* University News - Responsive Layout */
     .news-carousel {
         display: flex;
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         gap: 1.25rem;
-        padding-bottom: 1.5rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        margin-left: -1rem;
-        margin-right: -1rem;
+        padding: 1.5rem 1rem;
+        margin: -1.5rem -1rem;
     }
     .news-card {
         flex: 0 0 85%;
@@ -107,51 +82,41 @@
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         opacity: 0.6;
         transform: scale(0.9);
+        border: none !important;
     }
-    @media (min-width: 640px) {
-        .news-carousel { display: grid; grid-template-columns: repeat(2, 1fr); overflow: visible; margin: 0; padding: 0; }
-        .news-card { flex: none; scroll-snap-align: none; opacity: 1; transform: scale(1); }
+    @media (max-width: 767px) {
+        .news-card.active-focus {
+            opacity: 1 !important;
+            transform: scale(1.02) !important;
+            box-shadow: 0 30px 40px -10px rgba(0, 0, 0, 0.25);
+            z-index: 10;
+        }
     }
-    /* Active Focus Class (Mobile Only) */
-    .news-card.active-focus {
-        opacity: 1;
-        transform: scale(1);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    @media (min-width: 768px) {
+        .news-carousel { display: grid; grid-template-columns: repeat(2, 1fr); overflow: visible; padding: 0; margin: 0; }
+        .news-card { flex: none; opacity: 1; transform: scale(1); border: 1px solid #e5e7eb !important; }
+        .dark .news-card { border: 1px solid #262626 !important; }
     }
-
-    /* Date Icon Style for Schedule */
-    .date-icon {
-        width: 45px;
-        height: 45px;
-        background: #f9fafb;
-        border: 1px solid #f3f4f6;
-        border-radius: 0.75rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    .dark .date-icon { background: #111; border-color: #222; }
-    .date-month { font-size: 8px; font-weight: 900; color: #800000; text-transform: uppercase; }
-    .dark .date-month { color: #D4AF37; }
-    .date-day { font-size: 14px; font-weight: 900; line-height: 1; }
 
     /* Full Screen Modals on Mobile */
     @media (max-width: 640px) {
-        .modal-content-container {
+        .modal-content-container, #calendarModalContainer {
             width: 100vw !important;
             height: 100vh !important;
             max-height: 100vh !important;
             border-radius: 0 !important;
             margin: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
         }
-        #calendarModalContainer {
-            width: 100vw !important;
-            height: 100vh !important;
-            max-height: 100vh !important;
-            border-radius: 0 !important;
+        .modal-scroll-area { flex: 1; overflow-y: auto; padding-bottom: 7rem !important; }
+        .modal-header-img { height: 35vh !important; flex-shrink: 0; }
+        .fixed-modal-footer {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(to top, white 80%, transparent);
+            padding: 1.5rem 2rem 2.5rem 2rem; z-index: 5020;
         }
+        .dark .fixed-modal-footer { background: linear-gradient(to top, #151515 80%, transparent); }
     }
 </style>
 
@@ -163,19 +128,10 @@
 </script>
 {% endblock extra_head %}
 
-{% block skeleton %}
-<div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
-    <div class="w-full h-64 rounded-2xl skeleton-shimmer mb-8"></div>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        <div v-for="i in 4" :key="i" class="h-24 rounded-xl skeleton-shimmer"></div>
-    </div>
-</div>
-{% endblock skeleton %}
-
 {% block content %}
 <div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
 
-    <!-- 1. BANNER (Centered Text) -->
+    <!-- 1. BANNER -->
     <div class="hero-container relative w-full h-[180px] sm:h-[250px] md:h-[300px] rounded-2xl overflow-hidden shadow-lg mb-10 bg-gray-900 transition-all">
         <img src="{% static 'images/banner/banner.jpg' %}" alt="PUP Banner" class="absolute inset-0 w-full h-full object-cover z-0">
         <div class="absolute inset-0 bg-black/40 z-0"></div>
@@ -226,21 +182,16 @@
         </div>
     </div>
 
-    <!-- 3. ABOUT ORG SECTION (Flush logic with specific Radius) -->
-    <div class="about-section mb-10">
+    <!-- 3. ABOUT ORG SECTION -->
+    <div class="about-section mb-12 shadow-sm">
         <div class="flex flex-col lg:flex-row">
-            <!-- Left: Slideshow -->
             <div class="lg:w-1/2">
-                <div class="slideshow-container bg-gray-100 dark:bg-gray-800">
-                    <img class="slide" src="{% static 'images/org1.jpg' %}">
-                    <img class="slide" src="{% static 'images/org2.jpg' %}">
-                    <img class="slide" src="{% static 'images/org3.jpg' %}">
-                    <img class="slide" src="{% static 'images/org4.jpg' %}">
-                    <img class="slide" src="{% static 'images/org5.jpg' %}">
-                    <img class="slide" src="{% static 'images/PUPLogo.png' %}" style="object-fit: contain; background: white; padding: 2rem;">
+                <div class="slideshow-container bg-black">
+                    {% for img in slideshow_images %}
+                        <img class="slide {% if img.is_logo %}logo-slide{% endif %}" src="{{ img.url }}" alt="Org Photo">
+                    {% endfor %}
                 </div>
             </div>
-            <!-- Right: Content -->
             <div class="lg:w-1/2 p-8 sm:p-12 flex flex-col justify-center">
                 <div class="mb-6">
                     <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1">
@@ -258,32 +209,32 @@
     <!-- 4. QUICK ACTIONS -->
     <div class="mb-12">
         <h2 class="text-xs sm:text-sm font-black text-gray-400 dark:text-gray-500 mb-6 uppercase tracking-[0.3em] flex items-center gap-2">
-            <span class="w-8 h-[2px] bg-gray-200 dark:bg-gray-800"></span> Dashboard Console
+            Dashboard Console
         </h2>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <a href="{% url 'organizer_create_events' %}" class="action-card group">
-                <div class="action-icon w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
+                <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
                     <i class="ph-bold ph-calendar-plus text-2xl"></i>
                 </div>
                 <h3 class="action-title font-black text-xs sm:text-sm text-gray-900 dark:text-white uppercase tracking-wide">Create Event</h3>
                 <p class="action-desc text-[9px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Propose activities</p>
             </a>
             <a href="{% url 'organizer_document_tracking' %}" class="action-card group">
-                <div class="action-icon w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
+                <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
                     <i class="ph-bold ph-file-search text-2xl"></i>
                 </div>
                 <h3 class="action-title font-black text-xs sm:text-sm text-gray-900 dark:text-white uppercase tracking-wide">Tracking</h3>
                 <p class="action-desc text-[9px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Monitor status</p>
             </a>
             <a href="{% url 'organizer_manage_attendance' %}" class="action-card group">
-                <div class="action-icon w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
+                <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
                     <i class="ph-bold ph-users-three text-2xl"></i>
                 </div>
                 <h3 class="action-title font-black text-xs sm:text-sm text-gray-900 dark:text-white uppercase tracking-wide">Attendance</h3>
                 <p class="action-desc text-[9px] sm:text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Verify logs</p>
             </a>
             <a href="{% url 'organizer_analytics' %}" class="action-card group">
-                <div class="action-icon w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
+                <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-4 group-hover:scale-110 transition-transform">
                     <i class="ph-bold ph-chart-bar text-2xl"></i>
                 </div>
                 <h3 class="action-title font-black text-xs sm:text-sm text-gray-900 dark:text-white uppercase tracking-wide">Analytics</h3>
@@ -294,15 +245,13 @@
 
     <!-- 5. BOTTOM GRID -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        
-        <!-- News (Reverted to Horizontal Carousel on Mobile) -->
         <div class="lg:col-span-2">
             <h2 class="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight flex items-center gap-2">
                 <i class="ph-bold ph-newspaper-clipping text-pup-maroon dark:text-pup-gold"></i> University News
             </h2>
             <div class="news-carousel hide-scrollbar">
                 <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news)" class="news-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 transition-all cursor-pointer group">
-                    <div class="h-40 overflow-hidden">
+                    <div class="h-40 overflow-hidden relative">
                         <img :src="getStaticImageUrl(news.image)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </div>
                     <div class="p-5">
@@ -310,20 +259,15 @@
                         <h3 class="text-sm font-black text-gray-900 dark:text-white leading-tight uppercase truncate">[[ news.title ]]</h3>
                     </div>
                 </div>
-                <div v-if="!latestNews.length" class="text-center py-10 bg-gray-50 dark:bg-white/5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-800 w-full col-span-2">
-                    <p class="text-gray-400 font-bold text-xs uppercase tracking-widest">No recent updates</p>
-                </div>
             </div>
         </div>
 
-        <!-- Schedule -->
         <div class="lg:col-span-1">
             <h2 class="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight flex items-center gap-2">
                 <i class="ph-bold ph-calendar-blank text-pup-maroon dark:text-pup-gold"></i> Schedule
             </h2>
             <div class="bg-white dark:bg-pup-darkcard rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
                 <div id="calendar" class="w-full mb-6"></div>
-                
                 <div class="space-y-3 max-h-[350px] overflow-y-auto hide-scrollbar">
                     <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="handleCalendarEventClick(evt)" class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-800 group">
                         <div class="date-icon">
@@ -349,16 +293,14 @@
 <!-- ========================================== -->
 
 <!-- Simple Event Modal -->
-<div v-if="isEventModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center px-0 sm:px-4 py-6" v-cloak>
+<div v-if="isEventModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center px-0 sm:px-4 py-0 sm:py-6" v-cloak>
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal"></div>
-    
-    <!-- Fixed Close Button -->
     <button @click="closeModal" class="fixed top-6 right-6 sm:top-10 sm:right-10 z-[5010] bg-black/60 hover:bg-pup-maroon text-white w-12 h-12 rounded-full flex items-center justify-center transition-all backdrop-blur-md shadow-2xl border border-white/20">
         <i class="ph-bold ph-x text-xl"></i>
     </button>
 
-    <div class="modal-content-container relative bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-lg overflow-y-auto max-h-full border border-gray-100 dark:border-gray-800 hide-scrollbar">
-        <div class="h-48 sm:h-64 w-full bg-gray-200 dark:bg-gray-800 relative">
+    <div class="modal-content-container relative bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up">
+        <div class="h-48 sm:h-64 w-full bg-gray-200 dark:bg-gray-800 relative modal-header-img">
             <img :src="getStaticImageUrl(selectedEvent.image)" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
             <div class="absolute bottom-6 left-6 right-6">
@@ -366,28 +308,25 @@
                 <h2 class="text-xl sm:text-2xl font-black text-white uppercase leading-tight">[[ selectedEvent.title ]]</h2>
             </div>
         </div>
-        <div class="p-6 sm:p-8">
+        <div class="p-6 sm:p-8 modal-scroll-area">
             <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300 mb-6 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                 <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold"></i>
                 <div class="text-xs font-bold uppercase">[[ selectedEvent.location || 'PUP Unisan' ]]</div>
             </div>
-            <h3 class="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2">Event Overview</h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium italic">"[[ selectedEvent.description ]]"</p>
         </div>
     </div>
 </div>
 
 <!-- Calendar Detail Modal -->
-<div id="calendarEventModal" class="hidden fixed inset-0 z-[5000] items-center justify-center px-0 sm:px-4 py-6">
+<div id="calendarEventModal" class="hidden fixed inset-0 z-[5000] items-center justify-center px-0 sm:px-4 py-0 sm:py-6">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeCalendarModal()"></div>
-
-    <!-- Fixed Close Button -->
     <button onclick="closeCalendarModal()" class="fixed top-6 right-6 sm:top-10 sm:right-10 z-[5010] bg-black/60 hover:bg-pup-maroon text-white w-12 h-12 rounded-full flex items-center justify-center transition-all backdrop-blur-md shadow-2xl border border-white/20">
         <i class="ph-bold ph-x text-xl"></i>
     </button>
 
-    <div id="calendarModalContainer" class="relative bg-white dark:bg-pup-darkcard w-full max-w-2xl rounded-2xl shadow-2xl overflow-y-auto max-h-full border border-gray-100 dark:border-gray-800 hide-scrollbar">
-        <div class="h-64 w-full relative">
+    <div id="calendarModalContainer" class="relative bg-white dark:bg-pup-darkcard w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up">
+        <div class="h-64 w-full relative modal-header-img">
             <img id="calModalImg" src="" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
             <div class="absolute bottom-6 left-6 right-6">
@@ -395,7 +334,7 @@
                 <h2 id="calModalTitle" class="text-2xl sm:text-3xl font-black text-white uppercase leading-tight">Title</h2>
             </div>
         </div>
-        <div class="p-8">
+        <div class="p-8 modal-scroll-area">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 <div class="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-4 rounded-xl">
                     <i class="ph-fill ph-calendar-blank text-2xl text-pup-maroon dark:text-pup-gold"></i>
@@ -413,6 +352,15 @@
                 </div>
             </div>
             <p id="calModalDesc" class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed mb-10 italic font-medium">Description</p>
+        </div>
+        <!-- Mobile Fixed Footer -->
+        <div class="fixed-modal-footer sm:hidden">
+            <a href="{% url 'organizer_school_events' %}" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-4 rounded-xl text-[10px] flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg transition-transform active:scale-95">
+                <i class="ph-bold ph-planet text-lg"></i> Access Event Hub
+            </a>
+        </div>
+        <!-- Desktop Footer -->
+        <div class="p-8 pt-0 hidden sm:block">
             <a href="{% url 'organizer_school_events' %}" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 rounded-xl text-[10px] flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg transition-transform active:scale-95">
                 <i class="ph-bold ph-planet text-xl"></i> Access Event Hub
             </a>
@@ -440,30 +388,21 @@
 
     // 2. Carousel Focus Effect Logic
     function initCarouselFocus() {
-        if (window.innerWidth >= 640) return; // Desktop doesn't need this
-
+        if (window.innerWidth >= 768) return; 
         const carousel = document.querySelector('.news-carousel');
         const cards = document.querySelectorAll('.news-card');
-        
         if (!carousel || !cards.length) return;
-
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active-focus');
-                } else {
-                    entry.target.classList.remove('active-focus');
-                }
+                if (entry.isIntersecting) entry.target.classList.add('active-focus');
+                else entry.target.classList.remove('active-focus');
             });
         }, {
-            root: carousel,
-            threshold: 0.8,
-            rootMargin: '0px -10% 0px -10%'
+            root: carousel, threshold: 0.7, rootMargin: '0px -10% 0px -10%'
         });
-
         cards.forEach(card => observer.observe(card));
+        if (carousel.scrollLeft === 0) cards[0].classList.add('active-focus');
     }
-    
     document.addEventListener('DOMContentLoaded', initCarouselFocus);
     window.addEventListener('resize', initCarouselFocus);
 
@@ -472,22 +411,17 @@
     document.addEventListener('DOMContentLoaded', () => {
         const calendarEl = document.getElementById('calendar');
         if (!calendarEl) return;
-
         const rawEvents = window.VUE_APP_DATA.calendarEvents || [];
         const formattedEvents = rawEvents.map(e => ({
-            id: e.id,
-            title: e.title,
-            start: e.date,
+            id: e.id, title: e.title, start: e.date,
             backgroundColor: e.status === 'Approved' ? '#800000' : '#EAB308',
             borderColor: e.status === 'Approved' ? '#800000' : '#EAB308',
             extendedProps: { ...e }
         }));
-
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: { left: 'prev,next', center: 'title', right: '' },
-            height: 'auto',
-            events: formattedEvents,
+            height: 'auto', events: formattedEvents,
             datesSet: (info) => updateFilteredEvents(info.view.currentStart),
             eventClick: (info) => handleCalendarEventClick(info.event.extendedProps)
         });
@@ -501,30 +435,25 @@
         document.getElementById('calModalVenue').innerText = evt.venue || 'TBD';
         document.getElementById('calModalDesc').innerText = evt.description || 'No description provided.';
         document.getElementById('calModalImg').src = evt.image || '{% static "images/background.jpg" %}';
-
         const modal = document.getElementById('calendarEventModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
     }
-
     function closeCalendarModal() {
         const modal = document.getElementById('calendarEventModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         document.body.style.overflow = '';
     }
-
     function updateFilteredEvents(currentDate) {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         const allEvts = window.VUE_APP_DATA.calendarEvents || [];
-        
         const filtered = allEvts.filter(e => {
             const d = new Date(e.date);
             return d.getFullYear() === year && d.getMonth() === month;
         }).sort((a, b) => new Date(b.date) - new Date(a.date));
-
         const appElement = document.getElementById('app');
         if (appElement && appElement.__vue_app__) {
             const vm = appElement.__vue_app__._instance.proxy;

@@ -57,6 +57,13 @@ def is_student_strictly(user):
         log_audit_event(request, 'UNAUTHORIZED', status='Denied', changes={'attempted_role': 'Student'})
     return is_auth
 
+def get_img(e):
+    if not e: return '/static/images/PUPLogo.png'
+    if hasattr(e, 'event_cover_photo') and e.event_cover_photo: return e.event_cover_photo.url
+    if hasattr(e, 'cover_photo') and e.cover_photo: return e.cover_photo.url
+    if hasattr(e, 'thumbnail') and e.thumbnail: return e.thumbnail.url
+    return '/static/images/PUPLogo.png'
+
 ORG_FULL_NAMES = {
     "ITO": "ITO - INFORMATION TECHNOLOGY ORGANIZATION",
     "YEO": "YEO - YOUNG ENTREPRENEURSHIP ORGANIZATION",
@@ -613,17 +620,57 @@ def student_homepage(request):
     except Student.DoesNotExist:
         return redirect('index')
 
-    # 🟢 RBAC Filtered: Own Org + Global Events
-    org_filter = Q(org_id=student.organization) | Q(event_title__icontains='Flag Raising') | Q(event_title__icontains='General Assembly') | Q(event_title__icontains='Student Week')
+    org_acronym = student.organization.strip()
 
-    upcoming_events = Event.objects.filter(org_filter).filter(event_status='Approved').order_by('event_date', 'start_time')[:4]
+    # 🟢 Fetch OrgProfile for the student's organization
+    org_profile = OrgProfile.objects.filter(organization=org_acronym).first()
+    
+    # 🟢 RBAC Filtered: Own Org + Global Events
+    org_filter = Q(org_id=org_acronym) | Q(event_title__icontains='Flag Raising') | Q(event_title__icontains='General Assembly') | Q(event_title__icontains='Student Week')
+
+    # Show events from 7 days ago onwards to include recent past events as requested
+    recent_limit = timezone.now().date() - timedelta(days=7)
+    upcoming_events = Event.objects.filter(org_filter).filter(
+        event_status='Approved',
+        event_date__gte=recent_limit
+    ).order_by('event_date', 'start_time')[:4]
+    
     latest_news = Event.objects.filter(org_filter).filter(event_status='Approved').order_by('-created_at')[:4]
 
-    def get_img(e):
-        if e.event_cover_photo: return e.event_cover_photo.url
-        if e.cover_photo: return e.cover_photo.url
-        if e.thumbnail: return e.thumbnail.url
-        return '/static/images/PUPLogo.png'
+    # --- 🟢 STRICT ORGANIZATION-SPECIFIC SLIDESHOW LOGIC 🟢 ---
+    slideshow_images = []
+    import os
+    from django.conf import settings
+    
+    org_img_dir = os.path.join(settings.BASE_DIR, 'static', 'images', 'orgImage', org_acronym)
+    if os.path.exists(org_img_dir):
+        files = os.listdir(org_img_dir)
+        # 1. Identify Logo (Must be first)
+        logo_file = next((f for f in files if f.lower().startswith(org_acronym.lower()) and f.lower().endswith(('.png', '.jpg', '.jpeg'))), None)
+        if logo_file:
+            slideshow_images.append({
+                'url': f'/static/images/orgImage/{org_acronym}/{logo_file}',
+                'is_logo': True
+            })
+        
+        # 2. Add other images from folder (and only from folder)
+        other_files = [f for f in files if f != logo_file and f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        for f in other_files:
+            slideshow_images.append({
+                'url': f'/static/images/orgImage/{org_acronym}/{f}',
+                'is_logo': False
+            })
+
+    # Final Fallback if folder empty
+    if not slideshow_images:
+        slideshow_images = [{'url': '/static/images/PUPLogo.png', 'is_logo': True}]
+
+    def clean_desc(desc):
+        if not desc: return 'No description provided.'
+        # Remove [NEW EVENT] or [RESCHEDULE] tags and technical metadata
+        if "Desc:" in desc:
+            return desc.split("Desc:")[1].strip()
+        return desc
 
     upcoming_data = []
     for e in upcoming_events:
@@ -633,7 +680,7 @@ def student_homepage(request):
             'date': e.event_date.strftime('%b %d, %Y').upper(),
             'location': e.venue,
             'image': get_img(e),
-            'description': e.description
+            'description': clean_desc(e.description)
         })
 
     news_data = []
@@ -644,35 +691,86 @@ def student_homepage(request):
             'date': e.created_at.strftime('%b %d, %Y').upper(),
             'location': e.venue,
             'image': get_img(e),
-            'description': e.description
+            'description': clean_desc(e.description)
         })
 
-    # Find Action Required: First event that is evaluatable but not yet evaluated
+    # 🟢 DYNAMIC ACTION REQUIRED LOGIC 🟢
     now = timezone.now()
     action_required = None
     
-    # Simple logic: check events that ended today or within last 24h
-    evaluatable_events = Event.objects.filter(org_filter).filter(event_status='Approved', event_date=now.date())
+    # 1. Look for an ACTIVE or RECENT event today
+    active_events = Event.objects.filter(org_filter).filter(
+        event_status='Approved', 
+        event_date=now.date(),
+        end_time__gt=now.time()
+    ).order_by('start_time')
+    
     evaluated_titles = list(AuditLog.objects.filter(actor=request.user, action='EVALUATION', status='Success').values_list('changes__event', flat=True))
 
-    for e in evaluatable_events:
-        if e.event_title not in evaluated_titles:
-            # Check if within window (1h before end)
+    for e in active_events:
+        # Get student's attendance for this event
+        att = Attendance.objects.filter(student=student, event_id=e.id).first()
+        
+        # Scenario A: Has not Timed In yet
+        if not att:
+            # Only if event has started or about to start (within 30 mins)
+            start_dt = timezone.make_aware(datetime.combine(e.event_date, e.start_time))
+            if now >= (start_dt - timedelta(minutes=30)):
+                action_required = {
+                    'id': e.id, 'type': 'attendance', 'title': 'Time In Required',
+                    'message': f"Log your attendance for '{e.event_title}' now.",
+                    'button_text': 'Check In Now', 'url': '/student/school-events/'
+                }
+                break
+
+        # Scenario B: Timed In but NOT yet Timed Out
+        elif att and not att.time_out:
+            # Check if it's near/past end time
             if e.end_time:
                 end_dt = timezone.make_aware(datetime.combine(e.event_date, e.end_time))
-                if now >= (end_dt - timedelta(hours=1)) and now <= (end_dt + timedelta(hours=24)):
+                # Allow timeout 15 mins before end
+                if now >= (end_dt - timedelta(minutes=15)):
                     action_required = {
-                        'id': e.id,
-                        'title': e.event_title,
-                        'message': 'Submit feedback to complete your Institutional Record.'
+                        'id': e.id, 'type': 'attendance', 'title': 'Time Out Required',
+                        'message': f"Don't forget to time out for '{e.event_title}'.",
+                        'button_text': 'Check Out Now', 'url': '/student/school-events/'
                     }
                     break
+        
+        # Scenario C: Timed Out but NOT yet Evaluated
+        elif att and att.time_out and e.event_title not in evaluated_titles:
+            action_required = {
+                'id': e.id, 'type': 'evaluation', 'title': 'Evaluation Required',
+                'message': f"Please share your feedback for '{e.event_title}'.",
+                'button_text': 'Evaluate Now', 'url': '/student/evaluation/'
+            }
+            break
+
+    # Fetch all approved events for the calendar (Own Org + Global)
+    all_approved_events = Event.objects.filter(org_filter).filter(event_status='Approved').order_by('-event_date')
+    calendar_data = []
+    for e in all_approved_events:
+        calendar_data.append({
+            'id': e.id,
+            'title': e.event_title,
+            'date': e.event_date.strftime('%Y-%m-%d'),
+            'status': e.event_status,
+            'venue': e.venue,
+            'description': clean_desc(e.description),
+            'start_time': e.start_time.strftime('%I:%M %p') if e.start_time else "",
+            'end_time': e.end_time.strftime('%I:%M %p') if e.end_time else "",
+            'image': get_img(e)
+        })
 
     context = {
         'student': student,
-        'upcoming_events_json': json.dumps(upcoming_data),
         'latest_news_json': json.dumps(news_data),
-        'action_required_json': json.dumps(action_required)
+        'calendar_events_json': json.dumps(calendar_data),
+        'action_required_json': json.dumps(action_required),
+        'org_acronym': org_acronym,
+        'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
+        'org_about': ORG_ABOUT_US.get(org_acronym, "Advancing university excellence."),
+        'slideshow_images': slideshow_images,
     }
     return render(request, 'student/homepage.html', context)
 
@@ -694,6 +792,12 @@ def student_school_events(request):
     # 🟢 DETAILED ATTENDANCE TRACKING 🟢
     attendance_qs = Attendance.objects.filter(student=student)
     attendance_map = {str(att.event_id): att for att in attendance_qs}
+
+    def clean_desc(desc):
+        if not desc: return 'Join us for this exciting campus activity managed by university organizations.'
+        if "Desc:" in desc:
+            return desc.split("Desc:")[1].strip()
+        return desc
 
     events_data = []
     for e in all_events:
@@ -717,7 +821,7 @@ def student_school_events(request):
             'end_time_iso': e.end_time.strftime('%H:%M:%S') if e.end_time else '',
             'venue': e.venue,
             'image': img_url,
-            'description': e.description,
+            'description': clean_desc(e.description),
             'target_lat': float(e.target_latitude) if e.target_latitude else 13.84615,
             'target_lng': float(e.target_longitude) if e.target_longitude else 121.96955,
             'already_attended': att_record is not None,
@@ -968,6 +1072,52 @@ def organizer_homepage(request):
         org_acronym = org_profile.organization.strip()
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
+        org_profile = None
+
+    # --- 🟢 ORGANIZATION-SPECIFIC SLIDESHOW LOGIC 🟢 ---
+    slideshow_images = []
+    import os
+    from django.conf import settings
+    
+    # 1. Start with Org Logo and static images from orgImage folder
+    org_img_dir = os.path.join(settings.BASE_DIR, 'static', 'images', 'orgImage', org_acronym)
+    if os.path.exists(org_img_dir):
+        files = os.listdir(org_img_dir)
+        # Prioritize Logo (File starting with acronym)
+        logo_file = next((f for f in files if f.lower().startswith(org_acronym.lower()) and f.lower().endswith(('.png', '.jpg', '.jpeg'))), None)
+        if logo_file:
+            slideshow_images.append(f'/static/images/orgImage/{org_acronym}/{logo_file}')
+        
+        # Add other background images from the same folder
+        other_files = [f for f in files if f != logo_file and f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        for f in other_files[:3]:
+            slideshow_images.append(f'/static/images/orgImage/{org_acronym}/{f}')
+
+    # 2. Add dynamic uploads from profile if available
+    if org_profile:
+        if org_profile.cover_photo and org_profile.cover_photo.url not in slideshow_images:
+            slideshow_images.append(org_profile.cover_photo.url)
+        if org_profile.profile_picture and org_profile.profile_picture.url not in slideshow_images:
+            slideshow_images.append(org_profile.profile_picture.url)
+
+    # 3. Add Event images
+    org_events_images = Event.objects.filter(org_id=org_acronym, event_status='Approved').exclude(
+        Q(event_cover_photo='') & Q(cover_photo='') & Q(thumbnail='')
+    ).order_by('-event_date')[:3]
+
+    def get_img(e):
+        if e.event_cover_photo: return e.event_cover_photo.url
+        if e.cover_photo: return e.cover_photo.url
+        if e.thumbnail: return e.thumbnail.url
+        return None
+
+    for e in org_events_images:
+        url = get_img(e)
+        if url and url not in slideshow_images:
+            slideshow_images.append(url)
+
+    if not slideshow_images:
+        slideshow_images = ['/static/images/org1.jpg', '/static/images/org2.jpg', '/static/images/PUPLogo.png']
 
     # 🟢 Latest News: Own Org + Global Events
     latest_news = Event.objects.filter(
@@ -977,19 +1127,13 @@ def organizer_homepage(request):
         Q(event_title__icontains='Student Week')
     ).filter(event_status='Approved').order_by('-created_at')[:4]
 
-    def get_img(e):
-        if e.event_cover_photo: return e.event_cover_photo.url
-        if e.cover_photo: return e.cover_photo.url
-        if e.thumbnail: return e.thumbnail.url
-        return '/static/images/PUPLogo.png'
-
     news_data = []
     for e in latest_news:
         news_data.append({
             'id': e.id,
             'title': e.event_title,
             'date': e.created_at.strftime('%b %d, %Y').upper(),
-            'image': get_img(e),
+            'image': get_img(e) or '/static/images/PUPLogo.png',
             'description': e.description or 'No description provided.',
             'location': e.venue or 'PUP Unisan'
         })
@@ -1001,7 +1145,7 @@ def organizer_homepage(request):
     pending_proposals_count = Event.objects.filter(org_id=org_acronym).exclude(event_status__in=['Approved', 'Rejected']).count()
     managed_events_count = Event.objects.filter(org_id=org_acronym, event_status='Approved', event_date__lt=today).count()
 
-    # All Events for Calendar (Ordered NEW to OLD for the list view below calendar)
+    # All Events for Calendar
     all_events = Event.objects.filter(org_id=org_acronym).order_by('-event_date')
     calendar_data = []
     for e in all_events:
@@ -1014,7 +1158,7 @@ def organizer_homepage(request):
             'description': e.description,
             'start_time': e.start_time.strftime('%I:%M %p') if e.start_time else "",
             'end_time': e.end_time.strftime('%I:%M %p') if e.end_time else "",
-            'image': get_img(e)
+            'image': get_img(e) or '/static/images/PUPLogo.png'
         })
 
     context = {
@@ -1027,6 +1171,7 @@ def organizer_homepage(request):
         'upcoming_events_count': upcoming_events_count,
         'pending_proposals_count': pending_proposals_count,
         'managed_events_count': managed_events_count,
+        'slideshow_images': slideshow_images,
     }
     return render(request, 'organizer/homepage.html', context)
 
@@ -1196,11 +1341,22 @@ def organizer_create_events(request):
             'rejectReason': str(e.remarks) if e.remarks else 'No reason provided.'
         })
 
+    # Fetch approved events for rescheduling dropdown
+    approved_events = Event.objects.filter(org_id=org_acronym, event_status='Approved').values('id', 'event_title', 'event_date')
+    approved_events_list = []
+    for ae in approved_events:
+        approved_events_list.append({
+            'id': ae['id'],
+            'title': ae['event_title'],
+            'date': ae['event_date'].strftime('%Y-%m-%d')
+        })
+
     return render(request, 'organizer/create_events.html', {
         'org_acronym': org_acronym, 
         'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
         'events_json': json.dumps(events_data),
-        'documents_json': json.dumps(docs_data)
+        'documents_json': json.dumps(docs_data),
+        'approved_events_json': json.dumps(approved_events_list)
     })
 
 @user_passes_test(is_organizer_strictly, login_url='/')
@@ -1616,126 +1772,134 @@ def organizer_profile(request):
     }
     return render(request, 'organizer/profile.html', context)
 
+def get_all_org_notifications(org_acronym):
+    notifications = []
+    now = timezone.now()
+    today = now.date()
+    
+    # Ensure acronym is clean
+    org_clean = org_acronym.strip() if org_acronym else ""
+
+    # 1. New Student Registrations
+    try:
+        students = Student.objects.filter(organization__iexact=org_clean, is_verified=False).order_by('-id')
+        for s in students:
+            dt = getattr(s, 'created_at', None) or now
+            notifications.append({
+                'id': f"stud_{s.id}", 'type': 'student', 'title': 'New Student Registration',
+                'message': f"Mabuhay Iskolar! {s.full_name} is waiting for your approval to join the organization portal.",
+                'sender': 'System Admin', 'date': dt.strftime('%b %d, %Y'), 'timestamp': dt.timestamp(), 'url': '/organizer/manage-students'
+            })
+    except Exception: pass
+
+    # 2. Event Status Updates & Remarks
+    try:
+        events = Event.objects.filter(org_id__iexact=org_clean).order_by('-id')
+        for e in events:
+            dt = getattr(e, 'created_at', None) or now
+            url = '/organizer/school-events'
+            
+            if e.event_status == 'Approved':
+                msg = f"Great news! Your event proposal for '{e.event_title}' has been officially APPROVED by the Administration."
+                sender = 'Admin Office'
+            elif e.event_status == 'Admin Approved':
+                msg = f"Initial Approval granted for '{e.event_title}'! Please upload your signed documents in the Document Vault."
+                sender = 'Admin Office'
+                url = '/organizer/document-tracking'
+            elif e.event_status == 'Rejected':
+                msg = f"Notice: Your event proposal for '{e.event_title}' was REJECTED. Please check the remarks for details."
+                sender = 'Admin / Adviser'
+            elif e.remarks and str(e.remarks).strip().lower() != 'none' and str(e.remarks).strip() != '':
+                msg = f"Comment Update: Your proposal '{e.event_title}' has new remarks from the reviewer."
+                sender = 'Adviser / Admin'
+            else:
+                msg = f"Update: Your event proposal for '{e.event_title}' is currently UNDER REVIEW."
+                sender = 'System Notification'
+                
+            notifications.append({
+                'id': f"evt_{e.id}", 'type': 'event', 'title': e.event_title, 'status': e.event_status,
+                'remarks': str(e.remarks) if e.remarks else '', 'message': msg, 'sender': sender,
+                'date': dt.strftime('%b %d, %Y'), 'timestamp': dt.timestamp(), 'url': url
+            })
+    except Exception: pass
+
+    # 3. Attendance Issues
+    try:
+        att_issues = Attendance.objects.filter(event__org_id__iexact=org_clean).filter(Q(face_matched=False) | Q(is_valid_location=False)).order_by('-time_in')[:15]
+        for att in att_issues:
+            issue = "Biometric mismatch" if not att.face_matched else "Outside geofence"
+            notifications.append({
+                'id': f"att_issue_{att.id}", 'type': 'alert', 'title': 'Attendance Issue Detected',
+                'message': f"Alert: {att.student.full_name} has a recorded {issue} for '{att.event.event_title}'.",
+                'sender': 'Security System', 'date': att.time_in.strftime('%b %d, %Y'), 'timestamp': att.time_in.timestamp(),
+                'url': '/organizer/manage-attendance'
+            })
+    except Exception: pass
+
+    # 4. Incomplete Logs (Ended events)
+    try:
+        current_time = now.time()
+        ended_events = Event.objects.filter(org_id__iexact=org_clean, event_status='Approved', event_date=today)
+        for e in ended_events:
+            if e.end_time and e.end_time < current_time:
+                incomplete_count = Attendance.objects.filter(event=e, time_out__isnull=True).count()
+                if incomplete_count > 0:
+                    notifications.append({
+                        'id': f"inc_{e.id}", 'type': 'alert', 'title': 'Incomplete Event Logs',
+                        'message': f"Notice: {incomplete_count} students haven't timed out for the concluded event '{e.event_title}'.",
+                        'sender': 'Attendance Monitor', 'date': e.event_date.strftime('%b %d, %Y'), 'timestamp': now.timestamp(),
+                        'url': '/organizer/manage-attendance'
+                    })
+    except Exception: pass
+
+    # 5. New Evaluations
+    try:
+        new_evals = AuditLog.objects.filter(action='EVALUATION', status='Success').order_by('-timestamp')[:15]
+        for log in new_evals:
+            try:
+                evt_id = log.target_id
+                if not evt_id: continue
+                event = Event.objects.get(id=evt_id, org_id__iexact=org_clean)
+                notifications.append({
+                    'id': f"eval_{log.id}", 'type': 'message', 'title': 'New Event Feedback',
+                    'message': f"Mabuhay! A student just submitted an evaluation for '{event.event_title}'.",
+                    'sender': 'Evaluation Hub', 'date': log.timestamp.strftime('%b %d, %Y'), 'timestamp': log.timestamp.timestamp(),
+                    'url': f"/organizer/feedback?event_id={event.id}"
+                })
+            except: continue
+    except Exception: pass
+
+    # Fallback: Welcome notification if empty
+    if not notifications:
+        notifications.append({
+            'id': 'welcome_system', 'type': 'message', 'title': f'Welcome to Organizer Portal ({org_clean})',
+            'message': 'Mabuhay! This is your message history. All your event updates and student alerts will appear here.',
+            'sender': 'System', 'date': now.strftime('%b %d, %Y'), 'timestamp': now.timestamp(), 'url': '#'
+        })
+
+    # Safe sort
+    def get_ts(x):
+        try: return float(x.get('timestamp', 0))
+        except: return 0
+        
+    notifications.sort(key=get_ts, reverse=True)
+    return notifications
+
 @user_passes_test(is_organizer_strictly, login_url='/')
 def get_organizer_notifications_api(request):
     try:
         org_profile = OrgProfile.objects.get(user=request.user)
         org_acronym = org_profile.organization.strip()
-    except OrgProfile.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Organizer profile not found'})
-
-    events = Event.objects.filter(org_id=org_acronym).order_by('-id')
-    students = Student.objects.filter(organization__iexact=org_acronym, is_verified=False).order_by('-id')
-
-    notifications = []
-    
-    for s in students:
-        date_str = s.created_at.strftime('%b %d, %Y') if hasattr(s, 'created_at') and s.created_at else 'Recent'
-        timestamp = s.created_at.timestamp() if hasattr(s, 'created_at') and s.created_at else s.id
-        
-        notifications.append({
-            'id': f"stud_{s.id}",
-            'type': 'student',
-            'title': 'New Student Registration',
-            'message': f"Mabuhay Iskolar! {s.full_name} is waiting for your approval to join the organization portal.",
-            'sender': 'System Admin',
-            'date': date_str,
-            'timestamp': timestamp,
-            'url': '/organizer/manage-students'
-        })
-
-    for e in events:
-        date_str = e.created_at.strftime('%b %d, %Y') if hasattr(e, 'created_at') and e.created_at else 'Recent'
-        timestamp = e.created_at.timestamp() if hasattr(e, 'created_at') and e.created_at else e.id
-        
-        if e.event_status == 'Approved':
-            msg = f"Great news! Your event proposal for '{e.event_title}' has been officially APPROVED by the Administration."
-            sender = 'Admin Office'
-        elif e.event_status == 'Admin Approved':
-            msg = f"Initial Approval granted for '{e.event_title}'! Please upload your signed documents in the Document Vault."
-            sender = 'Admin Office'
-        elif e.event_status == 'Rejected':
-            msg = f"Notice: Your event proposal for '{e.event_title}' was REJECTED. Please click to view the remarks."
-            sender = 'Admin / Adviser'
-        else:
-            msg = f"Update: Your event proposal for '{e.event_title}' is currently UNDER REVIEW."
-            sender = 'System Notification'
-            
-        notifications.append({
-            'id': f"evt_{e.id}",
-            'raw_id': e.id,
-            'type': 'event',
-            'title': e.event_title,
-            'status': e.event_status,
-            'remarks': str(e.remarks) if e.remarks else '',
-            'message': msg,
-            'sender': sender,
-            'date': date_str,
-            'timestamp': timestamp,
-        })
-
-    notifications.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
-    return JsonResponse({'status': 'success', 'notifications': notifications})
+        notifications = get_all_org_notifications(org_acronym)
+        return JsonResponse({'status': 'success', 'notifications': notifications})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
 
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_message_history(request):
-    try:
-        org_profile = OrgProfile.objects.get(user=request.user)
-        org_acronym = org_profile.organization.strip()
-    except OrgProfile.DoesNotExist:
-        org_acronym = 'UNKNOWN'
-
-    events = Event.objects.filter(org_id=org_acronym).order_by('-id')
-    students = Student.objects.filter(organization__iexact=org_acronym, is_verified=False).order_by('-id')
-
-    notifications = []
-    
-    for s in students:
-        date_str = s.created_at.strftime('%b %d, %Y') if hasattr(s, 'created_at') and s.created_at else 'Recent'
-        timestamp = s.created_at.timestamp() if hasattr(s, 'created_at') and s.created_at else s.id
-        
-        notifications.append({
-            'id': f"stud_{s.id}",
-            'type': 'student',
-            'title': 'New Student Registration',
-            'message': f"Mabuhay Iskolar! {s.full_name} is waiting for your approval to join the organization portal.",
-            'sender': 'System Admin',
-            'date': date_str,
-            'timestamp': timestamp,
-            'url': '/organizer/manage-students'
-        })
-
-    for e in events:
-        date_str = e.created_at.strftime('%b %d, %Y') if hasattr(e, 'created_at') and e.created_at else 'Recent'
-        timestamp = e.created_at.timestamp() if hasattr(e, 'created_at') and e.created_at else e.id
-        
-        if e.event_status == 'Approved':
-            msg = f"Great news! Your event proposal for '{e.event_title}' has been officially APPROVED by the Administration."
-            sender = 'Admin Office'
-        elif e.event_status == 'Admin Approved':
-            msg = f"Initial Approval granted for '{e.event_title}'! Please upload your signed documents in the Document Vault."
-            sender = 'Admin Office'
-        elif e.event_status == 'Rejected':
-            msg = f"Notice: Your event proposal for '{e.event_title}' was REJECTED. Please click to view the remarks."
-            sender = 'Admin / Adviser'
-        else:
-            msg = f"Update: Your event proposal for '{e.event_title}' is currently UNDER REVIEW."
-            sender = 'System Notification'
-            
-        notifications.append({
-            'id': f"evt_{e.id}",
-            'raw_id': e.id,
-            'type': 'event',
-            'title': e.event_title,
-            'status': e.event_status,
-            'remarks': str(e.remarks) if e.remarks else '',
-            'message': msg,
-            'sender': sender,
-            'date': date_str,
-            'timestamp': timestamp,
-        })
-
-    notifications.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+    org_profile = OrgProfile.objects.get(user=request.user)
+    org_acronym = org_profile.organization.strip()
+    notifications = get_all_org_notifications(org_acronym)
 
     context = {
         'org_acronym': org_acronym,
@@ -2091,44 +2255,53 @@ def event_approvals_view(request):
     pending = Event.objects.filter(event_status__in=['Pending Admin', 'Final Admin Review']).order_by('-created_at')
     pending_data = []
     for e in pending:
-        # 🟢 Idinagdag ang equipment_url pati 12-hour format sa Admin 🟢
+        full_org_name = ORG_FULL_NAMES.get(e.org_id, e.org_id)
         pending_data.append({
-            'id': e.id, 'org': e.org_id, 'title': e.event_title or '',
+            'id': e.id, 'org': e.org_id, 'full_org': full_org_name, 'title': e.event_title or '',
             'date': e.event_date.strftime('%B %d, %Y') if e.event_date else '',
             'time': e.start_time.strftime('%I:%M %p') if e.start_time else '',
             'end_time': e.end_time.strftime('%I:%M %p') if getattr(e, 'end_time', None) else '',
             'requester_name': getattr(e, 'requester_name', '') or '',
             'adviser_name': getattr(e, 'adviser_name', '') or '',
             'venue': e.venue or '', 'description': e.description or '',
-            'equipment': getattr(e, 'equipment_needed', '') or '', 'status': e.event_status.upper() if e.event_status else '',
+            'status': e.event_status.upper() if e.event_status else '',
             'letter_url': e.letter_of_approval.url if getattr(e, 'letter_of_approval', None) else (e.letter_image.url if getattr(e, 'letter_image', None) else ''),
             'permit_url': e.permit_to_conduct.url if getattr(e, 'permit_to_conduct', None) else (e.permit_image.url if getattr(e, 'permit_image', None) else ''),
             'equipment_url': e.excuse_letter_equipment.url if getattr(e, 'excuse_letter_equipment', None) else (e.equipment_image.url if getattr(e, 'equipment_image', None) else ''),
             'event_cover_photo': e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) else (e.cover_photo.url if getattr(e, 'cover_photo', None) else ''),
             'letter_of_reschedule': e.letter_of_reschedule.url if getattr(e, 'letter_of_reschedule', None) else '',
-            'reschedule_cover_photo': e.reschedule_cover_photo.url if getattr(e, 'reschedule_cover_photo', None) else (getattr(e, 'reschedule_cover_photo_legacy', None).url if getattr(e, 'reschedule_cover_photo_legacy', None) else ''),
+            'reschedule_cover_photo': e.reschedule_cover_photo.url if getattr(e, 'reschedule_cover_photo', None) else '',
             'requirement_mode': e.requirement_mode
             })
         
-    # HISTORY EVENTS (Transaction Log)
-    history = Event.objects.filter(event_status__in=['Approved', 'Rejected']).order_by('-created_at')
+    # ALL EVENTS FOR CONFLICT DETECTION (Global Record Log)
+    # Admin wants to see everything to check for date/time conflicts
+    history = Event.objects.all().order_by('-created_at')
     history_data = []
     for e in history:
-        # 🟢 ADD PARTICIPATION STATS FOR ADMIN OVERSIGHT 🟢
         att_count = Attendance.objects.filter(event=e).count()
-        eval_count = AuditLog.objects.filter(action='EVALUATION', changes__event=e.event_title).count()
+        eval_count = AuditLog.objects.filter(action='EVALUATION', target_id=str(e.id)).count()
+        full_org_name = ORG_FULL_NAMES.get(e.org_id, e.org_id)
 
         history_data.append({
-            'id': e.id, 'org': e.org_id, 'title': e.event_title or '',
+            'id': e.id, 'org': e.org_id, 'full_org': full_org_name, 'title': e.event_title or '',
             'date': e.event_date.strftime('%B %d, %Y') if e.event_date else '',
             'time': e.start_time.strftime('%I:%M %p') if e.start_time else '',
+            'end_time': e.end_time.strftime('%I:%M %p') if getattr(e, 'end_time', None) else '',
             'attendance_count': att_count,
             'evaluation_count': eval_count,
             'status': e.event_status.upper() if e.event_status else '',
+            'requester_name': getattr(e, 'requester_name', '') or '',
+            'adviser_name': getattr(e, 'adviser_name', '') or '',
+            'venue': e.venue or '', 'description': e.description or '',
             'letter_url': e.letter_of_approval.url if getattr(e, 'letter_of_approval', None) else (e.letter_image.url if getattr(e, 'letter_image', None) else ''),
             'permit_url': e.permit_to_conduct.url if getattr(e, 'permit_to_conduct', None) else (e.permit_image.url if getattr(e, 'permit_image', None) else ''),
+            'equipment_url': e.excuse_letter_equipment.url if getattr(e, 'excuse_letter_equipment', None) else (e.equipment_image.url if getattr(e, 'equipment_image', None) else ''),
             'event_cover_photo': e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) else (e.cover_photo.url if getattr(e, 'cover_photo', None) else ''),
-            'venue': e.venue or '',
+            'letter_of_reschedule': e.letter_of_reschedule.url if getattr(e, 'letter_of_reschedule', None) else '',
+            'reschedule_cover_photo': e.reschedule_cover_photo.url if getattr(e, 'reschedule_cover_photo', None) else '',
+            'requirement_mode': e.requirement_mode,
+            'remarks': e.remarks or ''
         })
         
     return render(request, 'admin/event_approvals.html', {
@@ -2383,20 +2556,61 @@ def admin_api_action(request):
                     if data.get('event_date'): event.event_date = data.get('event_date')
                     if data.get('event_time'): event.start_time = data.get('event_time')
                     
-                    event.save() # Save before sending emails to ensure data is updated
+                    event.save() # Save before potentially swapping
+
+                    # 🟢 MAGIC SWAP LOGIC FOR RESCHEDULING 🟢
+                    # Check if this is a reschedule by parsing the description for 'OrigID:'
+                    desc = event.description or ""
+                    is_reschedule = "[RESCHEDULE]" in desc and "OrigID:" in desc
+                    final_event_to_announce = event
+
+                    if is_reschedule:
+                        try:
+                            # Extract Original ID (e.g., ... | OrigID: 123 | ...)
+                            orig_id_str = desc.split("OrigID:")[1].split("|")[0].strip()
+                            orig_event = Event.objects.get(id=int(orig_id_str))
+                            
+                            # 1. Update the Original Event with new info
+                            orig_event.event_date = event.event_date
+                            orig_event.start_time = event.start_time
+                            orig_event.end_time = event.end_time
+                            orig_event.venue = event.venue
+                            
+                            # Update metadata if needed (copy cover photo if new one was uploaded)
+                            if event.reschedule_cover_photo:
+                                orig_event.event_cover_photo = event.reschedule_cover_photo
+                            
+                            orig_event.save()
+                            
+                            # 2. Redirect announcements to the original event
+                            final_event_to_announce = orig_event
+                            
+                            # 3. DELETE the reschedule proposal record to avoid duplicates
+                            # (Wait until after email sending to be safe with references)
+                            reschedule_proposal_id = event.id
+                            
+                            message = f"Reschedule approved! '{orig_event.event_title}' has been updated to {orig_event.event_date.strftime('%B %d')}."
+                        except Exception as swap_err:
+                            print(f"Swap Error: {swap_err}")
+                            # Fallback: Just approve the new one if swap fails
 
                     # 🟢 SEND EVENT ALERT TO ALL STUDENTS OF THE ORG
-                    students = Student.objects.filter(organization__iexact=event.org_id, is_verified=True, email_notifications=True)
+                    students = Student.objects.filter(organization__iexact=final_event_to_announce.org_id, is_verified=True, email_notifications=True)
                     for s in students:
                         send_student_email(s, 'event_alert', {
-                            'event_title': event.event_title,
-                            'org_name': ORG_FULL_NAMES.get(event.org_id, event.org_id),
-                            'event_date': event.event_date.strftime('%B %d, %Y'),
-                            'start_time': event.start_time.strftime('%I:%M %p'),
-                            'venue': event.venue
+                            'event_title': final_event_to_announce.event_title,
+                            'org_name': ORG_FULL_NAMES.get(final_event_to_announce.org_id, final_event_to_announce.org_id),
+                            'event_date': final_event_to_announce.event_date.strftime('%B %d, %Y'),
+                            'start_time': final_event_to_announce.start_time.strftime('%I:%M %p'),
+                            'venue': final_event_to_announce.venue
                         })
 
-                    message = "Signatures verified! Event has been fully approved and published with countdown!"
+                    # Cleanup if swap happened
+                    if is_reschedule and 'reschedule_proposal_id' in locals():
+                         Event.objects.filter(id=reschedule_proposal_id).delete()
+
+                    if not is_reschedule:
+                        message = "Signatures verified! Event has been fully approved and published with countdown!"
                 else:
                     event.event_status = 'Approved'
                     message = "Event approved."
@@ -2602,15 +2816,19 @@ def adviser_dashboard(request):
 @user_passes_test(is_adviser_strictly, login_url='/admin/login/')
 def adviser_history(request):
     assigned_org = None
+    user_str = f"{request.user.username} {request.user.first_name} {request.user.last_name}".lower()
     for org in ORG_FULL_NAMES.keys():
-        if org.lower() in request.user.username.lower() or org.lower() in request.user.first_name.lower() or org.lower() in request.user.last_name.lower():
+        if org.lower() in user_str:
             assigned_org = org
             break
             
+    # History includes everything EXCEPT the very initial review stages (unless already acted upon)
+    # Actually, the user wants to see what they've approved. 
+    # Events move to 'Pending Admin' after Adviser approval.
     if assigned_org:
-        events = Event.objects.filter(org_id__iexact=assigned_org).exclude(event_status__in=['Pending Adviser', 'Permit Verification']).order_by('-created_at')
+        events = Event.objects.filter(org_id__iexact=assigned_org).exclude(event_status='Pending Adviser').order_by('-created_at')
     else:
-        events = Event.objects.exclude(event_status__in=['Pending Adviser', 'Permit Verification']).order_by('-created_at')
+        events = Event.objects.exclude(event_status='Pending Adviser').order_by('-created_at')
 
     events_data = []
     for e in events:
@@ -2641,8 +2859,10 @@ def adviser_api_action(request):
         try:
             data = json.loads(request.body)
             event = Event.objects.get(id=data.get('event_id'))
+            action = data.get('action')
             
-            if data.get('action') == 'approve':
+            if action == 'approve':
+                old_status = event.event_status
                 if event.event_status == 'Pending Adviser':
                     event.event_status = 'Pending Admin'
                     event.current_location = "Admin Office"
@@ -2656,12 +2876,23 @@ def adviser_api_action(request):
                     message = "Forwarded."
 
                 event.save()
+                
+                # 🟢 LOG AUDIT
+                log_audit_event(request, 'ADVISER_APPROVE', target_model='Event', target_id=str(event.id), status='Success', 
+                                changes={'from': old_status, 'to': event.event_status, 'title': event.event_title})
+                
                 return JsonResponse({"status": "success", "message": message})
             
-            elif data.get('action') == 'reject':
+            elif action == 'reject':
+                old_status = event.event_status
                 event.event_status = 'Rejected'
                 event.remarks = data.get('remarks')
                 event.save()
+                
+                # 🟢 LOG AUDIT
+                log_audit_event(request, 'ADVISER_REJECT', target_model='Event', target_id=str(event.id), status='Success', 
+                                changes={'from': old_status, 'reason': event.remarks, 'title': event.event_title})
+                
                 return JsonResponse({"status": "success", "message": "Event Rejected."})
                 
         except Exception as e: return JsonResponse({"status": "error", "message": str(e)})
@@ -2675,50 +2906,53 @@ def get_adviser_notifications_api(request):
     """
     try:
         assigned_org = None
+        # Improved org matching: checks username, first_name, last_name
+        user_str = f"{request.user.username} {request.user.first_name} {request.user.last_name}".lower()
         for org in ORG_FULL_NAMES.keys():
-            if org.lower() in request.user.username.lower() or org.lower() in request.user.first_name.lower() or org.lower() in request.user.last_name.lower():
+            if org.lower() in user_str:
                 assigned_org = org
                 break
         
         if assigned_org:
             events = Event.objects.filter(org_id__iexact=assigned_org).order_by('-created_at')
         else:
+            # If no specific org, fetch all relevant for staff
             events = Event.objects.all().order_by('-created_at')
 
         notifications = []
         for e in events:
-            # 1. New Proposal Notification
+            # 1. New Proposal Notification (Pending Initial Review)
             if e.event_status == 'Pending Adviser':
                 notifications.append({
                     'id': f"prop_{e.id}",
                     'type': 'proposal',
                     'title': 'New Event Proposal',
-                    'message': f"Action Required: '{e.event_title}' from {e.org_id} is waiting for your initial review.",
+                    'message': f"Initial Review Needed: '{e.event_title}' from {e.org_id} is waiting for your approval.",
                     'sender': e.org_id,
                     'date': e.created_at.strftime('%b %d, %Y'),
                     'timestamp': e.created_at.timestamp(),
                     'url': f"/adviser/dashboard/?id={e.id}"
                 })
             
-            # 2. Permit Verification Notification
+            # 2. Permit Verification Notification (Signed Documents)
             elif e.event_status == 'Permit Verification':
                 notifications.append({
                     'id': f"verify_{e.id}",
                     'type': 'verification',
-                    'title': 'Signatures for Verification',
-                    'message': f"Alert: Signed permits for '{e.event_title}' have been uploaded and need verification.",
+                    'title': 'Signature Verification',
+                    'message': f"Verify Signatures: Signed permits for '{e.event_title}' have been uploaded by {e.org_id}.",
                     'sender': e.org_id,
                     'date': e.created_at.strftime('%b %d, %Y'),
                     'timestamp': e.created_at.timestamp(),
                     'url': f"/adviser/dashboard/?id={e.id}"
                 })
             
-            # 3. Rejected by Admin (Adviser should know too)
+            # 3. Rejected by Admin (Adviser should know)
             elif e.event_status == 'Rejected' and e.remarks:
                 notifications.append({
                     'id': f"rej_{e.id}",
                     'type': 'rejection',
-                    'title': 'Event Proposal Rejected',
+                    'title': 'Proposal Rejected',
                     'message': f"Notice: '{e.event_title}' was rejected by Admin. Reason: {e.remarks[:50]}...",
                     'sender': 'Admin Office',
                     'date': e.created_at.strftime('%b %d, %Y'),
@@ -2726,22 +2960,22 @@ def get_adviser_notifications_api(request):
                     'url': f"/adviser/history/?id={e.id}"
                 })
             
-            # 4. Approved by Admin
+            # 4. Final Approval
             elif e.event_status == 'Approved':
                 notifications.append({
                     'id': f"appr_{e.id}",
                     'type': 'approval',
-                    'title': 'Event Fully Approved',
-                    'message': f"Success: '{e.event_title}' has been officially approved and published.",
+                    'title': 'Event Fully Published',
+                    'message': f"Success: '{e.event_title}' is now live and published to the student portal.",
                     'sender': 'Admin Office',
                     'date': e.created_at.strftime('%b %d, %Y'),
                     'timestamp': e.created_at.timestamp(),
                     'url': f"/adviser/history/?id={e.id}"
                 })
 
-        # Sort by latest
+        # Sort by latest and limit
         notifications.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
-        return JsonResponse({'status': 'success', 'notifications': notifications[:15]})
+        return JsonResponse({'status': 'success', 'notifications': notifications[:20]})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
 

@@ -238,9 +238,9 @@
 
     <script>
         const { createApp, reactive } = Vue;
-        const sharedState = reactive({ 
-            notifications: [], 
-            readNotifications: JSON.parse(localStorage.getItem('adviser_read_notifs') || '[]'),
+        const sharedState = Vue.reactive({
+            notifications: [],
+            readNotifications: JSON.parse(localStorage.getItem('adviser_read_notifications') || '[]'),
             isDark: localStorage.getItem('theme') === 'dark',
             showProfileBubble: false,
             isLogoutModalOpen: false
@@ -251,6 +251,9 @@
                 if (data.status === 'success') { sharedState.notifications = data.notifications; }
             }).catch(e => console.error(e));
         };
+
+        // Initialize fetch immediately
+        fetchNotifs();
 
         const baseConfig = {
             delimiters: ['${', '}'],
@@ -287,16 +290,28 @@
                 this.initIndicator();
                 window.addEventListener('resize', () => this.calculatePosition(this.activeIndex));
                 
-                if (this.$el.id === 'header-app') { fetchNotifs(); setInterval(fetchNotifs, 15000); }
+                if (this.$el.id === 'header-app') { 
+                    setInterval(fetchNotifs, 15000); 
+                }
                 window.addEventListener('click', (e) => { if (!e.target.closest('.relative')) this.showNotifications = false; });
             },
             methods: {
                 addBanner(notif) { if (this.notificationBanners.length >= 5) this.notificationBanners.shift(); this.notificationBanners.push(notif); setTimeout(() => { this.removeBanner(notif.id); }, 6000); },
                 removeBanner(id) { this.notificationBanners = this.notificationBanners.filter(b => b.id !== id); },
-                toggleNotifications() { this.showNotifications = !this.showNotifications; },
+                toggleNotifications() { 
+                    this.showNotifications = !this.showNotifications; 
+                    if (this.showNotifications) { fetchNotifs(); }
+                },
                 handleNotificationClick(notif) {
-                    if (!this.state.readNotifications.includes(notif.id)) { this.state.readNotifications.push(notif.id); localStorage.setItem('adviser_read_notifs', JSON.stringify(this.state.readNotifications)); }
-                    this.showNotifications = false; this.removeBanner(notif.id); window.location.href = notif.url;
+                    if (!this.state.readNotifications.includes(notif.id)) { 
+                        this.state.readNotifications.push(notif.id); 
+                        localStorage.setItem('adviser_read_notifications', JSON.stringify(this.state.readNotifications)); 
+                    }
+                    this.showNotifications = false; 
+                    this.removeBanner(notif.id); 
+                    if (notif.url) {
+                        window.location.href = notif.url; 
+                    }
                 },
                 getNotifIcon(type) { 
                     if (type === 'proposal') return 'ph-fill ph-file-plus';

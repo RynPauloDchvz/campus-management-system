@@ -103,6 +103,7 @@
         flex-direction: column; 
         box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
         animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
     }
     @keyframes modalSlide { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
     
@@ -176,16 +177,48 @@
     .letter-preview { 
         background: #ffffff; 
         color: #000000; 
-        padding: 50px; 
+        padding: 40px; 
         border-radius: 12px; 
         border: 1px solid #ddd; 
         font-family: 'Times New Roman', serif; 
         font-size: 15px; 
-        line-height: 1.6; 
+        line-height: 1.5; 
         text-align: left; 
         box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
         position: relative;
+    }
+
+    /* 🏷️ Modern Tab System 🏷️ */
+    .preview-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .preview-tab {
+        flex: 1;
+        padding: 12px;
+        border-radius: 12px;
+        border: 2px solid var(--border);
+        background: var(--card-bg);
+        color: var(--text-muted);
+        font-weight: 800;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .preview-tab.active {
+        border-color: var(--pup-maroon);
+        background: rgba(128, 0, 0, 0.05);
+        color: var(--pup-maroon);
     }
 
     /* 🔍 FULLSCREEN LIGHTBOX STYLES 🔍 */
@@ -281,19 +314,64 @@
     .spin { animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    /* Success Message State */
-    .success-overlay {
-        position: absolute;
-        inset: 0;
+    /* Success Message State (Small Modal) */
+    .success-mini-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         background: var(--card-bg);
-        z-index: 100;
+        z-index: 10000;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         text-align: center;
         padding: 40px;
-        animation: fadeIn 0.4s ease-out;
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        width: 90%;
+        max-width: 400px;
+        animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Loading Steps Animation */
+    .loading-step-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+        padding: 20px;
+    }
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.85rem;
+        opacity: 0.4;
+        transition: 0.3s;
+    }
+    .step-item.active {
+        color: var(--pup-maroon);
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    .step-item.completed {
+        color: #28a745;
+        opacity: 1;
+    }
+    .step-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    .step-spinner {
+        font-size: 1.2rem;
+        animation: spin 1s linear infinite;
     }
 </style>
 {% endblock %}
@@ -493,7 +571,12 @@
                 </select>
 
                 <select v-model="histStatus" class="custom-select">
-                    <option value="All">All Results</option>
+                    <option value="All">All Transactions</option>
+                    <option value="PENDING ADVISER">Waiting for Adviser</option>
+                    <option value="PENDING ADMIN">Initial Admin Review</option>
+                    <option value="ADMIN APPROVED">Gathering Signatures</option>
+                    <option value="PERMIT VERIFICATION">Permit Verification</option>
+                    <option value="FINAL ADMIN REVIEW">Final Admin Review</option>
                     <option value="APPROVED">Published (Approved)</option>
                     <option value="REJECTED">Rejected</option>
                 </select>
@@ -542,7 +625,8 @@
                             </td>
                             <td>
                                 <span v-if="event.status === 'APPROVED'" class="badge badge-approved"><i class="ph-bold ph-check-circle"></i> Published</span>
-                                <span v-else class="badge badge-rejected"><i class="ph-bold ph-x-circle"></i> Rejected</span>
+                                <span v-else-if="event.status === 'REJECTED'" class="badge badge-rejected"><i class="ph-bold ph-x-circle"></i> Rejected</span>
+                                <span v-else class="badge badge-pending" style="color: #6c757d; border-color: #6c757d;"><i class="ph-bold ph-clock"></i> [[ event.status ]]</span>
                             </td>
                             <td style="text-align: center;">
                                 <button @click="openModal(event, true)" class="action-btn" style="padding: 10px 15px;">
@@ -557,204 +641,301 @@
     </div>
 
     <!-- 🏛️ MAIN APPROVAL/RECORD MODAL 🏛️ -->
-    <div class="av-modal" v-if="isModalOpen" @click="closeModal">
-        <div class="av-modal-box" @click.stop>
-            
-            <div class="av-modal-header">
-                <h3 class="av-modal-title">
-                    <i class="ph-bold ph-magnifying-glass-plus" style="color: var(--pup-maroon);"></i> 
-                    <span v-if="isHistoryMode">Historical Event Record</span>
-                    <span v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'">Final Document Verification</span>
-                    <span v-else>Initial Clearance Review</span>
-                </h3>
-                <button class="av-btn-close" @click="closeModal"><i class="ph-bold ph-x"></i></button>
-            </div>
-            
-            <div class="av-modal-body" v-if="selectedEvent">
-                
-                <!-- 🟢 SUCCESS STATE OVERLAY 🟢 -->
-                <div v-if="showSuccessMsg" class="success-overlay">
-                    <i class="ph-fill ph-check-circle" style="font-size: 6rem; color: #28a745; margin-bottom: 20px;"></i>
-                    <h2 style="font-size: 2rem; font-weight: 900; color: var(--text-main); margin-bottom: 10px; text-transform: uppercase;">Action Successful!</h2>
-                    <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 400px; line-height: 1.6;">[[ statusMessage ]]</p>
-                </div>
-
-                <!-- Header Info -->
-                <div style="display:flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 5px;">
-                    <div style="flex: 1;">
-                        <span style="display: block; font-size: 0.65rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px;">Event Activity Title</span>
-                        <span style="font-size: 1.4rem; font-weight: 900; color: var(--text-main); line-height: 1.2;">[[ selectedEvent.title ]]</span>
-                    </div>
-                    <span class="badge" style="background: rgba(128,0,0,0.1); color: var(--pup-maroon); border: 2.5px solid rgba(128,0,0,0.3); font-size: 0.9rem; padding: 8px 15px;">[[ selectedEvent.org ]]</span>
-                </div>
-
-                <!-- 📂 DYNAMIC DOCUMENT GRID (MATCHES ADVISER DASHBOARD) 📂 -->
-                <div v-if="selectedEvent.status === 'FINAL ADMIN REVIEW' || selectedEvent.status === 'APPROVED' || (isHistoryMode && selectedEvent.status !== 'REJECTED')" 
-                     class="fade-in" 
-                     style="background: rgba(0, 123, 255, 0.03); padding: 25px; border-radius: 20px; border: 1.5px solid rgba(0, 123, 255, 0.15);">
+    <transition 
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+    >
+        <div class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 sm:p-6" v-if="isModalOpen" @click="closeModal">
+            <transition 
+                enter-active-class="transition duration-300 ease-out delay-75"
+                enter-from-class="opacity-0 scale-95 translate-y-4 sm:translate-y-0"
+                enter-to-class="opacity-100 scale-100 translate-y-0"
+                leave-active-class="transition duration-200 ease-in"
+                leave-from-class="opacity-100 scale-100 translate-y-0"
+                leave-to-class="opacity-0 scale-95 translate-y-4 sm:translate-y-0"
+            >
+                <div class="bg-[var(--card-bg)] border border-[var(--border)] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden" v-if="isModalOpen" @click.stop>
                     
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h4 style="font-size: 0.8rem; font-weight: 900; color: #007bff; margin: 0; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
-                            <i class="ph-bold ph-folder-open" style="font-size: 1.2rem;"></i> Uploaded Document Records
-                        </h4>
-                        <span style="font-size: 0.65rem; font-weight: 900; background: #007bff; color: white; padding: 4px 10px; border-radius: 6px;">[[ currentDocCount ]] FILES ATTACHED</span>
-                    </div>
-
-                    <div :class="['doc-grid', currentDocCount === 4 ? 'grid-cols-4' : 'grid-cols-2']">
-                        <div v-for="doc in activeDocs" :key="doc.label" 
-                             @click="viewActualDoc(doc.label, doc.url)"
-                             class="doc-card">
-                            <div class="doc-icon-wrapper">
-                                <i :class="['ph-fill', doc.icon, 'doc-icon-bg']"></i>
-                                <i class="ph-bold ph-eye doc-icon-eye"></i>
+                    <!-- 🟢 STEP-BY-STEP LOADING OVERLAY (MODAL LEVEL) 🟢 -->
+                    <div v-if="actionLoading" class="absolute inset-0 z-[6000] bg-[var(--card-bg)] flex items-center justify-center">
+                        <div class="loading-step-container">
+                            <h3 style="font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; color: var(--text-main); font-size: 1.2rem;">
+                                <i class="ph-bold ph-gear-six spin" style="display: inline-block; margin-right: 10px;"></i> Processing Request
+                            </h3>
+                            
+                            <div :class="['step-item', loadingStep >= 1 ? (loadingStep > 1 ? 'completed' : 'active') : '']">
+                                <i v-if="loadingStep > 1" class="ph-bold ph-check-circle text-green-500"></i>
+                                <i v-else-if="loadingStep === 1" class="ph-bold ph-spinner step-spinner"></i>
+                                <div v-else class="step-dot"></div>
+                                <span>Updating System Records...</span>
                             </div>
-                            <span class="doc-label">[[ doc.label ]]</span>
-                            <span class="doc-status">View Image</span>
+
+                            <div :class="['step-item', loadingStep >= 2 ? (loadingStep > 2 ? 'completed' : 'active') : '']">
+                                <i v-if="loadingStep > 2" class="ph-bold ph-check-circle text-green-500"></i>
+                                <i v-else-if="loadingStep === 2" class="ph-bold ph-spinner step-spinner"></i>
+                                <div v-else class="step-dot"></div>
+                                <span>Notifying Organization...</span>
+                            </div>
+
+                            <div v-if="selectedEvent && selectedEvent.status === 'FINAL ADMIN REVIEW'" :class="['step-item', loadingStep >= 3 ? (loadingStep > 3 ? 'completed' : 'active') : '']">
+                                <i v-if="loadingStep > 3" class="ph-bold ph-check-circle text-green-500"></i>
+                                <i v-else-if="loadingStep === 3" class="ph-bold ph-spinner step-spinner"></i>
+                                <div v-else class="step-dot"></div>
+                                <span>Publishing to Student Hub...</span>
+                            </div>
+
+                            <div :class="['step-item', loadingStep >= 4 ? (loadingStep > 4 ? 'completed' : 'active') : '']">
+                                <i v-if="loadingStep > 4" class="ph-bold ph-check-circle text-green-500"></i>
+                                <i v-else-if="loadingStep === 4" class="ph-bold ph-spinner step-spinner"></i>
+                                <div v-else class="step-dot"></div>
+                                <span>Finalizing Uploads...</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Reschedule Form (Only for Approved Events in History) -->
-                <div v-if="isRescheduling && isHistoryMode && selectedEvent.status === 'APPROVED'" class="fade-in reschedule-box">
-                    <h4 style="font-size: 0.95rem; font-weight: 900; color: #17a2b8; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; text-transform: uppercase;">
-                        <i class="ph-bold ph-calendar-blank" style="font-size: 1.3rem;"></i> Reschedule Event Session
-                    </h4>
-                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 20px; font-weight: 600;">Update the official schedule for this event due to administrative conflicts.</p>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
-                        <div class="form-group">
-                            <label class="form-label">New Proposed Date</label>
-                            <input type="date" v-model="rescheduleDate" class="form-input" style="border-color: #17a2b8;">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">New Starting Time</label>
-                            <input type="time" v-model="rescheduleTime" class="form-input" style="border-color: #17a2b8;">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">New End Time</label>
-                            <input type="time" v-model="rescheduleEndTime" class="form-input" style="border-color: #17a2b8;">
-                        </div>
+                    <div class="av-modal-header">
+                        <h3 class="av-modal-title">
+                            <i class="ph-bold ph-magnifying-glass-plus" style="color: var(--pup-maroon);"></i> 
+                            <span v-if="isHistoryMode">Historical Event Record</span>
+                            <span v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'">Final Document Verification</span>
+                            <span v-else>Initial Clearance Review</span>
+                        </h3>
+                        <button class="av-btn-close" @click="closeModal"><i class="ph-bold ph-x"></i></button>
                     </div>
-                </div>
-
-                <!-- 📜 OFFICIAL LETTER PREVIEW (FULL WIDTH, NO INTERNAL SCROLL) 📜 -->
-                <div class="letter-preview">
-                    <p style="margin-bottom: 30px; font-weight: bold; font-size: 16px;">[[ selectedEvent.date ]]</p>
                     
-                    <p style="margin-bottom: 30px; line-height: 1.3;">
-                        <strong>Dr. EDWIN G. MALABUYOC</strong><br>
-                        Director<br>
-                        PUP Unisan Campus
-                    </p>
+                    <div class="av-modal-body" v-if="selectedEvent">
+                        
+                        <!-- 🟢 SUCCESS MINI MODAL (GLOBAL TO VUE APP) 🟢 -->
+                        <teleport to="body">
+                            <transition 
+                                enter-active-class="transition duration-300 ease-out"
+                                enter-from-class="opacity-0 scale-90 translate-y-10"
+                                enter-to-class="opacity-100 scale-100 translate-y-0"
+                                leave-active-class="transition duration-200 ease-in"
+                                leave-from-class="opacity-100 scale-100 translate-y-0"
+                                leave-to-class="opacity-0 scale-90 translate-y-10"
+                            >
+                                <div v-if="showSuccessMsg" class="success-mini-modal">
+                                    <i class="ph-fill ph-check-circle" style="font-size: 5rem; color: #28a745; margin-bottom: 20px;"></i>
+                                    <h2 style="font-size: 1.5rem; font-weight: 900; color: var(--text-main); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Success!</h2>
+                                    <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6;">[[ statusMessage ]]</p>
+                                </div>
+                            </transition>
+                        </teleport>
 
-                    <p style="margin-bottom: 30px; line-height: 1.3;">
-                        Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
-                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
-                        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;PUP Unisan Campus
-                    </p>
+                        <!-- Header Info -->
+                        <div style="display:flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 5px;">
+                            <div style="flex: 1;">
+                                <span style="display: block; font-size: 0.65rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px;">Activity Track Ref: #[[ selectedEvent.id ]]</span>
+                                <span style="font-size: 1.4rem; font-weight: 900; color: var(--text-main); line-height: 1.2;">[[ selectedEvent.title ]]</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <span class="badge" style="background: rgba(128,0,0,0.1); color: var(--pup-maroon); border: 2.5px solid rgba(128,0,0,0.3); font-size: 0.9rem; padding: 8px 15px; margin-bottom: 5px;">[[ selectedEvent.org ]]</span>
+                                <p style="font-size: 0.6rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin: 0;">[[ selectedEvent.full_org ]]</p>
+                            </div>
+                        </div>
 
-                    <p style="margin-bottom: 30px;">
-                        Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
-                    </p>
+                        <!-- 📂 UPLOADED DOCUMENT GRID 📂 -->
+                        <div v-if="selectedEvent.status === 'FINAL ADMIN REVIEW' || (isHistoryMode && selectedEvent.status !== 'REJECTED' && selectedEvent.letter_url)" 
+                             class="fade-in" 
+                             style="background: rgba(0, 123, 255, 0.03); padding: 20px; border-radius: 20px; border: 1.5px solid rgba(0, 123, 255, 0.15);">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h4 style="font-size: 0.75rem; font-weight: 900; color: #007bff; margin: 0; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+                                    <i class="ph-bold ph-folder-open" style="font-size: 1.1rem;"></i> Signed Document Records
+                                </h4>
+                                <span style="font-size: 0.65rem; font-weight: 900; background: #007bff; color: white; padding: 4px 10px; border-radius: 6px;">[[ activeDocs.length ]] FILES ATTACHED</span>
+                            </div>
 
-                    <p style="margin-bottom: 20px;">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                            <div :class="['doc-grid', activeDocs.length > 2 ? 'grid-cols-4' : 'grid-cols-2']">
+                                <div v-for="doc in activeDocs" :key="doc.label" 
+                                     @click="viewActualDoc(doc.label, doc.url)"
+                                     class="doc-card" style="padding: 15px 10px;">
+                                    <div class="doc-icon-wrapper" style="width: 40px; height: 40px; margin-bottom: 8px;">
+                                        <i :class="['ph-fill', doc.icon, 'doc-icon-bg']" style="font-size: 2rem;"></i>
+                                        <i class="ph-bold ph-eye doc-icon-eye" style="font-size: 2rem;"></i>
+                                    </div>
+                                    <span class="doc-label" style="font-size: 0.6rem;">[[ doc.label ]]</span>
+                                    <span class="doc-status">Verified Image</span>
+                                </div>
+                            </div>
+                        </div>
 
-                    <p style="margin-bottom: 20px;">Greetings!</p>
+                        <!-- 🏷️ TAB SELECTOR 🏷️ -->
+                        <div class="preview-tabs" v-if="parsedDescription.type !== 'reschedule' && selectedEvent.status !== 'REJECTED'">
+                            <button @click="activeTab = 'main'" :class="['preview-tab', activeTab === 'main' ? 'active' : '']">
+                                <i class="ph-bold ph-file-text"></i> Request Letter
+                            </button>
+                            <button @click="activeTab = 'excuse'" :class="['preview-tab', activeTab === 'excuse' ? 'active' : '']">
+                                <i class="ph-bold ph-users-four"></i> Excuse & Equipment
+                            </button>
+                        </div>
 
-                    <p style="margin-bottom: 20px; text-align: justify; text-indent: 50px;">
-                        To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ selectedEvent.description ]]
-                    </p>
+                        <!-- 📜 OFFICIAL LETTER PREVIEW 📜 -->
+                        <div v-if="selectedEvent.status !== 'REJECTED'" class="letter-preview fade-in">
+                            <!-- Main / Reschedule Letter Content -->
+                            <div v-if="activeTab === 'main'">
+                                <p style="margin-bottom: 25px; font-weight: bold;">[[ selectedEvent.date ]]</p>
+                                
+                                <p style="margin-bottom: 25px; line-height: 1.2;">
+                                    <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+                                    Director<br>
+                                    PUP Unisan Campus
+                                </p>
 
-                    <p style="margin-bottom: 40px; text-align: justify; text-indent: 50px;">
-                        The activity will be held on <strong>[[ selectedEvent.date ]]</strong>, from <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
-                    </p>
+                                <p style="margin-bottom: 25px; line-height: 1.2;">
+                                    Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+                                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+                                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;PUP Unisan Campus
+                                </p>
 
-                    <p style="margin-bottom: 50px;">Thank you for your kind consideration and usual support.</p>
+                                <div v-if="parsedDescription">
+                                    <!-- STANDARD / NEW EVENT -->
+                                    <div v-if="parsedDescription.type === 'standard' || parsedDescription.type === 'new_event'">
+                                        <p style="margin-bottom: 25px;">
+                                            Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
+                                        </p>
+                                        <p style="margin-bottom: 15px;">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                        <p style="margin-bottom: 15px;">Greetings!</p>
+                                        <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;">
+                                            To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.full_org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
+                                        </p>
+                                        <p style="margin-bottom: 30px; text-align: justify; text-indent: 40px;">
+                                            The activity is scheduled for <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                                        </p>
+                                    </div>
 
-                    <p style="margin-bottom: 40px;">Respectfully yours,</p>
+                                    <!-- RESCHEDULE LETTER -->
+                                    <div v-if="parsedDescription.type === 'reschedule'">
+                                        <p style="margin-bottom: 25px;">
+                                            Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong>
+                                        </p>
+                                        <p style="margin-bottom: 15px;">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                        <p style="margin-bottom: 15px;">Greetings!</p>
+                                        <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;">
+                                            We hope this letter finds you well. <strong>[[ selectedEvent.full_org ]]</strong> respectfully requests a rescheduling of our upcoming event entitled <strong>"[[ selectedEvent.title ]]"</strong>. The event was originally set for <strong>[[ parsedDescription.origDate || '(Original Date)' ]]</strong>.
+                                        </p>
+                                        <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;">
+                                            We propose moving the event to <strong>[[ selectedEvent.date ]]</strong>, from <strong>[[ selectedEvent.time ]] to [[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+                                        </p>
+                                        <p style="margin-bottom: 30px; text-align: justify; text-indent: 40px;">
+                                            This request is made due to [[ parsedDescription.reason ]]. [[ parsedDescription.originalDesc ]]
+                                        </p>
+                                    </div>
+                                </div>
 
-                    <div style="margin-bottom: 40px;">
-                        <p style="margin: 0; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; display: inline-block;">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
-                        <p style="margin: 5px 0 0 0;">[[ selectedEvent.org ]] President</p>
+                                <p style="margin-bottom: 35px;">Thank you for your kind consideration and usual support.</p>
+                                <p style="margin-bottom: 30px;">Respectfully yours,</p>
+
+                                <div style="margin-bottom: 30px;">
+                                    <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+                                    <p style="margin: 0;">[[ selectedEvent.org ]] President</p>
+                                </div>
+
+                                <div>
+                                    <p style="margin-bottom: 10px;">Noted by:</p>
+                                    <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+                                    <p style="margin: 0;">[[ selectedEvent.org ]] Adviser</p>
+                                </div>
+                            </div>
+
+                            <!-- Excuse & Equipment Tab -->
+                            <div v-if="activeTab === 'excuse'">
+                                <p style="margin-bottom: 25px; font-weight: bold;">[[ selectedEvent.date ]]</p>
+                                
+                                <p style="margin-bottom: 25px; line-height: 1.2;">
+                                    <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+                                    Director<br>
+                                    PUP Unisan Campus
+                                </p>
+
+                                <p style="margin-bottom: 25px; line-height: 1.2;">
+                                    Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+                                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+                                    &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;PUP Unisan Campus
+                                </p>
+
+                                <p style="margin-bottom: 25px;">
+                                    Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong>
+                                </p>
+                                <p style="margin-bottom: 15px;">Dear <strong>Dr. Malabuyoc</strong>:</p>
+                                <p style="margin-bottom: 15px;">Greetings!</p>
+                                
+                                <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;">
+                                    The <strong>[[ selectedEvent.full_org ]]</strong> is organizing an event entitled <strong>"[[ selectedEvent.title ]]"</strong> on <strong>[[ selectedEvent.date ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>. 
+                                </p>
+                                <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;" v-if="parsedDescription.type === 'new_event'">
+                                    We respectfully request the excusal of <strong>[[ parsedDescription.target || 'all affected students' ]]</strong> whose classes will be affected, and we also request usage of the aforementioned facility, together with <strong>[[ parsedDescription.equipment || 'the necessary equipment' ]]</strong>.
+                                </p>
+                                <p style="margin-bottom: 30px; text-align: justify; text-indent: 40px;" v-else>
+                                    We respectfully request the usage of the facility and aforementioned equipment for the success of this event.
+                                </p>
+                                
+                                <p style="margin-bottom: 35px;">We look forward to your response. Thank you for your kind consideration and usual support!</p>
+                                <p style="margin-bottom: 30px;">Respectfully yours,</p>
+
+                                <div style="margin-bottom: 30px;">
+                                    <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+                                    <p style="margin: 0;">[[ selectedEvent.org ]] President</p>
+                                </div>
+
+                                <div>
+                                    <p style="margin-bottom: 10px;">Noted by:</p>
+                                    <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+                                    <p style="margin: 0;">[[ selectedEvent.org ]] Adviser</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Remarks for Rejected Events -->
+                        <div v-if="selectedEvent.status === 'REJECTED'" class="readonly-box" style="border: 2px solid rgba(220, 53, 69, 0.3); background: rgba(220, 53, 69, 0.03); padding: 25px; border-radius: 15px;">
+                            <span class="form-label" style="color: var(--danger); font-size: 0.8rem;"><i class="ph-bold ph-warning-circle"></i> Admin Rejection Remarks</span>
+                            <p style="color: var(--danger); font-size: 1rem; margin: 10px 0 0 0; font-weight: 800; line-height: 1.5;">[[ selectedEvent.remarks || 'No detailed reason provided.' ]]</p>
+                        </div>
+
+                        <!-- Rejection Form -->
+                        <div v-if="isRejecting && !isHistoryMode" class="fade-in" style="background: rgba(220, 53, 69, 0.05); padding: 25px; border-radius: 15px; border: 2px solid rgba(220, 53, 69, 0.2);">
+                            <label class="form-label" style="color: var(--danger);"><i class="ph-bold ph-warning-circle"></i> Official Reason for Rejection (Required)</label>
+                            <textarea v-model="rejectReason" rows="4" class="form-input" placeholder="State the administrative or technical reason why this proposal cannot proceed..." style="resize: none; border-color: rgba(220, 53, 69, 0.3);"></textarea>
+                        </div>
+
                     </div>
 
-                    <div>
-                        <p style="margin-bottom: 20px;">Noted by:</p>
-                        <p style="margin: 0; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; display: inline-block;">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
-                        <p style="margin: 5px 0 0 0;">[[ selectedEvent.org ]] Adviser</p>
+                    <!-- MODAL FOOTERS -->
+                    <div class="av-modal-footer" v-if="!isHistoryMode">
+                        <template v-if="!isRejecting">
+                            <button class="btn-large btn-reject" @click="initiateReject" :disabled="actionLoading">
+                                Reject Proposal
+                            </button>
+                            
+                            <button v-if="selectedEvent.status === 'PENDING ADMIN'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
+                                Grant Initial Clearance
+                            </button>
+                            <button v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
+                                <i class="ph-bold ph-rocket-launch"></i> Fully Approve & Publish
+                            </button>
+                        </template>
+                        
+                        <template v-else-if="isRejecting">
+                            <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="cancelReject" :disabled="actionLoading">Go Back</button>
+                            <button class="btn-large" style="background: var(--danger); color: white; border: none;" @click="confirmReject" :disabled="actionLoading">
+                                <i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection
+                            </button>
+                        </template>
                     </div>
+
+                    <div class="av-modal-footer" v-else>
+                        <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main); width: 100%;" @click="closeModal">Close Record</button>
+                    </div>
+
                 </div>
-
-                <!-- Remarks for Rejected Events -->
-                <div v-if="selectedEvent.status === 'REJECTED'" class="readonly-box" style="border: 2px solid rgba(220, 53, 69, 0.3); background: rgba(220, 53, 69, 0.03); padding: 25px; border-radius: 15px;">
-                    <span class="form-label" style="color: var(--danger); font-size: 0.8rem;"><i class="ph-bold ph-warning-circle"></i> Admin Rejection Remarks</span>
-                    <p style="color: var(--danger); font-size: 1rem; margin: 10px 0 0 0; font-weight: 800; line-height: 1.5;">[[ selectedEvent.remarks || 'No detailed reason provided.' ]]</p>
-                </div>
-
-                <!-- Rejection Form -->
-                <div v-if="isRejecting && !isHistoryMode" class="fade-in" style="background: rgba(220, 53, 69, 0.05); padding: 25px; border-radius: 15px; border: 2px solid rgba(220, 53, 69, 0.2);">
-                    <label class="form-label" style="color: var(--danger);"><i class="ph-bold ph-warning-circle"></i> Official Reason for Rejection (Required)</label>
-                    <textarea v-model="rejectReason" rows="4" class="form-input" placeholder="State the administrative or technical reason why this proposal cannot proceed..." style="resize: none; border-color: rgba(220, 53, 69, 0.3);"></textarea>
-                </div>
-
-            </div>
-
-            <!-- MODAL FOOTERS -->
-            <div class="av-modal-footer" v-if="!isHistoryMode">
-                <template v-if="!isRejecting">
-                    <button class="btn-large btn-reject" @click="initiateReject" :disabled="actionLoading">
-                        <template v-if="!actionLoading">Reject Proposal</template>
-                        <template v-else><i class="ph-bold ph-spinner spin"></i> Wait...</template>
-                    </button>
-                    
-                    <button v-if="selectedEvent.status === 'PENDING ADMIN'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
-                        <template v-if="!actionLoading">Grant Initial Clearance</template>
-                        <template v-else><i class="ph-bold ph-spinner spin"></i> Processing...</template>
-                    </button>
-                    <button v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
-                        <template v-if="!actionLoading">
-                            <i class="ph-bold ph-rocket-launch"></i> Fully Approve & Publish
-                        </template>
-                        <template v-else>
-                            <i class="ph-bold ph-spinner spin"></i> Publishing Live...
-                        </template>
-                    </button>
-                </template>
-                
-                <template v-else-if="isRejecting">
-                    <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="cancelReject" :disabled="actionLoading">Go Back</button>
-                    <button class="btn-large" style="background: var(--danger); color: white; border: none;" @click="confirmReject" :disabled="actionLoading">
-                        <template v-if="!actionLoading">
-                            <i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection
-                        </template>
-                        <template v-else>
-                            <i class="ph-bold ph-spinner spin"></i> Sending...
-                        </template>
-                    </button>
-                </template>
-            </div>
-
-            <div class="av-modal-footer" v-else>
-                <template v-if="!isRescheduling">
-                    <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="closeModal">Close Record</button>
-                    <button v-if="selectedEvent.status === 'APPROVED'" class="btn-large" style="background: #17a2b8; color: white; border: none;" @click="initiateReschedule" :disabled="actionLoading">
-                        <i class="ph-bold ph-calendar-blank"></i> Reschedule Event
-                    </button>
-                </template>
-                <template v-else>
-                    <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="cancelReschedule" :disabled="actionLoading">Cancel</button>
-                    <button class="btn-large" style="background: #17a2b8; color: white; border: none;" @click="confirmReschedule" :disabled="actionLoading">
-                        <template v-if="!actionLoading">
-                            <i class="ph-bold ph-floppy-disk"></i> Save New Schedule
-                        </template>
-                        <template v-else>
-                            <i class="ph-bold ph-spinner spin"></i> Saving...
-                        </template>
-                    </button>
-                </template>
-            </div>
-
+            </transition>
         </div>
-    </div>
+    </transition>
 
     <!-- 🔍 TRUE FULLSCREEN LIGHTBOX VIEWER 🔍 -->
     <div v-if="isDocViewerOpen" class="lightbox-overlay fade-in" @click="closeDocViewer">
@@ -787,7 +968,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
 <script>
     const { createApp, ref, computed, onMounted } = Vue;
     createApp({
@@ -808,6 +989,9 @@
             const histStatus = ref('All');
             const histMonth = ref('');
 
+            const loadingStep = ref(0);
+            const activeTab = ref('main');
+
             const isRejecting = ref(false);
             const rejectReason = ref('');
 
@@ -825,8 +1009,14 @@
             try {
                 const pendNode = document.getElementById('events-data');
                 const histNode = document.getElementById('history-data');
-                if(pendNode) pendingArr = JSON.parse(JSON.parse(pendNode.textContent));
-                if(histNode) historyArr = JSON.parse(JSON.parse(histNode.textContent));
+                if(pendNode) {
+                    const raw = pendNode.textContent;
+                    pendingArr = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw);
+                }
+                if(histNode) {
+                    const raw = histNode.textContent;
+                    historyArr = JSON.parse(raw.startsWith('"') ? JSON.parse(raw) : raw);
+                }
             } catch(e) { console.error("Data Parse Error", e); }
             
             const pendingEvents = ref(pendingArr);
@@ -868,18 +1058,49 @@
                 const e = selectedEvent.value;
                 const mode = currentDocCount.value;
 
+                let docs = [];
                 if (mode === 2) {
-                    return [
-                        { label: 'Letter of Reschedule', icon: 'ph-file-text', url: e.letter_of_reschedule || e.letter_url },
-                        { label: 'Reschedule Cover Photo', icon: 'ph-image', url: e.reschedule_cover_photo || e.event_cover_photo }
-                    ];
+                    if (e.letter_of_reschedule || e.letter_url) 
+                        docs.push({ label: 'Letter of Reschedule', icon: 'ph-file-text', url: e.letter_of_reschedule || e.letter_url });
+                    if (e.reschedule_cover_photo || e.event_cover_photo)
+                        docs.push({ label: 'Reschedule Cover Photo', icon: 'ph-image', url: e.reschedule_cover_photo || e.event_cover_photo });
                 } else {
-                    return [
-                        { label: 'Signed Request Letter', icon: 'ph-file-text', url: e.letter_url }, 
-                        { label: 'Signed Permit', icon: 'ph-certificate', url: e.permit_url },
-                        { label: 'Equipment Form', icon: 'ph-toolbox', url: e.equipment_url },
-                        { label: 'Event Cover Photo', icon: 'ph-image', url: e.event_cover_photo }
-                    ];
+                    if (e.letter_url) docs.push({ label: 'Signed Request Letter', icon: 'ph-file-text', url: e.letter_url }); 
+                    if (e.permit_url) docs.push({ label: 'Signed Permit', icon: 'ph-certificate', url: e.permit_url });
+                    if (e.equipment_url) docs.push({ label: 'Equipment Form', icon: 'ph-toolbox', url: e.equipment_url });
+                    if (e.event_cover_photo) docs.push({ label: 'Event Cover Photo', icon: 'ph-image', url: e.event_cover_photo });
+                }
+                return docs;
+            });
+
+            const parsedDescription = computed(() => {
+                if (!selectedEvent.value) return { type: 'standard', originalDesc: '' };
+                let desc = selectedEvent.value.description || "";
+
+                if (desc.includes("[RESCHEDULE]")) {
+                    let reasonStr = "Administrative conflicts";
+                    let origDateStr = "N/A";
+                    let origDescStr = "";
+                    desc.split('|').forEach(part => {
+                        if(part.includes("Reason:")) reasonStr = part.split('Reason:')[1]?.trim() || reasonStr;
+                        if(part.includes("Original:")) origDateStr = part.split('Original:')[1]?.trim() || origDateStr;
+                        if(part.includes("Desc:")) origDescStr = part.split('Desc:')[1]?.trim() || origDescStr;
+                    });
+                    return { type: 'reschedule', reason: reasonStr, origDate: origDateStr, originalDesc: origDescStr };
+                }
+                else if (desc.includes("[NEW EVENT]")) {
+                    let targetStr = "N/A";
+                    let equipStr = "N/A";
+                    let origDescStr = "";
+                    desc.split('|').forEach(part => {
+                        if(part.includes("Target:")) targetStr = part.split('Target:')[1]?.trim() || targetStr;
+                        if(part.includes("Equipment:")) equipStr = part.split('Equipment:')[1]?.trim() || equipStr;
+                        if(part.includes("Desc:")) origDescStr = part.split('Desc:')[1]?.trim() || origDescStr;
+                    });
+                    return { type: 'new_event', target: targetStr, equipment: equipStr, originalDesc: origDescStr }; 
+                }
+                else {
+                    return { type: 'standard', originalDesc: desc };
                 }
             });
 
@@ -892,6 +1113,8 @@
                 showSuccessMsg.value = false;
                 statusMessage.value = '';
                 actionLoading.value = false;
+                loadingStep.value = 0;
+                activeTab.value = 'main';
                 isModalOpen.value = true; 
                 document.body.style.overflow = 'hidden';
             };
@@ -902,6 +1125,7 @@
                 setTimeout(() => { 
                     selectedEvent.value = null; 
                     showSuccessMsg.value = false;
+                    loadingStep.value = 0;
                 }, 300); 
             };
 
@@ -928,7 +1152,13 @@
 
             const updateEventStatus = async (status, payloadData = {}) => {
                 actionLoading.value = true;
+                loadingStep.value = 1;
+                
                 try {
+                    // Artificial delays to show steps to admin
+                    await new Promise(r => setTimeout(r, 800));
+                    loadingStep.value = 2;
+                    
                     const payload = { event_id: selectedEvent.value.id, action: status, ...payloadData };
                     const response = await fetch("{% url 'admin_api_action' %}", {
                         method: 'POST',
@@ -938,9 +1168,20 @@
                     const data = await response.json();
                     
                     if(data.status === 'success') {
+                        if (selectedEvent.value.status === 'FINAL ADMIN REVIEW') {
+                            loadingStep.value = 3;
+                            await new Promise(r => setTimeout(r, 1000));
+                        }
+                        
+                        loadingStep.value = 4;
+                        await new Promise(r => setTimeout(r, 800));
+                        loadingStep.value = 5; // Completed
+
                         statusMessage.value = data.message;
                         showSuccessMsg.value = true;
+                        actionLoading.value = false;
 
+                        // UPDATE LOCAL STATE
                         if(status === 'reschedule') {
                             let ev = historyEvents.value.find(e => e.id === selectedEvent.value.id);
                             if(ev) {
@@ -949,21 +1190,32 @@
                             }
                         } else {
                             let updatedEvent = { ...selectedEvent.value };
-                            if(status === 'approve' && selectedEvent.value.status === 'FINAL ADMIN REVIEW') {
-                                updatedEvent.status = 'APPROVED';
-                                historyEvents.value.unshift(updatedEvent);
+                            if(status === 'approve') {
+                                if (selectedEvent.value.status === 'FINAL ADMIN REVIEW') {
+                                    updatedEvent.status = 'APPROVED';
+                                } else {
+                                    updatedEvent.status = 'ADMIN APPROVED';
+                                }
                             } else if(status === 'reject') {
                                 updatedEvent.status = 'REJECTED';
+                                updatedEvent.remarks = payloadData.remarks;
+                            }
+                            
+                            // Remove from pending if it moved out of Admin states
+                            if (updatedEvent.status === 'REJECTED' || updatedEvent.status === 'ADMIN APPROVED' || updatedEvent.status === 'APPROVED') {
+                                pendingEvents.value = pendingEvents.value.filter(e => e.id !== selectedEvent.value.id);
+                            }
+                            
+                            // Update or Add to history
+                            let histIdx = historyEvents.value.findIndex(e => e.id === updatedEvent.id);
+                            if (histIdx !== -1) {
+                                historyEvents.value[histIdx] = updatedEvent;
+                            } else {
                                 historyEvents.value.unshift(updatedEvent);
                             }
-                            pendingEvents.value = pendingEvents.value.filter(e => e.id !== selectedEvent.value.id);
                         }
                         
-                        // Auto-close after 2 seconds
-                        setTimeout(() => {
-                            if(isModalOpen.value) closeModal();
-                            actionLoading.value = false; // Reset loading state here so you can use modal again
-                        }, 2000);
+                        setTimeout(() => { if(isModalOpen.value) closeModal(); }, 2500);
 
                     } else { 
                         alert(data.message); 
@@ -1010,7 +1262,8 @@
                 isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
                 openModal, closeModal, approveEvent,
                 currentDocCount, activeDocs,
-                showSuccessMsg, statusMessage
+                showSuccessMsg, statusMessage,
+                loadingStep, activeTab, parsedDescription
             }
         }
     }).mount('#vue-admin-app');

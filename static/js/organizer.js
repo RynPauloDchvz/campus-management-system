@@ -10,11 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = createApp({
         delimiters: ['[[', ']]'],
         data() {
+            const urls = window.VUE_APP_DATA?.urls || {};
             return {
                 isDark: false,
                 isLoading: true,
                 showProfileBubble: false,
                 isLogoutModalOpen: false,
+                currentUrl: window.VUE_APP_DATA?.currentUrl || '',
+                
                 // --- ?? Notification System ?? ---
                 unreadNotifCount: 0,
                 allNotifs: [],
@@ -23,6 +26,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 shownBannerIds: JSON.parse(sessionStorage.getItem('organizer_shown_banners') || '[]'),
                 isMsgModalOpen: false,
                 currentMsg: {},
+
+                // --- ?? Mobile Nav Bar ?? ---
+                navItems: [
+                    { name: 'Home', label: 'Home', icon: 'ph-bold ph-house', iconActive: 'ph-fill ph-house', url: urls.homepage },
+                    { name: 'Events', label: 'Events', icon: 'ph-bold ph-calendar-blank', iconActive: 'ph-fill ph-calendar-blank', url: urls.school_events },
+                    { name: 'Create', label: 'Create', icon: 'ph-bold ph-plus-circle', iconActive: 'ph-fill ph-plus-circle', url: urls.create_events },
+                    { name: 'Students', label: 'Students', icon: 'ph-bold ph-users', iconActive: 'ph-fill ph-users', url: urls.manage_students },
+                    { name: 'Attendance', label: 'Attendance', icon: 'ph-bold ph-user-focus', iconActive: 'ph-fill ph-user-focus', url: urls.manage_attendance },
+                    { name: 'Analytics', label: 'Analytics', icon: 'ph-bold ph-chart-bar', iconActive: 'ph-fill ph-chart-bar', url: urls.analytics },
+                    { name: 'Theme', label: 'Theme', icon: 'ph-bold ph-moon', iconActive: 'ph-fill ph-sun', url: null }
+                ],
+                activeIndex: -1,
+                indicatorOffset: 0,
+                indicatorWidth: 0,
+                showLeftArrow: false,
+                showRightArrow: true,
+                navRefs: [],
 
                 // --- ?? State ?? ---
                 isEventModalOpen: false,
@@ -47,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Initialize filteredCalendarEvents for current month
             const now = new Date();
-            this.filteredCalendarEvents = this.calendarEvents.filter(e => {
+            this.filteredCalendarEvents = (this.calendarEvents || []).filter(e => {
                 const d = new Date(e.date);
                 return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
             });
@@ -138,20 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 this.unreadNotifCount = this.allNotifs.filter(n => !this.readNotifs.includes(n.id)).length;
                 
-                // Logic based on title for redirection
-                const title = banner.title.toLowerCase();
-                const msg = banner.message.toLowerCase();
-                
-                if (title.includes('attendance') || msg.includes('attendance')) {
-                    let eventName = '';
-                    const match = banner.message.match(/for "(.*?)"/);
-                    if (match) eventName = match[1];
-                    if (eventName) sessionStorage.setItem('eventSearchQuery', eventName);
-                    window.location.href = window.VUE_APP_DATA?.urls?.school_events || '/organizer/school-events/';
-                } else if (title.includes('student') || msg.includes('student')) {
-                    window.location.href = window.VUE_APP_DATA?.urls?.manage_students || '/organizer/manage-students/';
-                } else if (title.includes('event') || msg.includes('event')) {
-                    window.location.href = window.VUE_APP_DATA?.urls?.school_events || '/organizer/school-events/';
+                if (banner.url) {
+                    window.location.href = banner.url;
                 } else {
                     window.location.href = window.VUE_APP_DATA?.urls?.messages || '/organizer/messages/';
                 }
@@ -163,18 +171,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = window.VUE_APP_DATA?.urls?.messages || '/organizer/messages/';
             },
             getNotifBorderClass(type, status) {
-                if (status === 'Approved') return 'border-l-green-500';
-                if (status === 'Rejected' || type === 'alert') return 'border-l-red-500';
+                if (type === 'student') return 'border-l-blue-500';
+                if (type === 'alert') return 'border-l-red-500';
+                if (type === 'event') {
+                    if (status === 'Approved') return 'border-l-green-500';
+                    if (status === 'Rejected') return 'border-l-red-500';
+                    return 'border-l-yellow-500';
+                }
+                if (type === 'message') return 'border-l-[#800000] dark:border-l-[#D4AF37]';
                 return 'border-l-blue-500';
             },
             getIconClass(type) {
                 if (type === 'event') return 'ph-calendar-star';
                 if (type === 'alert') return 'ph-warning-circle';
+                if (type === 'student') return 'ph-user-plus';
+                if (type === 'message') return 'ph-chats-teardrop';
                 return 'ph-megaphone';
             },
             getIconBgClass(type) {
                 if (type === 'event') return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800';
                 if (type === 'alert') return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800';
+                if (type === 'student') return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800';
+                if (type === 'message') return 'bg-maroon-50 text-[#800000] dark:bg-gold-900/10 dark:text-[#D4AF37] border-maroon-100 dark:border-gold-900/20';
                 return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800';
             },
             handleHeaderProfileClick() {

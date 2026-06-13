@@ -822,7 +822,8 @@
 
         window.addEventListener('load', () => {
             if (!window.VUE_APP_MOUNTED) {
-                Vue.createApp(baseAppConfig).mount('#app');
+                const app = Vue.createApp(baseAppConfig);
+                window.VUE_APP_INSTANCE = app.mount('#app');
                 window.VUE_APP_MOUNTED = true;
             }
         });

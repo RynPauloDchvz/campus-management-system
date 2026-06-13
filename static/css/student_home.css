@@ -1,0 +1,212 @@
+/* static/css/student_home.css */
+
+.hero-container {
+    transition: all 0.5s ease;
+}
+
+.action-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+html.dark .action-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(212, 175, 55, 0.1);
+}
+
+/* About Org Container - Mirroring Organizer Refinement */
+.about-section {
+    background: white;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+.dark .about-section {
+    background: #151515;
+    border: 1px solid #262626;
+}
+
+/* Slideshow Refinement */
+.slideshow-container {
+    background: #000;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    min-height: 250px; 
+    border-top-left-radius: 1.5rem;
+    border-bottom-left-radius: 1.5rem;
+}
+
+.slideshow-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.3);
+    pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+    .slideshow-container { 
+        aspect-ratio: 16/9; 
+        min-height: auto;
+        border-bottom-left-radius: 0;
+        border-top-right-radius: 1.5rem;
+    }
+}
+
+.slide {
+    display: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    animation: fadeEffect 1s;
+}
+
+@keyframes fadeEffect {
+    from {opacity: 0.4;}
+    to {opacity: 1;}
+}
+
+/* FullCalendar Customizations */
+.fc .fc-toolbar {
+    margin-bottom: 1.5rem !important;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background-color: rgba(128, 0, 0, 0.05) !important;
+}
+
+html.dark .fc .fc-daygrid-day.fc-day-today {
+    background-color: rgba(212, 175, 55, 0.05) !important;
+}
+
+.fc-daygrid-event {
+    border-radius: 4px !important;
+    padding: 2px 4px !important;
+    font-size: 0.65rem !important;
+}
+
+/* ========================================== */
+/* NEWS SECTION - RESPONSIVE (GRID VS CAROUSEL) */
+/* ========================================== */
+
+/* Mobile: Carousel (Default) */
+.news-carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 1.25rem;
+    padding: 1.5rem 1rem;
+    margin: -1.5rem -1rem;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.news-carousel::-webkit-scrollbar { display: none; }
+
+.news-card {
+    flex: 0 0 85%;
+    scroll-snap-align: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0.6; /* Reduced slightly for more contrast on focus */
+    transform: scale(0.9);
+    border: none !important; /* Remove outline as requested */
+}
+
+/* Mobile Active Focus Effect */
+@media (max-width: 767px) {
+    .news-card.active-focus {
+        opacity: 1 !important;
+        transform: scale(1.02) !important; /* "Nakaultaw" effect */
+        box-shadow: 0 30px 40px -10px rgba(0, 0, 0, 0.25);
+        z-index: 10;
+    }
+    .dark .news-card.active-focus {
+        box-shadow: 0 30px 40px -10px rgba(212, 175, 55, 0.15);
+    }
+}
+
+/* Desktop: Restore Grid Layout */
+@media (min-width: 768px) {
+    .news-carousel {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        overflow: visible;
+        padding: 0;
+        margin: 0;
+        scroll-snap-type: none;
+    }
+    .news-card {
+        flex: none;
+        opacity: 1;
+        transform: scale(1);
+        scroll-snap-align: none;
+        border: 1px solid #e5e7eb !important;
+    }
+    .dark .news-card { border: 1px solid #262626 !important; }
+
+    .news-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* ========================================== */
+/* MOBILE FULLSCREEN MODALS & UI TWEAKS */
+/* ========================================== */
+@media (max-width: 640px) {
+    /* Hero Banner: Edge to Edge */
+    .hero-container {
+        border-radius: 0 !important;
+        margin-left: -1.25rem !important; /* Match default padding of px-5 */
+        margin-right: -1.25rem !important;
+        width: calc(100% + 2.5rem) !important;
+    }
+
+    .mobile-fullscreen-modal {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 5005 !important;
+    }
+
+    .modal-scroll-area {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 7rem !important; /* Added space for the fixed button */
+    }
+
+    .modal-header-img {
+        height: 35vh !important;
+        flex-shrink: 0;
+    }
+
+    /* Fixed Button Container for Mobile */
+    .fixed-modal-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(to top, white 80%, transparent);
+        padding: 1.5rem 2rem 2.5rem 2rem;
+        z-index: 5020;
+    }
+    .dark .fixed-modal-footer {
+        background: linear-gradient(to top, #151515 80%, transparent);
+    }
+}

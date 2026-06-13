@@ -75,9 +75,6 @@
                     <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3 flex justify-between items-center">
                         <span id="formTitle">Document Form</span>
                         <div class="flex items-center gap-3">
-                            <a href="{% url 'organizer_event_vault' %}" class="text-[10px] bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-200 dark:border-blue-800 px-3 py-1 rounded-full uppercase tracking-widest font-black hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all flex items-center gap-2">
-                                <i class="ph-bold ph-file-arrow-up text-xs"></i> Upload Permits
-                            </a>
                             <span id="editBadge" class="hidden bg-yellow-100 text-yellow-700 border border-yellow-300 text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-black shadow-sm animate-pulse">Edit Mode</span>
                         </div>
                     </h3>
@@ -116,6 +113,13 @@
 
                     <div id="rescheduleFields" class="hidden bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 p-4 rounded-xl flex flex-col gap-4">
                         <div>
+                            <label class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Original Event (to be updated)</label>
+                            <select id="origEventId" onchange="autoPopulateOrigDate(this)" class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none font-bold">
+                                <option value="">-- Select Event to Reschedule --</option>
+                                <!-- Populated via JS -->
+                            </select>
+                        </div>
+                        <div class="hidden">
                             <label class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Original Event Date</label>
                             <input type="date" id="origDate" class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none">
                         </div>
@@ -387,6 +391,7 @@
 
 {{ events_json|json_script:"events-data" }}
 {{ documents_json|json_script:"documents-data" }}
+{{ approved_events_json|json_script:"approved-events-data" }}
 
 <style>
     .document-preview-container {
@@ -432,6 +437,7 @@
 
     let allEvents = [];
     let allDocuments = [];
+    let approvedEvents = [];
 
     document.addEventListener("DOMContentLoaded", function() {
         try {
@@ -451,10 +457,40 @@
                     showTrackingDetails(allDocuments[0].id);
                 }
             }
+
+            const apprNode = document.getElementById('approved-events-data');
+            if(apprNode) {
+                const parsedAppr = JSON.parse(apprNode.textContent);
+                approvedEvents = typeof parsedAppr === 'string' ? JSON.parse(parsedAppr) : parsedAppr;
+                
+                // Populate Dropdown
+                const dropdown = document.getElementById('origEventId');
+                if (dropdown) {
+                    approvedEvents.forEach(ae => {
+                        const opt = document.createElement('option');
+                        opt.value = ae.id;
+                        opt.textContent = `${ae.title} (${ae.date})`;
+                        dropdown.appendChild(opt);
+                    });
+                }
+            }
         } catch(e) { console.error("Error loading data", e); }
         
         toggleFormFields(); 
     });
+
+    function autoPopulateOrigDate(select) {
+        const eventId = select.value;
+        const origDateInput = document.getElementById('origDate');
+        if (!eventId) {
+            origDateInput.value = "";
+            return;
+        }
+        const event = approvedEvents.find(ae => ae.id.toString() === eventId.toString());
+        if (event) {
+            origDateInput.value = event.date;
+        }
+    }
 
     function renderDocuments(docsToRender) {
         // Function disabled on this page as the list has been moved to document_tracking.html
@@ -758,7 +794,8 @@
         if(type === 'reschedule_event') {
             const reason = document.getElementById('reschedReason').value || "unforeseen circumstances";
             const orig = document.getElementById('origDate').value || "Unknown Date";
-            finalDesc = `[RESCHEDULE] Reason: ${reason} | Original: ${orig} | Target: ${target} | Equipment: ${equip} | Desc: ${descBase}`;
+            const origId = document.getElementById('origEventId').value || "None";
+            finalDesc = `[RESCHEDULE] Reason: ${reason} | Original: ${orig} | OrigID: ${origId} | Target: ${target} | Equipment: ${equip} | Desc: ${descBase}`;
         } else {
             finalDesc = `[NEW EVENT] Target: ${target} | Equipment: ${equip} | Desc: ${descBase}`;
         }

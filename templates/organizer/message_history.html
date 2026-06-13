@@ -57,15 +57,9 @@
     
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div class="mb-8">
-            <a href="{% url 'organizer_profile' %}" class="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">
-                <i class="ph-bold ph-arrow-left"></i> Back to Profile
-            </a>
-        </div>
-
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
             <h1 class="text-3xl sm:text-4xl font-black text-pup-maroon dark:text-pup-gold uppercase tracking-wide flex items-center gap-3">
-                <i class="ph-fill ph-bell text-3xl"></i> All Messages
+                <i class="ph-fill ph-bell text-3xl"></i> Message History
             </h1>
             
             <div class="relative w-full sm:w-80 shrink-0">
@@ -75,31 +69,9 @@
         </div>
 
         <div class="flex flex-col gap-4" id="notificationsContainer">
-            </div>
-
-    </div>
-
-    <div id="eventMessageModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4">
-        <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeModal()"></div>
-        <div class="relative bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] shadow-2xl w-full max-w-sm p-10 text-center border border-gray-100 dark:border-gray-800 z-10 animate-in fade-in zoom-in duration-200">
-            
-            <div id="modalIconWrapper" class="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4">
-                <i id="modalIcon" class="ph-fill text-5xl"></i>
-            </div>
-            
-            <h3 id="modalTitle" class="text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight"></h3>
-            
-            <p id="modalBody" class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-8 px-2 font-medium"></p>
-
-            <div id="reasonContainer" class="hidden bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-5 rounded-2xl text-left mb-8">
-                <span class="block text-[11px] font-black text-red-500 uppercase tracking-widest mb-2">Reason for Rejection:</span>
-                <p id="reasonText" class="text-sm font-bold text-red-800 dark:text-red-400"></p>
-            </div>
-            
-            <button onclick="closeModal()" class="w-full py-4 rounded-2xl bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-all text-base shadow-sm">
-                Close Message
-            </button>
+            <!-- Notifications will be injected here -->
         </div>
+
     </div>
 
 </div>
@@ -113,61 +85,58 @@
 <script>
     let notifications = [];
     let currentFiltered = [];
-    let readNotifs = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+    let readNotifs = JSON.parse(localStorage.getItem('organizer_read_notifs') || '[]');
 
-    // Kukunin ang Data mula sa Django
-    try {
-        const rawData = document.getElementById('django-notifs-data').textContent;
-        if (rawData && rawData.trim() !== '') {
-            notifications = JSON.parse(rawData.trim());
-            currentFiltered = notifications;
-        }
-    } catch (error) {
-        console.error("Error loading notifications:", error);
-    }
-
-    // Pang-display ng mga notifications sa HTML
     function renderNotifications(dataList) {
         const container = document.getElementById('notificationsContainer');
         if (!container) return;
         
-        // Kapag walang nahanap sa search o walang data
         if (dataList.length === 0) {
             container.innerHTML = `
                 <div class="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200 border-dashed dark:border-gray-800 p-12 text-center shadow-sm">
                     <i class="ph-fill ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-700 mb-3 block"></i>
-                    <h3 class="font-bold text-gray-500 dark:text-gray-400 text-lg">No matches found.</h3>
-                    <p class="text-sm text-gray-400 dark:text-gray-600 mt-1">Try adjusting your search keywords.</p>
+                    <h3 class="font-bold text-gray-500 dark:text-gray-400 text-lg">No notifications found.</h3>
                 </div>
             `;
             return;
         }
 
         let htmlString = '';
-
         dataList.forEach((notif, index) => {
             const isRead = readNotifs.includes(notif.id);
             
-            // Set styles based on type and status
-            let borderClass = 'border-l-yellow-500';
-            let iconBg = 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400';
-            let iconClass = 'ph-clock';
+            let borderClass = 'border-l-blue-500';
+            let iconBg = 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+            let iconClass = 'ph-megaphone';
 
             if (notif.type === 'student') {
                 borderClass = 'border-l-blue-500';
                 iconBg = 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
                 iconClass = 'ph-user-plus';
-            } else if (notif.status === 'Approved') {
-                borderClass = 'border-l-green-500';
-                iconBg = 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
-                iconClass = 'ph-check-circle';
-            } else if (notif.status === 'Rejected') {
+            } else if (notif.type === 'alert') {
                 borderClass = 'border-l-red-500';
                 iconBg = 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
-                iconClass = 'ph-x-circle';
+                iconClass = 'ph-warning-circle';
+            } else if (notif.type === 'event') {
+                if (notif.status === 'Approved') {
+                    borderClass = 'border-l-green-500';
+                    iconBg = 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+                    iconClass = 'ph-calendar-check';
+                } else if (notif.status === 'Rejected') {
+                    borderClass = 'border-l-red-500';
+                    iconBg = 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+                    iconClass = 'ph-x-circle';
+                } else {
+                    borderClass = 'border-l-yellow-500';
+                    iconBg = 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400';
+                    iconClass = 'ph-calendar-star';
+                }
+            } else if (notif.type === 'message') {
+                borderClass = 'border-l-pup-maroon dark:border-l-pup-gold';
+                iconBg = 'bg-maroon-50 text-pup-maroon dark:bg-gold-900/10 dark:text-pup-gold';
+                iconClass = 'ph-chats-teardrop';
             }
 
-            // Kapag read na, magiging grey/malabo
             const readClass = isRead 
                 ? 'opacity-60 bg-gray-50 dark:bg-[#111111] border-gray-300 dark:border-gray-800' 
                 : 'bg-white dark:bg-[#151515] shadow-sm hover:shadow-md border-gray-200 dark:border-gray-700';
@@ -204,95 +173,51 @@
         container.innerHTML = htmlString;
     }
 
-    // FUNCTION PARA SA SEARCH BAR
     function filterNotifications() {
         const query = document.getElementById('searchInput').value.toLowerCase().trim();
-        
         if (query === "") {
             currentFiltered = notifications;
-            renderNotifications(currentFiltered);
-            return;
+        } else {
+            currentFiltered = notifications.filter(n => 
+                (n.title || '').toLowerCase().includes(query) || 
+                (n.sender || '').toLowerCase().includes(query) || 
+                (n.message || '').toLowerCase().includes(query)
+            );
         }
-
-        currentFiltered = notifications.filter(n => {
-            const titleMatch = (n.title || '').toLowerCase().includes(query);
-            const senderMatch = (n.sender || '').toLowerCase().includes(query);
-            const msgMatch = (n.message || '').toLowerCase().includes(query);
-            const statMatch = (n.status || '').toLowerCase().includes(query);
-            
-            return titleMatch || senderMatch || msgMatch || statMatch;
-        });
-
         renderNotifications(currentFiltered);
     }
 
-    // FUNCTION KAPAG CLINICK YUNG NOTIFICATION (Gagamit ng Index imbes na JSON string para di mag-error)
     function handleNotifClick(index) {
         const notif = currentFiltered[index];
-        
-        // I-save sa LocalStorage na nabasa na
         if (!readNotifs.includes(notif.id)) {
             readNotifs.push(notif.id);
-            localStorage.setItem('read_notifs', JSON.stringify(readNotifs));
-            renderNotifications(currentFiltered); // Update UI para maging grey yung pinindot
+            localStorage.setItem('organizer_read_notifs', JSON.stringify(readNotifs));
         }
-
-        if (notif.type === 'student') {
-            window.location.href = notif.url; // Redirect to Manage Students
-        } else {
-            openEventModal(notif); // Open Dynamic Modal
+        if (notif.url && notif.url !== '#') {
+            window.location.href = notif.url;
         }
     }
 
-    // 🟢 EKSAMINADONG MODAL LOGIC (TULAD SA SS) 🟢
-    function openEventModal(notif) {
-        const iconWrapper = document.getElementById('modalIconWrapper');
-        const icon = document.getElementById('modalIcon');
-        const titleEl = document.getElementById('modalTitle');
-        const bodyEl = document.getElementById('modalBody');
-        const reasonContainer = document.getElementById('reasonContainer');
-        const reasonText = document.getElementById('reasonText');
-
-        // I-set yung generic message gaya ng sa screenshot mo
-        bodyEl.innerHTML = notif.message;
-
-        if(notif.status === 'Approved') {
-            iconWrapper.className = "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4 border-green-100 bg-green-50 text-green-500 dark:border-green-900/30 dark:bg-green-900/20";
-            icon.className = "ph-fill ph-check-circle";
-            titleEl.className = "text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight text-green-600 dark:text-green-500";
-            titleEl.innerText = "EVENT APPROVED!";
-            reasonContainer.classList.add('hidden');
-        } 
-        else if (notif.status === 'Rejected') {
-            iconWrapper.className = "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4 border-red-100 bg-red-50 text-red-500 dark:border-red-900/30 dark:bg-red-900/20";
-            icon.className = "ph-fill ph-x-circle";
-            titleEl.className = "text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight text-red-600 dark:text-red-500";
-            titleEl.innerText = "EVENT REJECTED";
-            reasonContainer.classList.remove('hidden');
-            reasonText.innerText = notif.remarks && notif.remarks.trim() !== 'None' ? notif.remarks : "No specific reason provided.";
-        } 
-        else {
-            iconWrapper.className = "w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 border-4 border-yellow-100 bg-yellow-50 text-yellow-500 dark:border-yellow-900/30 dark:bg-yellow-900/20";
-            icon.className = "ph-fill ph-clock";
-            titleEl.className = "text-2xl sm:text-3xl font-black mb-4 uppercase tracking-tight text-yellow-600 dark:text-yellow-500";
-            titleEl.innerText = "EVENT PENDING";
-            reasonContainer.classList.add('hidden');
+    function initNotifications() {
+        try {
+            const rawData = document.getElementById('django-notifs-data').textContent;
+            if (rawData && rawData.trim() !== '') {
+                notifications = JSON.parse(rawData.trim());
+                currentFiltered = notifications;
+                renderNotifications(notifications);
+            } else {
+                renderNotifications([]);
+            }
+        } catch (error) {
+            console.error("Error loading notifications:", error);
+            renderNotifications([]);
         }
-
-        document.getElementById('eventMessageModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
     }
 
-    function closeModal() {
-        document.getElementById('eventMessageModal').classList.add('hidden');
-        document.body.style.overflow = '';
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', initNotifications);
+    } else {
+        initNotifications();
     }
-
-    // Simulan ang pag-render kapag nag-load na ang window
-    window.addEventListener('DOMContentLoaded', () => {
-        if(notifications.length > 0) {
-            renderNotifications(notifications);
-        }
-    });
 </script>
 {% endblock extra_js %}
