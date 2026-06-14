@@ -83,14 +83,20 @@
 
                     <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-[0.65rem] sm:text-sm font-bold text-gray-600 dark:text-gray-400 transition-colors">
                         <span class="bg-gray-200 dark:bg-gray-800 px-3 py-1.5 rounded-full border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white uppercase shadow-sm">{{ student.organization }} STUDENT</span>
-                        <span class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200/50 dark:border-gray-800/50 shadow-sm"><i class="ph-fill ph-check-circle text-green-600 dark:text-green-400"></i> {{ present_count }} Events Attended</span>
+                        <div class="flex items-center bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md rounded-full border border-gray-200/50 dark:border-gray-800/50 shadow-sm divide-x divide-gray-200 dark:divide-gray-800">
+                            <span class="px-3 py-1.5 text-green-600 dark:text-green-400 flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> {{ present_count }} Present</span>
+                            <span class="px-3 py-1.5 text-red-600 dark:text-red-400 flex items-center gap-1"><i class="ph-fill ph-x-circle"></i> {{ absent_count }} Absent</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="pb-1 sm:pb-3 shrink-0 flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto mt-4 sm:mt-0 relative z-40">
-                <button onclick="openSettingsModal()" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Settings">
+                <button id="cancelBtn" onclick="window.location.reload()" class="hidden bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-[0.65rem] sm:text-sm shadow-sm transition-colors hover:bg-gray-300 dark:hover:bg-gray-700 flex items-center gap-1 sm:gap-2">
+                    <i class="ph-bold ph-x text-sm sm:text-lg"></i> <span>Cancel</span>
+                </button>
+                <button onclick="openSettingsModal()" id="settingsBtn" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Settings">
                     <i class="ph-bold ph-gear text-base sm:text-lg"></i>
                 </button>
                 <button id="editBtn" onclick="toggleStudentProfileEdit()" class="bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-[0.65rem] sm:text-sm shadow-sm transition-colors hover:opacity-90 flex items-center gap-1 sm:gap-2">
@@ -130,7 +136,8 @@
                 <span id="birthDisplay" class="block text-[0.7rem] sm:text-base font-black text-gray-900 dark:text-white uppercase transition-colors truncate">
                     {% if student.birthdate %}{{ student.birthdate|date:"M d, Y" }}{% else %}Not Set{% endif %}
                 </span>
-                <input type="date" id="birthInput" class="hidden absolute inset-0 w-full h-full opacity-0 cursor-pointer" value="{{ student.birthdate|date:'Y-m-d' }}">
+                <!-- Birthdate is now read-only -->
+                <input type="date" id="birthInput" class="hidden" value="{{ student.birthdate|date:'Y-m-d' }}">
             </div>
         </div>
 
@@ -438,6 +445,8 @@
     let isEditMode = false;
     async function toggleStudentProfileEdit() {
         const btn = document.getElementById('editBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
         const btnText = document.getElementById('editBtnText');
         const btnMobile = document.getElementById('editBtnMobile');
         const nameDisplay = document.getElementById('profileFullNameDisplay');
@@ -445,13 +454,13 @@
         const inputEditName = document.getElementById('inputEditName');
         const yearDisplay = document.getElementById('yearDisplay');
         const yearSelect = document.getElementById('yearSelect');
-        const birthDisplay = document.getElementById('birthDisplay');
-        const birthInput = document.getElementById('birthInput');
         const profileOverlay = document.getElementById('profileEditOverlay');
         const coverOverlay = document.getElementById('coverEditOverlay');
 
         if (!isEditMode) {
             isEditMode = true;
+            cancelBtn.classList.remove('hidden');
+            settingsBtn.classList.add('hidden');
             btn.classList.replace('bg-[#800000]', 'bg-green-600');
             btn.classList.replace('dark:bg-[#D4AF37]', 'dark:bg-green-500');
             btn.classList.replace('dark:text-black', 'dark:text-white');
@@ -464,19 +473,33 @@
             yearDisplay.classList.add('opacity-50');
             yearSelect.classList.remove('hidden');
             document.getElementById('yearChevron').classList.remove('hidden');
-            birthDisplay.classList.add('opacity-50');
-            birthInput.classList.remove('hidden');
             profileOverlay.style.display = 'flex';
             coverOverlay.style.display = 'flex';
+
+            // Remove uppercase from input to see actual casing
+            inputEditName.classList.remove('uppercase');
+            
+            // Add Caps Lock Detector
+            inputEditName.addEventListener('keyup', function(event) {
+                if (event.getModifierState('CapsLock')) {
+                    inputEditName.classList.add('border-amber-500');
+                    inputEditName.title = "Warning: Caps Lock is ON";
+                } else {
+                    inputEditName.classList.remove('border-amber-500');
+                    inputEditName.title = "";
+                }
+            });
         } else {
             btnText.innerText = "Saving...";
             btn.disabled = true;
+            cancelBtn.classList.add('hidden');
             document.getElementById('yearChevron').classList.add('hidden');
 
             const formData = new FormData();
             formData.append('full_name', inputEditName.value);
             formData.append('year_level', yearSelect.value);
-            formData.append('birthdate', birthInput.value);
+            // birthdate is now fixed, but we keep it in formData for API compatibility
+            formData.append('birthdate', document.getElementById('birthInput').value);
             
             const profileFile = document.getElementById('profileFileInput').files[0];
             const coverFile = document.getElementById('coverFileInput').files[0];
@@ -562,7 +585,16 @@
     }
 
     // --- RECENT ACTIVITY MODAL LOGIC ---
-    function analyzeSentiment(text) {
+    function analyzeSentiment(text, vaderResult = null) {
+        // 🟢 Use server-side VADER result if provided
+        if (vaderResult && vaderResult.label) {
+            const label = vaderResult.label.charAt(0).toUpperCase() + vaderResult.label.slice(1);
+            if (label === 'Positive') return { label: 'Positive', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: 'ph-smiley' };
+            if (label === 'Negative') return { label: 'Negative', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: 'ph-smiley-sad' };
+            return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
+        }
+
+        // Fallback for older records
         if (!text || text.toLowerCase() === 'no feedback provided.') return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
         const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'helpful', 'informative', 'learned', 'well', 'organized', 'maganda', 'mahusay', 'sulit', 'maraming natutunan', 'salamat', 'thank', 'nice', 'ayos', 'the best'];
         const negativeWords = ['bad', 'poor', 'boring', 'waste', 'disorganized', 'late', 'rude', 'confusing', 'pangit', 'sayang', 'mabagal', 'maingay', 'gulo', 'hindi maganda', 'failed'];
@@ -596,22 +628,29 @@
             document.getElementById('viewEvaluationProof').classList.add('hidden');
             document.getElementById('proofTime').innerText = details.timestamp;
             
-            const locSig = document.getElementById('modalLocSig');
-            if (details.is_valid_location) {
-                locSig.innerText = "Verified inside PUP Campus Perimeter.";
-                locSig.className = "text-sm font-bold text-gray-900 dark:text-white leading-snug";
+            // 🟢 Show Capture Image
+            const faceContainer = document.querySelector('#viewAttendanceProof .aspect-\\[3\\/4\\]');
+            if (details.capture_url) {
+                faceContainer.innerHTML = `<img src="${details.capture_url}" class="w-full h-full object-cover">`;
             } else {
-                locSig.innerText = "Detected outside the designated event location.";
-                locSig.className = "text-sm font-bold text-red-600 leading-snug";
+                faceContainer.innerHTML = `<i class="ph-fill ph-user text-6xl text-gray-400"></i>`;
             }
 
-            const faceBadge = document.getElementById('modalFaceStatus');
-            if (details.face_matched) {
-                faceBadge.innerHTML = '<i class="ph-fill ph-check-circle"></i> Matched';
-                faceBadge.className = 'text-xs font-bold text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-md w-full text-center border border-green-200 dark:border-green-800/50';
+            const locSig = document.getElementById('modalLocSig');
+            const coords = details.coords || "N/A";
+            if (details.is_valid_location) {
+                locSig.innerHTML = `<span class="text-green-600 dark:text-green-400">Verified inside PUP Campus Perimeter</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
             } else {
-                faceBadge.innerHTML = '<i class="ph-fill ph-x-circle"></i> Mismatch';
-                faceBadge.className = 'text-xs font-bold text-red-600 dark:text-red-500 bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-md w-full text-center border border-red-200 dark:border-red-800/50';
+                locSig.innerHTML = `<span class="text-red-600 dark:text-red-400">Outside designated event geofence</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+            }
+
+            const faceStatus = document.getElementById('modalFaceStatus');
+            if (details.face_matched) {
+                faceStatus.innerText = "MATCHED";
+                faceStatus.className = "text-[10px] font-black px-3 py-1 rounded-md w-full text-center border border-green-200 bg-green-50 text-green-600 uppercase tracking-widest";
+            } else {
+                faceStatus.innerText = "MISMATCH";
+                faceStatus.className = "text-[10px] font-black px-3 py-1 rounded-md w-full text-center border border-red-200 bg-red-50 text-red-600 uppercase tracking-widest";
             }
         } else {
             document.getElementById('viewAttendanceProof').classList.add('hidden');
@@ -642,10 +681,11 @@
 
             const feedback = details.feedback || "No feedback provided.";
             document.getElementById('modalEvalComment').innerText = `"${feedback}"`;
-            const sentiment = analyzeSentiment(feedback);
+            
+            const sentiment = analyzeSentiment(feedback, details.sentiment);
             const badge = document.getElementById('modalSentimentBadge');
             badge.className = `px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 ${sentiment.class}`;
-            badge.innerHTML = `<i class="ph-fill ${sentiment.icon}"></i> ${sentiment.label}`;
+            badge.innerHTML = `<i class="ph-fill ${sentiment.icon}"></i> ${sentiment.label} (AI)`;
         }
 
         modal.classList.remove('hidden');

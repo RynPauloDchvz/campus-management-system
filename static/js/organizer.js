@@ -107,8 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         methods: {
             async fetchNotifications() {
+                if (document.hidden) return;
                 try {
                     const response = await fetch('/organizer/api/notifications/');
+                    if (!response.ok) return;
                     const data = await response.json();
                     if (data.status === 'success') {
                         this.allNotifs = data.notifications;
@@ -121,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.updateNotificationState();
                     }
                 } catch (error) {
-                    console.error('Error fetching notifications:', error);
+                    // Silent fail to avoid console clutter
                 }
             },
             updateNotificationState() {

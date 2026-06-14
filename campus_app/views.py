@@ -14,11 +14,13 @@ from django.utils.html import strip_tags
 from django.utils import timezone
 from django.utils.timezone import localtime
 from datetime import timedelta, datetime
+from django.core.files.base import ContentFile
 import json 
 import string 
 import random 
 import os 
 import io
+import base64
 import zipfile
 from docxtpl import DocxTemplate 
 from .models import OrgProfile, Student, Attendance, Event, LoginLockout, AuditLog
@@ -410,16 +412,23 @@ def student_profile(request):
 
     # 🟢 CONSTRUCT RECENT NOTIFICATIONS FOR PROFILE PREVIEW
     notifications = get_student_notifications(student)
-    recent_notifications = notifications[:4]  # Show only top 4 on profile
+    recent_notifications = notifications[:10]  # Increased to top 10 for better coverage
 
     # 🟢 STATS FOR STUDENT
+    all_events_count = Event.objects.filter(
+        Q(org_id=student.organization) | 
+        Q(event_title__icontains='Flag Raising') | 
+        Q(event_title__icontains='General Assembly') | 
+        Q(event_title__icontains='Student Week')
+    ).filter(event_status='Approved', event_date__lt=timezone.now().date()).count()
+
     attended_count = Attendance.objects.filter(student=student).count()
     present_count = Attendance.objects.filter(student=student, face_matched=True, is_valid_location=True).count()
-    absent_count = attended_count - present_count # Simplistic
+    absent_count = max(0, all_events_count - present_count)
 
     # 🟢 RECENT ACTIVITY LOGS
     # Get latest 3 attendance records and 3 audit logs for evaluations
-    recent_attendance = Attendance.objects.filter(student=student, face_matched=True, is_valid_location=True).order_by('-time_in')[:3]
+    recent_attendance = Attendance.objects.filter(student=student).order_by('-time_in')[:3]
     
     # Using AuditLog to find recent evaluations
     from .models import AuditLog
@@ -430,7 +439,9 @@ def student_profile(request):
         details = {
             'face_matched': att.face_matched,
             'is_valid_location': att.is_valid_location,
-            'timestamp': att.time_in.strftime('%B %d, %Y at %I:%M %p')
+            'timestamp': att.time_in.strftime('%B %d, %Y at %I:%M %p'),
+            'capture_url': att.capture_image.url if att.capture_image else None,
+            'coords': f"{att.latitude}, {att.longitude}" if att.latitude else "N/A"
         }
         recent_activity.append({
             'id': f'att_{att.id}',
@@ -459,7 +470,8 @@ def student_profile(request):
             'rating': changes.get('rating', '0'),
             'feedback': changes.get('feedback', 'No feedback provided.'),
             'total_raw_score': changes.get('total_raw_score', '0'),
-            'detailed_scores': changes.get('detailed_scores', {})
+            'detailed_scores': changes.get('detailed_scores', {}),
+            'sentiment': changes.get('sentiment', None) # Pass VADER result
         }
 
         recent_activity.append({
@@ -493,6 +505,8 @@ def student_profile(request):
 
 def get_student_notifications(student):
     notifications = []
+    now = timezone.now()
+    today = now.date()
 
     # 1. Welcome Message
     notifications.append({
@@ -506,21 +520,32 @@ def get_student_notifications(student):
         'status': 'System'
     })
 
-    # 2. Upcoming Events (Approved & Future)
-    # 🟢 RBAC Filtered: Own Org + Global Events
-    upcoming_events = Event.objects.filter(
+    # 2. Upcoming & Newly Published Events
+    # Filter: Own Org + Global Events
+    relevant_events = Event.objects.filter(
         Q(org_id=student.organization) | 
         Q(event_title__icontains='Flag Raising') | 
         Q(event_title__icontains='General Assembly') | 
         Q(event_title__icontains='Student Week')
-    ).filter(event_status='Approved', event_date__gte=timezone.now().date()).order_by('event_date')[:5]
-    
+    ).filter(event_status='Approved')
+
+    upcoming_events = relevant_events.filter(event_date__gte=today).order_by('event_date')[:8]
+
     for evt in upcoming_events:
+        # Check if it was recently approved (last 3 days)
+        is_new = (now - evt.created_at).days <= 3
+        prefix = "🔥 NEW EVENT: " if is_new else "Upcoming: "
+
+        # Check for rescheduling in remarks
+        is_rescheduled = evt.remarks and "rescheduled" in evt.remarks.lower()
+        if is_rescheduled:
+            prefix = "📅 RESCHEDULED: "
+
         notifications.append({
             'id': f"event_{evt.id}",
-            'type': 'event',
-            'title': f"Upcoming: {evt.event_title}",
-            'message': f"An exciting event '{evt.event_title}' is happening on {evt.event_date.strftime('%B %d')} at {evt.venue}. Don't miss out!",
+            'type': 'update' if is_rescheduled else ('new' if is_new else 'event'),
+            'title': f"{prefix}{evt.event_title}",
+            'message': f"Event '{evt.event_title}' is happening on {evt.event_date.strftime('%B %d')} at {evt.venue}. {evt.remarks if is_rescheduled else 'Don\'t miss out!'}",
             'sender': evt.org_id,
             'date': evt.created_at.strftime('%b %d, %Y'),
             'timestamp': evt.created_at.timestamp(),
@@ -549,6 +574,36 @@ def get_student_notifications(student):
             'status': 'Rejected'
         })
 
+    # 4. Evaluation Reminders
+    # Attended events in the last 14 days that have ended
+    recent_attended = Attendance.objects.filter(
+        student=student, 
+        face_matched=True, 
+        is_valid_location=True,
+        event__event_date__lt=today,
+        event__event_date__gte=today - timedelta(days=14)
+    ).select_related('event')
+
+    # Check which ones are already evaluated via AuditLog
+    evaluated_ids = list(AuditLog.objects.filter(
+        actor=student.user, 
+        action='EVALUATION', 
+        status='Success'
+    ).values_list('target_id', flat=True))
+
+    for att in recent_attended:
+        if str(att.event.id) not in evaluated_ids:
+            notifications.append({
+                'id': f"eval_rem_{att.event.id}",
+                'type': 'evaluation',
+                'title': f"Feedback Required: {att.event.event_title}",
+                'message': f"How was '{att.event.event_title}'? Please share your feedback in the Evaluation Hub to help us improve!",
+                'sender': 'System',
+                'date': att.event.event_date.strftime('%b %d, %Y'),
+                'timestamp': att.event.event_date.timestamp() + 86400, # Set to day after event
+                'status': 'Pending'
+            })
+
     # Sort by timestamp descending
     notifications.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
     return notifications
@@ -567,7 +622,6 @@ def student_messages(request):
         'notifications_json': json.dumps(notifications)
     }
     return render(request, 'student/messages.html', context)
-
 @user_passes_test(is_student_strictly, login_url='/')
 def update_student_password(request):
     if request.method == 'POST':
@@ -853,6 +907,13 @@ def student_event_calendar(request):
     ).filter(event_status='Approved').order_by('event_date', 'start_time')
     
     # Prepare data for FullCalendar
+    def clean_desc(desc):
+        if not desc: return 'No description provided.'
+        if "Desc:" in desc:
+            return desc.split("Desc:")[1].strip()
+        clean = desc.replace("[NEW EVENT]", "").replace("[RESCHEDULE]", "").strip()
+        return clean if clean else 'No description provided.'
+
     events_data = []
     for event in approved_events:
         # Default image logic
@@ -870,7 +931,7 @@ def student_event_calendar(request):
             'backgroundColor': '#800000',
             'borderColor': '#800000',
             'extendedProps': {
-                'description': event.description,
+                'description': clean_desc(event.description),
                 'venue': event.venue,
                 'time': event.start_time.strftime('%I:%M %p'),
                 'category': event.org_id,
@@ -888,6 +949,8 @@ def student_event_calendar(request):
 
     # Masterlist: All approved events from today onwards
     masterlist_events = approved_events.filter(event_date__gte=now.date())
+    for e in masterlist_events:
+        e.cleaned_description = clean_desc(e.description)
 
     context = {
         'events_json': json.dumps(events_data),
@@ -922,6 +985,13 @@ def student_evaluation(request):
         status='Success'
     ).values_list('target_id', flat=True)) if eid]
 
+    def clean_desc(desc):
+        if not desc: return 'No description provided.'
+        if "Desc:" in desc:
+            return desc.split("Desc:")[1].strip()
+        clean = desc.replace("[NEW EVENT]", "").replace("[RESCHEDULE]", "").strip()
+        return clean if clean else 'No description provided.'
+
     events_data = []
     for e in all_events:
         img_url = ""
@@ -945,6 +1015,8 @@ def student_evaluation(request):
             'end_time_iso': e.end_time.strftime('%H:%M:%S') if e.end_time else '',
             'venue': e.venue,
             'image': img_url,
+            'description': e.description,
+            'cleaned_description': clean_desc(e.description),
             'org': e.org_id,
             'already_evaluated': str(e.id) in evaluated_ids,
             'is_eligible': is_eligible,
@@ -1003,7 +1075,9 @@ def student_event_history(request):
             'details': {
                 'face_matched': att.face_matched,
                 'is_valid_location': att.is_valid_location,
-                'timestamp': att.time_in.strftime('%B %d, %Y at %I:%M %p')
+                'timestamp': att.time_in.strftime('%B %d, %Y at %I:%M %p'),
+                'capture_url': att.capture_image.url if att.capture_image else None,
+                'coords': f"{att.latitude}, {att.longitude}" if att.latitude else "N/A"
             }
         })
 
@@ -1075,49 +1149,30 @@ def organizer_homepage(request):
         org_profile = None
 
     # --- 🟢 ORGANIZATION-SPECIFIC SLIDESHOW LOGIC 🟢 ---
+    # Strictly only from the static folder as requested
     slideshow_images = []
     import os
     from django.conf import settings
     
-    # 1. Start with Org Logo and static images from orgImage folder
     org_img_dir = os.path.join(settings.BASE_DIR, 'static', 'images', 'orgImage', org_acronym)
     if os.path.exists(org_img_dir):
         files = os.listdir(org_img_dir)
         # Prioritize Logo (File starting with acronym)
         logo_file = next((f for f in files if f.lower().startswith(org_acronym.lower()) and f.lower().endswith(('.png', '.jpg', '.jpeg'))), None)
         if logo_file:
-            slideshow_images.append(f'/static/images/orgImage/{org_acronym}/{logo_file}')
+            slideshow_images.append({'url': f'/static/images/orgImage/{org_acronym}/{logo_file}', 'is_logo': True})
         
         # Add other background images from the same folder
         other_files = [f for f in files if f != logo_file and f.lower().endswith(('.png', '.jpg', '.jpeg'))]
-        for f in other_files[:3]:
-            slideshow_images.append(f'/static/images/orgImage/{org_acronym}/{f}')
+        for f in other_files:
+            slideshow_images.append({'url': f'/static/images/orgImage/{org_acronym}/{f}', 'is_logo': False})
 
-    # 2. Add dynamic uploads from profile if available
-    if org_profile:
-        if org_profile.cover_photo and org_profile.cover_photo.url not in slideshow_images:
-            slideshow_images.append(org_profile.cover_photo.url)
-        if org_profile.profile_picture and org_profile.profile_picture.url not in slideshow_images:
-            slideshow_images.append(org_profile.profile_picture.url)
-
-    # 3. Add Event images
-    org_events_images = Event.objects.filter(org_id=org_acronym, event_status='Approved').exclude(
-        Q(event_cover_photo='') & Q(cover_photo='') & Q(thumbnail='')
-    ).order_by('-event_date')[:3]
-
-    def get_img(e):
-        if e.event_cover_photo: return e.event_cover_photo.url
-        if e.cover_photo: return e.cover_photo.url
-        if e.thumbnail: return e.thumbnail.url
-        return None
-
-    for e in org_events_images:
-        url = get_img(e)
-        if url and url not in slideshow_images:
-            slideshow_images.append(url)
-
+    # Final Fallback if folder is empty or doesn't exist
     if not slideshow_images:
-        slideshow_images = ['/static/images/org1.jpg', '/static/images/org2.jpg', '/static/images/PUPLogo.png']
+        slideshow_images = [
+            {'url': '/static/images/org1.jpg', 'is_logo': False},
+            {'url': '/static/images/PUPLogo.png', 'is_logo': True}
+        ]
 
     # 🟢 Latest News: Own Org + Global Events
     latest_news = Event.objects.filter(
@@ -1127,6 +1182,15 @@ def organizer_homepage(request):
         Q(event_title__icontains='Student Week')
     ).filter(event_status='Approved').order_by('-created_at')[:4]
 
+    def clean_desc(desc):
+        if not desc: return 'No description provided.'
+        # Remove [NEW EVENT] or [RESCHEDULE] tags and technical metadata
+        if "Desc:" in desc:
+            return desc.split("Desc:")[1].strip()
+        # Remove common tags if they still exist
+        clean = desc.replace("[NEW EVENT]", "").replace("[RESCHEDULE]", "").strip()
+        return clean if clean else 'No description provided.'
+
     news_data = []
     for e in latest_news:
         news_data.append({
@@ -1134,7 +1198,7 @@ def organizer_homepage(request):
             'title': e.event_title,
             'date': e.created_at.strftime('%b %d, %Y').upper(),
             'image': get_img(e) or '/static/images/PUPLogo.png',
-            'description': e.description or 'No description provided.',
+            'description': clean_desc(e.description),
             'location': e.venue or 'PUP Unisan'
         })
 
@@ -2330,6 +2394,26 @@ def record_attendance(request):
                 return JsonResponse({'status': 'error', 'message': 'Event not found or not yet approved.'})
 
             # Check for existing attendance
+            # 🟢 HUMAN-READABLE LOCATION (Reverse Geocoding Logic) 🟢
+            location_name = "Unknown Location"
+            if lat and lng:
+                lat_f, lng_f = float(lat), float(lng)
+                zones = [
+                    {'name': 'Main Building', 'lat': 13.84615, 'lng': 121.96955},
+                    {'name': 'Gymnasium', 'lat': 13.84580, 'lng': 121.96980},
+                    {'name': 'Covered Court', 'lat': 13.84640, 'lng': 121.96940},
+                    {'name': 'Campus Grounds', 'lat': 13.84610, 'lng': 121.96970}
+                ]
+                closest_zone = zones[0]
+                min_dist = float('inf')
+                for zone in zones:
+                    dist = ((lat_f - zone['lat'])**2 + (lng_f - zone['lng'])**2)**0.5
+                    if dist < min_dist:
+                        min_dist = dist
+                        closest_zone = zone
+                if min_dist < 0.001: location_name = closest_zone['name']
+                else: location_name = f"Outside Campus ({lat_f:.4f}, {lng_f:.4f})"
+
             attendance = None
             if student:
                 attendance = Attendance.objects.filter(student=student, event=event).first()
@@ -2367,16 +2451,18 @@ def record_attendance(request):
                 attendance.latitude_out = lat
                 attendance.longitude_out = lng
                 attendance.is_valid_location_out = is_valid_location
+                attendance.location_zone = location_name # Save zone on timeout
                 attendance.save()
 
                 log_audit_event(request, 'ATTENDANCE', target_model='Event', target_id=str(event.id), status='Success', changes={
                     'type': 'Time Out',
                     'event': event.event_title,
                     'user': student.full_name if student else organizer.user.username,
-                    'location': is_valid_location
+                    'location_zone': location_name,
+                    'location_valid': is_valid_location
                 })
 
-                return JsonResponse({'status': 'success', 'message': 'Time Out recorded successfully! You can now evaluate this activity.'})
+                return JsonResponse({'status': 'success', 'message': f'Mission Complete: Time Out verified at {location_name}. Participation synchronized.'})
 
             # 🟢 TIME IN LOGIC 🟢
             if end_dt:
@@ -2385,9 +2471,9 @@ def record_attendance(request):
                 expiry_dt = start_dt + timedelta(hours=4)
 
             if now < start_dt:
-                return JsonResponse({'status': 'error', 'message': f'Attendance hasn\'t started yet. Opens at {event.start_time.strftime("%I:%M %p")}.'})
+                return JsonResponse({'status': 'error', 'message': f'Authorization window hasn\'t opened yet. Access available at {event.start_time.strftime("%I:%M %p")}.'})
             if now > expiry_dt:
-                return JsonResponse({'status': 'error', 'message': 'Attendance window has closed for this event.'})
+                return JsonResponse({'status': 'error', 'message': 'Authorization window has expired for this activity.'})
 
             # 🟢 SERVER-SIDE DEEPFACE VERIFICATION 🟢
             face_matched = False
@@ -2405,22 +2491,35 @@ def record_attendance(request):
                 face_matched=face_matched,
                 is_valid_location=is_valid_location,
                 latitude=lat,
-                longitude=lng
+                longitude=lng,
+                location_zone=location_name # Save zone on timein
             )
+
+            # 🟢 SAVE CAPTURE IMAGE 🟢
+            if live_face_b64:
+                try:
+                    format, imgstr = live_face_b64.split(';base64,')
+                    ext = format.split('/')[-1]
+                    data = ContentFile(base64.b64decode(imgstr), name=f'capture_{attendance.id}.{ext}')
+                    attendance.capture_image = data
+                    attendance.save()
+                except Exception as e:
+                    print(f"Error saving capture image: {e}")
             
             log_audit_event(request, 'ATTENDANCE', target_model='Event', target_id=str(event.id), status='Success' if face_matched else 'Issue', changes={
                 'type': 'Time In',
                 'event': event.event_title,
                 'user': student.full_name if student else organizer.user.username,
+                'location_zone': location_name,
                 'face_match': face_matched,
-                'location': is_valid_location,
-                'ai_verified': True
+                'location_valid': is_valid_location,
             })
             
+            msg = f"Time In verified at {location_name}."
             if not face_matched:
-                return JsonResponse({'status': 'issue', 'message': 'Time In recorded, but Face Recognition MISMATCH detected.'})
+                msg += " Note: Biometric mismatch detected; record flagged for review."
 
-            return JsonResponse({'status': 'success', 'message': 'Time In recorded successfully!'})
+            return JsonResponse({'status': 'success' if face_matched else 'issue', 'message': msg})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 

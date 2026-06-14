@@ -41,13 +41,15 @@
         background: #000;
         border-top-left-radius: 1.5rem;
         border-bottom-left-radius: 1.5rem;
+        border-top-right-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
     }
     @media (max-width: 1024px) {
         .slideshow-container { 
             aspect-ratio: 16/9; 
             min-height: auto;
             border-bottom-left-radius: 0;
-            border-top-right-radius: 1.5rem;
+            border-top-right-radius: 1.5rem !important;
         }
     }
 
@@ -67,7 +69,51 @@
     }
     @keyframes fadeEffect { from {opacity: 0.4;} to {opacity: 1;} }
 
-    /* University News - Responsive Layout */
+    /* Action Cards Fix */
+    .action-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 1.5rem;
+        border: 1px solid #f3f4f6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .dark .action-card {
+        background: #111;
+        border-color: #222;
+        box-shadow: none;
+    }
+    .action-card:hover {
+        border-color: #800000;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    .dark .action-card:hover { border-color: #D4AF37; }
+
+    /* Date Icon Style (Calendar List) */
+    .date-icon {
+        width: 45px;
+        height: 45px;
+        background: #f9fafb;
+        border: 1px solid #f3f4f6;
+        border-radius: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .dark .date-icon { background: #111; border-color: #222; }
+    .date-month { font-size: 8px; font-weight: 900; color: #800000; text-transform: uppercase; line-height: 1; }
+    .dark .date-month { color: #D4AF37; }
+    .date-day { font-size: 14px; font-weight: 900; line-height: 1; margin-top: 2px; }
+
+    /* Activity Announcements - Responsive Layout */
     .news-carousel {
         display: flex;
         overflow-x: auto;
@@ -98,6 +144,16 @@
         .dark .news-card { border: 1px solid #262626 !important; }
     }
 
+    /* Highlight for selected day in sidebar calendar */
+    .fc-daygrid-day.selected-day {
+        background-color: rgba(128, 0, 0, 0.1) !important;
+        border: 2px solid #800000 !important;
+    }
+    .dark .fc-daygrid-day.selected-day {
+        background-color: rgba(212, 175, 55, 0.1) !important;
+        border: 2px solid #D4AF37 !important;
+    }
+
     /* Full Screen Modals on Mobile */
     @media (max-width: 640px) {
         .modal-content-container, #calendarModalContainer {
@@ -123,7 +179,10 @@
 <script>
     window.VUE_APP_DATA = Object.assign(window.VUE_APP_DATA || {}, {
         latestNews: {{ latest_news_json|default:"[]"|safe }},
-        calendarEvents: {{ calendar_events_json|default:"[]"|safe }}
+        calendarEvents: {{ calendar_events_json|default:"[]"|safe }},
+        filteredCalendarEvents: [],
+        calendarFilterDate: null,
+        calendarCurrentMonth: new Date()
     });
 </script>
 {% endblock extra_head %}
@@ -247,8 +306,9 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div class="lg:col-span-2">
             <h2 class="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight flex items-center gap-2">
-                <i class="ph-bold ph-newspaper-clipping text-pup-maroon dark:text-pup-gold"></i> University News
+                <i class="ph-bold ph-newspaper-clipping text-pup-maroon dark:text-pup-gold"></i> Activity Announcements
             </h2>
+
             <div class="news-carousel hide-scrollbar">
                 <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news)" class="news-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 transition-all cursor-pointer group">
                     <div class="h-40 overflow-hidden relative">
@@ -263,24 +323,43 @@
         </div>
 
         <div class="lg:col-span-1">
-            <h2 class="text-lg font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tight flex items-center gap-2">
-                <i class="ph-bold ph-calendar-blank text-pup-maroon dark:text-pup-gold"></i> Schedule
-            </h2>
-            <div class="bg-white dark:bg-pup-darkcard rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
-                <div id="calendar" class="w-full mb-6"></div>
-                <div class="space-y-3 max-h-[350px] overflow-y-auto hide-scrollbar">
-                    <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="handleCalendarEventClick(evt)" class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-800 group">
-                        <div class="date-icon">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                    <i class="ph-bold ph-calendar-blank text-pup-maroon dark:text-pup-gold"></i> Schedule
+                </h2>
+                <button v-if="calendarFilterDate" @click="resetCalendarFilter" class="text-[10px] font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest hover:underline">
+                    View Month
+                </button>
+            </div>
+            
+            <div class="bg-white dark:bg-pup-darkcard rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm transition-all hover:shadow-md">
+                <div id="calendar" class="w-full mb-8"></div>
+                
+                <div class="mb-4 flex items-center justify-between px-1">
+                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                        [[ calendarFilterDate ? 'Events on ' + formatDateShort(calendarFilterDate) : 'Upcoming this Month' ]]
+                    </span>
+                    <span class="text-[10px] font-black text-pup-maroon dark:text-pup-gold bg-pup-maroon/5 dark:bg-pup-gold/5 px-2 py-0.5 rounded-full">
+                        [[ filteredCalendarEvents.length ]]
+                    </span>
+                </div>
+
+                <div class="space-y-3 max-h-[350px] overflow-y-auto hide-scrollbar pr-1">
+                    <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="handleCalendarEventClick(evt)" 
+                        class="flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-800 group relative">
+                        <div class="date-icon transform group-hover:scale-110 transition-transform">
                             <span class="date-month">[[ getMonth(evt.date) ]]</span>
                             <span class="date-day text-gray-900 dark:text-white">[[ getDay(evt.date) ]]</span>
                         </div>
-                        <div class="min-w-0">
-                            <h4 class="font-black text-gray-900 dark:text-white text-xs truncate uppercase tracking-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold">[[ evt.title ]]</h4>
+                        <div class="min-w-0 flex-grow">
+                            <h4 class="font-black text-gray-900 dark:text-white text-[11px] sm:text-xs truncate uppercase tracking-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">[[ evt.title ]]</h4>
                             <p class="text-[9px] text-gray-500 font-bold uppercase mt-0.5">[[ evt.start_time ]] • [[ evt.venue || 'Campus' ]]</p>
                         </div>
+                        <i class="ph-bold ph-caret-right text-gray-300 dark:text-gray-700 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0"></i>
                     </div>
-                    <div v-if="!filteredCalendarEvents.length" class="text-center py-8">
-                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">No events for this month</p>
+                    
+                    <div v-if="!filteredCalendarEvents.length" class="text-center py-10 bg-gray-50/50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">No scheduled events</p>
                     </div>
                 </div>
             </div>
@@ -299,7 +378,7 @@
         <i class="ph-bold ph-x text-xl"></i>
     </button>
 
-    <div class="modal-content-container relative bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up">
+    <div class="modal-content-container relative bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800">
         <div class="h-48 sm:h-64 w-full bg-gray-200 dark:bg-gray-800 relative modal-header-img">
             <img :src="getStaticImageUrl(selectedEvent.image)" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
@@ -325,7 +404,7 @@
         <i class="ph-bold ph-x text-xl"></i>
     </button>
 
-    <div id="calendarModalContainer" class="relative bg-white dark:bg-pup-darkcard w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up">
+    <div id="calendarModalContainer" class="relative bg-white dark:bg-pup-darkcard w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
         <div class="h-64 w-full relative modal-header-img">
             <img id="calModalImg" src="" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
@@ -384,7 +463,7 @@
         slides[slideIndex-1].style.display = "block";  
         setTimeout(showSlides, 4000); 
     }
-    showSlides();
+    document.addEventListener('DOMContentLoaded', showSlides);
 
     // 2. Carousel Focus Effect Logic
     function initCarouselFocus() {
@@ -421,8 +500,27 @@
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: { left: 'prev,next', center: 'title', right: '' },
-            height: 'auto', events: formattedEvents,
-            datesSet: (info) => updateFilteredEvents(info.view.currentStart),
+            height: 'auto',
+            selectable: true,
+            events: formattedEvents,
+            datesSet: (info) => {
+                const appElement = document.getElementById('app');
+                if (appElement && appElement.__vue_app__) {
+                    const vm = appElement.__vue_app__._instance.proxy;
+                    vm.calendarCurrentMonth = info.view.currentStart;
+                    vm.updateFilteredEvents();
+                }
+            },
+            dateClick: (info) => {
+                const appElement = document.getElementById('app');
+                if (appElement && appElement.__vue_app__) {
+                    const vm = appElement.__vue_app__._instance.proxy;
+                    vm.calendarFilterDate = info.dateStr;
+                    vm.updateFilteredEvents();
+                }
+                document.querySelectorAll('.fc-daygrid-day').forEach(el => el.classList.remove('selected-day'));
+                info.dayEl.classList.add('selected-day');
+            },
             eventClick: (info) => handleCalendarEventClick(info.event.extendedProps)
         });
         calendar.render();
@@ -446,19 +544,39 @@
         modal.classList.remove('flex');
         document.body.style.overflow = '';
     }
-    function updateFilteredEvents(currentDate) {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        const allEvts = window.VUE_APP_DATA.calendarEvents || [];
-        const filtered = allEvts.filter(e => {
-            const d = new Date(e.date);
-            return d.getFullYear() === year && d.getMonth() === month;
-        }).sort((a, b) => new Date(b.date) - new Date(a.date));
-        const appElement = document.getElementById('app');
-        if (appElement && appElement.__vue_app__) {
-            const vm = appElement.__vue_app__._instance.proxy;
-            vm.filteredCalendarEvents = filtered;
-        }
-    }
+
+    (function() {
+        window.VUE_APP_METHODS = Object.assign(window.VUE_APP_METHODS || {}, {
+            getMonth(dateStr) { 
+                return new Date(dateStr.split('-').join('/')).toLocaleString('default', { month: 'short' }); 
+            },
+            getDay(dateStr) { 
+                return new Date(dateStr.split('-').join('/')).getDate(); 
+            },
+            formatDateShort(dateStr) {
+                return new Date(dateStr.split('-').join('/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            },
+            handleCalendarEventClick(evt) { handleCalendarEventClick(evt); },
+            resetCalendarFilter() {
+                this.calendarFilterDate = null;
+                document.querySelectorAll('.fc-daygrid-day').forEach(el => el.classList.remove('selected-day'));
+                this.updateFilteredEvents();
+            },
+            updateFilteredEvents(currentDate) {
+                if (currentDate) this.calendarCurrentMonth = currentDate;
+                const activeMonth = this.calendarCurrentMonth;
+                const year = activeMonth.getFullYear();
+                const month = activeMonth.getMonth();
+                const allEvts = this.calendarEvents || [];
+                
+                this.filteredCalendarEvents = allEvts.filter(e => {
+                    const d = new Date(e.date.split('-').join('/'));
+                    const matchesMonth = d.getFullYear() === year && d.getMonth() === month;
+                    if (this.calendarFilterDate) return e.date === this.calendarFilterDate;
+                    return matchesMonth;
+                }).sort((a, b) => new Date(a.date.split('-').join('/')) - new Date(b.date.split('-').join('/')));
+            }
+        });
+    })();
 </script>
 {% endblock extra_js %}

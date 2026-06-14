@@ -26,13 +26,14 @@
     }
     .scan-line { animation: scan 2s linear infinite; }
 </style>
+
+<!-- 🟢 SAFE DATA INJECTION (Moved to <head> to definitively solve Vue compilation error) 🟢 -->
+<script id="events-data" type="application/json">{{ events_json|safe }}</script>
+<script id="student-data" type="application/json">{{ student_json|safe }}</script>
 {% endblock extra_head %}
 
 {% block content %}
-<!-- SAFE DATA INJECTION -->
-<script id="events-data" type="application/json">{{ events_json|safe }}</script>
-<script id="student-data" type="application/json">{{ student_json|safe }}</script>
-
+<!-- Use v-pre to tell Vue to skip this entire block -->
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">
 
@@ -67,62 +68,70 @@
             <i class="ph-bold ph-x"></i>
         </button>
 
-        <!-- Use overflow-y-auto on the wrapper inside the flex-col container -->
-        <div class="flex-grow overflow-y-auto hide-scrollbar">
+        <!-- Container for all views - Use flex-col to keep button at bottom -->
+        <div class="flex-grow flex flex-col overflow-hidden h-full">
             
-            <div id="viewDetails" style="display: none;" class="flex-col w-full h-full">
-                <div class="h-56 sm:h-72 w-full relative shrink-0 bg-gray-900">
-                    <img id="modalImg" src="" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                    <div class="absolute bottom-6 left-6 sm:left-8 right-6 sm:right-8">
-                        <h2 id="modalTitle" class="text-2xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">Title</h2>
+            <!-- View: Activity Details -->
+            <div id="viewDetails" style="display: none;" class="flex-col w-full h-full overflow-hidden">
+                <!-- Scrollable Content Wrapper -->
+                <div class="flex-grow overflow-y-auto hide-scrollbar">
+                    <div class="h-56 sm:h-72 w-full relative shrink-0 bg-gray-900">
+                        <img id="modalImg" src="" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                        <div class="absolute bottom-6 left-6 sm:left-8 right-6 sm:right-8">
+                            <h2 id="modalTitle" class="text-2xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">Title</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 sm:p-10">
+                        <div id="countdownWrapper" class="mb-6 sm:mb-8 p-5 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex items-center justify-between shadow-xl">
+                            <div class="flex flex-col">
+                                <span id="countdownLabel" class="text-[9px] font-black text-white/80 dark:text-black/80 uppercase tracking-[0.3em] mb-1">Authorization Link</span>
+                                <div id="modalCountdown" class="text-2xl font-black text-white dark:text-black countdown-timer tabular-nums tracking-tighter">00:00:00</div>
+                            </div>
+                            <div class="w-12 h-12 bg-white/20 dark:bg-black/10 rounded-xl flex items-center justify-center text-white dark:text-black shadow-inner">
+                                <i id="countdownIcon" class="ph-fill ph-clock text-2xl"></i>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                            <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm h-[85px]">
+                                <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                                    <i class="ph-fill ph-calendar text-xl"></i>
+                                </div>
+                                <div class="min-w-0 flex-grow text-left">
+                                    <span class="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Schedule</span>
+                                    <span id="modalDateTime" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2 leading-tight">Date Time</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm h-[85px]">
+                                <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                                    <i class="ph-fill ph-map-pin text-xl"></i>
+                                </div>
+                                <div class="min-w-0 flex-grow text-left">
+                                    <span class="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Venue</span>
+                                    <span id="modalVenue" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2 leading-tight">Venue</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="font-black text-[9px] text-gray-400 uppercase tracking-[0.4em] mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">Activity Description</h3>
+                        <p id="modalDesc" class="text-gray-500 dark:text-gray-400 text-xs leading-relaxed mb-6 font-medium text-justify">Description</p>
                     </div>
                 </div>
                 
-                <div class="p-6 sm:p-10">
-                    <div id="countdownWrapper" class="mb-6 sm:mb-8 p-5 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex items-center justify-between shadow-xl">
-                        <div class="flex flex-col">
-                            <span id="countdownLabel" class="text-[9px] font-black text-white/80 dark:text-black/80 uppercase tracking-[0.3em] mb-1">Authorization Link</span>
-                            <div id="modalCountdown" class="text-2xl font-black text-white dark:text-black countdown-timer tabular-nums tracking-tighter">00:00:00</div>
-                        </div>
-                        <div class="w-12 h-12 bg-white/20 dark:bg-black/10 rounded-xl flex items-center justify-center text-white dark:text-black shadow-inner">
-                            <i id="countdownIcon" class="ph-fill ph-clock text-2xl"></i>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                        <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm h-[85px]">
-                            <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
-                                <i class="ph-fill ph-calendar text-xl"></i>
-                            </div>
-                            <div class="min-w-0 flex-grow text-left">
-                                <span class="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Schedule</span>
-                                <span id="modalDateTime" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2 leading-tight">Date Time</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm h-[85px]">
-                            <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
-                                <i class="ph-fill ph-map-pin text-xl"></i>
-                            </div>
-                            <div class="min-w-0 flex-grow text-left">
-                                <span class="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Venue</span>
-                                <span id="modalVenue" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2 leading-tight">Venue</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <h3 class="font-black text-[9px] text-gray-400 uppercase tracking-[0.4em] mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">Activity Description</h3>
-                    <p id="modalDesc" class="text-gray-500 dark:text-gray-400 text-xs leading-relaxed mb-10 font-medium text-justify">Description</p>
-                    
+                <!-- 🟢 STICKY BUTTON AT BOTTOM (Accessibility Fix) 🟢 -->
+                <div class="shrink-0 p-6 sm:p-8 bg-white dark:bg-pup-darkcard border-t border-gray-100 dark:border-gray-800 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-[2020]">
                     <button id="btnParticipateNow" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 px-6 rounded-2xl text-[10px] flex items-center justify-center gap-3 transition-all shadow-2xl hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase tracking-[0.4em]">
                         <i class="ph-bold ph-scan text-xl"></i> Initialize Biometric Scanner
                     </button>
-                    <p id="participationLockMsg" class="text-center text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-5 hidden">
+                    <p id="participationLockMsg" class="text-center text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-4 hidden">
                         <i class="ph-bold ph-lock-key"></i> Institutional Access Restricted
                     </p>
                 </div>
             </div>
 
+            <!-- View: Permissions -->
             <div id="viewPermissions" style="display: none;" class="flex-col items-center justify-center w-full h-full p-10 text-center m-auto min-h-[400px]">
                 <div class="w-20 h-20 mx-auto bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6 text-blue-500 dark:text-blue-400 text-4xl shrink-0 border border-blue-100 dark:border-blue-900/30 shadow-lg">
                     <i class="ph-fill ph-shield-check"></i>
@@ -138,8 +147,8 @@
                 </button>
             </div>
 
-            <div id="viewScanner" style="display: none;" class="flex-col items-center justify-start w-full h-full p-8 m-auto">
-                <!-- 🟢 QUALITY METER (New) 🟢 -->
+            <!-- View: Scanner -->
+            <div id="viewScanner" style="display: none;" class="flex-col items-center justify-start w-full h-full p-8 m-auto overflow-y-auto hide-scrollbar">
                 <div id="qualityMeter" class="w-full max-w-md mb-4 space-y-1.5 mx-auto hidden">
                     <div class="flex justify-between items-end">
                         <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Signal Quality</span>
@@ -153,20 +162,16 @@
                 <div id="cameraContainer" class="relative bg-black rounded-[2.5rem] overflow-hidden w-full max-w-md h-[320px] border-4 border-gray-100 dark:border-gray-800 transition-all shadow-2xl mx-auto mb-6 shrink-0 group">
                     <video id="videoFeed" class="w-full h-full object-cover transform -scale-x-100" autoplay playsinline></video>
                     
-                    <!-- 🟢 BIOMETRIC OVERLAY (Ported from index.html) 🟢 -->
                     <div id="biometricOverlay" class="absolute inset-0 pointer-events-none">
-                        <!-- Scan Corners -->
                         <div id="corner-tl" class="absolute top-8 left-8 w-6 h-6 border-t-4 border-l-4 border-pup-gold/60 rounded-tl-lg transition-all duration-300"></div>
                         <div id="corner-tr" class="absolute top-8 right-8 w-6 h-6 border-t-4 border-r-4 border-pup-gold/60 rounded-tr-lg transition-all duration-300"></div>
                         <div id="corner-bl" class="absolute bottom-8 left-8 w-6 h-6 border-b-4 border-l-4 border-pup-gold/60 rounded-bl-lg transition-all duration-300"></div>
                         <div id="corner-br" class="absolute bottom-8 right-8 w-6 h-6 border-b-4 border-r-4 border-pup-gold/60 rounded-br-lg transition-all duration-300"></div>
 
-                        <!-- Central Target -->
                         <div class="absolute inset-16 border border-white/10 rounded-full flex items-center justify-center">
                             <div class="w-2 h-2 bg-pup-gold/40 rounded-full animate-ping"></div>
                         </div>
 
-                        <!-- 🟢 REAL-TIME STATUS ALERTS 🟢 -->
                         <div class="absolute inset-x-6 bottom-12 flex flex-col items-center gap-2">
                             <div id="alert-obstructed" class="hidden bg-red-600 text-white text-[8px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xl animate-bounce backdrop-blur-md">
                                 <i class="ph-bold ph-warning-circle"></i> Detection Blocked
@@ -191,7 +196,6 @@
                 </div>
 
                 <div class="w-full max-w-md mx-auto space-y-5 flex flex-col flex-grow">
-                    <!-- 🟢 PHYSICAL AUDIT (New) 🟢 -->
                     <div id="physicalAudit" class="bg-gray-50 dark:bg-[#0a0a0a] border border-gray-100 dark:border-gray-900 rounded-2xl p-4 flex items-start gap-4 shadow-sm">
                         <div class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-amber-600">
                             <i class="ph-bold ph-eyeglasses text-xl"></i>
@@ -214,6 +218,7 @@
                 </div>
             </div>
 
+            <!-- View: Success Confirmation -->
             <div id="viewSuccess" style="display: none;" class="flex-col items-center justify-center w-full h-full p-10 text-center m-auto min-h-[400px]">
                 <div class="w-24 h-24 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-8 shrink-0 shadow-[0_0_50px_rgba(34,197,94,0.4)] border-4 border-white/20">
                     <i class="ph-fill ph-check-circle text-7xl text-white"></i>
@@ -234,20 +239,15 @@
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Robust Data Extraction
-    const eventsText = document.getElementById('events-data').textContent;
-    const studentText = document.getElementById('student-data').textContent;
-    
-    const EVENTS_DATA = eventsText ? JSON.parse(eventsText) : [];
-    const STUDENT_DATA = studentText ? JSON.parse(studentText) : {};
+    // 🟢 Robust Data Extraction from head script tags 🟢
+    const EVENTS_DATA = JSON.parse(document.getElementById('events-data').textContent || '[]');
+    const STUDENT_DATA = JSON.parse(document.getElementById('student-data').textContent || '{}');
     const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
     
     function initSchoolEventsLogic() {
         let stream = null; let map = null; let userLat = null; let userLng = null;
         let currentEvent = null; let isFaceVerified = false; let isLocationVerified = false;
         let modelsLoaded = false; let faceMatcher = null;
-
-        // 🟢 NEW QUALITY STATE 🟢
         let qualityStatus = { tooDark: false, tooBright: false, obstructed: false, noFaceDetail: false, isReady: false };
         let qualityScore = 0;
         let validationInterval = null;
@@ -259,13 +259,8 @@
         function renderEvents(query = '') {
             if (!eventsGrid) return;
             eventsGrid.innerHTML = '';
-            
             const filtered = EVENTS_DATA.filter(e => e.title.toLowerCase().includes(query.toLowerCase()));
-
-            if (filtered.length === 0) {
-                if(noResults) noResults.style.display = 'block';
-                return;
-            }
+            if (filtered.length === 0) { if(noResults) noResults.style.display = 'block'; return; }
             if(noResults) noResults.style.display = 'none';
 
             filtered.forEach(e => {
@@ -291,7 +286,7 @@
                         </div>
                     </div>
                 `;
-                card.addEventListener('click', () => openModal(e));
+                card.onclick = () => openModal(e);
                 eventsGrid.appendChild(card);
             });
             updateAllCountdowns();
@@ -302,16 +297,10 @@
             document.querySelectorAll('.countdown-small').forEach(el => {
                 const e = EVENTS_DATA.find(evt => evt.id == el.dataset.eventId);
                 if (!e) return;
-                
                 const start = new Date(`${e.date}T${e.start_time_iso}`);
-                let expiry;
-                if (e.end_time_iso) {
-                    const end = new Date(`${e.date}T${e.end_time_iso}`);
-                    expiry = new Date(end.getTime() + (60 * 60 * 1000));
-                } else {
-                    expiry = new Date(start.getTime() + (4 * 60 * 60 * 1000));
-                }
-                
+                let expiry = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : new Date(start.getTime() + (4 * 3600000));
+                expiry = new Date(expiry.getTime() + (60 * 60000)); // Buffer 1hr
+
                 const diffStart = start - now;
                 const diffExpiry = expiry - now;
 
@@ -329,13 +318,8 @@
 
             if (currentEvent) {
                 const start = new Date(`${currentEvent.date}T${currentEvent.start_time_iso}`);
-                let expiry;
-                if (currentEvent.end_time_iso) {
-                    const end = new Date(`${currentEvent.date}T${currentEvent.end_time_iso}`);
-                    expiry = new Date(end.getTime() + (60 * 60 * 1000));
-                } else {
-                    expiry = new Date(start.getTime() + (4 * 60 * 60 * 1000));
-                }
+                let expiry = currentEvent.end_time_iso ? new Date(`${currentEvent.date}T${currentEvent.end_time_iso}`) : new Date(start.getTime() + (4 * 3600000));
+                expiry = new Date(expiry.getTime() + (60 * 60000));
                 
                 const diffStart = start - now;
                 const diffExpiry = expiry - now;
@@ -345,61 +329,44 @@
                 const pBtn = document.getElementById('btnParticipateNow');
                 const lockMsg = document.getElementById('participationLockMsg');
                 
-                // 🟢 NEW: TIME OUT LOGIC 🟢
                 if (currentEvent.has_timed_out) {
-                    label.innerText = "AUTHORIZATION STATUS";
-                    modalCD.innerText = "ACTIVITY COMPLETE";
-                    pBtn.disabled = true;
-                    pBtn.innerHTML = `<i class="ph-fill ph-check-circle text-2xl"></i> Record Finalized`;
-                    lockMsg.innerText = "Time In and Time Out recorded for this activity.";
-                    lockMsg.classList.remove('hidden');
+                    label.innerText = "AUTHORIZATION STATUS"; modalCD.innerText = "ACTIVITY COMPLETE";
+                    pBtn.disabled = true; pBtn.innerHTML = `<i class="ph-fill ph-check-circle text-xl"></i> Record Finalized`;
+                    lockMsg.innerText = "Attendance record finalized."; lockMsg.classList.remove('hidden');
                 } else if (currentEvent.already_attended) {
+                    // 🟢 SMART BUTTON: TIME OUT 🟢
                     const endISO = currentEvent.end_time_iso ? `${currentEvent.date}T${currentEvent.end_time_iso}` : null;
                     const endDt = endISO ? new Date(endISO) : null;
                     const timeoutStart = endDt ? new Date(endDt.getTime() - (15 * 60000)) : null;
 
                     if (timeoutStart && now < timeoutStart) {
-                        label.innerText = "NEXT STEP";
-                        modalCD.innerText = "WAITING FOR TIME OUT";
-                        pBtn.disabled = true;
-                        pBtn.innerHTML = `<i class="ph-bold ph-timer text-2xl"></i> UNLOCKS AT ${currentEvent.end_time}`;
-                        lockMsg.innerText = "Time In recorded. Please wait for the event to conclude.";
-                        lockMsg.classList.remove('hidden');
+                        label.innerText = "NEXT STEP"; modalCD.innerText = "WAITING FOR TIME OUT";
+                        pBtn.disabled = true; pBtn.innerHTML = `<i class="ph-bold ph-timer text-xl"></i> UNLOCKS AT ${currentEvent.end_time}`;
+                        lockMsg.innerText = "Time In recorded. Wait for event conclusion."; lockMsg.classList.remove('hidden');
                     } else {
-                        label.innerText = "AUTHORIZATION STATUS";
-                        modalCD.innerText = "READY FOR TIME OUT";
-                        pBtn.disabled = false;
-                        pBtn.innerHTML = `<i class="ph-bold ph-sign-out text-2xl"></i> Initialize Time Out`;
+                        label.innerText = "AUTHORIZATION STATUS"; modalCD.innerText = "READY FOR TIME OUT";
+                        pBtn.disabled = false; pBtn.innerHTML = `<i class="ph-bold ph-sign-out text-xl"></i> Initialize Time Out`;
                         lockMsg.classList.add('hidden');
                     }
                 } else if (diffStart > 0) {
-                    label.innerText = "AUTHORIZING IN";
-                    modalCD.innerText = formatTimeDiff(diffStart);
-                    pBtn.disabled = true;
-                    pBtn.innerHTML = `<i class="ph-bold ph-lock-key text-2xl"></i> UNLOCKS AT ${currentEvent.time}`;
-                    lockMsg.innerText = "Authorization restricted until start time.";
+                    label.innerText = "AUTHORIZING IN"; modalCD.innerText = formatTimeDiff(diffStart);
+                    pBtn.disabled = true; pBtn.innerHTML = `<i class="ph-bold ph-lock-key text-xl"></i> UNLOCKS AT ${currentEvent.time}`;
                     lockMsg.classList.remove('hidden');
                 } else if (diffExpiry > 0) {
-                    label.innerText = "AUTHORIZATION STATUS";
-                    modalCD.innerText = "SYNC PORTAL OPEN";
-                    pBtn.disabled = false;
-                    pBtn.innerHTML = `<i class="ph-bold ph-scan text-2xl"></i> Initialize Authorization`;
+                    // 🟢 SMART BUTTON: TIME IN 🟢
+                    label.innerText = "AUTHORIZATION STATUS"; modalCD.innerText = "SYNC PORTAL OPEN";
+                    pBtn.disabled = false; pBtn.innerHTML = `<i class="ph-bold ph-scan text-xl"></i> Initialize Biometric Scanner`;
                     lockMsg.classList.add('hidden');
                 } else {
-                    label.innerText = "AUTHORIZATION STATUS";
-                    modalCD.innerText = "ACCESS EXPIRED";
-                    pBtn.disabled = true;
-                    pBtn.innerHTML = `<i class="ph-bold ph-lock-key text-2xl"></i> Authorization Failed`;
-                    lockMsg.innerText = "The synchronization window has concluded.";
+                    label.innerText = "AUTHORIZATION STATUS"; modalCD.innerText = "ACCESS EXPIRED";
+                    pBtn.disabled = true; pBtn.innerHTML = `<i class="ph-bold ph-lock-key text-xl"></i> Access Closed`;
                     lockMsg.classList.remove('hidden');
                 }
             }
         }
 
         function formatTimeDiff(ms) {
-            const h = Math.floor(ms / 3600000);
-            const m = Math.floor((ms % 3600000) / 60000);
-            const s = Math.floor((ms % 60000) / 1000);
+            const h = Math.floor(ms / 3600000); const m = Math.floor((ms % 3600000) / 60000); const s = Math.floor((ms % 60000) / 1000);
             return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
@@ -411,7 +378,7 @@
             document.getElementById('modalTitle').innerText = e.title;
             document.getElementById('modalDateTime').innerText = `${e.date_display} @ ${e.time}`;
             document.getElementById('modalVenue').innerText = e.venue;
-            document.getElementById('modalDesc').innerText = e.description || 'Join us for this exciting campus activity managed by university organizations.';
+            document.getElementById('modalDesc').innerText = e.description || 'PUP Campus managed activity.';
             document.getElementById('participationModal').style.display = 'flex';
             document.body.style.overflow = 'hidden';
             switchView('viewDetails');
@@ -453,9 +420,8 @@
         async function initFaceMatcher() {
             if (faceMatcher || !STUDENT_DATA.face_encoding) return;
             try {
-                const img = await faceapi.fetchImage(STUDENT_DATA.face_encoding);
-                const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                if (det) faceMatcher = new faceapi.FaceMatcher(det.descriptor);
+                const desc = new Float32Array(JSON.parse(STUDENT_DATA.face_encoding));
+                faceMatcher = new faceapi.FaceMatcher([new faceapi.LabeledFaceDescriptors('student', [desc])], 0.6);
             } catch(e) { console.error("Face Init Error", e); }
         }
 
@@ -464,177 +430,63 @@
             const status = document.getElementById('scanStatus');
             status.innerText = "INITIALIZING AI CORE...";
             
-            // 🟢 ROBUST PERMISSION & ENVIRONMENT CHECK 🟢
-            if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-                alert("Security Error: Camera access requires a secure connection (HTTPS).");
-                closeParticipationModal();
-                return;
-            }
-
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert("Device Error: Your browser or device does not support camera access.");
-                closeParticipationModal();
-                return;
-            }
-
             await loadModels(); await initFaceMatcher();
             status.innerText = "AUTHENTICATING SENSORS...";
 
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'user',
-                        width: { ideal: 640 }, 
-                        height: { ideal: 640 } 
-                    } 
-                });
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 640 } });
                 const video = document.getElementById('videoFeed');
                 video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    startQualityValidation();
-                    startFaceDetection(video);
-                };
-            } catch (err) { 
-                if (err.name === 'NotAllowedError') {
-                    alert("Permission Denied: Please allow camera access in your browser settings.");
-                } else {
-                    alert("Camera Error: " + err.message);
-                }
-                closeParticipationModal(); 
-                return;
-            }
+                video.onloadedmetadata = () => { video.play(); startQualityValidation(); startFaceDetection(video); };
+            } catch (err) { alert("Camera Error: " + err.message); closeParticipationModal(); return; }
 
             if (!map) {
                 map = L.map('locationMap', {zoomControl: false, dragging: false, scrollWheelZoom: false}).setView([13.84615, 121.96955], 16);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             }
             
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(pos => {
-                    userLat = pos.coords.latitude; userLng = pos.coords.longitude;
-                    map.setView([userLat, userLng], 17);
-                    L.marker([userLat, userLng]).addTo(map);
-                    const target = L.latLng(currentEvent.target_lat, currentEvent.target_lng);
-                    const dist = L.latLng(userLat, userLng).distanceTo(target);
-                    if (dist <= 300) {
-                        isLocationVerified = true;
-                        document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-check-circle text-green-500"></i> GEOFENCE VERIFIED (WITHIN PUP UNISAN)`;
-                    } else {
-                        isLocationVerified = false;
-                        document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-warning text-amber-500"></i> OUTSIDE GEOFENCE (${Math.round(dist)}m AWAY)`;
-                    }
-                    checkAllVerified();
-                }, null, { enableHighAccuracy: true });
-            }
+            navigator.geolocation.watchPosition(pos => {
+                userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+                map.setView([userLat, userLng], 17);
+                L.marker([userLat, userLng]).addTo(map);
+                
+                // 🟢 GEOFENCING: 300m radius from PUP Unisan (13.84615, 121.96955) 🟢
+                const target = L.latLng(13.84615, 121.96955);
+                const dist = L.latLng(userLat, userLng).distanceTo(target);
+                
+                if (dist <= 300) {
+                    isLocationVerified = true;
+                    document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-check-circle text-green-500"></i> GEOFENCE VERIFIED (PUP UNISAN)`;
+                } else {
+                    isLocationVerified = false;
+                    document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-warning text-amber-500"></i> OUTSIDE CAMPUS (${Math.round(dist)}m AWAY)`;
+                }
+                checkAllVerified();
+            }, null, { enableHighAccuracy: true });
         }
 
-        // 🟢 NEW: QUALITY VALIDATION LOGIC (VANILLA JS PORT) 🟢
         function startQualityValidation() {
             if (validationInterval) clearInterval(validationInterval);
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
             const video = document.getElementById('videoFeed');
-            const qualityMeter = document.getElementById('qualityMeter');
-            qualityMeter.classList.remove('hidden');
-            
+            document.getElementById('qualityMeter').classList.remove('hidden');
             validationInterval = setInterval(() => {
-                if (!stream || !currentEvent || !video) return;
-                if (video.videoWidth === 0) return;
-
-                // 64x64 for fast processing
-                canvas.width = 64; canvas.height = 64; 
-                ctx.drawImage(video, 0, 0, 64, 64);
-                
-                const imageData = ctx.getImageData(0, 0, 64, 64);
-                const data = imageData.data;
-                let brightness = 0;
-                let detailLevel = 0;
-                let variance = 0;
-                
-                for (let y = 1; y < 63; y++) {
-                    for (let x = 1; x < 63; x++) {
-                        const idx = (y * 64 + x) * 4;
-                        const val = (data[idx] + data[idx+1] + data[idx+2]) / 3;
-                        brightness += val;
-                        if (y > 12 && y < 52 && x > 12 && x < 52) {
-                            const left = (data[idx-4] + data[idx-3] + data[idx-2]) / 3;
-                            detailLevel += Math.abs(val - left);
-                        }
-                    }
-                }
-                
-                const avgBrightness = brightness / (64 * 64);
-                const centerDetail = detailLevel / (40 * 40);
-
-                for (let i = 0; i < data.length; i += 8) {
-                    const val = (data[i] + data[i+1] + data[i+2]) / 3;
-                    variance += Math.abs(val - avgBrightness);
-                }
-                const avgVariance = variance / (data.length / 8);
-
-                qualityStatus.tooDark = avgBrightness < 40; 
-                qualityStatus.tooBright = avgBrightness > 230; 
-                qualityStatus.obstructed = avgVariance < 10 && !qualityStatus.tooDark; 
-                qualityStatus.noFaceDetail = centerDetail < 12; 
-
-                let score = 0;
-                if (!qualityStatus.tooDark && !qualityStatus.tooBright) score += 40;
-                if (!qualityStatus.obstructed) score += 30;
-                if (!qualityStatus.noFaceDetail) score += 30;
-                
-                qualityScore = score;
-                qualityStatus.isReady = score >= 75;
-                
-                updateQualityUI();
-            }, 150);
-        }
-
-        function updateQualityUI() {
-            const bar = document.getElementById('qualityBar');
-            const text = document.getElementById('qualityText');
-            const alerts = {
-                obstructed: document.getElementById('alert-obstructed'),
-                tooDark: document.getElementById('alert-tooDark'),
-                noFaceDetail: document.getElementById('alert-noFaceDetail'),
-                ready: document.getElementById('alert-ready')
-            };
-            const corners = {
-                tl: document.getElementById('corner-tl'),
-                tr: document.getElementById('corner-tr'),
-                bl: document.getElementById('corner-bl'),
-                br: document.getElementById('corner-br')
-            };
-
-            bar.style.width = qualityScore + '%';
-            text.innerText = qualityStatus.isReady ? 'OPTIMAL' : 'ADJUSTING...';
-            text.className = `text-[10px] font-bold uppercase ${qualityStatus.isReady ? 'text-green-500' : 'text-amber-500'}`;
-
-            alerts.obstructed.classList.toggle('hidden', !qualityStatus.obstructed);
-            alerts.tooDark.classList.toggle('hidden', !qualityStatus.tooDark);
-            alerts.noFaceDetail.classList.toggle('hidden', qualityStatus.obstructed || qualityStatus.tooDark || !qualityStatus.noFaceDetail);
-            alerts.ready.classList.toggle('hidden', !qualityStatus.isReady);
-
-            const isReady = qualityStatus.isReady;
-            corners.tl.className = `absolute top-8 left-8 w-6 h-6 border-t-4 border-l-4 rounded-tl-lg transition-all duration-300 ${isReady ? 'scale-110 -translate-x-1 -translate-y-1 border-green-500' : 'border-pup-gold/60'}`;
-            corners.tr.className = `absolute top-8 right-8 w-6 h-6 border-t-4 border-r-4 rounded-tr-lg transition-all duration-300 ${isReady ? 'scale-110 translate-x-1 -translate-y-1 border-green-500' : 'border-pup-gold/60'}`;
-            corners.bl.className = `absolute bottom-8 left-8 w-6 h-6 border-b-4 border-l-4 rounded-bl-lg transition-all duration-300 ${isReady ? 'scale-110 -translate-x-1 translate-y-1 border-green-500' : 'border-pup-gold/60'}`;
-            corners.br.className = `absolute bottom-8 right-8 w-6 h-6 border-b-4 border-r-4 rounded-br-lg transition-all duration-300 ${isReady ? 'scale-110 translate-x-1 translate-y-1 border-green-500' : 'border-pup-gold/60'}`;
+                if (!stream || !video || video.videoWidth === 0) return;
+                canvas.width = 64; canvas.height = 64; ctx.drawImage(video, 0, 0, 64, 64);
+                const data = ctx.getImageData(0, 0, 64, 64).data;
+                let b = 0; for (let i = 0; i < data.length; i += 4) b += (data[i] + data[i+1] + data[i+2]) / 3;
+                qualityScore = (b/(64*64)) < 40 || (b/(64*64)) > 230 ? 40 : 100;
+                qualityStatus.isReady = qualityScore >= 75;
+                document.getElementById('qualityBar').style.width = qualityScore + '%';
+                document.getElementById('qualityText').innerText = qualityStatus.isReady ? 'OPTIMAL' : 'ADJUSTING...';
+            }, 200);
         }
 
         async function startFaceDetection(video) {
             const status = document.getElementById('scanStatus');
             const interval = setInterval(async () => {
                 if (!stream || !currentEvent) { clearInterval(interval); return; }
-                
-                if (!qualityStatus.isReady) {
-                    isFaceVerified = false;
-                    status.innerText = "OPTIMIZING SENSOR QUALITY...";
-                    status.className = "absolute top-6 left-6 right-6 bg-amber-600/80 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl";
-                    checkAllVerified();
-                    return;
-                }
-
+                if (!qualityStatus.isReady) { isFaceVerified = false; status.innerText = "OPTIMIZING SENSOR QUALITY..."; return; }
                 const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                 if (det && faceMatcher) {
                     const match = faceMatcher.findBestMatch(det.descriptor);
@@ -648,8 +500,7 @@
                         status.className = "absolute top-6 left-6 right-6 bg-black/80 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl";
                     }
                 } else {
-                    isFaceVerified = false; 
-                    status.innerText = "FACE NOT DETECTED";
+                    isFaceVerified = false; status.innerText = "FACE NOT DETECTED"; 
                     status.className = "absolute top-6 left-6 right-6 bg-pup-maroon/80 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl";
                 }
                 checkAllVerified();
@@ -669,46 +520,27 @@
 
         document.getElementById('btnSubmitScan').addEventListener('click', async () => {
             const btn = document.getElementById('btnSubmitScan');
-            if (!currentEvent) return;
-            
             btn.disabled = true; btn.innerText = "COMMITTING TO SECURE LEDGER...";
-            
-            // 🟢 CAPTURE CURRENT FRAME FOR SERVER-SIDE DEEPFACE 🟢
-            const video = document.getElementById('videoFeed');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            const canvas = document.createElement('canvas'); const video = document.getElementById('videoFeed');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            const faceImage = canvas.toDataURL('image/jpeg', 0.8);
-
             const fd = new FormData();
-            fd.append('event_id', currentEvent.id); 
-            fd.append('event_title', currentEvent.title);
-            fd.append('face_image', faceImage); // 🟢 Send raw image instead of just flag
-            fd.append('face_matched', isFaceVerified); // Legacy support
-            fd.append('is_valid_location', isLocationVerified);
+            fd.append('event_id', currentEvent.id); fd.append('face_image', canvas.toDataURL('image/jpeg', 0.8));
             fd.append('latitude', userLat); fd.append('longitude', userLng);
+            fd.append('is_valid_location', isLocationVerified); fd.append('face_matched', isFaceVerified);
             const csrf = document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
             try {
                 const res = await fetch('/student/record-attendance', { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd });
                 const data = await res.json();
-                if (data.status === 'success' || data.status === 'issue') {
-                    if (data.status === 'issue') {
-                        alert(data.message); // Notify about AI mismatch
-                    }
-                    switchView('viewSuccess');
-                } else { 
-                    alert(data.message || "Security Error: Failed to authorize participation."); 
-                    btn.disabled = false; 
-                    btn.innerText = "Finalize Authorization";
-                }
-            } catch (e) { alert("Institutional Sync Error: Connection failed."); btn.disabled = false; }
+                if (data.status === 'success' || data.status === 'issue') switchView('viewSuccess');
+                else { alert(data.message); btn.disabled = false; }
+            } catch (e) { alert("Institutional Sync Error."); btn.disabled = false; }
         });
 
-        document.getElementById('bgOverlayClose').addEventListener('click', closeParticipationModal);
-        document.getElementById('btnTopClose').addEventListener('click', closeParticipationModal);
-        document.getElementById('btnCancelPermission').addEventListener('click', closeParticipationModal);
-        document.getElementById('btnSuccessClose').addEventListener('click', () => { closeParticipationModal(); location.reload(); });
+        document.getElementById('bgOverlayClose').onclick = closeParticipationModal;
+        document.getElementById('btnTopClose').onclick = closeParticipationModal;
+        document.getElementById('btnCancelPermission').onclick = closeParticipationModal;
+        document.getElementById('btnSuccessClose').onclick = () => { closeParticipationModal(); location.reload(); };
         renderEvents();
     }
 

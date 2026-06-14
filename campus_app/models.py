@@ -148,6 +148,8 @@ class Attendance(models.Model):
     is_valid_location_out = models.BooleanField(default=False)
     
     face_matched = models.BooleanField(default=False) 
+    capture_image = models.ImageField(upload_to='attendance_captures/', null=True, blank=True)
+    location_zone = models.CharField(max_length=100, null=True, blank=True)
     
     def __str__(self):
         target = self.student.student_number if self.student else (self.organizer.user.username if self.organizer else "Unknown")

@@ -195,26 +195,31 @@ function initHistoryLogic() {
             document.getElementById('viewEvaluationProof').classList.add('hidden');
             document.getElementById('proofTime').innerText = item.details.timestamp;
             
+            // 🟢 Show Capture Image
+            const faceContainer = document.querySelector('#viewAttendanceProof .aspect-\\[3\\/4\\]');
+            if (item.details.capture_url) {
+                faceContainer.innerHTML = `<img src="${item.details.capture_url}" class="w-full h-full object-cover">`;
+            } else {
+                faceContainer.innerHTML = `<i class="ph-fill ph-user text-6xl text-gray-400"></i>`;
+            }
+
             // Handle location signature
             const locSig = document.querySelector('#viewAttendanceProof .text-sm.font-bold');
+            const coords = item.details.coords || "N/A";
             if (item.details.is_valid_location) {
-                locSig.innerText = "Verified inside PUP Campus Perimeter.";
-                locSig.classList.add('text-gray-900', 'dark:text-white');
-                locSig.classList.remove('text-red-600');
+                locSig.innerHTML = `<span class="text-green-600 dark:text-green-400">Verified inside PUP Campus Perimeter</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
             } else {
-                locSig.innerText = "Detected outside the designated event location.";
-                locSig.classList.remove('text-gray-900', 'dark:text-white');
-                locSig.classList.add('text-red-600');
+                locSig.innerHTML = `<span class="text-red-600 dark:text-red-400">Outside designated event geofence</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
             }
 
             // Handle face capture status
-            const faceBadge = document.querySelector('#viewAttendanceProof .text-green-600, #viewAttendanceProof .text-red-600');
+            const faceBadge = document.querySelector('#viewAttendanceProof .text-green-600, #viewAttendanceProof .text-red-600, #viewAttendanceProof .bg-green-100, #viewAttendanceProof .bg-red-100');
             if (item.details.face_matched) {
-                faceBadge.innerHTML = '<i class="ph-fill ph-check-circle"></i> Matched';
-                faceBadge.className = 'text-xs font-bold text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-md w-full text-center border border-green-200 dark:border-green-800/50';
+                faceBadge.innerHTML = '<i class="ph-fill ph-check-circle"></i> MATCHED';
+                faceBadge.className = 'text-[10px] font-black px-3 py-1 rounded-md w-full text-center border border-green-200 bg-green-50 text-green-600 uppercase tracking-widest';
             } else {
-                faceBadge.innerHTML = '<i class="ph-fill ph-x-circle"></i> Mismatch';
-                faceBadge.className = 'text-xs font-bold text-red-600 dark:text-red-500 bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-md w-full text-center border border-red-200 dark:border-red-800/50';
+                faceBadge.innerHTML = '<i class="ph-fill ph-x-circle"></i> MISMATCH';
+                faceBadge.className = 'text-[10px] font-black px-3 py-1 rounded-md w-full text-center border border-red-200 bg-red-50 text-red-600 uppercase tracking-widest';
             }
 
         } else {
@@ -237,7 +242,7 @@ function initHistoryLogic() {
             }
             starsContainer.innerHTML = starsHtml;
             document.getElementById('modalEvalAvgLabel').innerText = `${avgRating} / 5.0`;
-            document.getElementById('modalEvalPercent').innerText = `${percent}% Match`;
+            document.getElementById('modalEvalPercent').innerText = `${percent}%`;
             
             // Emoji & Grade Logic
             const emojiEl = document.getElementById('modalEvalEmoji');
@@ -256,18 +261,23 @@ function initHistoryLogic() {
             
             if (sentiment && sentiment.label) {
                 const label = sentiment.label.toUpperCase();
+                let colorClass = "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400";
+                let icon = "ph-smiley";
+                
                 if (label === 'POSITIVE') {
-                    badge.className = "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-                    badge.innerHTML = `<i class="ph-fill ph-smiley"></i> ${label}`;
+                    colorClass = "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+                    icon = "ph-smiley";
+                } else if (label === 'NEGATIVE') {
+                    colorClass = "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+                    icon = "ph-smiley-sad";
                 } else if (label === 'NEUTRAL') {
-                    badge.className = "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-                    badge.innerHTML = `<i class="ph-fill ph-smiley-meh"></i> ${label}`;
-                } else {
-                    badge.className = "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-                    badge.innerHTML = `<i class="ph-fill ph-smiley-sad"></i> ${label}`;
+                    colorClass = "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
+                    icon = "ph-smiley-meh";
                 }
+                
+                badge.className = `px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 ${colorClass}`;
+                badge.innerHTML = `<i class="ph-fill ${icon}"></i> ${label} (AI)`;
             } else {
-                // Fallback to basic calculation
                 badge.className = "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400";
                 badge.innerHTML = `<i class="ph-fill ph-meh"></i> ANALYZED`;
             }

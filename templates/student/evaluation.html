@@ -7,14 +7,54 @@
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .evaluation-card { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
     .evaluation-card:hover { transform: translateY(-5px); }
+
+    /* Mobile Fixed Modal Footer (Replicated from school_events.html) */
+    @media (max-width: 640px) {
+        .fixed-modal-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, white 80%, transparent);
+            padding: 1.5rem 2rem 2.5rem 2rem;
+            z-index: 2020;
+        }
+        .dark .fixed-modal-footer {
+            background: linear-gradient(to top, #151515 80%, transparent);
+        }
+        .modal-scroll-area {
+            padding-bottom: 9rem !important;
+        }
+
+        .evaluation-card {
+            border-radius: 1.5rem !important;
+        }
+        .evaluation-card .card-image-container {
+            flex-shrink: 0;
+        }
+        .evaluation-card .card-content-container {
+            padding: 1rem !important;
+            justify-content: center;
+        }
+        .evaluation-card h3 {
+            font-size: 0.9rem !important;
+            -webkit-line-clamp: 2;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            white-space: normal !important;
+            margin-bottom: 0.25rem !important;
+        }
+        .evaluation-card .btn-eval {
+            display: none !important; /* Hide button on mobile list view as per request */
+        }
+        #activeEvaluationsGrid {
+            gap: 1rem !important;
+        }
+    }
 </style>
 {% endblock extra_head %}
 
 {% block content %}
-<!-- SAFE DATA INJECTION -->
-<script id="events-data" type="application/json">{{ events_json|safe }}</script>
-<script id="history-data" type="application/json">{{ history_json|safe }}</script>
-
 <div v-pre>
 <div class="max-w-[98rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">
 
@@ -51,10 +91,77 @@
             <p class="text-gray-400 text-[10px] mt-1 font-black uppercase tracking-[0.2em]">Feedback portals unlock 1 hour before event ends.</p>
         </div>
     </div>
+    </div>
 
-</div>
+    <!-- SESSION DETAIL MODAL (New, Replicated from school_events.html participation modal) -->
+    <div id="sessionDetailModal" class="hidden fixed inset-0 z-[2000] items-center justify-center overflow-hidden p-0 sm:p-10 font-sans">
+    <div class="fixed inset-0 bg-black/95 backdrop-blur-md" onclick="closeSessionModal()"></div>
 
-<!-- HISTORY DETAIL MODAL (Maintained for UI compatibility) -->
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] border-0 sm:border border-gray-100 dark:border-gray-800 overflow-hidden">
+
+        <button onclick="closeSessionModal()" class="absolute top-6 right-6 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-lg hover:bg-black/70 transition-colors">
+            <i class="ph-bold ph-x"></i>
+        </button>
+
+        <div class="flex-grow overflow-y-auto hide-scrollbar modal-scroll-area">
+            <div class="h-56 sm:h-72 w-full relative shrink-0 bg-gray-900">
+                <img id="modalS_Img" src="" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                <div class="absolute bottom-6 left-6 sm:left-8 right-6 sm:right-8">
+                    <h2 id="modalS_Title" class="text-2xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">Title</h2>
+                </div>
+            </div>
+
+            <div class="p-6 sm:p-10">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                    <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm h-[85px]">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                            <i class="ph-fill ph-calendar text-xl"></i>
+                        </div>
+                        <div class="min-w-0 flex-grow text-left">
+                            <span class="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Schedule</span>
+                            <span id="modalS_DateTime" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2 leading-tight">Date Time</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-900 shadow-sm h-[85px]">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                            <i class="ph-fill ph-map-pin text-xl"></i>
+                        </div>
+                        <div class="min-w-0 flex-grow text-left">
+                            <span class="block text-[8px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Venue</span>
+                            <span id="modalS_Venue" class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-[10px] block break-words line-clamp-2 leading-tight">Venue</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-black text-[9px] text-gray-400 uppercase tracking-[0.4em] mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">Activity Description</h3>
+                <p id="modalS_Desc" class="text-gray-500 dark:text-gray-400 text-xs leading-relaxed font-medium text-justify">Description</p>
+
+                <!-- Desktop Button -->
+                <div class="hidden sm:block mt-10">
+                    <button id="btnEvaluateNow" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 px-6 rounded-2xl text-[10px] flex items-center justify-center gap-3 transition-all shadow-2xl hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase tracking-[0.4em]">
+                        Evaluate Now
+                    </button>
+                    <p id="evalLockMsg" class="text-center text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-5 hidden">
+                        <i class="ph-bold ph-lock-key"></i> Institutional Access Restricted
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Fixed Footer -->
+        <div class="fixed-modal-footer sm:hidden">
+            <button id="btnEvaluateNowMobile" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 px-6 rounded-2xl text-[10px] flex items-center justify-center gap-3 transition-all shadow-2xl hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed uppercase tracking-[0.4em]">
+                Evaluate Now
+            </button>
+            <p id="evalLockMsgMobile" class="text-center text-[8px] text-gray-400 font-bold uppercase tracking-widest mt-3 hidden">
+                <i class="ph-bold ph-lock-key"></i> Access Restricted
+            </p>
+        </div>
+    </div>
+    </div>
+
+    <!-- HISTORY DETAIL MODAL (Maintained for UI compatibility) -->
 <div id="historyDetailModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-0 sm:p-6">
     <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="closeHistoryModal()"></div>
     <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-100 dark:border-gray-800 z-10 transition-all">
@@ -88,15 +195,20 @@
                 </div>
 
                 <!-- Sentiment Block -->
-                <div class="bg-gray-50 dark:bg-[#0a0a0a] rounded-[2rem] p-6 border border-gray-100 dark:border-gray-900 flex flex-col justify-center">
-                    <span class="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4">Feedback Analysis</span>
+                <div class="bg-gray-50 dark:bg-[#0a0a0a] rounded-[2rem] p-6 border border-gray-100 dark:border-gray-900 flex flex-col justify-center relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="block text-[9px] font-black text-gray-400 uppercase tracking-widest">Feedback Analysis</span>
+                        <div id="modalH_SentimentBadge" class="px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1 border border-current opacity-90 transition-all duration-300">
+                            <!-- Badge Content -->
+                        </div>
+                    </div>
                     <div class="flex items-center gap-3">
-                        <div id="modalH_SentimentIcon" class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl">
+                        <div id="modalH_SentimentIcon" class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0 transition-all duration-500">
                             <!-- Icon -->
                         </div>
                         <div>
-                            <span id="modalH_SentimentLabel" class="block font-black text-gray-900 dark:text-white uppercase tracking-tight text-lg leading-none">POSITIVE</span>
-                            <span id="modalH_SentimentPct" class="text-green-500 font-black text-sm">92% Match</span>
+                            <span id="modalH_SentimentLabel" class="block font-black text-gray-900 dark:text-white uppercase tracking-tight text-lg leading-none transition-all duration-500">POSITIVE</span>
+                            <span id="modalH_SentimentPct" class="text-green-500 font-black text-sm transition-all duration-500">92% Match</span>
                         </div>
                     </div>
                 </div>
@@ -120,6 +232,10 @@
 {% endblock content %}
 
 {% block extra_js %}
+<!-- SAFE DATA INJECTION -->
+<script id="events-data" type="application/json">{{ events_json|safe }}</script>
+<script id="history-data" type="application/json">{{ history_json|safe }}</script>
+
 <script>
     const eventsText = document.getElementById('events-data').textContent;
     const historyText = document.getElementById('history-data').textContent;
@@ -131,8 +247,8 @@
     function initEvaluationHubLogic() {
         const activeGrid = document.getElementById('activeEvaluationsGrid');
         const noActive = document.getElementById('noActiveEvaluations');
-        
         const openSearch = document.getElementById('openSearch');
+        let currentSession = null;
 
         function renderActive(query = '') {
             if (!activeGrid) return;
@@ -146,12 +262,11 @@
                 const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
                 if (!end) return false;
                 
-                const evalCloseTime = new Date(end.getTime() + (24 * 60 * 60 * 1000)); // Allow eval for 24h
+                const evalCloseTime = new Date(end.getTime() + (24 * 60 * 60 * 1000)); 
                 
                 const isToday = e.date === now.toISOString().split('T')[0];
                 const inWindow = now <= evalCloseTime;
                 
-                // Show if already evaluated, or if it's today/in window
                 return e.already_evaluated || inWindow || isToday;
             });
 
@@ -163,7 +278,7 @@
 
             activeEvents.forEach(e => {
                 const card = document.createElement('div');
-                card.className = "evaluation-card bg-white dark:bg-pup-darkcard rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-gray-800 group shadow-sm hover:shadow-xl transition-all flex flex-col";
+                card.className = "evaluation-card bg-white dark:bg-pup-darkcard rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-gray-800 group shadow-sm hover:shadow-xl transition-all flex flex-row sm:flex-col cursor-pointer";
                 
                 const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
                 const evalOpenTime = end ? new Date(end.getTime() - (60 * 60 * 1000)) : null;
@@ -177,57 +292,63 @@
                 
                 if (e.already_evaluated) {
                     statusLabel = "COMPLETED";
-                    btnHtml = `<button disabled class="mt-auto w-full py-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                        <i class="ph-fill ph-check-circle text-green-500 text-lg"></i> Feedback Synchronized
-                      </button>`;
+                    btnHtml = ""; 
                 } else if (!e.is_eligible) {
                     statusLabel = "RESTRICTED";
-                    btnHtml = `<button disabled class="mt-auto w-full py-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] flex flex-col items-center justify-center gap-1">
+                    btnHtml = `<button disabled class="btn-eval mt-auto w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[7px] sm:text-[10px] uppercase tracking-[0.2em] flex flex-col items-center justify-center gap-0.5 sm:gap-1">
                         <span class="flex items-center gap-2"><i class="ph-bold ph-lock-key"></i> ${e.att_status}</span>
-                        <span class="text-[7px] opacity-60">TIME OUT REQUIRED TO EVALUATE</span>
+                        <span class="text-[6px] sm:text-[7px] opacity-60">TIME OUT REQUIRED</span>
                       </button>`;
                 } else if (isUpcoming) {
                     const diff = evalOpenTime - now;
                     statusLabel = `OPENS IN ${formatTimeDiffShort(diff)}`;
-                    btnHtml = `<button disabled class="mt-auto w-full py-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                        <i class="ph-bold ph-lock-key"></i> Unlocks @ ${formatClockTime(evalOpenTime)}
+                    btnHtml = `<button disabled class="btn-eval mt-auto w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[7px] sm:text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-lock-key"></i> ${formatClockTime(evalOpenTime)}
                       </button>`;
                 } else if (isOpen) {
-                    const diff = evalCloseTime - now;
-                    statusLabel = `OPEN FOR EVALUATION`;
-                    btnHtml = `<button onclick="startEvaluation('${e.id}', '${e.title.replace(/'/g, "\\'")}', '${e.image}')" class="mt-auto w-full py-5 rounded-2xl bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:opacity-90 active:scale-95 transition-all">
-                        Initialize Sync Portal
+                    statusLabel = `OPEN`;
+                    btnHtml = `<button class="btn-eval mt-auto w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black text-[7px] sm:text-[10px] uppercase tracking-[0.2em] shadow-xl hover:opacity-90 active:scale-95 transition-all">
+                        Initialize Sync
                       </button>`;
                 } else {
-                    statusLabel = "WINDOW CLOSED";
-                    btnHtml = `<button disabled class="mt-auto w-full py-5 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                        <i class="ph-bold ph-x-circle text-red-500 text-lg"></i> Session Expired
+                    statusLabel = "EXPIRED";
+                    btnHtml = `<button disabled class="btn-eval mt-auto w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[7px] sm:text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-x-circle text-red-500 text-xs sm:text-lg"></i> Closed
                       </button>`;
                 }
 
                 card.innerHTML = `
-                    <div class="h-44 w-full relative overflow-hidden bg-gray-900">
-                        <img src="${e.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-6');">
+                    <div class="card-image-container w-28 sm:h-44 sm:w-full relative overflow-hidden bg-gray-900 shrink-0 border-r sm:border-r-0 sm:border-b border-gray-100 dark:border-gray-800">
+                        <img src="${e.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-4 sm:p-6');">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                        <div class="absolute top-4 left-4">
-                            <span class="bg-black/60 backdrop-blur-xl border border-white/10 text-white text-[8px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest">${statusLabel}</span>
-                        </div>
-                        <div class="absolute bottom-4 left-6 right-6">
-                            <p class="text-pup-gold text-[9px] font-black uppercase tracking-[0.2em] mb-1">${e.org}</p>
-                            <h3 class="text-white font-black text-lg leading-tight uppercase tracking-tighter truncate">${e.title}</h3>
+                        <div class="absolute top-2 left-2 sm:top-4 sm:left-4">
+                            <span class="bg-black/60 backdrop-blur-xl border border-white/10 text-white text-[6px] sm:text-[8px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-black uppercase tracking-widest">${statusLabel}</span>
                         </div>
                     </div>
-                    <div class="p-6 flex-grow flex flex-col bg-white dark:bg-pup-darkcard">
-                        <div class="flex items-center justify-between mb-6">
-                            <div class="flex items-center gap-2">
-                                <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i>
-                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">${e.venue}</span>
-                            </div>
-                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">${e.time}</span>
+                    <div class="card-content-container p-3 sm:p-6 flex-grow flex flex-col bg-white dark:bg-pup-darkcard min-w-0">
+                        <div class="text-[7px] sm:text-[8px] font-black text-pup-maroon dark:text-pup-gold mb-0.5 sm:mb-6 uppercase tracking-[0.2em] flex justify-between items-center">
+                            <span>${e.date_display || e.date}</span>
+                            <span class="sm:hidden text-gray-400">${e.time}</span>
                         </div>
-                        ${btnHtml}
+                        
+                        <h3 class="text-gray-900 dark:text-white font-black text-xs sm:text-lg leading-tight uppercase tracking-tighter truncate mb-2 sm:mb-0">${e.title}</h3>
+                        
+                        <div class="flex items-center justify-between pt-2 sm:pt-3 border-t border-gray-50 dark:border-gray-800 mt-auto">
+                            <p class="text-[7px] sm:text-[8px] text-gray-400 flex items-center gap-1 font-bold uppercase tracking-widest truncate">
+                                <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold"></i> 
+                                <span class="truncate">${e.venue}</span>
+                            </p>
+                            <div class="flex items-center gap-2">
+                                ${e.already_evaluated ? '<i class="ph-fill ph-check-circle text-green-500 text-sm sm:text-base"></i>' : '<i class="ph-bold ph-caret-right text-gray-300 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-all group-hover:translate-x-1 text-sm sm:text-base"></i>'}
+                            </div>
+                        </div>
+                        
+                        <div class="hidden sm:block mt-4">
+                            ${btnHtml}
+                        </div>
                     </div>
                 `;
+                card.onclick = () => openSessionModal(e);
                 activeGrid.appendChild(card);
             });
         }
@@ -242,6 +363,92 @@
 
         function formatClockTime(date) {
             return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        window.openSessionModal = (e) => {
+            currentSession = e;
+            const now = new Date();
+            const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
+            const evalOpenTime = end ? new Date(end.getTime() - (60 * 60 * 1000)) : null;
+            const evalCloseTime = end ? new Date(end.getTime() + (24 * 60 * 60 * 1000)) : null;
+
+            const isOpen = end && now >= evalOpenTime && now <= evalCloseTime;
+            
+            document.getElementById('modalS_Img').src = e.image;
+            document.getElementById('modalS_Title').innerText = e.title;
+            document.getElementById('modalS_DateTime').innerText = `${e.date_display || e.date} @ ${e.time}`;
+            document.getElementById('modalS_Venue').innerText = e.venue;
+            document.getElementById('modalS_Desc').innerText = e.description || 'Your feedback is vital for institutional record synchronization and activity optimization.';
+            
+            const btn = document.getElementById('btnEvaluateNow');
+            const btnMobile = document.getElementById('btnEvaluateNowMobile');
+            const lockMsg = document.getElementById('evalLockMsg');
+            const lockMsgMobile = document.getElementById('evalLockMsgMobile');
+
+            const setBtnState = (disabled, text, msgText, msgHidden) => {
+                [btn, btnMobile].forEach(b => {
+                    b.disabled = disabled;
+                    b.innerText = text;
+                });
+                [lockMsg, lockMsgMobile].forEach(m => {
+                    m.innerText = msgText;
+                    if (msgHidden) m.classList.add('hidden');
+                    else m.classList.remove('hidden');
+                });
+            };
+
+            if (e.already_evaluated) {
+                setBtnState(true, "Feedback Synchronized", "You have already completed the evaluation for this session.", false);
+            } else if (!e.is_eligible) {
+                setBtnState(true, "Evaluation Restricted", `${e.att_status || 'Time Out Required'}. Evaluation portal unlocks after activity conclusion.`, false);
+            } else if (isOpen) {
+                setBtnState(false, "Evaluate Now", "", true);
+            } else {
+                setBtnState(true, "Portal Closed", "The institutional feedback window for this session has concluded.", false);
+            }
+
+            const modal = document.getElementById('sessionDetailModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeSessionModal = () => {
+            const modal = document.getElementById('sessionDetailModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+            currentSession = null;
+        };
+
+        const triggerStartEval = () => {
+            if (currentSession) {
+                startEvaluation(currentSession.id, currentSession.title, currentSession.image);
+            }
+        };
+
+        document.getElementById('btnEvaluateNow').addEventListener('click', triggerStartEval);
+        document.getElementById('btnEvaluateNowMobile').addEventListener('click', triggerStartEval);
+
+        function analyzeSentiment(text, vaderResult = null) {
+            // 🟢 Use server-side VADER result if provided
+            if (vaderResult && vaderResult.label) {
+                const label = vaderResult.label.charAt(0).toUpperCase() + vaderResult.label.slice(1);
+                if (label === 'Positive') return { label: 'Positive', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: 'ph-smiley' };
+                if (label === 'Negative') return { label: 'Negative', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: 'ph-smiley-sad' };
+                return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
+            }
+
+            if (!text || text.toLowerCase() === 'no feedback provided.') return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
+            const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'helpful', 'informative', 'learned', 'well', 'organized', 'maganda', 'mahusay', 'sulit', 'maraming natutunan', 'salamat', 'thank', 'nice', 'ayos', 'the best'];
+            const negativeWords = ['bad', 'poor', 'boring', 'waste', 'disorganized', 'late', 'rude', 'confusing', 'pangit', 'sayang', 'mabagal', 'maingay', 'gulo', 'hindi maganda', 'failed'];
+            const lowerText = text.toLowerCase();
+            let score = 0;
+            positiveWords.forEach(word => { if (lowerText.includes(word)) score++; });
+            negativeWords.forEach(word => { if (lowerText.includes(word)) score--; });
+            if (score > 0) return { label: 'Positive', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: 'ph-smiley' };
+            if (score < 0) return { label: 'Negative', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: 'ph-smiley-sad' };
+            return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
         }
 
         window.openHistoryModal = (record) => {
@@ -261,27 +468,33 @@
             document.getElementById('modalH_Stars').innerHTML = starsHtml;
 
             const ratingVal = parseFloat(record.rating);
+            const feedbackText = record.feedback || '';
+            const sentiment = analyzeSentiment(feedbackText, record.sentiment);
+            
+            const badge = document.getElementById('modalH_SentimentBadge');
             const sPctEl = document.getElementById('modalH_SentimentPct');
             const sLabelEl = document.getElementById('modalH_SentimentLabel');
             const sIconEl = document.getElementById('modalH_SentimentIcon');
 
-            if (ratingVal >= 4.0) {
-                sPctEl.innerText = `${Math.floor(ratingVal * 20)}% Match`;
-                sLabelEl.innerText = "POSITIVE";
-                sPctEl.className = "text-green-500 font-black text-sm";
-                sIconEl.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-green-50 text-green-500 dark:bg-green-900/20";
+            // Update Badge
+            badge.className = `px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1 border border-current opacity-90 transition-all duration-300 ${sentiment.class}`;
+            badge.innerHTML = `<i class="ph-fill ${sentiment.icon}"></i> ${sentiment.label} (AI)`;
+
+            // Update Main Sentiment Display (Icon, Label, Pct)
+            sPctEl.innerText = `${Math.round((ratingVal / 5) * 100)}% Match`;
+            sLabelEl.innerText = sentiment.label.toUpperCase();
+            
+            if (sentiment.label === 'Positive') {
+                sPctEl.className = "text-green-500 font-black text-sm transition-all duration-500";
+                sIconEl.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-green-50 text-green-500 dark:bg-green-900/20 shrink-0 transition-all duration-500";
                 sIconEl.innerHTML = '<i class="ph-fill ph-smiley"></i>';
-            } else if (ratingVal >= 2.5) {
-                sPctEl.innerText = `${Math.floor(ratingVal * 20)}% Match`;
-                sLabelEl.innerText = "NEUTRAL";
-                sPctEl.className = "text-amber-500 font-black text-sm";
-                sIconEl.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-amber-50 text-amber-500 dark:bg-amber-900/20";
+            } else if (sentiment.label === 'Neutral') {
+                sPctEl.className = "text-amber-500 font-black text-sm transition-all duration-500";
+                sIconEl.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-amber-50 text-amber-500 dark:bg-amber-900/20 shrink-0 transition-all duration-500";
                 sIconEl.innerHTML = '<i class="ph-fill ph-smiley-meh"></i>';
             } else {
-                sPctEl.innerText = `${Math.floor(ratingVal * 20)}% Match`;
-                sLabelEl.innerText = "NEGATIVE";
-                sPctEl.className = "text-red-500 font-black text-sm";
-                sIconEl.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-red-50 text-red-500 dark:bg-red-900/20";
+                sPctEl.className = "text-red-500 font-black text-sm transition-all duration-500";
+                sIconEl.className = "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl bg-red-50 text-red-500 dark:bg-red-900/20 shrink-0 transition-all duration-500";
                 sIconEl.innerHTML = '<i class="ph-fill ph-smiley-sad"></i>';
             }
 

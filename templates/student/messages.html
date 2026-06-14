@@ -162,17 +162,26 @@
 
                 // 2. Logic-based redirection (Matching Banner/Icon Standard)
                 const title = notif.title || "";
+                const type = notif.type || "";
                 
                 // Patterns for Events
-                if (title.startsWith('Upcoming: ') || title.includes('Attendance Issue: ')) {
-                    let searchTitle = title.replace('Upcoming: ', '').replace('Attendance Issue: ', '');
+                if (type === 'event' || type === 'new' || type === 'update' || type === 'alert' || 
+                    title.includes('Upcoming: ') || title.includes('Attendance Issue: ') || 
+                    title.includes('NEW EVENT') || title.includes('RESCHEDULED')) {
+                    
+                    let searchTitle = title
+                        .replace('Upcoming: ', '')
+                        .replace('Attendance Issue: ', '')
+                        .replace('🔥 NEW EVENT: ', '')
+                        .replace('📅 RESCHEDULED: ', '');
+
                     sessionStorage.setItem('eventSearchQuery', searchTitle.trim());
                     window.location.href = "{% url 'student_school_events' %}";
                     return;
                 }
 
                 // Patterns for Evaluations
-                if (title.toLowerCase().includes('evaluation') || title.toLowerCase().includes('feedback')) {
+                if (type === 'evaluation' || title.toLowerCase().includes('evaluation') || title.toLowerCase().includes('feedback')) {
                     window.location.href = "{% url 'student_evaluation' %}";
                     return;
                 }

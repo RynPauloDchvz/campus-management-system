@@ -247,9 +247,10 @@
         });
 
         const fetchNotifs = () => {
+            if (document.hidden) return;
             fetch('/adviser/api/notifications/').then(r => r.json()).then(data => {
                 if (data.status === 'success') { sharedState.notifications = data.notifications; }
-            }).catch(e => console.error(e));
+            }).catch(e => { /* Silent fail */ });
         };
 
         // Initialize fetch immediately

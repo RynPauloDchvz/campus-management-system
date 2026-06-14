@@ -629,15 +629,17 @@
             methods: {
                 ...window.VUE_APP_METHODS,
                 async fetchNotifications() {
+                    if (document.hidden) return; 
                     try {
                         const response = await fetch("{% url 'student_api_notifications' %}");
+                        if (!response.ok) return; 
                         const data = await response.json();
                         if (data.status === 'success') {
                             this.allNotifs = data.notifications;
                             this.updateNotificationState();
                         }
                     } catch (error) {
-                        console.error('Error fetching notifications:', error);
+                        // Silent fail to avoid clogging the console during server restarts or transient network issues
                     }
                 },
                 updateNotificationState() {
@@ -671,11 +673,11 @@
                 },
                 handleBannerClick(banner) {
                     let searchTitle = banner.title;
-                    if (banner.title.startsWith('Upcoming: ')) {
-                        searchTitle = banner.title.replace('Upcoming: ', '');
-                    } else if (banner.title.startsWith('Attendance Issue: ')) {
-                        searchTitle = banner.title.replace('Attendance Issue: ', '');
-                    }
+                    searchTitle = searchTitle
+                        .replace('Upcoming: ', '')
+                        .replace('Attendance Issue: ', '')
+                        .replace('🔥 NEW EVENT: ', '')
+                        .replace('📅 RESCHEDULED: ', '');
                     
                     if (!this.readNotifs.includes(banner.id)) {
                         this.readNotifs.push(banner.id);
@@ -751,26 +753,41 @@
                 },
                 getNotifBorderClass(type, status) {
                     if (type === 'event' || status === 'Approved') return 'border-l-green-500';
+                    if (type === 'new') return 'border-l-amber-500';
+                    if (type === 'update') return 'border-l-purple-500';
+                    if (type === 'evaluation') return 'border-l-indigo-500';
                     if (type === 'alert' || status === 'Rejected') return 'border-l-red-500';
                     return 'border-l-blue-500';
                 },
                 getIconBg(type) {
                     if (type === 'event') return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+                    if (type === 'new') return 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
+                    if (type === 'update') return 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400';
+                    if (type === 'evaluation') return 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400';
                     if (type === 'alert') return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
                     return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
                 },
                 getIconClass(type) {
                     if (type === 'event') return 'ph-calendar-star';
+                    if (type === 'new') return 'ph-sparkle';
+                    if (type === 'update') return 'ph-calendar-check';
+                    if (type === 'evaluation') return 'ph-star-half';
                     if (type === 'alert') return 'ph-warning-circle';
                     return 'ph-megaphone';
                 },
                 getModalIconWrapperClass(type) {
                     if (type === 'event') return 'border-green-100 bg-green-50 text-green-500 dark:border-green-900/30 dark:bg-green-900/20';
+                    if (type === 'new') return 'border-amber-100 bg-amber-50 text-amber-500 dark:border-amber-900/30 dark:bg-amber-900/20';
+                    if (type === 'update') return 'border-purple-100 bg-purple-50 text-purple-500 dark:border-purple-900/30 dark:bg-purple-900/20';
+                    if (type === 'evaluation') return 'border-indigo-100 bg-indigo-50 text-indigo-500 dark:border-indigo-900/30 dark:bg-indigo-900/20';
                     if (type === 'alert') return 'border-red-100 bg-red-50 text-red-500 dark:border-red-900/30 dark:bg-red-900/20';
                     return 'border-blue-100 bg-blue-50 text-blue-500 dark:border-blue-900/30 dark:bg-blue-900/20';
                 },
                 getModalTitleClass(type) {
                     if (type === 'event') return 'text-green-600 dark:text-green-500';
+                    if (type === 'new') return 'text-amber-600 dark:text-amber-500';
+                    if (type === 'update') return 'text-purple-600 dark:text-purple-500';
+                    if (type === 'evaluation') return 'text-indigo-600 dark:text-indigo-500';
                     if (type === 'alert') return 'text-red-600 dark:text-red-500';
                     return 'text-blue-600 dark:text-blue-500';
                 },
