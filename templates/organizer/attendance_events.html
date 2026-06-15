@@ -1,0 +1,102 @@
+{% extends 'organizer_base.html' %} 
+{% load static %}
+
+{% block extra_head %}
+<style>
+    /* Custom Scrollbar for Event List */
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #334155; }
+</style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">
+    
+    <div class="mb-8 border-b border-gray-200 dark:border-gray-800 pb-6 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="font-black text-2xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Attendance Hub</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">Select an event to manage and view its attendance records.</p>
+        </div>
+
+        <div class="w-full sm:w-auto bg-gray-50 dark:bg-[#151515] p-3 sm:px-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 flex items-center justify-center gap-3">
+            <span class="font-bold text-sm text-gray-500 uppercase tracking-widest">Organization:</span>
+            <span class="font-black text-pup-maroon dark:text-pup-gold text-xl">{{ org_acronym }}</span>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-[#151515] rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 sm:p-8 transition-colors">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b border-gray-100 dark:border-gray-800 pb-4 gap-4">
+            <div>
+                <h2 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2 tracking-tight">
+                    Event Attendance List
+                </h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">Click on any event below to open its specific attendance view.</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <div class="relative flex-grow sm:w-64">
+                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg"></i>
+                    <input type="text" id="searchEvent" placeholder="Search event title..." class="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 text-gray-900 dark:text-white transition-colors" onkeyup="filterEvents()">
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar" id="eventListContainer">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    const eventsData = JSON.parse('{{ events_data_json|escapejs|default:"[]" }}');
+
+    function renderEventList(dataToRender) {
+        const container = document.getElementById('eventListContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        if (dataToRender.length === 0) {
+            container.innerHTML = `
+                <div class="py-10 text-center text-gray-500 dark:text-gray-400 font-medium">
+                    <i class="ph-fill ph-magnifying-glass text-4xl mb-2 opacity-50"></i>
+                    <p>No events found.</p>
+                </div>
+            `;
+            return;
+        }
+
+        dataToRender.forEach(event => {
+            const card = `
+                <a href="/organizer/manage-attendance?event_id=${event.id}" class="block group bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 sm:p-6 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all cursor-pointer">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-start gap-4">
+                            <div class="w-2.5 h-2.5 rounded-full bg-blue-500 dark:bg-blue-400 mt-2.5 shadow-sm shrink-0"></div>
+                            <div>
+                                <h3 class="font-black text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">${event.title}</h3>
+                                <p class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 mt-1"><i class="ph-bold ph-calendar-blank"></i> ${event.date} &nbsp;•&nbsp; <i class="ph-bold ph-users"></i> ${event.respondents} Scanned Attendees</p>
+                            </div>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-gray-400 dark:text-gray-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all text-xl"></i>
+                    </div>
+                </a>
+            `;
+            container.innerHTML += card;
+        });
+    }
+
+    function filterEvents() {
+        const searchTerm = document.getElementById('searchEvent').value.toLowerCase();
+        const filtered = eventsData.filter(event => event.title.toLowerCase().includes(searchTerm));
+        renderEventList(filtered);
+    }
+
+    window.addEventListener('load', () => {
+        renderEventList(eventsData);
+    });
+</script>
+{% endblock extra_js %}

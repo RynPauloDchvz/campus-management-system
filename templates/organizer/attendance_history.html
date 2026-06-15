@@ -61,8 +61,8 @@
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
         <div>
-            <a href="{% url 'organizer_profile' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors mb-2">
-                <i class="ph-bold ph-arrow-left"></i> Back to Profile
+            <a href="{% url 'organizer_school_events' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors mb-2">
+                <i class="ph-bold ph-arrow-left"></i> Back to School Events
             </a>
             <h1 class="font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide font-sans">Event History</h1>
         </div>
@@ -75,8 +75,23 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 pb-10" id="historyGrid">
+    <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden mb-10">
+        <div class="overflow-x-auto hide-scrollbar">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 dark:bg-[#111] border-b border-gray-100 dark:border-gray-800 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    <tr>
+                        <th class="p-5 pl-8 whitespace-nowrap">Event Record</th>
+                        <th class="p-5 whitespace-nowrap">Venue</th>
+                        <th class="p-5 whitespace-nowrap">Timestamp Log</th>
+                        <th class="p-5 pr-8 whitespace-nowrap">Security Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyGrid" class="divide-y divide-gray-100 dark:divide-gray-800">
+                    <!-- Data injected here -->
+                </tbody>
+            </table>
         </div>
+    </div>
     
     <div id="noResults" class="hidden text-center py-10 w-full col-span-full">
         <i class="ph-bold ph-magnifying-glass-minus text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
@@ -113,10 +128,11 @@
                 <div class="flex flex-col sm:flex-row gap-4">
                     <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm w-full sm:w-[40%]">
                         <div class="w-full aspect-[3/4] rounded-xl bg-gray-200 dark:bg-black flex items-center justify-center mb-3 overflow-hidden border border-gray-300 dark:border-gray-700">
-                            <i class="ph-fill ph-user text-6xl text-gray-400"></i>
+                            <i id="capturePlaceholder" class="ph-fill ph-user text-6xl text-gray-400"></i>
+                            <img id="captureImg" src="" class="w-full h-full object-cover hidden">
                         </div>
                         <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Face Capture ID</div>
-                        <div class="text-xs font-bold text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-md w-full text-center border border-green-200 dark:border-green-800/50"><i class="ph-fill ph-check-circle"></i> Matched</div>
+                        <div id="matchStatus" class="text-xs font-bold text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-md w-full text-center border border-green-200 dark:border-green-800/50"><i class="ph-fill ph-check-circle"></i> Matched</div>
                     </div>
                     
                     <div class="flex flex-col gap-3 w-full sm:w-[60%]">
@@ -128,7 +144,7 @@
                             <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-2">Location Signature</div>
                             <div class="flex items-start gap-3">
                                 <i class="ph-fill ph-map-pin text-3xl text-pup-maroon dark:text-pup-gold shrink-0"></i>
-                                <div class="text-sm font-bold text-gray-900 dark:text-white leading-snug">Verified inside PUP Campus Perimeter.</div>
+                                <div id="locSignature" class="text-sm font-bold text-gray-900 dark:text-white leading-snug">Verified inside PUP Campus Perimeter.</div>
                             </div>
                         </div>
                     </div>
@@ -142,15 +158,13 @@
 {% endblock content %}
 
 {% block extra_js %}
+<script id="history-data" type="application/json">{{ history_data_json|safe }}</script>
 <script>
     const APP_STATIC_URL = "{% static 'images/' %}";
     const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
 
-    const historyData = [
-        { id: 1, title: "Research Colloquium", date: "May 12, 2026", time: "08:15 AM", venue: "Audio Visual Room", type: "Attendance", img: "research.jpg" },
-        { id: 2, title: "IT Week Hackathon", date: "Jun 05, 2026", time: "07:30 AM", venue: "Computer Lab 1", type: "Attendance", img: "tech_talk.jpg" },
-        { id: 3, title: "Quiz Bee Competition", date: "Jul 20, 2026", time: "01:00 PM", venue: "Main Gym", type: "Attendance", img: "background.jpg" }
-    ];
+    const historyDataText = document.getElementById('history-data').textContent;
+    const historyData = historyDataText ? JSON.parse(historyDataText) : [];
 
     function renderHistory() {
         const grid = document.getElementById('historyGrid');
@@ -158,7 +172,7 @@
         grid.innerHTML = '';
         const query = document.getElementById('historySearch').value.toLowerCase();
         
-        const filtered = historyData.filter(item => item.title.toLowerCase().includes(query));
+        const filtered = historyData.filter(item => (item.title || "").toLowerCase().includes(query));
 
         if (filtered.length === 0) {
             document.getElementById('noResults').classList.remove('hidden');
@@ -167,22 +181,31 @@
         }
 
         filtered.forEach(item => {
+            const isVerified = item.matched;
+            const statusClass = isVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+            const statusText = isVerified ? 'Verified' : 'Unmatched';
+            
             const html = `
-                <div class="bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" onclick="openHistoryModal(${item.id})">
-                    <div class="w-24 sm:w-full h-24 sm:h-32 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] border-r sm:border-r-0 sm:border-b border-gray-200 dark:border-gray-800">
-                        <img src="${APP_STATIC_URL}${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-                        <div class="absolute top-2 right-2 hidden sm:block">
-                            <span class="text-[0.65rem] font-bold px-2 py-1 rounded-md uppercase bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shadow-sm"><i class="ph-fill ph-user-focus"></i> ${item.type}</span>
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-[#111]/50 transition-colors cursor-pointer group" onclick="openHistoryModal(${item.id})">
+                    <td class="p-5 pl-8">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 border-2 border-gray-100 dark:border-gray-800">
+                                <img src="${item.img}" class="w-full h-full object-cover" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-1');">
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm leading-none mb-1 truncate max-w-[200px] sm:max-w-[300px]">
+                                    ${item.title}
+                                </h4>
+                                <p class="text-[10px] text-pup-maroon dark:text-pup-gold font-black uppercase tracking-widest">${item.date}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="p-3 sm:p-4 flex flex-col justify-center flex-grow min-w-0">
-                        <div class="flex justify-between items-start mb-1">
-                            <div class="text-[0.65rem] font-bold text-pup-maroon dark:text-pup-gold truncate">${item.date}</div>
-                        </div>
-                        <h3 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white leading-tight mb-1 truncate">${item.title}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">${item.venue}</span></p>
-                    </div>
-                </div>
+                    </td>
+                    <td class="p-5 text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight truncate max-w-[150px]"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold mr-1"></i>${item.venue}</td>
+                    <td class="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">IN: ${item.time}</td>
+                    <td class="p-5 pr-8">
+                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-current opacity-80 ${statusClass}">${statusText}</span>
+                    </td>
+                </tr>
             `;
             grid.insertAdjacentHTML('beforeend', html);
         });
@@ -197,6 +220,29 @@
         document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${item.date} • ${item.time}`;
         document.getElementById('modalVenue').innerHTML = `<i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> ${item.venue}`;
         document.getElementById('proofTime').innerText = item.date + " at " + item.time;
+        
+        const captureImg = document.getElementById('captureImg');
+        const capturePlaceholder = document.getElementById('capturePlaceholder');
+        if (item.capture_img && !item.capture_img.includes('PUPLogo')) {
+            captureImg.src = item.capture_img;
+            captureImg.classList.remove('hidden');
+            capturePlaceholder.classList.add('hidden');
+        } else {
+            captureImg.classList.add('hidden');
+            capturePlaceholder.classList.remove('hidden');
+        }
+        
+        const matchStatus = document.getElementById('matchStatus');
+        if (item.matched) {
+            matchStatus.className = "text-xs font-bold text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-md w-full text-center border border-green-200 dark:border-green-800/50";
+            matchStatus.innerHTML = '<i class="ph-fill ph-check-circle"></i> Matched';
+        } else {
+            matchStatus.className = "text-xs font-bold text-red-600 dark:text-red-500 bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-md w-full text-center border border-red-200 dark:border-red-800/50";
+            matchStatus.innerHTML = '<i class="ph-fill ph-warning-circle"></i> Unmatched';
+        }
+        
+        document.getElementById('locSignature').innerText = item.location || "Verified inside PUP Campus Perimeter.";
+
         document.getElementById('viewAttendanceProof').classList.remove('hidden');
 
         document.getElementById('historyModal').classList.remove('hidden');

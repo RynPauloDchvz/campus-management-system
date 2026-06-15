@@ -23,9 +23,19 @@
         background-color: #111111 !important;
     }
     
-    /* HORIZONTAL SCROLLBAR HIDING */
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* HORIZONTAL SCROLLBAR (Hidden on mobile, slim on desktop) */
+    @media (max-width: 768px) {
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    }
+    @media (min-width: 769px) {
+        .hide-scrollbar::-webkit-scrollbar { height: 8px; }
+        .hide-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .hide-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .dark .hide-scrollbar::-webkit-scrollbar-thumb { background: #374151; }
+        .hide-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        .dark .hide-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+    }
 </style>
 {% endblock extra_head %}
 
@@ -92,7 +102,7 @@
         {% if org_profile.cover_photo %}
             <img src="{{ org_profile.cover_photo.url }}" class="w-full h-full object-cover opacity-90" id="coverImage">
         {% else %}
-            <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover opacity-90" id="coverImage" onerror="this.src=window.DEFAULT_LOGO">
+            <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover opacity-90" id="coverImage" onerror="this.src=window.DEFAULT_LOGO">
         {% endif %}
         
         <div id="coverEditOverlay" class="absolute inset-0 z-10 bg-black/40 items-center justify-center cursor-pointer transition-colors" style="display: none;" onclick="document.getElementById('coverFileInput').click()">
@@ -131,7 +141,7 @@
                     </div>
                     
                     <div id="nameEditContainer" class="items-center justify-center sm:justify-start gap-2 mb-2 w-full max-w-sm mx-auto sm:mx-0" style="display: none;">
-                        <input type="text" id="inputEditName" value="{{ full_name }}" class="w-full bg-white dark:bg-[#111] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-lg sm:text-xl font-black text-gray-900 dark:text-white outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors text-center sm:text-left uppercase tracking-wide shadow-lg">
+                        <input type="text" id="inputEditName" value="{{ full_name }}" class="w-full bg-white dark:bg-[#111] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 text-lg sm:text-xl font-black text-gray-900 dark:text-white outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors text-center sm:text-left tracking-wide shadow-lg">
                     </div>
 
                     <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-[0.65rem] sm:text-sm font-bold text-gray-600 dark:text-gray-400 transition-colors">
@@ -142,21 +152,13 @@
             </div>
 
             <div class="pb-1 sm:pb-3 shrink-0 flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto mt-4 sm:mt-0 relative z-40">
-                
-                <a href="{% url 'organizer_event_vault' %}" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-[#800000] dark:text-[#D4AF37] px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-all hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Document Vault (Signed Permits)">
-                    <i class="ph-bold ph-folder-lock text-base sm:text-lg"></i>
-                </a>
-
-                <a href="{% url 'organizer_document_tracking' %}" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Document Tracking">
-                    <i class="ph-bold ph-files text-base sm:text-lg"></i>
-                </a>
-                <a href="{% url 'organizer_attendance_history' %}" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Attendance History">
-                    <i class="ph-bold ph-clock-counter-clockwise text-base sm:text-lg"></i>
-                </a>
                 <button onclick="openSettingsModal()" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Notification Settings">
                     <i id="notifBellIcon" class="ph-bold ph-bell-ringing text-base sm:text-lg transition-transform"></i>
                 </button>
-                <button id="editBtn" onclick="toggleOrgProfileEdit()" class="bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-[0.65rem] sm:text-sm shadow-sm transition-colors hover:opacity-90 flex items-center gap-1 sm:gap-2">
+                <button id="cancelEditBtn" onclick="toggleOrgProfileEdit(true)" class="hidden bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-[0.65rem] sm:text-sm shadow-sm transition-colors hover:opacity-90 items-center gap-1 sm:gap-2">
+                    <i class="ph-bold ph-x text-sm sm:text-lg"></i> <span class="hidden sm:inline">Cancel</span>
+                </button>
+                <button id="editBtn" onclick="toggleOrgProfileEdit(false)" class="bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-[0.65rem] sm:text-sm shadow-sm transition-colors hover:opacity-90 flex items-center gap-1 sm:gap-2">
                     <i class="ph-bold ph-pencil-simple text-sm sm:text-lg"></i> <span class="hidden sm:inline" id="editBtnText">Edit Profile</span><span class="sm:hidden" id="editBtnMobile">Edit</span>
                 </button>
             </div>
@@ -192,11 +194,13 @@
             </div>
             
             {% if completed_events %}
-                <div class="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar">
+                <div class="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory hide-scrollbar scroll-smooth">
                     {% for evt in completed_events %}
                         <div onclick="openAnalyticsModal(this)" 
                              data-title="{{ evt.event_title }}"
-                             class="shrink-0 w-64 sm:w-80 bg-white dark:bg-[#151515] p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col justify-between cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all snap-start">
+                             data-rating="{{ evt.average_rating }}"
+                             data-sentiment="{{ evt.sentiment_percentage }}"
+                             class="shrink-0 w-64 sm:w-80 bg-white dark:bg-[#151515] p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col justify-between cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all snap-center sm:snap-align-none">
                             <div>
                                 <h4 class="font-black text-gray-900 dark:text-white text-base mb-1 truncate">{{ evt.event_title }}</h4>
                                 <p class="text-[11px] font-bold text-gray-500 uppercase tracking-widest"><i class="ph-bold ph-calendar"></i> {{ evt.event_date }}</p>
@@ -205,7 +209,10 @@
                                 <span class="px-3 py-1 rounded border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500 text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1">
                                     Published
                                 </span>
-                                <i class="ph-bold ph-chart-line-up text-gray-400"></i>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-black text-gray-400"><i class="ph-fill ph-star text-pup-gold"></i> {{ evt.average_rating }}</span>
+                                    <i class="ph-bold ph-chart-line-up text-gray-400"></i>
+                                </div>
                             </div>
                         </div>
                     {% endfor %}
@@ -348,11 +355,11 @@
         <div class="grid grid-cols-2 gap-4 mb-6">
             <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center shadow-sm">
                 <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Average Score</p>
-                <div class="text-3xl font-black text-blue-600 dark:text-blue-400">4.8<span class="text-sm text-gray-400">/5.0</span></div>
+                <div class="text-3xl font-black text-blue-600 dark:text-blue-400"><span id="analyticsModalRating">0.0</span><span class="text-sm text-gray-400">/5.0</span></div>
             </div>
             <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-center shadow-sm">
                 <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1">Sentiment</p>
-                <div class="text-3xl font-black text-green-500">92%</div>
+                <div class="text-3xl font-black text-green-500" id="analyticsModalSentiment">0%</div>
             </div>
         </div>
 
@@ -434,8 +441,18 @@
 <script>
     window.DEFAULT_LOGO = "{% static 'images/PUPLogo.png' %}";
 
-    let readNotifs = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-    let notifSettingEnabled = localStorage.getItem('notif_enabled') !== 'false';
+    let readNotifs = {{ read_notifications_json|safe }};
+    let notifSettingEnabled = {{ email_notifications|yesno:"true,false" }};
+
+    function syncReadNotifications() {
+        const formData = new FormData();
+        formData.append('notif_ids', readNotifs.join(','));
+        fetch("{% url 'mark_org_notifications_read' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: formData
+        });
+    }
 
     function initNotifications() {
         const notifItems = document.querySelectorAll('.notif-item');
@@ -474,9 +491,9 @@
         const status = element.dataset.status;
         const remarks = element.dataset.remarks;
 
-        if(!readNotifs.includes(notifId)) {
+        if(notifId && !readNotifs.includes(notifId)) {
             readNotifs.push(notifId);
-            localStorage.setItem('read_notifs', JSON.stringify(readNotifs));
+            syncReadNotifications();
             initNotifications();
         }
 
@@ -492,7 +509,12 @@
             icon.innerHTML = '<i class="ph-fill ph-check-circle"></i>';
             titleEl.innerText = "Event Officially Published!";
             titleEl.className = "text-xl sm:text-2xl font-black text-green-600 dark:text-green-500 mb-2 uppercase tracking-wide";
-            bodyEl.innerHTML = `Congratulations! The Administration has verified your signed documents. Your event <strong>"${title}"</strong> is now fully approved and published in the system. The countdown timer is now active for the students!`;
+            
+            if (title.toLowerCase().includes('flag raising')) {
+                bodyEl.innerHTML = `This Global Event was published directly! Your event <strong>"${title}"</strong> is now live and attendance/evaluation is open for students globally.`;
+            } else {
+                bodyEl.innerHTML = `Congratulations! The Administration has verified your signed documents. Your event <strong>"${title}"</strong> is now fully approved and published in the system. The countdown timer is now active for the students!`;
+            }
             reasonBox.classList.add('hidden');
         } 
         else if(status === 'Admin Approved') {
@@ -527,7 +549,11 @@
 
     function openAnalyticsModal(element) {
         const title = element.dataset.title;
+        const rating = element.dataset.rating;
+        const sentiment = element.dataset.sentiment;
         document.getElementById('analyticsModalTitle').innerText = title;
+        document.getElementById('analyticsModalRating').innerText = rating;
+        document.getElementById('analyticsModalSentiment').innerText = sentiment + '%';
         document.getElementById('analyticsModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -539,22 +565,34 @@
 
     function markAllAsRead() {
         const notifItems = document.querySelectorAll('.notif-item');
+        let hasNew = false;
         notifItems.forEach(item => {
             let notifId = "";
             if(item.hasAttribute('data-id')) { notifId = item.getAttribute('data-id'); }
             else if(item.hasAttribute('data-notif-id')) { notifId = item.getAttribute('data-notif-id'); }
 
-            if(notifId && !readNotifs.includes(notifId)) readNotifs.push(notifId);
+            if(notifId && !readNotifs.includes(notifId)) {
+                readNotifs.push(notifId);
+                hasNew = true;
+            }
         });
-        localStorage.setItem('read_notifs', JSON.stringify(readNotifs));
-        initNotifications();
+        if(hasNew) {
+            syncReadNotifications();
+            initNotifications();
+        }
     }
 
     function toggleNotifSetting() {
         const toggle = document.getElementById('notifToggle');
         if (toggle) {
             notifSettingEnabled = toggle.checked;
-            localStorage.setItem('notif_enabled', notifSettingEnabled);
+            const formData = new FormData();
+            formData.append('email_notifications', notifSettingEnabled);
+            fetch("{% url 'update_org_notification_preference' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                body: formData
+            });
             initNotifications();
         }
     }
@@ -579,8 +617,9 @@
 
     let isOrgEditMode = false;
     
-    async function toggleOrgProfileEdit() {
+    async function toggleOrgProfileEdit(isCancel = false) {
         const btn = document.getElementById('editBtn');
+        const btnCancel = document.getElementById('cancelEditBtn');
         const btnText = document.getElementById('editBtnText');
         const btnMobile = document.getElementById('editBtnMobile');
         const nameDisplay = document.getElementById('profileFullNameDisplay');
@@ -589,8 +628,29 @@
         const profileOverlay = document.getElementById('profileEditOverlay');
         const coverOverlay = document.getElementById('coverEditOverlay');
 
+        if (isCancel && isOrgEditMode) {
+            isOrgEditMode = false;
+            btnCancel.classList.add('hidden');
+            btnCancel.classList.remove('flex');
+            btn.classList.replace('bg-green-600', 'bg-[#800000]');
+            btn.classList.replace('dark:bg-green-500', 'dark:bg-[#D4AF37]');
+            btn.classList.replace('dark:text-white', 'dark:text-black');
+            btnText.innerText = "Edit Profile";
+            btnMobile.innerText = "Edit";
+            btn.querySelector('i').classList.replace('ph-floppy-disk', 'ph-pencil-simple');
+            
+            nameInputContainer.style.display = 'none';
+            nameDisplay.style.display = 'inline-block';
+            profileOverlay.style.display = 'none';
+            coverOverlay.style.display = 'none';
+            inputEditName.value = nameDisplay.innerText.trim();
+            return;
+        }
+
         if (!isOrgEditMode) {
             isOrgEditMode = true;
+            btnCancel.classList.remove('hidden');
+            btnCancel.classList.add('flex');
             btn.classList.replace('bg-[#800000]', 'bg-green-600');
             btn.classList.replace('dark:bg-[#D4AF37]', 'dark:bg-green-500');
             btn.classList.replace('dark:text-black', 'dark:text-white');

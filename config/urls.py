@@ -62,6 +62,7 @@ urlpatterns = [
     path('student/verify-password', views.verify_student_password, name='verify_student_password'),
     path('student/update-password', views.update_student_password, name='update_student_password'),
     path('student/update-profile', views.update_student_profile, name='update_student_profile'),
+    path('student/update-face', views.update_student_face, name='update_student_face'),
     path('student/update-notif-preference', views.update_notification_preference, name='update_notification_preference'),
     path('student/api/notifications/', views.get_student_notifications_api, name='student_api_notifications'),
     path('student/record-attendance', views.record_attendance, name='record_attendance_student'),
@@ -92,7 +93,10 @@ urlpatterns = [
     path('organizer/download-proposal-doc/', views.download_event_proposal_doc, name='download_event_proposal_doc'),
     
     path('organizer/manage-students', views.organizer_manage_students, name='organizer_manage_students'),
+    # Force reload comment 2
     path('organizer/approve-student', views.approve_individual_student, name='approve_individual_student'), 
+    path('organizer/reject-student', views.reject_individual_student, name='reject_individual_student'), 
+    path('organizer/attendance-hub', views.organizer_attendance_events, name='organizer_attendance_events'),
     path('organizer/manage-attendance', views.organizer_manage_attendance, name='organizer_manage_attendance'),
     
     # 🟢 DITO YUNG ANALYTICS AT DETAILED FEEDBACK MO NA GINAWA NATIN 🟢
@@ -101,6 +105,8 @@ urlpatterns = [
     
     path('organizer/profile', views.organizer_profile, name='organizer_profile'),
     path('organizer/api/update-profile/', views.update_organizer_profile, name='update_organizer_profile'),
+    path('organizer/api/update-notif-preference/', views.update_org_notification_preference, name='update_org_notification_preference'),
+    path('organizer/api/mark-notifs-read/', views.mark_org_notifications_read, name='mark_org_notifications_read'),
     path('organizer/message-history', views.organizer_message_history, name='organizer_message_history'),
     path('organizer/attendance-history', views.organizer_attendance_history, name='organizer_attendance_history'),
     path('organizer/document-tracking', views.organizer_document_tracking, name='organizer_document_tracking'),

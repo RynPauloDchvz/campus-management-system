@@ -2,28 +2,6 @@
 {% load static %}
 
 {% block extra_head %}
-{% endblock %}
-
-{% block skeleton %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full min-h-screen">
-    <div class="mb-10 border-b border-gray-100 dark:border-gray-800 pb-6 space-y-3 text-center sm:text-left">
-        <div class="w-64 h-10 rounded-lg skeleton-shimmer mx-auto sm:mx-0"></div>
-        <div class="w-full max-w-md h-5 rounded skeleton-shimmer mx-auto sm:mx-0"></div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div class="bg-white dark:bg-pup-darkcard rounded-3xl border border-gray-100 dark:border-gray-800 h-[600px] skeleton-shimmer"></div>
-        <div class="bg-white dark:bg-pup-darkcard rounded-3xl border border-gray-100 dark:border-gray-800 p-6 sm:p-8 h-[600px] flex flex-col gap-6">
-            <div class="w-48 h-8 rounded-lg skeleton-shimmer"></div>
-            <div class="space-y-4">
-                <div v-for="i in 4" :key="i" class="h-24 rounded-2xl skeleton-shimmer"></div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock skeleton %}
-
-{% block content %}
 <style>
     .print-hide { display: none !important; }
     /* Custom Select Arrow Hiding fallback */
@@ -55,6 +33,28 @@
         }
     }
 </style>
+{% endblock %}
+
+{% block skeleton %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full min-h-screen">
+    <div class="mb-10 border-b border-gray-100 dark:border-gray-800 pb-6 space-y-3 text-center sm:text-left">
+        <div class="w-64 h-10 rounded-lg skeleton-shimmer mx-auto sm:mx-0"></div>
+        <div class="w-full max-w-md h-5 rounded skeleton-shimmer mx-auto sm:mx-0"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div class="bg-white dark:bg-pup-darkcard rounded-3xl border border-gray-100 dark:border-gray-800 h-[600px] skeleton-shimmer"></div>
+        <div class="bg-white dark:bg-pup-darkcard rounded-3xl border border-gray-100 dark:border-gray-800 p-6 sm:p-8 h-[600px] flex flex-col gap-6">
+            <div class="w-48 h-8 rounded-lg skeleton-shimmer"></div>
+            <div class="space-y-4">
+                <div v-for="i in 4" :key="i" class="h-24 rounded-2xl skeleton-shimmer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock skeleton %}
+
+{% block content %}
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full min-h-screen">
     
@@ -85,6 +85,7 @@
                             <select id="letterType" onchange="toggleFormFields()" class="appearance-none w-full bg-maroon-50 dark:bg-gray-800 border-2 border-pup-maroon dark:border-pup-gold rounded-xl pl-4 pr-10 py-3 text-sm font-bold text-gray-900 dark:text-white outline-none cursor-pointer transition-colors shadow-sm">
                                 <option value="new_event">New Event Proposal (Request Letter + Excuse/Usage)</option>
                                 <option value="reschedule_event">Reschedule Event (Reschedule Letter Only)</option>
+                                <option value="flag_raising">Flag Raising Ceremony (Fast-Track Post)</option>
                             </select>
                             <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-700 dark:text-gray-300 pointer-events-none"></i>
                         </div>
@@ -137,6 +138,18 @@
                         <div>
                             <label class="block text-[0.7rem] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1.5">Equipment to Request</label>
                             <textarea id="reqEquipment" rows="2" class="w-full bg-white dark:bg-[#151515] border border-blue-300 dark:border-blue-700 rounded-lg px-4 py-2.5 text-sm outline-none resize-none" placeholder="e.g., sound system, two microphones, flags..."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="flagRaisingFields" class="hidden bg-pup-gold/10 border border-pup-gold/30 p-4 rounded-xl flex flex-col gap-4">
+                        <label class="block text-[0.7rem] font-bold text-pup-gold dark:text-pup-gold uppercase tracking-wider mb-1.5">Event Cover Photo</label>
+                        <div class="relative w-full h-32 bg-gray-50 dark:bg-[#111] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl flex flex-col items-center justify-center overflow-hidden group">
+                            <input type="file" id="flagCoverPhoto" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewFlagImage(this)">
+                            <img id="flagPhotoPreview" class="absolute inset-0 w-full h-full object-cover hidden">
+                            <div id="flagPlaceholder" class="flex flex-col items-center gap-2">
+                                <i class="ph-bold ph-image text-3xl text-gray-400"></i>
+                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Upload Banner</span>
+                            </div>
                         </div>
                     </div>
 
@@ -234,11 +247,7 @@
 
 </div>
 
-<!-- List of Trackable Documents Modal (Mobile/Overlay) -->
-<button onclick="document.getElementById('docsListModal').classList.remove('hidden')" class="fixed bottom-6 right-6 lg:hidden z-40 bg-pup-maroon text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl border-4 border-white dark:border-gray-900">
-    <i class="ph-fill ph-files"></i>
-</button>
-
+<!-- List of Trackable Documents Modal -->
 <div id="docsListModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 lg:p-0 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm lg:hidden" onclick="document.getElementById('docsListModal').classList.add('hidden')"></div>
     <div class="relative bg-white dark:bg-[#151515] lg:bg-transparent lg:shadow-none lg:border-none rounded-3xl shadow-2xl w-full max-w-sm lg:max-w-none mx-auto p-6 lg:p-0 z-10 border border-gray-200 dark:border-gray-800 lg:static lg:block h-[80vh] lg:h-auto flex flex-col">
@@ -311,6 +320,64 @@
         </div>
     </div>
 </div>
+</div>
+
+<!-- FLAG RAISING PREVIEW MODAL -->
+<div id="flagPreviewModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-6 font-sans">
+    <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="closeFlagPreviewModal()"></div>
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-100 dark:border-gray-800">
+        <button onclick="closeFlagPreviewModal()" class="absolute top-8 right-8 z-[2010] w-12 h-12 flex items-center justify-center bg-black/50 text-white rounded-full text-xl hover:bg-black/70 transition-colors">
+            <i class="ph-bold ph-x"></i>
+        </button>
+        <div class="overflow-y-auto hide-scrollbar flex-grow">
+            <div class="h-56 sm:h-72 w-full relative shrink-0 bg-gray-900">
+                <img id="flagModalImg" src="" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                <div class="absolute bottom-6 left-6 sm:left-8 right-6 sm:right-8">
+                    <h2 id="flagModalTitle" class="text-2xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">Title</h2>
+                </div>
+            </div>
+            <div class="p-6 sm:p-10">
+                <div class="flex items-center justify-between mb-8 p-6 bg-pup-gold rounded-2xl shadow-xl">
+                    <div>
+                        <span class="block text-[10px] font-black text-black/80 uppercase tracking-[0.3em] mb-1">Fast-Track Status</span>
+                        <span class="text-xl font-black text-black tabular-nums tracking-tighter">READY FOR DEPLOYMENT</span>
+                    </div>
+                    <div class="w-16 h-16 bg-black/10 rounded-2xl flex items-center justify-center text-black shadow-inner">
+                        <i class="ph-fill ph-rocket-launch text-4xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+                    <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-800 h-[90px]">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                            <i class="ph-fill ph-calendar text-xl"></i>
+                        </div>
+                        <div class="min-w-0 flex-grow text-left">
+                            <span class="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Schedule</span>
+                            <span id="flagModalDateTime" class="font-black text-gray-900 dark:text-white uppercase text-[10px] block break-words line-clamp-2 leading-tight">--</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-800 h-[90px]">
+                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                            <i class="ph-fill ph-map-pin text-xl"></i>
+                        </div>
+                        <div class="min-w-0 flex-grow text-left">
+                            <span class="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Venue</span>
+                            <span id="flagModalVenue" class="font-black text-gray-900 dark:text-white uppercase text-[10px] block break-words line-clamp-2 leading-tight">--</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-8 border-t border-gray-100 dark:border-gray-800 text-center">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">
+                        <i class="ph-bold ph-info"></i> This event will bypass the 6-step approval flow and will be immediately visible to all students.
+                    </p>
+                    <button type="button" onclick="submitFlagRaising(this)" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-3 active:scale-95">
+                        <i class="ph-bold ph-paper-plane-tilt text-2xl"></i> Deploy to School Events
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="letterModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-6 font-sans">
@@ -389,6 +456,9 @@
     </div>
 </div>
 
+{% endblock content %}
+
+{% block extra_js %}
 {{ events_json|json_script:"events-data" }}
 {{ documents_json|json_script:"documents-data" }}
 {{ approved_events_json|json_script:"approved-events-data" }}
@@ -524,16 +594,108 @@
         const type = document.getElementById('letterType').value;
         const reschedFields = document.getElementById('rescheduleFields');
         const excuseFields = document.getElementById('excuseFields');
+        const flagFields = document.getElementById('flagRaisingFields');
+        const standardDescDiv = document.getElementById('standardDescDiv');
         const downloadBtn = document.getElementById('btnDownloadDocs');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const advNameInput = document.getElementById('advName');
+        const evtTitleInput = document.getElementById('evtTitle');
+        const orgAcr = document.getElementById('reqOrg').value;
 
-        if(type === 'reschedule_event') {
-            reschedFields.classList.remove('hidden');
-            excuseFields.classList.add('hidden'); // Hide excuse fields for reschedule
+        if (type === 'flag_raising') {
+            if (flagFields) flagFields.classList.remove('hidden');
+            if (reschedFields) reschedFields.classList.add('hidden');
+            if (excuseFields) excuseFields.classList.add('hidden');
+            if (standardDescDiv) standardDescDiv.classList.add('hidden');
+            if (advNameInput) advNameInput.parentElement.classList.add('hidden');
+            if (advNameInput) advNameInput.required = false;
+            if (evtTitleInput) {
+                evtTitleInput.value = `Flag Raising - ${orgAcr}`;
+                evtTitleInput.readOnly = true;
+            }
+            if (submitBtn) submitBtn.innerHTML = '<i class="ph-bold ph-eye text-lg"></i> PREVIEW EVENT POST';
+        } else if (type === 'reschedule_event') {
+            if (flagFields) flagFields.classList.add('hidden');
+            if (reschedFields) reschedFields.classList.remove('hidden');
+            if (excuseFields) excuseFields.classList.add('hidden');
+            if (standardDescDiv) standardDescDiv.classList.remove('hidden');
+            if (advNameInput) advNameInput.parentElement.classList.remove('hidden');
+            if (advNameInput) advNameInput.required = true;
+            if (evtTitleInput) {
+                evtTitleInput.readOnly = false;
+                if (evtTitleInput.value.startsWith('Flag Raising -')) evtTitleInput.value = '';
+            }
+            if (submitBtn) submitBtn.innerHTML = '<i class="ph-bold ph-file-text text-lg"></i> PREVIEW REQUEST LETTER';
             if (downloadBtn) downloadBtn.innerHTML = '<i class="ph-bold ph-file-doc"></i> Download Word Doc';
         } else {
-            reschedFields.classList.add('hidden');
-            excuseFields.classList.remove('hidden');
+            if (flagFields) flagFields.classList.add('hidden');
+            if (reschedFields) reschedFields.classList.add('hidden');
+            if (excuseFields) excuseFields.classList.remove('hidden');
+            if (standardDescDiv) standardDescDiv.classList.remove('hidden');
+            if (advNameInput) advNameInput.parentElement.classList.remove('hidden');
+            if (advNameInput) advNameInput.required = true;
+            if (evtTitleInput) {
+                evtTitleInput.readOnly = false;
+                if (evtTitleInput.value.startsWith('Flag Raising -')) evtTitleInput.value = '';
+            }
+            if (submitBtn) submitBtn.innerHTML = '<i class="ph-bold ph-file-text text-lg"></i> PREVIEW REQUEST LETTER';
             if (downloadBtn) downloadBtn.innerHTML = '<i class="ph-bold ph-file-zip"></i> Download Word Docs (ZIP)';
+        }
+    }
+
+    function previewFlagImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('flagPhotoPreview').src = e.target.result;
+                document.getElementById('flagPhotoPreview').classList.remove('hidden');
+                document.getElementById('flagPlaceholder').classList.add('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function closeFlagPreviewModal() {
+        document.getElementById('flagPreviewModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    async function submitFlagRaising(btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Deploying...';
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+        formData.append('title', document.getElementById('evtTitle').value);
+        formData.append('date', document.getElementById('evtDate').value);
+        formData.append('start_time', document.getElementById('evtStartTime').value);
+        formData.append('end_time', document.getElementById('evtEndTime').value);
+        formData.append('venue', document.getElementById('evtVenue').value);
+        formData.append('is_flag_raising', 'true');
+        
+        const photoInput = document.getElementById('flagCoverPhoto');
+        if (photoInput.files.length > 0) {
+            formData.append('cover_photo', photoInput.files[0]);
+        }
+
+        try {
+            const response = await fetch('/organizer/api/submit-proposal/', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.status === 'success') {
+                closeFlagPreviewModal();
+                document.getElementById('successModal').classList.remove('hidden');
+                const successMsg = document.querySelector('#successModal p');
+                if (successMsg) successMsg.innerText = "The Flag Raising ceremony has been posted and is now live on the School Events ledger.";
+            } else {
+                alert("Error: " + data.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        } catch (error) {
+            alert("Connection error.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     }
 
@@ -613,14 +775,27 @@
 
     function generateLetter() {
         const type = document.getElementById('letterType').value;
-        const orgAcr = document.getElementById('reqOrg').value;
-        const fullOrgText = getOrgFullName(orgAcr);
-        
         const title = document.getElementById('evtTitle').value;
         const venue = document.getElementById('evtVenue').value;
         const dateRaw = document.getElementById('evtDate').value;
         const sTime = formatTime(document.getElementById('evtStartTime').value);
         const eTime = formatTime(document.getElementById('evtEndTime').value);
+
+        if (type === 'flag_raising') {
+            document.getElementById('flagModalTitle').innerText = title;
+            document.getElementById('flagModalVenue').innerText = venue;
+            document.getElementById('flagModalDateTime').innerText = `${dateRaw} @ ${sTime} - ${eTime}`;
+            
+            const photoPreview = document.getElementById('flagPhotoPreview').src;
+            document.getElementById('flagModalImg').src = photoPreview || DEFAULT_IMG;
+
+            document.getElementById('flagPreviewModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            return;
+        }
+
+        const orgAcr = document.getElementById('reqOrg').value;
+        const fullOrgText = getOrgFullName(orgAcr);
         const desc = document.getElementById('evtDesc').value;
         
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -914,4 +1089,4 @@
     
     function cancelEdit() { window.location.reload(); }
 </script>
-{% endblock content %}
+{% endblock extra_js %}

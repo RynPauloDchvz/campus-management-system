@@ -261,9 +261,7 @@
 
                 const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
                 if (!end) return false;
-                
-                const evalCloseTime = new Date(end.getTime() + (24 * 60 * 60 * 1000)); 
-                
+                const evalCloseTime = new Date(end.getTime() + (60 * 60 * 1000)); 
                 const isToday = e.date === now.toISOString().split('T')[0];
                 const inWindow = now <= evalCloseTime;
                 
@@ -282,7 +280,7 @@
                 
                 const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
                 const evalOpenTime = end ? new Date(end.getTime() - (60 * 60 * 1000)) : null;
-                const evalCloseTime = end ? new Date(end.getTime() + (24 * 60 * 60 * 1000)) : null;
+                const evalCloseTime = end ? new Date(end.getTime() + (60 * 60 * 1000)) : null;
 
                 const isOpen = end && now >= evalOpenTime && now <= evalCloseTime;
                 const isUpcoming = end && now < evalOpenTime;
@@ -370,7 +368,7 @@
             const now = new Date();
             const end = e.end_time_iso ? new Date(`${e.date}T${e.end_time_iso}`) : null;
             const evalOpenTime = end ? new Date(end.getTime() - (60 * 60 * 1000)) : null;
-            const evalCloseTime = end ? new Date(end.getTime() + (24 * 60 * 60 * 1000)) : null;
+            const evalCloseTime = end ? new Date(end.getTime() + (60 * 60 * 1000)) : null;
 
             const isOpen = end && now >= evalOpenTime && now <= evalCloseTime;
             

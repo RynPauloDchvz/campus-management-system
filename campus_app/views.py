@@ -417,6 +417,7 @@ def student_profile(request):
     # 🟢 STATS FOR STUDENT
     all_events_count = Event.objects.filter(
         Q(org_id=student.organization) | 
+        Q(is_flag_raising=True) |
         Q(event_title__icontains='Flag Raising') | 
         Q(event_title__icontains='General Assembly') | 
         Q(event_title__icontains='Student Week')
@@ -644,6 +645,24 @@ def update_student_password(request):
     return JsonResponse({"status": "error", "message": "Invalid request."})
 
 @user_passes_test(is_student_strictly, login_url='/')
+def update_student_face(request):
+    if request.method == 'POST':
+        try:
+            student = Student.objects.get(user=request.user)
+            face_data = request.POST.get('face_encoding')
+            if not face_data:
+                return JsonResponse({'status': 'error', 'message': 'No facial data received.'})
+            
+            student.face_encoding = face_data
+            student.save()
+            
+            log_audit_event(request, 'UPDATE', target_model='Student', target_id=str(student.id), status='Success', changes={'face_encoding': 'Updated'})
+            return JsonResponse({'status': 'success', 'message': 'Face identity updated successfully!'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+
+@user_passes_test(is_student_strictly, login_url='/')
 def update_student_profile(request):
     if request.method == 'POST':
         try:
@@ -838,6 +857,7 @@ def student_school_events(request):
     # 🟢 RBAC Filtered: Own Org + Global Events
     all_events = Event.objects.filter(
         Q(org_id=student.organization) | 
+        Q(is_flag_raising=True) |
         Q(event_title__icontains='Flag Raising') | 
         Q(event_title__icontains='General Assembly') | 
         Q(event_title__icontains='Student Week')
@@ -876,6 +896,7 @@ def student_school_events(request):
             'venue': e.venue,
             'image': img_url,
             'description': clean_desc(e.description),
+            'is_flag_raising': getattr(e, 'is_flag_raising', False),
             'target_lat': float(e.target_latitude) if e.target_latitude else 13.84615,
             'target_lng': float(e.target_longitude) if e.target_longitude else 121.96955,
             'already_attended': att_record is not None,
@@ -970,6 +991,7 @@ def student_evaluation(request):
     # 🟢 RBAC Filtered: Own Org + Global Events
     all_events = Event.objects.filter(
         Q(org_id=student.organization) | 
+        Q(is_flag_raising=True) |
         Q(event_title__icontains='Flag Raising') | 
         Q(event_title__icontains='General Assembly') | 
         Q(event_title__icontains='Student Week')
@@ -1219,7 +1241,7 @@ def organizer_homepage(request):
             'date': e.event_date.strftime('%Y-%m-%d'),
             'status': e.event_status,
             'venue': e.venue,
-            'description': e.description,
+            'description': clean_desc(e.description),
             'start_time': e.start_time.strftime('%I:%M %p') if e.start_time else "",
             'end_time': e.end_time.strftime('%I:%M %p') if e.end_time else "",
             'image': get_img(e) or '/static/images/PUPLogo.png'
@@ -1262,6 +1284,13 @@ def organizer_school_events(request):
         attendance_qs = Attendance.objects.filter(organizer=org_profile)
         attendance_map = {str(att.event_id): att for att in attendance_qs}
 
+    def clean_desc(desc):
+        if not desc: return 'No description provided.'
+        if "Desc:" in desc:
+            return desc.split("Desc:")[1].strip()
+        clean = desc.replace("[NEW EVENT]", "").replace("[RESCHEDULE]", "").strip()
+        return clean if clean else 'No description provided.'
+
     events_data = []
     for e in all_events:
         img_url = ""
@@ -1288,7 +1317,7 @@ def organizer_school_events(request):
             'end_time_iso': e.end_time.strftime('%H:%M:%S') if e.end_time else '',
             'venue': e.venue,
             'image': img_url,
-            'description': e.description,
+            'description': clean_desc(e.description),
             'attendance_count': att_count,
             'evaluation_count': eval_count,
             'target_lat': float(e.target_latitude) if e.target_latitude else 13.84615,
@@ -1439,6 +1468,7 @@ def submit_event_proposal(request):
             end_time = request.POST.get('end_time')
             venue = request.POST.get('venue')
             description = request.POST.get('description')
+            is_flag_raising = request.POST.get('is_flag_raising') == 'true'
 
             if event_id:
                 # 🟢 RESCHEDULE / EDIT EXISTING EVENT 🟢
@@ -1448,7 +1478,7 @@ def submit_event_proposal(request):
                 event.event_date = event_date
                 event.start_time = start_time
                 event.venue = venue
-                event.description = description
+                event.description = description or f"Updated activity for {org_acronym}."
                 
                 if hasattr(event, 'end_time'): event.end_time = end_time
                 if hasattr(event, 'adviser_name'): event.adviser_name = adviser_name
@@ -1460,6 +1490,15 @@ def submit_event_proposal(request):
                 message = "Event proposal updated and resubmitted to Adviser successfully!"
             else:
                 # 🟢 CREATE NEW EVENT 🟢
+                status = 'Pending Adviser'
+                loc = 'Office of the Adviser'
+                
+                # 🟢 FAST-TRACK BYPASS FOR FLAG RAISING 🟢
+                if is_flag_raising:
+                    status = 'Approved'
+                    loc = 'System Published'
+                    if not requester_name: requester_name = f"{org_acronym} President"
+
                 event = Event(
                     org_id=org_acronym,
                     proposal_by_user_id=request.user.username,
@@ -1468,15 +1507,20 @@ def submit_event_proposal(request):
                     event_date=event_date,
                     start_time=start_time,
                     venue=venue,
-                    description=description,
-                    event_status='Pending Adviser', 
-                    current_location='Office of the Adviser'
+                    description=description or f"Flag Raising ceremony hosted by {org_acronym}.",
+                    event_status=status,
+                    current_location=loc,
+                    is_flag_raising=is_flag_raising
                 )
                 if hasattr(event, 'end_time'): event.end_time = end_time
                 if hasattr(event, 'adviser_name'): event.adviser_name = adviser_name
                 if hasattr(event, 'equipment_needed'): event.equipment_needed = ""
+                
+                if is_flag_raising and request.FILES.get('cover_photo'):
+                    event.event_cover_photo = request.FILES.get('cover_photo')
+
                 event.save()
-                message = "New event proposal submitted to Adviser successfully!"
+                message = "Flag Raising posted directly!" if is_flag_raising else "New event proposal submitted to Adviser successfully!"
 
             return JsonResponse({"status": "success", "message": message})
         except Exception as e:
@@ -1608,6 +1652,35 @@ def approve_individual_student(request):
             messages.error(request, "Student not found.")
     return redirect('organizer_manage_students')
 
+@user_passes_test(is_organizer_strictly, login_url='/')
+def reject_individual_student(request):
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        reject_reason = request.POST.get('reject_reason', 'No reason provided.')
+        try:
+            student = Student.objects.get(id=student_id)
+            
+            # Send Email before deletion (otherwise we lose the data)
+            send_student_email(student, 'reject', {
+                'reason': reject_reason,
+                'organization': student.organization
+            })
+            
+            # Log Rejection before deletion
+            log_audit_event(request, 'REJECTION', status='Success', changes={'student': student.full_name, 'reason': reject_reason})
+            
+            # Delete associated User (which cascades to delete the Student record)
+            user_account = student.user
+            if user_account:
+                user_account.delete()
+            else:
+                student.delete() # Fallback if no user is linked for some reason
+            
+            messages.success(request, f"Successfully rejected {student.full_name} and sent feedback.")
+        except Student.DoesNotExist:
+            messages.error(request, "Student not found.")
+    return redirect('organizer_manage_students')
+
 # ==========================================
 # 🟢 UTILITY: SEND STUDENT EMAIL NOTIFICATION
 # ==========================================
@@ -1630,6 +1703,9 @@ def send_student_email(student, email_type, context_data):
     elif email_type == 'evaluation':
         subject = f"Evaluation Issue: {context_data.get('event_title')}"
         template_name = "email/evaluation_issue.html"
+    elif email_type == 'reject':
+        subject = "Registration Declined - Action Required"
+        template_name = "email/rejection_email.html"
     
     if not template_name:
         return False
@@ -1677,6 +1753,30 @@ def get_student_notifications_api(request):
 
 
 @user_passes_test(is_organizer_strictly, login_url='/')
+def organizer_attendance_events(request):
+    try:
+        org_profile = OrgProfile.objects.get(user=request.user)
+        org_acronym = org_profile.organization.strip()
+    except OrgProfile.DoesNotExist:
+        org_acronym = "UNKNOWN"
+
+    org_events = Event.objects.filter(org_id=org_acronym, event_status='Approved').order_by('-event_date', '-start_time')
+    
+    event_data = []
+    for event in org_events:
+        event_data.append({
+            'id': event.id,
+            'title': event.event_title,
+            'date': event.event_date.strftime("%b %d, %Y") if event.event_date else "TBA",
+            'respondents': Attendance.objects.filter(event=event).count(),
+        })
+
+    return render(request, 'organizer/attendance_events.html', {
+        'org_acronym': org_acronym,
+        'events_data_json': json.dumps(event_data)
+    })
+
+@user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_manage_attendance(request): 
     try:
         org_profile = OrgProfile.objects.get(user=request.user)
@@ -1684,8 +1784,17 @@ def organizer_manage_attendance(request):
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
 
-    # Fetch attendance for events belonging to this org
-    attendance_records = Attendance.objects.filter(event__org_id=org_acronym).select_related('student', 'organizer__user', 'event').order_by('-time_in')
+    event_id = request.GET.get('event_id')
+    if not event_id:
+        return redirect('organizer_attendance_events')
+
+    try:
+        current_event = Event.objects.get(id=event_id, org_id=org_acronym)
+    except Event.DoesNotExist:
+        return redirect('organizer_attendance_events')
+
+    # Fetch attendance for THIS specific event
+    attendance_records = Attendance.objects.filter(event=current_event).select_related('student', 'organizer__user', 'event').order_by('-time_in')
     
     attendance_data = []
     for att in attendance_records:
@@ -1721,15 +1830,18 @@ def organizer_manage_attendance(request):
             'status': status,
             'event': att.event.event_title,
             'venue': att.event.venue,
-            'lat': float(att.latitude) if att.latitude else 13.8392, # Default to campus if missing
+            'lat': float(att.latitude) if att.latitude else 13.8392,
             'lng': float(att.longitude) if att.longitude else 121.9861,
-            'img': img
+            'img': img,
+            'captured_face': att.capture_image.url if att.capture_image else None,
+            'is_global': current_event.is_flag_raising
         })
 
     context = {
         'org_acronym': org_acronym, 
         'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
-        'attendance_data_json': json.dumps(attendance_data)
+        'attendance_data_json': json.dumps(attendance_data),
+        'event': current_event
     }
     return render(request, 'organizer/manage_attendance.html', context)
 
@@ -1821,8 +1933,43 @@ def organizer_profile(request):
     full_name = request.user.first_name if request.user.first_name else request.user.username
     
     recent_events = Event.objects.filter(org_id=org_acronym).order_by('-created_at')[:4]
-    completed_events = Event.objects.filter(org_id=org_acronym, event_status='Approved').order_by('-created_at')
+    completed_events_qs = Event.objects.filter(org_id=org_acronym, event_status='Approved').order_by('-created_at')
+    
+    # Process analytics for completed events
+    completed_events = []
+    for evt in completed_events_qs:
+        logs = AuditLog.objects.filter(action='EVALUATION', target_model='Event', target_id=str(evt.id), status='Success')
+        total_rating = 0
+        total_compound = 0
+        count = 0
+        
+        for log in logs:
+            if log.changes:
+                try:
+                    rating = float(log.changes.get('rating', 0))
+                    compound = float(log.changes.get('sentiment', {}).get('compound', 0))
+                    total_rating += rating
+                    total_compound += compound
+                    count += 1
+                except: pass
+                
+        if count > 0:
+            avg_rating = round(total_rating / count, 1)
+            # Map compound (-1 to +1) to percentage (0% to 100%)
+            sentiment_percent = int(((total_compound / count) + 1) / 2 * 100)
+        else:
+            avg_rating = 0.0
+            sentiment_percent = 0
+            
+        evt.average_rating = avg_rating
+        evt.sentiment_percentage = sentiment_percent
+        completed_events.append(evt)
+        
     pending_students = Student.objects.filter(organization__iexact=org_acronym, is_verified=False).order_by('-created_at')
+    
+    email_notifications = org_profile.email_notifications if org_profile else True
+    read_notifications_str = org_profile.read_notifications if org_profile else ""
+    read_notifications = [r for r in read_notifications_str.split(',') if r]
 
     context = {
         'org_profile': org_profile,
@@ -1832,9 +1979,37 @@ def organizer_profile(request):
         'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
         'recent_events': recent_events,
         'completed_events': completed_events,
-        'pending_students': pending_students 
+        'pending_students': pending_students,
+        'email_notifications': email_notifications,
+        'read_notifications_json': json.dumps(read_notifications)
     }
     return render(request, 'organizer/profile.html', context)
+
+@user_passes_test(is_organizer_strictly, login_url='/')
+def update_org_notification_preference(request):
+    if request.method == 'POST':
+        enabled = request.POST.get('email_notifications') == 'true'
+        try:
+            org_profile = OrgProfile.objects.get(user=request.user)
+            org_profile.email_notifications = enabled
+            org_profile.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+@user_passes_test(is_organizer_strictly, login_url='/')
+def mark_org_notifications_read(request):
+    if request.method == 'POST':
+        notif_ids = request.POST.get('notif_ids', '')
+        try:
+            org_profile = OrgProfile.objects.get(user=request.user)
+            org_profile.read_notifications = notif_ids
+            org_profile.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
 
 def get_all_org_notifications(org_acronym):
     notifications = []
@@ -2004,19 +2179,23 @@ def organizer_attendance_history(request):
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
 
-    # Fetch completed events or events with attendance records
-    events_with_attendance = Event.objects.filter(org_id=org_acronym).order_by('-event_date')
+    # Fetch actual attendance records for this organizer
+    org_attendances = Attendance.objects.filter(organizer=org_profile).select_related('event').order_by('-time_in')
     
     history_data = []
-    for e in events_with_attendance:
+    for att in org_attendances:
+        e = att.event
         history_data.append({
             'id': e.id,
             'title': e.event_title,
             'date': e.event_date.strftime('%b %d, %Y') if e.event_date else 'No Date',
-            'time': e.start_time.strftime('%I:%M %p') if e.start_time else '--',
+            'time': att.time_in.strftime('%I:%M %p') if att.time_in else '--',
             'venue': e.venue,
             'type': 'Attendance',
-            'img': e.thumbnail.url if e.thumbnail else '/static/images/PUPLogo.png'
+            'img': e.thumbnail.url if e.thumbnail else '/static/images/PUPLogo.png',
+            'capture_img': att.capture_image.url if att.capture_image else '/static/images/PUPLogo.png',
+            'matched': att.face_matched,
+            'location': att.location_zone or "Verified inside PUP Campus Perimeter."
         })
 
     context = {
@@ -2226,6 +2405,17 @@ def upload_signed_permit(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid Request'})
 
 
+def gcash_anonymize(name):
+    if not name: return "Anonymous"
+    words = name.strip().split()
+    anon_words = []
+    for w in words:
+        if len(w) <= 2:
+            anon_words.append(w[0] + "*" * (len(w)-1))
+        else:
+            anon_words.append(w[0] + "*" * (len(w)-2) + w[-1])
+    return " ".join(anon_words)
+
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_feedback_detail(request):
     event_id = request.GET.get('event_id')
@@ -2256,24 +2446,37 @@ def organizer_feedback_detail(request):
                 avg_rating += r
                 if r >= 4: pos_count += 1
                 
-                # Criteria logic (mapping detailed_scores if present)
-                details = changes.get('detailed_scores', {})
-                # Template expects: Relevance, Knowledge, Time, Venue, Overall
-                criteria_scores[0] += float(details.get('q1', r))
-                criteria_scores[1] += float(details.get('q2', r))
-                criteria_scores[2] += float(details.get('q3', r))
-                criteria_scores[3] += float(details.get('q4', r))
-                criteria_scores[4] += float(details.get('q5', r))
+                # Criteria logic (details is a list of dicts from frontend)
+                details = changes.get('detailed_scores', [])
+                if isinstance(details, list) and len(details) >= 5:
+                    criteria_scores[0] += float(details[0].get('average', r))
+                    criteria_scores[1] += float(details[1].get('average', r))
+                    criteria_scores[2] += float(details[2].get('average', r))
+                    criteria_scores[3] += float(details[3].get('average', r))
+                    criteria_scores[4] += float(details[4].get('average', r))
+                else:
+                    criteria_scores[0] += r
+                    criteria_scores[1] += r
+                    criteria_scores[2] += r
+                    criteria_scores[3] += r
+                    criteria_scores[4] += r
                 
-                # Qualitative Comments
-                sentiment = 'positive' if r >= 4 else ('negative' if r <= 2 else 'neutral')
+                # Qualitative Comments & VADER Sentiment
+                if 'sentiment' in changes and isinstance(changes['sentiment'], dict):
+                    sentiment = changes['sentiment'].get('label', 'neutral')
+                else:
+                    feedback_text = changes.get('feedback', '')
+                    sentiment = get_sentiment(feedback_text).get('label', 'neutral')
                 
                 # Get student year level
                 student = Student.objects.filter(user=log.actor).first()
                 y_level = student.year_level if student else 'Unknown'
                 if y_level in year_dist: year_dist[y_level] += 1
                 
+                full_name = student.full_name if student and student.full_name else log.actor.get_full_name()
+                
                 comments.append({
+                    'name': gcash_anonymize(full_name),
                     'text': changes.get('feedback', 'No feedback provided.'),
                     'sentiment': sentiment,
                     'year': y_level
@@ -2291,7 +2494,7 @@ def organizer_feedback_detail(request):
         att_count = Attendance.objects.filter(event=event).count()
 
         # Find highest rated area
-        labels = ['Relevance', 'Knowledge', 'Time', 'Venue', 'Overall']
+        labels = ['Organization', 'Objectives', 'Materials', 'Management Team', 'Venue/Logistics']
         max_idx = criteria_scores.index(max(criteria_scores)) if total_evals > 0 else 0
         highest_area = labels[max_idx]
 
@@ -2392,6 +2595,10 @@ def record_attendance(request):
             event = Event.objects.filter(id=event_id, event_status='Approved').first()
             if not event:
                 return JsonResponse({'status': 'error', 'message': 'Event not found or not yet approved.'})
+
+            # 🟢 GLOBAL ATTENDANCE FOR FLAG RAISING 🟢
+            if getattr(event, 'is_flag_raising', False):
+                is_valid_location = True
 
             # Check for existing attendance
             # 🟢 HUMAN-READABLE LOCATION (Reverse Geocoding Logic) 🟢
@@ -2531,10 +2738,6 @@ def register_organizer_face(request):
         try:
             org_profile = OrgProfile.objects.get(user=request.user)
             
-            # 🟢 GUARD: Prevent re-registration if face data already exists 🟢
-            if org_profile.face_encoding:
-                return JsonResponse({'status': 'error', 'message': 'Account already has a registered face identity.'})
-
             face_data = request.POST.get('face_encoding')
             if not face_data:
                 return JsonResponse({'status': 'error', 'message': 'No facial data received.'})
@@ -2543,7 +2746,7 @@ def register_organizer_face(request):
             org_profile.save()
             
             log_audit_event(request, 'UPDATE', target_model='OrgProfile', target_id=str(org_profile.id), status='Success', changes={'face_encoding': 'Updated'})
-            return JsonResponse({'status': 'success', 'message': 'Face identity registered successfully!'})
+            return JsonResponse({'status': 'success', 'message': 'Face identity updated successfully!'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})

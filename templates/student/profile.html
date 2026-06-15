@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
+<script src="https://justadudewhohacks.github.io/face-api.js/face-api.min.js"></script>
 <style>
     .editable-field-active {
         background-color: rgba(0, 0, 0, 0.04) !important;
@@ -22,9 +23,29 @@
         background-color: #111111 !important;
     }
     
-    /* HORIZONTAL SCROLLBAR HIDING */
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* HORIZONTAL SCROLLBAR (Hidden on mobile, slim on desktop) */
+    @media (max-width: 768px) {
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    }
+    @media (min-width: 769px) {
+        .hide-scrollbar::-webkit-scrollbar { height: 8px; }
+        .hide-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .hide-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .dark .hide-scrollbar::-webkit-scrollbar-thumb { background: #374151; }
+        .hide-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        .dark .hide-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+    }
+
+    /* FACE SCAN ANIMATION */
+    @keyframes scan {
+        0% { top: 10%; opacity: 0; }
+        50% { opacity: 1; }
+        100% { top: 90%; opacity: 0; }
+    }
+    .animate-scan {
+        animation: scan 2s linear infinite;
+    }
 </style>
 {% endblock extra_head %}
 
@@ -362,6 +383,9 @@
         </h3>
         
         <div class="text-left mb-6">
+            <button onclick="openFaceUpdateModal()" class="w-full mb-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-bold hover:border-[#800000] dark:hover:border-[#D4AF37] transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
+                <i class="ph-bold ph-user-focus"></i> Update Face Identity
+            </button>
             <button onclick="openPasswordModal()" class="w-full mb-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-bold hover:border-[#800000] dark:hover:border-[#D4AF37] transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
                 <i class="ph-bold ph-lock-key"></i> Change Password
             </button>
@@ -418,10 +442,210 @@
         </div>
     </div>
 </div>
+
+<!-- Face Update Modal -->
+<div id="faceUpdateModal" class="hidden fixed inset-0 z-[2020] flex items-center justify-center p-0 sm:p-4">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-md" onclick="closeFaceUpdateModal()"></div>
+    <div class="relative bg-white dark:bg-[#111] rounded-none sm:rounded-[3rem] w-full max-w-lg p-6 sm:p-10 border-0 sm:border border-gray-100 dark:border-gray-800 shadow-2xl flex flex-col max-h-screen sm:max-h-[90vh] z-10 overflow-hidden">
+        
+        <button onclick="closeFaceUpdateModal()" class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:hover:bg-white/20 transition-colors z-50">
+            <i class="ph-bold ph-x text-xl"></i>
+        </button>
+
+        <div class="text-center mb-8 shrink-0">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 border border-pup-maroon/20 dark:border-pup-gold/20 mb-3">
+                <span class="w-1.5 h-1.5 rounded-full bg-pup-maroon dark:bg-pup-gold animate-pulse"></span>
+                <span class="text-[9px] font-black text-pup-maroon dark:text-pup-gold uppercase tracking-[0.2em]">Biometric Update</span>
+            </div>
+            <h2 class="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-2">Update Identity</h2>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium max-w-[80%] mx-auto leading-relaxed">
+                Scan your face to update your biometric identity for faster and more accurate recognition.
+            </p>
+        </div>
+
+        <!-- Scanner Container -->
+        <div class="relative flex-grow flex flex-col items-center justify-center overflow-hidden rounded-3xl bg-black shadow-inner border border-white/5 group">
+            <video id="faceUpdateVideo" autoplay muted playsinline class="w-full h-full object-cover grayscale-[0.3] brightness-110 contrast-125"></video>
+            
+            <!-- Scanning Overlay -->
+            <div class="absolute inset-0 border-[2px] border-pup-maroon/30 dark:border-pup-gold/30 rounded-3xl pointer-events-none">
+                <div class="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-pup-maroon dark:border-pup-gold rounded-tl-2xl"></div>
+                <div class="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-pup-maroon dark:border-pup-gold rounded-tr-2xl"></div>
+                <div class="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-pup-maroon dark:border-pup-gold rounded-bl-2xl"></div>
+                <div class="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-pup-maroon dark:border-pup-gold rounded-tl-2xl rotate-180"></div>
+            </div>
+
+            <!-- Scanning Line Animation -->
+            <div class="absolute left-4 right-4 h-0.5 bg-pup-maroon/50 dark:bg-pup-gold/50 shadow-[0_0_15px_rgba(128,0,0,0.5)] dark:shadow-[0_0_15px_rgba(212,175,55,0.5)] animate-scan z-10"></div>
+
+            <div id="faceUpdateStatus" class="absolute top-4 left-4 right-4 bg-black/80 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center border border-white/10 shadow-2xl z-20">
+                Initializing AI Core...
+            </div>
+            
+            <!-- Quality Indicator -->
+            <div id="updateQualityMeter" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-xl px-4 py-2 rounded-2xl flex items-center gap-4 border border-white/10 shadow-2xl z-20 transition-all opacity-0">
+                <div class="flex flex-col gap-1">
+                    <span class="text-[7px] font-black text-gray-400 uppercase tracking-widest">Sensor Quality</span>
+                    <div class="flex gap-1 items-end h-2">
+                        <div id="bar1" class="w-1 bg-white/20 rounded-full transition-all"></div>
+                        <div id="bar2" class="w-1 bg-white/20 rounded-full transition-all"></div>
+                        <div id="bar3" class="w-1 bg-white/20 rounded-full transition-all"></div>
+                    </div>
+                </div>
+                <div class="h-6 w-px bg-white/10"></div>
+                <div class="flex flex-col">
+                    <span id="updateQualityLabel" class="text-[8px] font-black text-white uppercase tracking-widest leading-none">Scanning...</span>
+                    <span class="text-[6px] font-bold text-gray-500 uppercase tracking-tighter mt-1">Optimization Active</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 flex flex-col gap-3 shrink-0">
+            <button id="btnConfirmUpdateFace" disabled class="w-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg disabled:opacity-50 disabled:grayscale transition-all active:scale-95 flex items-center justify-center gap-2">
+                <i class="ph-bold ph-fingerprint"></i> Confirm New Identity
+            </button>
+            <p class="text-center text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                Position your face clearly within the frame
+            </p>
+        </div>
+    </div>
+</div>
 {% endblock content %}
 
 {% block extra_js %}
 <script>
+    // --- FACE UPDATE SCANNER LOGIC ---
+    let updateStream = null;
+    let updateInterval = null;
+    let modelsLoaded = false;
+    let capturedDescriptor = null;
+
+    window.openFaceUpdateModal = function() {
+        document.getElementById('faceUpdateModal').classList.remove('hidden');
+        document.getElementById('settingsModal').classList.add('hidden');
+        startFaceUpdateScanner();
+    }
+
+    window.closeFaceUpdateModal = function() {
+        if (updateStream) { updateStream.getTracks().forEach(t => t.stop()); updateStream = null; }
+        if (updateInterval) clearInterval(updateInterval);
+        document.getElementById('faceUpdateModal').classList.add('hidden');
+        document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    async function loadUpdateModels() {
+        if (modelsLoaded) return;
+        const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        try {
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(URL)
+            ]);
+            modelsLoaded = true;
+            console.log("AI Core Online");
+        } catch(e) { console.error("AI Model Load Fail", e); }
+    }
+
+    async function startFaceUpdateScanner() {
+        const status = document.getElementById('faceUpdateStatus');
+        const video = document.getElementById('faceUpdateVideo');
+        const btn = document.getElementById('btnConfirmUpdateFace');
+        const qualityMeter = document.getElementById('updateQualityMeter');
+
+        status.innerText = "INITIALIZING AI CORE...";
+        if (!modelsLoaded) await loadUpdateModels();
+
+        try {
+            updateStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } } 
+            });
+            video.srcObject = updateStream;
+            video.play();
+            
+            status.innerText = "SEARCHING FOR FACE...";
+            qualityMeter.classList.remove('opacity-0');
+
+            updateInterval = setInterval(async () => {
+                if (!updateStream) return;
+                
+                const detect = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                
+                if (detect) {
+                    capturedDescriptor = Array.from(detect.descriptor);
+                    btn.disabled = false;
+                    status.innerText = "IDENTITY MAPPED ✅";
+                    status.className = "absolute top-4 left-4 right-4 bg-green-600/90 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center shadow-2xl z-20";
+                    updateQuality(true);
+                } else {
+                    btn.disabled = true;
+                    status.innerText = "POSITION FACE IN FRAME";
+                    status.className = "absolute top-4 left-4 right-4 bg-black/80 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center border border-white/10 shadow-2xl z-20";
+                    updateQuality(false);
+                }
+            }, 500);
+
+            btn.onclick = async () => {
+                if (!capturedDescriptor) return;
+                btn.disabled = true;
+                btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> UPDATING...`;
+
+                const fd = new FormData();
+                fd.append('face_encoding', JSON.stringify(capturedDescriptor));
+                
+                try {
+                    const resp = await fetch("{% url 'update_student_face' %}", {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': getCsrfToken() },
+                        body: fd
+                    });
+                    const data = await resp.json();
+                    if (data.status === 'success') {
+                        alert("Biometric identity updated successfully!");
+                        closeFaceUpdateModal();
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="ph-bold ph-fingerprint"></i> Confirm New Identity`;
+                    }
+                } catch(e) {
+                    alert("Network error.");
+                    btn.disabled = false;
+                }
+            };
+
+        } catch (err) {
+            alert("Camera Error: " + err.message);
+            closeFaceUpdateModal();
+        }
+    }
+
+    function updateQuality(isGood) {
+        const label = document.getElementById('updateQualityLabel');
+        const b1 = document.getElementById('bar1');
+        const b2 = document.getElementById('bar2');
+        const b3 = document.getElementById('bar3');
+
+        if (isGood) {
+            label.innerText = "OPTIMIZED";
+            label.className = "text-[8px] font-black text-green-500 uppercase tracking-widest leading-none";
+            [b1, b2, b3].forEach(b => {
+                b.classList.remove('bg-white/20');
+                b.classList.add('bg-green-500');
+            });
+            b1.style.height = '40%'; b2.style.height = '70%'; b3.style.height = '100%';
+        } else {
+            label.innerText = "SCANNING...";
+            label.className = "text-[8px] font-black text-white uppercase tracking-widest leading-none";
+            [b1, b2, b3].forEach(b => {
+                b.classList.remove('bg-green-500');
+                b.classList.add('bg-white/20');
+                b.style.height = '20%';
+            });
+        }
+    }
+
     window.VUE_APP_DATA = {
         allNotifs: [
             {% for notif in notifications %}
@@ -586,15 +810,21 @@
 
     // --- RECENT ACTIVITY MODAL LOGIC ---
     function analyzeSentiment(text, vaderResult = null) {
-        // 🟢 Use server-side VADER result if provided
-        if (vaderResult && vaderResult.label) {
-            const label = vaderResult.label.charAt(0).toUpperCase() + vaderResult.label.slice(1);
+        let labelStr = '';
+        if (vaderResult && typeof vaderResult === 'object' && vaderResult.label) {
+            labelStr = vaderResult.label;
+        } else if (vaderResult && typeof vaderResult === 'string') {
+            labelStr = vaderResult;
+        }
+
+        if (labelStr) {
+            const label = labelStr.charAt(0).toUpperCase() + labelStr.slice(1);
             if (label === 'Positive') return { label: 'Positive', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: 'ph-smiley' };
             if (label === 'Negative') return { label: 'Negative', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: 'ph-smiley-sad' };
             return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
         }
 
-        // Fallback for older records
+        // Fallback for older records without AI sentiment
         if (!text || text.toLowerCase() === 'no feedback provided.') return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
         const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'helpful', 'informative', 'learned', 'well', 'organized', 'maganda', 'mahusay', 'sulit', 'maraming natutunan', 'salamat', 'thank', 'nice', 'ayos', 'the best'];
         const negativeWords = ['bad', 'poor', 'boring', 'waste', 'disorganized', 'late', 'rude', 'confusing', 'pangit', 'sayang', 'mabagal', 'maingay', 'gulo', 'hindi maganda', 'failed'];
@@ -657,8 +887,8 @@
             document.getElementById('viewEvaluationProof').classList.remove('hidden');
             
             const rawScore = parseInt(details.total_raw_score) || 0;
-            const avgRating = (rawScore / 25).toFixed(1);
-            const percent = Math.round((rawScore / 125) * 100);
+            const avgRating = (rawScore > 0) ? (rawScore / 25).toFixed(1) : parseFloat(details.rating).toFixed(1);
+            const percent = (rawScore > 0) ? Math.round((rawScore / 125) * 100) : Math.round((parseFloat(details.rating) / 5) * 100);
             
             const starsContainer = document.getElementById('modalEvalStars');
             let starsHtml = '';

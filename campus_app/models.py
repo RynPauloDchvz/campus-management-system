@@ -9,6 +9,9 @@ class OrgProfile(models.Model):
     profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
     cover_photo = models.ImageField(upload_to='covers/', null=True, blank=True)
     face_encoding = models.TextField(null=True, blank=True)
+    
+    email_notifications = models.BooleanField(default=True)
+    read_notifications = models.TextField(default='', blank=True) # Comma-separated IDs
 
     def __str__(self):
         return f"{self.user.username} - {self.organization}"
@@ -44,8 +47,9 @@ class Event(models.Model):
     
     # Event Details
     event_title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     venue = models.CharField(max_length=200)
+    is_flag_raising = models.BooleanField(default=False)
     
     event_date = models.DateField()
     start_time = models.TimeField()

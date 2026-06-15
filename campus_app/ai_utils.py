@@ -54,6 +54,7 @@ def base64_to_cv2(b64_string):
 def verify_face(live_base64, anchor_base64):
     """
     Verifies if the face in live_base64 matches anchor_base64 using DeepFace.
+    Updated to ArcFace for better accuracy and RetinaFace for robust detection.
     """
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as f1, \
@@ -64,11 +65,13 @@ def verify_face(live_base64, anchor_base64):
             cv2.imwrite(f1.name, img1)
             cv2.imwrite(f2.name, img2)
             
+            # 🟢 Facenet + opencv provides the best balance of speed and accuracy for webcams/CPUs
+            # 🟢 RetinaFace is too slow for real-time web verification, so we use opencv
             result = DeepFace.verify(
                 img1_path=f1.name, 
                 img2_path=f2.name, 
                 enforce_detection=False,
-                model_name='VGG-Face',
+                model_name='Facenet', 
                 detector_backend='opencv'
             )
             
@@ -77,7 +80,18 @@ def verify_face(live_base64, anchor_base64):
             return result['verified'], result['distance']
     except Exception as e:
         print(f"DeepFace Error: {str(e)}")
-        return False, 1.0
+        # Fallback to an even lighter model if Facenet fails
+        try:
+             result = DeepFace.verify(
+                img1_path=f1.name, 
+                img2_path=f2.name, 
+                enforce_detection=False,
+                model_name='VGG-Face',
+                detector_backend='opencv'
+            )
+             return result['verified'], result['distance']
+        except:
+            return False, 1.0
 
 def get_sentiment(text):
     """

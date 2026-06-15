@@ -93,7 +93,7 @@
                 create_events: "{% url 'organizer_create_events' %}",
                 messages: "{% url 'organizer_message_history' %}",
                 manage_students: "{% url 'organizer_manage_students' %}",
-                manage_attendance: "{% url 'organizer_manage_attendance' %}",
+                manage_attendance: "{% url 'organizer_attendance_events' %}",
                 analytics: "{% url 'organizer_analytics' %}",
                 profile: "{% url 'organizer_profile' %}"
             }
@@ -118,7 +118,7 @@
                 <a href="{% url 'organizer_school_events' %}" class="font-bold uppercase text-sm transition-colors {% if request.resolver_match.url_name == 'organizer_school_events' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">School Events</a>
                 <a href="{% url 'organizer_create_events' %}" class="font-bold uppercase text-sm transition-colors {% if request.resolver_match.url_name == 'organizer_create_events' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Create Events</a>
                 <a href="{% url 'organizer_manage_students' %}" class="font-bold uppercase text-sm transition-colors {% if request.resolver_match.url_name == 'organizer_manage_students' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Manage Students</a>
-                <a href="{% url 'organizer_manage_attendance' %}" class="font-bold uppercase text-sm transition-colors {% if request.resolver_match.url_name == 'organizer_manage_attendance' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Manage Attendance</a>
+                <a href="{% url 'organizer_attendance_events' %}" class="font-bold uppercase text-sm transition-colors {% if request.resolver_match.url_name == 'organizer_attendance_events' or request.resolver_match.url_name == 'organizer_manage_attendance' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Manage Attendance</a>
                 <a href="{% url 'organizer_analytics' %}" class="font-bold uppercase text-sm transition-colors {% if request.resolver_match.url_name == 'organizer_analytics' %}text-pup-maroon dark:text-pup-gold{% else %}text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold{% endif %}">Analytics</a>
             </div>
 
@@ -135,7 +135,7 @@
 
                 <!-- ?? Profile Icon ?? -->
                 <div class="relative">
-                    <button @click="handleHeaderProfileClick" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-all overflow-hidden flex items-center justify-center {% if request.resolver_match.url_name == 'organizer_profile' %}bg-pup-maroon/10 dark:bg-pup-gold/10 border-pup-maroon dark:border-pup-gold{% else %}bg-gray-100 dark:bg-gray-800 border-transparent hover:border-pup-maroon dark:hover:border-pup-gold{% endif %}" title="My Profile">
+                    <button {% if request.resolver_match.url_name != 'organizer_profile' %}@click="handleHeaderProfileClick"{% endif %} class="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 transition-all overflow-hidden flex items-center justify-center {% if request.resolver_match.url_name == 'organizer_profile' %}bg-pup-maroon/10 dark:bg-pup-gold/10 border-pup-maroon dark:border-pup-gold cursor-default{% else %}bg-gray-100 dark:bg-gray-800 border-transparent hover:border-pup-maroon dark:hover:border-pup-gold cursor-pointer{% endif %}" title="My Profile">
                         {% if request.user.orgprofile.profile_picture %}
                             <img src="{{ request.user.orgprofile.profile_picture.url }}" class="w-full h-full object-cover">
                         {% else %}
@@ -336,7 +336,7 @@
                         <h3 class="text-pup-gold font-bold text-[11px] md:text-base mb-3 md:mb-4 tracking-wide">Management</h3>
                         <ul class="flex flex-col gap-2 md:gap-3 text-[10px] md:text-sm text-gray-400">
                             <li><a href="{% url 'organizer_manage_students' %}" class="hover:text-pup-gold transition-colors">Manage Students</a></li>
-                            <li><a href="{% url 'organizer_manage_attendance' %}" class="hover:text-pup-gold transition-colors">Manage Attendance</a></li>
+                            <li><a href="{% url 'organizer_attendance_events' %}" class="hover:text-pup-gold transition-colors">Manage Attendance</a></li>
                             <li><a href="{% url 'organizer_document_tracking' %}" class="hover:text-pup-gold transition-colors">Document Tracking</a></li>
                         </ul>
                     </div>

@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
     .countdown-timer { font-variant-numeric: tabular-nums; }
@@ -237,7 +237,7 @@
 {% endblock content %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
     // 🟢 Robust Data Extraction from head script tags 🟢
     const EVENTS_DATA = JSON.parse(document.getElementById('events-data').textContent || '[]');
@@ -417,24 +417,40 @@
             modelsLoaded = true;
         }
 
+        // 🟢 PRE-LOAD MODELS & INITIALIZE IDENTITY ON LOAD 🟢
+        document.addEventListener('DOMContentLoaded', () => {
+            loadModels();
+            if (typeof STUDENT_DATA !== 'undefined' && STUDENT_DATA.face_encoding) initFaceMatcher();
+        });
+
         async function initFaceMatcher() {
             if (faceMatcher || !STUDENT_DATA.face_encoding) return;
             try {
                 const desc = new Float32Array(JSON.parse(STUDENT_DATA.face_encoding));
                 faceMatcher = new faceapi.FaceMatcher([new faceapi.LabeledFaceDescriptors('student', [desc])], 0.6);
+                console.log("Biometric Identity Initialized");
             } catch(e) { console.error("Face Init Error", e); }
         }
 
         async function startScanner() {
             switchView('viewScanner');
             const status = document.getElementById('scanStatus');
-            status.innerText = "INITIALIZING AI CORE...";
+            status.innerText = "INITIALIZING SENSORS...";
             
-            await loadModels(); await initFaceMatcher();
+            // Ensure ready before proceeding
+            if (!modelsLoaded) await loadModels();
+            if (!faceMatcher) await initFaceMatcher();
             status.innerText = "AUTHENTICATING SENSORS...";
 
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 640 } });
+                // 🟢 OPTIMIZED CAMERA CONSTRAINTS 🟢
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user', 
+                        width: { ideal: 640 }, 
+                        height: { ideal: 640 }
+                    } 
+                });
                 const video = document.getElementById('videoFeed');
                 video.srcObject = stream;
                 video.onloadedmetadata = () => { video.play(); startQualityValidation(); startFaceDetection(video); };
@@ -450,16 +466,22 @@
                 map.setView([userLat, userLng], 17);
                 L.marker([userLat, userLng]).addTo(map);
                 
-                // 🟢 GEOFENCING: 300m radius from PUP Unisan (13.84615, 121.96955) 🟢
-                const target = L.latLng(13.84615, 121.96955);
-                const dist = L.latLng(userLat, userLng).distanceTo(target);
-                
-                if (dist <= 300) {
+                // 🟢 GLOBAL ATTENDANCE FOR FLAG RAISING 🟢
+                if (currentEvent && currentEvent.is_flag_raising) {
                     isLocationVerified = true;
-                    document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-check-circle text-green-500"></i> GEOFENCE VERIFIED (PUP UNISAN)`;
+                    document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-check-circle text-green-500"></i> GLOBAL ATTENDANCE VERIFIED`;
                 } else {
-                    isLocationVerified = false;
-                    document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-warning text-amber-500"></i> OUTSIDE CAMPUS (${Math.round(dist)}m AWAY)`;
+                    // Standard GEOFENCING: 300m radius from PUP Unisan (13.84615, 121.96955)
+                    const target = L.latLng(13.84615, 121.96955);
+                    const dist = L.latLng(userLat, userLng).distanceTo(target);
+                    
+                    if (dist <= 300) {
+                        isLocationVerified = true;
+                        document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-check-circle text-green-500"></i> GEOFENCE VERIFIED (PUP UNISAN)`;
+                    } else {
+                        isLocationVerified = false;
+                        document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-warning text-amber-500"></i> OUTSIDE CAMPUS (${Math.round(dist)}m AWAY)`;
+                    }
                 }
                 checkAllVerified();
             }, null, { enableHighAccuracy: true });

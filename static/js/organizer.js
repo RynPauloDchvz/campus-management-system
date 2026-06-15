@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 managedEvents: window.VUE_APP_DATA?.managedEvents || [],
                 calendarEvents: window.VUE_APP_DATA?.calendarEvents || [],
                 filteredCalendarEvents: [],
+                calendarFilterDate: window.VUE_APP_DATA?.calendarFilterDate || null,
+                calendarCurrentMonth: window.VUE_APP_DATA?.calendarCurrentMonth || new Date(),
                 actionRequired: window.VUE_APP_DATA?.actionRequired || null
             }
         },
@@ -61,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'organizer_create_events': 2,
                 'organizer_manage_students': 3,
                 'organizer_manage_attendance': 4,
+                'organizer_attendance_events': 4,
                 'organizer_analytics': 5
             };
             this.activeIndex = urlToIndex[this.currentUrl] !== undefined ? urlToIndex[this.currentUrl] : -1;
@@ -275,12 +278,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
             getMonth(dateStr) {
-                const date = new Date(dateStr);
+                const date = new Date(dateStr.split('-').join('/'));
                 return date.toLocaleString('en-US', { month: 'short' });
             },
             getDay(dateStr) {
-                const date = new Date(dateStr);
+                const date = new Date(dateStr.split('-').join('/'));
                 return date.getDate();
+            },
+            formatDateShort(dateStr) {
+                return new Date(dateStr.split('-').join('/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            },
+            resetCalendarFilter() {
+                this.calendarFilterDate = null;
+                document.querySelectorAll('.fc-daygrid-day').forEach(el => el.classList.remove('selected-day'));
+                this.updateFilteredEvents();
+            },
+            updateFilteredEvents(currentDate) {
+                if (currentDate) this.calendarCurrentMonth = currentDate;
+                const activeMonth = this.calendarCurrentMonth;
+                const year = activeMonth.getFullYear();
+                const month = activeMonth.getMonth();
+                const allEvts = this.calendarEvents || [];
+                
+                this.filteredCalendarEvents = allEvts.filter(e => {
+                    const d = new Date(e.date.split('-').join('/'));
+                    const matchesMonth = d.getFullYear() === year && d.getMonth() === month;
+                    if (this.calendarFilterDate) return e.date === this.calendarFilterDate;
+                    return matchesMonth;
+                }).sort((a, b) => new Date(a.date.split('-').join('/')) - new Date(b.date.split('-').join('/')));
             },
             closeModal() {
                 this.isEventModalOpen = false;
