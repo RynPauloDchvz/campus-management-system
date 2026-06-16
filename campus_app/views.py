@@ -2601,7 +2601,7 @@ def event_approvals_view(request):
             'remarks': e.remarks or ''
         })
         
-    return render(request, 'admin/event_approvals.html', {
+    return render(request, 'admin_dashboard/event_approvals.html', {
         'events_json': json.dumps(pending_data),
         'history_json': json.dumps(history_data)
     })
@@ -3025,7 +3025,7 @@ def admin_notifications_view(request):
     context = {
         'notifications_json': json.dumps(notifications)
     }
-    return render(request, 'admin/notifications.html', context)
+    return render(request, 'admin_dashboard/notifications.html', context)
 
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
 def manage_accounts_view(request): 
@@ -3040,7 +3040,7 @@ def manage_accounts_view(request):
             'status': status, 'avatar': f"https://ui-avatars.com/api/?name={s.full_name}&background=800000&color=fff"
         })
         
-    return render(request, 'admin/manage_accounts.html', {'students_json': json.dumps(student_data)})
+    return render(request, 'admin_dashboard/manage_accounts.html', {'students_json': json.dumps(student_data)})
 
 
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
@@ -3055,7 +3055,7 @@ def manage_organizers_view(request):
             'org': profile.organization, 'status': 'Active',
             'avatar': f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
         })
-    return render(request, 'admin/student_org.html', {'organizers_json': json.dumps(org_data)})
+    return render(request, 'admin_dashboard/student_org.html', {'organizers_json': json.dumps(org_data)})
 
 
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
@@ -3078,7 +3078,7 @@ def account_history_view(request):
             'type': 'Student Org', 'status': 'Deactivated',
             'avatar': f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
         })
-    return render(request, 'admin/account_history.html', {'history_json': json.dumps(history_data)})
+    return render(request, 'admin_dashboard/account_history.html', {'history_json': json.dumps(history_data)})
 
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
 def student_api_action(request):
@@ -3189,7 +3189,7 @@ def org_monitor_view(request):
     context = {
         'history_data_json': json.dumps(history_data),
     }
-    return render(request, 'admin/org_monitor.html', context)
+    return render(request, 'admin_dashboard/org_monitor.html', context)
 
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
 def admin_feedback_detail(request):
@@ -3288,7 +3288,7 @@ def admin_feedback_detail(request):
             'year_dist': json.dumps(list(year_dist.values())),
             'comments_json': json.dumps(comments)
         }
-        return render(request, 'admin/feedback.html', context)
+        return render(request, 'admin_dashboard/feedback.html', context)
     except Exception as e:
         return redirect('org_monitor')
 
@@ -3599,7 +3599,7 @@ def admin_dashboard(request):
         'event_freq_labels': json.dumps(event_freq_labels),
         'event_freq_values': json.dumps(event_freq_values),
     }
-    return render(request, 'admin/index.html', context)
+    return render(request, 'admin_dashboard/index.html', context)
 
 # ==========================================
 # 🟢 ADMIN AUDIT LOGS (WITH LOCAL TIME FIX) 🟢
@@ -3634,7 +3634,7 @@ def admin_audit_logs(request):
             'changes': changes
         })
         
-    return render(request, 'admin/audit_logs.html', {
+    return render(request, 'admin_dashboard/audit_logs.html', {
         'logs_json': json.dumps(logs_data)
     })
 
@@ -3698,7 +3698,7 @@ def staff_login_view(request):
             return JsonResponse({"status": "error", "message": f"Invalid credentials. Attempt {total_attempts % 5} of 5."})
             
     is_locked, remaining = check_lockout(request, type='staff')
-    return render(request, 'admin/login.html', {'is_locked': is_locked, 'remaining': remaining})
+    return render(request, 'admin_dashboard/login.html', {'is_locked': is_locked, 'remaining': remaining})
 
 def debug_database_view(request):
     students = Student.objects.all()
