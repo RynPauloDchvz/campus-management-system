@@ -3,7 +3,9 @@
 
 {% block extra_head %}
 <style>
-    .print-hide { display: none !important; }
+    @media print {
+        .print-hide { display: none !important; }
+    }
     /* Custom Select Arrow Hiding fallback */
     select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
 
@@ -320,7 +322,6 @@
         </div>
     </div>
 </div>
-</div>
 
 <!-- FLAG RAISING PREVIEW MODAL -->
 <div id="flagPreviewModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-6 font-sans">
@@ -479,6 +480,7 @@
         padding-top: 2rem;
         padding-bottom: 2rem;
         transform: translateY(0);
+        overflow-y: auto;
     }
     @media (min-width: 640px) {
         .document-preview-container.active {

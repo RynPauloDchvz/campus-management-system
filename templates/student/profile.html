@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_head %}
-<script src="https://justadudewhohacks.github.io/face-api.js/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
     .editable-field-active {
         background-color: rgba(0, 0, 0, 0.04) !important;
@@ -324,7 +324,7 @@
                     
                     <div class="flex flex-col gap-3 w-full sm:w-[60%]">
                         <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
-                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Timestamp Log</div>
+                            <div id="proofTimeLabel" class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Timestamp Log</div>
                             <div id="proofTime" class="font-bold text-gray-900 dark:text-white text-base">--</div>
                         </div>
                         <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex-grow">
@@ -464,7 +464,7 @@
         </div>
 
         <!-- Scanner Container -->
-        <div class="relative flex-grow flex flex-col items-center justify-center overflow-hidden rounded-3xl bg-black shadow-inner border border-white/5 group">
+        <div class="relative w-full max-w-sm mx-auto aspect-[3/4] flex flex-col items-center justify-center overflow-hidden rounded-3xl bg-black shadow-inner border border-white/5 group my-4">
             <video id="faceUpdateVideo" autoplay muted playsinline class="w-full h-full object-cover grayscale-[0.3] brightness-110 contrast-125"></video>
             
             <!-- Scanning Overlay -->
@@ -534,17 +534,8 @@
     }
 
     async function loadUpdateModels() {
-        if (modelsLoaded) return;
-        const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-        try {
-            await Promise.all([
-                faceapi.nets.tinyFaceDetector.loadFromUri(URL),
-                faceapi.nets.faceLandmark68Net.loadFromUri(URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(URL)
-            ]);
-            modelsLoaded = true;
-            console.log("AI Core Online");
-        } catch(e) { console.error("AI Model Load Fail", e); }
+        // Models are no longer loaded on frontend, backend handles verification
+        modelsLoaded = true;
     }
 
     async function startFaceUpdateScanner() {
@@ -566,32 +557,32 @@
             status.innerText = "SEARCHING FOR FACE...";
             qualityMeter.classList.remove('opacity-0');
 
-            updateInterval = setInterval(async () => {
+            const detectUpdateLoop = async () => {
                 if (!updateStream) return;
                 
-                const detect = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                
-                if (detect) {
-                    capturedDescriptor = Array.from(detect.descriptor);
-                    btn.disabled = false;
-                    status.innerText = "IDENTITY MAPPED ✅";
-                    status.className = "absolute top-4 left-4 right-4 bg-green-600/90 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center shadow-2xl z-20";
-                    updateQuality(true);
-                } else {
-                    btn.disabled = true;
-                    status.innerText = "POSITION FACE IN FRAME";
-                    status.className = "absolute top-4 left-4 right-4 bg-black/80 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center border border-white/10 shadow-2xl z-20";
-                    updateQuality(false);
-                }
-            }, 500);
+                // Without face-api, we just wait a moment to ensure camera is adjusted
+                // In a production scenario, you might add a lightweight brightness check here
+                btn.disabled = false;
+                status.innerText = "SENSOR READY. CLICK CONFIRM.";
+                status.className = "absolute top-4 left-4 right-4 bg-green-600/90 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center shadow-2xl z-20";
+                updateQuality(true);
+            };
+
+            // Delay just to let camera exposure settle
+            setTimeout(detectUpdateLoop, 1500);
 
             btn.onclick = async () => {
-                if (!capturedDescriptor) return;
                 btn.disabled = true;
-                btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> UPDATING...`;
+                btn.innerHTML = `<i class="ph-bold ph-spinner animate-spin"></i> SAVING...`;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth; 
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const capturedImage = canvas.toDataURL('image/jpeg', 0.9);
 
                 const fd = new FormData();
-                fd.append('face_encoding', JSON.stringify(capturedDescriptor));
+                fd.append('face_encoding', capturedImage);
                 
                 try {
                     const resp = await fetch("{% url 'update_student_face' %}", {
@@ -872,10 +863,11 @@
         document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${date} • ${time}`;
         document.getElementById('modalVenue').innerHTML = `<i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> ${venue}`;
 
-        if(type === 'Attendance') {
+        if(type === 'Time In' || type === 'Time Out') {
             document.getElementById('viewAttendanceProof').classList.remove('hidden');
             document.getElementById('viewEvaluationProof').classList.add('hidden');
             document.getElementById('proofTime').innerText = details.timestamp;
+            document.getElementById('proofTimeLabel').innerText = `${type} Timestamp Log`;
             
             // 🟢 Show Capture Image
             const faceContainer = document.querySelector('#viewAttendanceProof .aspect-\\[3\\/4\\]');
@@ -887,10 +879,28 @@
 
             const locSig = document.getElementById('modalLocSig');
             const coords = details.coords || "N/A";
-            if (details.is_valid_location) {
-                locSig.innerHTML = `<span class="text-green-600 dark:text-green-400">Verified inside PUP Campus Perimeter</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+            const colorClass = details.is_valid_location ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
+            let locText = details.is_valid_location ? "Verified inside designated location" : "Outside designated event geofence";
+            
+            locSig.innerHTML = `<span class="text-gray-500 text-xs italic"><i class="ph ph-spinner animate-spin"></i> Fetching address...</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+
+            if (coords !== "N/A" && coords.includes(',')) {
+                const [lat, lng] = coords.split(',').map(s => s.trim());
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.display_name) {
+                            const address = data.display_name.split(',').slice(0, 3).join(',');
+                            locSig.innerHTML = `<span class="${colorClass} leading-tight">${address}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+                        } else {
+                            locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+                        }
+                    })
+                    .catch(e => {
+                        locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+                    });
             } else {
-                locSig.innerHTML = `<span class="text-red-600 dark:text-red-400">Outside designated event geofence</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+                locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
             }
 
             const faceStatus = document.getElementById('modalFaceStatus');

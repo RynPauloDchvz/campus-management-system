@@ -458,27 +458,57 @@ def student_profile(request):
     
     recent_activity = []
     for att in recent_attendance:
-        details = {
-            'face_matched': att.face_matched,
-            'is_valid_location': att.is_valid_location,
-            'timestamp': att.time_in.strftime('%B %d, %Y at %I:%M %p'),
-            'capture_url': att.capture_image.url if att.capture_image else None,
-            'coords': f"{att.latitude}, {att.longitude}" if att.latitude else "N/A"
-        }
-        recent_activity.append({
-            'id': f'att_{att.id}',
-            'type': 'Attendance',
-            'title': att.event.event_title,
-            'venue': att.event.venue,
-            'date': att.time_in.strftime('%b %d, %Y'),
-            'time': att.time_in.strftime('%I:%M %p'),
-            'icon': 'ph-user-focus',
-            'color': 'text-green-500',
-            'bg': 'bg-green-50 dark:bg-green-900/20',
-            'timestamp': att.time_in,
-            'details': details,
-            'details_json': json.dumps(details)
-        })
+        # Time In Activity
+        time_in_local = timezone.localtime(att.time_in) if att.time_in else None
+        if time_in_local:
+            in_details = {
+                'face_matched': att.face_matched,
+                'is_valid_location': att.is_valid_location,
+                'timestamp': time_in_local.strftime('%B %d, %Y at %I:%M %p'),
+                'capture_url': att.capture_image.url if att.capture_image else None,
+                'coords': f"{att.latitude}, {att.longitude}" if att.latitude else "N/A",
+                'location_zone': getattr(att, 'location_zone', 'Location Verifying...')
+            }
+            recent_activity.append({
+                'id': f'attin_{att.id}',
+                'type': 'Time In',
+                'title': att.event.event_title,
+                'venue': att.event.venue,
+                'date': time_in_local.strftime('%b %d, %Y'),
+                'time': time_in_local.strftime('%I:%M %p'),
+                'icon': 'ph-user-focus',
+                'color': 'text-green-500',
+                'bg': 'bg-green-50 dark:bg-green-900/20',
+                'timestamp': time_in_local,
+                'details': in_details,
+                'details_json': json.dumps(in_details)
+            })
+
+        # Time Out Activity
+        if att.time_out:
+            time_out_local = timezone.localtime(att.time_out)
+            out_details = {
+                'face_matched': att.face_matched,
+                'is_valid_location': getattr(att, 'is_valid_location_out', att.is_valid_location),
+                'timestamp': time_out_local.strftime('%B %d, %Y at %I:%M %p'),
+                'capture_url': getattr(att, 'capture_image_out', None).url if hasattr(att, 'capture_image_out') and getattr(att, 'capture_image_out', None) else (att.capture_image.url if att.capture_image else None),
+                'coords': f"{getattr(att, 'latitude_out', '')}, {getattr(att, 'longitude_out', '')}" if getattr(att, 'latitude_out', None) else "N/A",
+                'location_zone': getattr(att, 'location_zone_out', 'Location Verifying...')
+            }
+            recent_activity.append({
+                'id': f'attout_{att.id}',
+                'type': 'Time Out',
+                'title': att.event.event_title,
+                'venue': att.event.venue,
+                'date': time_out_local.strftime('%b %d, %Y'),
+                'time': time_out_local.strftime('%I:%M %p'),
+                'icon': 'ph-sign-out',
+                'color': 'text-pup-gold',
+                'bg': 'bg-pup-gold/10',
+                'timestamp': time_out_local,
+                'details': out_details,
+                'details_json': json.dumps(out_details)
+            })
     
     for evl in recent_evals:
         changes = evl.changes if isinstance(evl.changes, dict) else json.loads(evl.changes)
@@ -920,7 +950,7 @@ def student_school_events(request):
             'venue': e.venue,
             'image': img_url,
             'description': clean_desc(e.description),
-            'is_flag_raising': getattr(e, 'is_flag_raising', False),
+            'is_flag_raising': getattr(e, 'is_flag_raising', False) or 'flag raising' in e.event_title.lower(),
             'target_lat': float(e.target_latitude) if e.target_latitude else 13.84615,
             'target_lng': float(e.target_longitude) if e.target_longitude else 121.96955,
             'already_attended': att_record is not None,
@@ -1110,22 +1140,47 @@ def student_event_history(request):
         elif e.event_cover_photo: img_url = e.event_cover_photo.url
         elif e.cover_photo: img_url = e.cover_photo.url
 
+        time_in_local = timezone.localtime(att.time_in)
+        
+        # 1. TIME IN CARD
         history_data.append({
-            'id': f"att_{att.id}",
+            'id': f"attin_{att.id}",
             'title': e.event_title,
-            'date': att.time_in.strftime('%b %d, %Y'),
-            'time': att.time_in.strftime('%I:%M %p'),
+            'date': time_in_local.strftime('%b %d, %Y'),
+            'time': time_in_local.strftime('%I:%M %p'),
             'venue': e.venue,
-            'type': 'Attendance',
+            'type': 'Time In',
             'img': img_url,
             'details': {
                 'face_matched': att.face_matched,
                 'is_valid_location': att.is_valid_location,
-                'timestamp': att.time_in.strftime('%B %d, %Y at %I:%M %p'),
+                'timestamp': time_in_local.strftime('%B %d, %Y at %I:%M %p'),
                 'capture_url': att.capture_image.url if att.capture_image else None,
-                'coords': f"{att.latitude}, {att.longitude}" if att.latitude else "N/A"
+                'coords': f"{att.latitude}, {att.longitude}" if att.latitude else "N/A",
+                'location_zone': getattr(att, 'location_zone', '')
             }
         })
+
+        # 2. TIME OUT CARD (If exists)
+        if att.time_out:
+            time_out_local = timezone.localtime(att.time_out)
+            history_data.append({
+                'id': f"attout_{att.id}",
+                'title': e.event_title,
+                'date': time_out_local.strftime('%b %d, %Y'),
+                'time': time_out_local.strftime('%I:%M %p'),
+                'venue': e.venue,
+                'type': 'Time Out',
+                'img': img_url,
+                'details': {
+                    'face_matched': att.face_matched,
+                    'is_valid_location': getattr(att, 'is_valid_location_out', att.is_valid_location),
+                    'timestamp': time_out_local.strftime('%B %d, %Y at %I:%M %p'),
+                    'capture_url': getattr(att, 'capture_image_out', None).url if hasattr(att, 'capture_image_out') and getattr(att, 'capture_image_out', None) else (att.capture_image.url if att.capture_image else None),
+                    'coords': f"{att.latitude_out}, {att.longitude_out}" if att.latitude_out else "N/A",
+                    'location_zone': getattr(att, 'location_zone', '')
+                }
+            })
 
     # 2. Fetch Evaluation Records (from AuditLog)
     eval_logs = AuditLog.objects.filter(actor=request.user, action='EVALUATION', status='Success').order_on_timestamp = AuditLog.objects.filter(actor=request.user, action='EVALUATION', status='Success').order_by('-timestamp')
@@ -1134,20 +1189,31 @@ def student_event_history(request):
         
         # Try to find the event to get venue and image
         event_title = changes.get('event', 'Unknown Event')
-        event = Event.objects.filter(event_title=event_title).first()
+        event = None
+        if log.target_id:
+            try:
+                event = Event.objects.get(id=int(log.target_id))
+            except (ValueError, Event.DoesNotExist):
+                pass
+        
+        if not event:
+            event = Event.objects.filter(event_title=event_title).first()
         
         img_url = '/static/images/PUPLogo.png'
         venue = 'Campus Event'
         if event:
             if event.thumbnail: img_url = event.thumbnail.url
             elif event.event_cover_photo: img_url = event.event_cover_photo.url
+            elif event.cover_photo: img_url = event.cover_photo.url
             venue = event.venue
+
+        log_local = timezone.localtime(log.timestamp)
 
         history_data.append({
             'id': f"eval_{log.id}",
             'title': event_title,
-            'date': log.timestamp.strftime('%b %d, %Y'),
-            'time': log.timestamp.strftime('%I:%M %p'),
+            'date': log_local.strftime('%b %d, %Y'),
+            'time': log_local.strftime('%I:%M %p'),
             'venue': venue,
             'type': 'Evaluation',
             'img': img_url,
@@ -1155,6 +1221,7 @@ def student_event_history(request):
                 'rating': changes.get('rating', '0'),
                 'feedback': changes.get('feedback', 'No feedback provided.'),
                 'sentiment': changes.get('sentiment', None),
+                'timestamp': log_local.strftime('%B %d, %Y at %I:%M %p'),
                 'total_raw_score': changes.get('total_raw_score', '0'),
                 'detailed_scores': changes.get('detailed_scores', {})
             }
@@ -1342,6 +1409,7 @@ def organizer_school_events(request):
             'venue': e.venue,
             'image': img_url,
             'description': clean_desc(e.description),
+            'is_flag_raising': getattr(e, 'is_flag_raising', False) or 'flag raising' in e.event_title.lower(),
             'attendance_count': att_count,
             'evaluation_count': eval_count,
             'target_lat': float(e.target_latitude) if e.target_latitude else 13.84615,
@@ -1445,18 +1513,21 @@ def organizer_create_events(request):
             coords = ADVISER_COORDS
             progress = 0
 
-        docs_data.append({
-            'id': e.id,
-            'eventName': e.event_title,       
-            'orgName': e.org_id,              
-            'status': e.event_status,
-            'date': str(e.event_date),
-            'currentLoc': loc,                
-            'docType': 'Activity Proposal',
-            'coords': coords,
-            'progress': progress,
-            'rejectReason': str(e.remarks) if e.remarks else 'No reason provided.'
-        })
+        is_flag_raising = getattr(e, 'is_flag_raising', False) or 'flag' in e.event_title.lower() or 'ceremony' in e.event_title.lower()
+        
+        if not is_flag_raising:
+            docs_data.append({
+                'id': e.id,
+                'eventName': e.event_title,       
+                'orgName': e.org_id,              
+                'status': e.event_status,
+                'date': str(e.event_date),
+                'currentLoc': loc,                
+                'docType': 'Activity Proposal',
+                'coords': coords,
+                'progress': progress,
+                'rejectReason': str(e.remarks) if e.remarks else 'No reason provided.'
+            })
 
     # Fetch approved events for rescheduling dropdown
     approved_events = Event.objects.filter(org_id=org_acronym, event_status='Approved').values('id', 'event_title', 'event_date')
@@ -1858,6 +1929,7 @@ def organizer_manage_attendance(request):
             'lng': float(att.longitude) if att.longitude else 121.9861,
             'img': img,
             'captured_face': att.capture_image.url if att.capture_image else None,
+            'captured_face_out': att.capture_image_out.url if att.capture_image_out else None,
             'is_global': current_event.is_flag_raising
         })
 
@@ -1877,8 +1949,13 @@ def organizer_analytics(request):
     except OrgProfile.DoesNotExist:
         org_acronym = "UNKNOWN"
 
-    # 🟢 NEWEST TO OLDEST ORDERING 🟢
-    org_events = Event.objects.filter(org_id=org_acronym, event_status='Approved').order_by('-event_date', '-start_time')
+    # 🟢 NEWEST TO OLDEST ORDERING + GLOBAL EVENTS 🟢
+    org_events = Event.objects.filter(
+        Q(org_id=org_acronym) | 
+        Q(event_title__icontains='Flag Raising') | 
+        Q(event_title__icontains='General Assembly') | 
+        Q(event_title__icontains='Student Week')
+    ).filter(event_status='Approved').order_by('-event_date', '-start_time')
     event_ids = [str(e.id) for e in org_events]
     
     # Fetch evaluations from AuditLog
@@ -2062,13 +2139,16 @@ def get_all_org_notifications(org_acronym):
             dt = getattr(e, 'created_at', None) or now
             url = '/organizer/school-events'
             
-            if e.event_status == 'Approved':
+            if getattr(e, 'is_flag_raising', False):
+                msg = f"Your Flag Raising event '{e.event_title}' has been successfully scheduled and published."
+                sender = 'System Notification'
+            elif e.event_status == 'Approved':
                 msg = f"Great news! Your event proposal for '{e.event_title}' has been officially APPROVED by the Administration."
                 sender = 'Admin Office'
             elif e.event_status == 'Admin Approved':
                 msg = f"Initial Approval granted for '{e.event_title}'! Please upload your signed documents in the Document Vault."
                 sender = 'Admin Office'
-                url = '/organizer/document-tracking'
+                url = '/organizer/event-vault/'
             elif e.event_status == 'Rejected':
                 msg = f"Notice: Your event proposal for '{e.event_title}' was REJECTED. Please check the remarks for details."
                 sender = 'Admin / Adviser'
@@ -2627,13 +2707,13 @@ def record_attendance(request):
                 return JsonResponse({'status': 'error', 'message': 'Event not found or not yet approved.'})
 
             # 🟢 GLOBAL ATTENDANCE FOR FLAG RAISING 🟢
-            if getattr(event, 'is_flag_raising', False):
+            if getattr(event, 'is_flag_raising', False) or 'flag' in event.event_title.lower() or 'ceremony' in event.event_title.lower():
                 is_valid_location = True
 
             # Check for existing attendance
             # 🟢 HUMAN-READABLE LOCATION (Reverse Geocoding Logic) 🟢
             location_name = "Unknown Location"
-            if lat and lng:
+            if lat and lng and lat != 'null' and lng != 'null':
                 lat_f, lng_f = float(lat), float(lng)
                 zones = [
                     {'name': 'Main Building', 'lat': 13.84615, 'lng': 121.96955},
@@ -2683,12 +2763,37 @@ def record_attendance(request):
                     if now < timeout_start:
                         return JsonResponse({'status': 'error', 'message': 'Time Out not yet available.'})
 
+                # 🟢 SERVER-SIDE DEEPFACE VERIFICATION FOR TIME OUT 🟢
+                face_matched = False
+                anchor_b64 = student.face_encoding if student else (organizer.face_encoding if organizer else None)
+                
+                if live_face_b64 and anchor_b64:
+                    if anchor_b64.strip().startswith('['):
+                        return JsonResponse({'status': 'error', 'message': 'Please update your biometrics in your Profile first!'})
+                    
+                    face_matched, distance = verify_face(live_face_b64, anchor_b64)
+                    if not face_matched:
+                        return JsonResponse({'status': 'error', 'message': 'Biometric identity mismatch! Face not recognized.'})
+                else:
+                    return JsonResponse({'status': 'error', 'message': 'Missing biometric data for verification.'})
+
                 # Update for Time Out
                 attendance.time_out = now
                 attendance.latitude_out = lat
                 attendance.longitude_out = lng
                 attendance.is_valid_location_out = is_valid_location
                 attendance.location_zone = location_name # Save zone on timeout
+                
+                # 🟢 SAVE CAPTURE IMAGE OUT 🟢
+                if live_face_b64:
+                    try:
+                        format, imgstr = live_face_b64.split(';base64,')
+                        ext = format.split('/')[-1]
+                        data = ContentFile(base64.b64decode(imgstr), name=f'capture_out_{attendance.id}.{ext}')
+                        attendance.capture_image_out = data
+                    except Exception as e:
+                        print(f"Error saving capture image out: {e}")
+
                 attendance.save()
 
                 log_audit_event(request, 'ATTENDANCE', target_model='Event', target_id=str(event.id), status='Success', changes={
@@ -2717,9 +2822,15 @@ def record_attendance(request):
             anchor_b64 = student.face_encoding if student else (organizer.face_encoding if organizer else None)
             
             if live_face_b64 and anchor_b64:
+                # If anchor is a legacy JSON array string (from previous bugs), reject it gracefully
+                if anchor_b64.strip().startswith('['):
+                    return JsonResponse({'status': 'error', 'message': 'Please update your biometrics in your Profile first!'})
+                
                 face_matched, distance = verify_face(live_face_b64, anchor_b64)
+                if not face_matched:
+                    return JsonResponse({'status': 'error', 'message': 'Biometric identity mismatch! Face not recognized.'})
             else:
-                face_matched = request.POST.get('face_matched') == 'true'
+                return JsonResponse({'status': 'error', 'message': 'Missing biometric data for verification.'})
 
             attendance = Attendance.objects.create(
                 student=student,
@@ -3339,12 +3450,12 @@ def adviser_dashboard(request):
             'adviser_name': getattr(e, 'adviser_name', '') or '',
             'venue': e.venue or '', 'description': e.description or '',
             'equipment': getattr(e, 'equipment_needed', '') or '', 'status': e.event_status.upper() if e.event_status else '',
-            'letter_url': e.letter_image.url if e.letter_image else '',
-            'permit_url': e.permit_image.url if e.permit_image else '',
-            'equipment_url': e.equipment_image.url if e.equipment_image else '',
-            'event_cover_photo': e.event_cover_photo.url if e.event_cover_photo else '',
-            'letter_of_reschedule': e.letter_image.url if e.letter_image and e.requirement_mode == 2 else '',
-            'reschedule_cover_photo': e.reschedule_cover_photo.url if e.reschedule_cover_photo else (e.event_cover_photo.url if e.event_cover_photo and e.requirement_mode == 2 else ''),
+            'letter_url': e.letter_of_approval.url if getattr(e, 'letter_of_approval', None) else (e.letter_image.url if getattr(e, 'letter_image', None) else ''),
+            'permit_url': e.permit_to_conduct.url if getattr(e, 'permit_to_conduct', None) else (e.permit_image.url if getattr(e, 'permit_image', None) else ''),
+            'equipment_url': e.excuse_letter_equipment.url if getattr(e, 'excuse_letter_equipment', None) else (e.equipment_image.url if getattr(e, 'equipment_image', None) else ''),
+            'event_cover_photo': e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) else (e.cover_photo.url if getattr(e, 'cover_photo', None) else ''),
+            'letter_of_reschedule': e.letter_of_reschedule.url if getattr(e, 'letter_of_reschedule', None) else (e.letter_image.url if getattr(e, 'letter_image', None) and getattr(e, 'requirement_mode', 0) == 2 else ''),
+            'reschedule_cover_photo': e.reschedule_cover_photo.url if getattr(e, 'reschedule_cover_photo', None) else (e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) and getattr(e, 'requirement_mode', 0) == 2 else (getattr(e, 'reschedule_cover_photo_legacy', None).url if getattr(e, 'reschedule_cover_photo_legacy', None) else '')),
             'requirement_mode': e.requirement_mode
         })
     

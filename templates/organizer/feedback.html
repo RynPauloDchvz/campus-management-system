@@ -10,9 +10,9 @@
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
 
     // 🟢 REAL DATA FROM BACKEND 🟢
-    const criteriaData = JSON.parse('{{ criteria_scores|safe|default:"[0,0,0,0,0]" }}');
-    const yearLevelData = JSON.parse('{{ year_dist|safe|default:"[0,0,0,0]" }}');
-    const allComments = JSON.parse('{{ comments_json|safe|default:"[]" }}');
+    const criteriaData = {{ criteria_scores|safe|default:"[0,0,0,0,0]" }};
+    const yearLevelData = {{ year_dist|safe|default:"[0,0,0,0]" }};
+    const allComments = {{ comments_json|safe|default:"[]" }};
 
     document.addEventListener('DOMContentLoaded', () => {
         // 🟢 BAR CHART: Ratings Per Question 🟢

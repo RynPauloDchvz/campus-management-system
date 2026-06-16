@@ -313,11 +313,32 @@
                 const diffStart = start - now;
                 const diffExpiry = expiry - now;
 
-                if (diffStart > 0) {
+                if (e.has_timed_out) {
+                    el.innerHTML = `<i class="ph-fill ph-check-circle"></i> COMPLETED`;
+                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ended";
+                } else if (e.already_attended) {
+                    const endISO = e.end_time_iso ? `${e.date}T${e.end_time_iso}` : null;
+                    const endDt = endISO ? new Date(endISO) : null;
+                    const timeoutStart = endDt ? new Date(endDt.getTime() - (15 * 60000)) : null;
+                    const timeoutExpiry = endDt ? new Date(endDt.getTime() + (3 * 3600000)) : null;
+
+                    if (timeoutStart && now < timeoutStart) {
+                        const diffOutStart = timeoutStart - now;
+                        el.innerHTML = `<i class="ph-bold ph-hourglass"></i> WAITING OUT • ${formatTimeDiff(diffOutStart)}`;
+                        el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-upcoming";
+                    } else if (timeoutExpiry && now < timeoutExpiry) {
+                        const diffOutExpiry = timeoutExpiry - now;
+                        el.innerHTML = `<i class="ph-fill ph-broadcast animate-pulse"></i> TIME OUT • ${formatTimeDiff(diffOutExpiry)}`;
+                        el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ongoing";
+                    } else {
+                        el.innerHTML = `<i class="ph-bold ph-lock"></i> OUT EXPIRED`;
+                        el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ended";
+                    }
+                } else if (diffStart > 0) {
                     el.innerHTML = `<i class="ph-bold ph-hourglass"></i> ${formatTimeDiff(diffStart)}`;
                     el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-upcoming";
                 } else if (diffExpiry > 0) {
-                    el.innerHTML = `<i class="ph-fill ph-broadcast animate-pulse"></i> ACTIVE`;
+                    el.innerHTML = `<i class="ph-fill ph-broadcast animate-pulse"></i> ACTIVE • ${formatTimeDiff(diffExpiry)}`;
                     el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ongoing";
                 } else {
                     el.innerHTML = `<i class="ph-bold ph-lock"></i> CLOSED`;
@@ -347,15 +368,20 @@
                     const endISO = currentEvent.end_time_iso ? `${currentEvent.date}T${currentEvent.end_time_iso}` : null;
                     const endDt = endISO ? new Date(endISO) : null;
                     const timeoutStart = endDt ? new Date(endDt.getTime() - (15 * 60000)) : null;
+                    const timeoutExpiry = endDt ? new Date(endDt.getTime() + (3 * 3600000)) : null;
 
                     if (timeoutStart && now < timeoutStart) {
-                        label.innerText = "NEXT STEP"; modalCD.innerText = "WAITING FOR TIME OUT";
+                        label.innerText = "NEXT STEP"; modalCD.innerText = `WAITING FOR TIME OUT • ${formatTimeDiff(timeoutStart - now)}`;
                         pBtn.disabled = true; pBtn.innerHTML = `<i class="ph-bold ph-timer text-xl"></i> UNLOCKS AT ${currentEvent.end_time}`;
                         lockMsg.innerText = "Time In recorded. Wait for event conclusion."; lockMsg.classList.remove('hidden');
-                    } else {
-                        label.innerText = "AUTHORIZATION STATUS"; modalCD.innerText = "READY FOR TIME OUT";
+                    } else if (timeoutExpiry && now < timeoutExpiry) {
+                        label.innerText = "AUTHORIZATION STATUS"; modalCD.innerText = `READY FOR TIME OUT • ${formatTimeDiff(timeoutExpiry - now)}`;
                         pBtn.disabled = false; pBtn.innerHTML = `<i class="ph-bold ph-sign-out text-xl"></i> Initialize Time Out`;
                         lockMsg.classList.add('hidden');
+                    } else {
+                        label.innerText = "AUTHORIZATION STATUS"; modalCD.innerText = "TIME OUT EXPIRED";
+                        pBtn.disabled = true; pBtn.innerHTML = `<i class="ph-bold ph-lock-key text-xl"></i> Time Out Window Closed`;
+                        lockMsg.innerText = "Time out window has expired."; lockMsg.classList.remove('hidden');
                     }
                 } else if (diffStart > 0) {
                     label.innerText = "AUTHORIZING IN"; modalCD.innerText = formatTimeDiff(diffStart);
@@ -363,7 +389,7 @@
                     lockMsg.classList.remove('hidden');
                 } else if (diffExpiry > 0) {
                     // 🟢 SMART BUTTON: TIME IN 🟢
-                    label.innerText = "AUTHORIZATION STATUS"; modalCD.innerText = "SYNC PORTAL OPEN";
+                    label.innerText = "AUTHORIZATION STATUS"; modalCD.innerText = `SYNC PORTAL OPEN • ${formatTimeDiff(diffExpiry)}`;
                     pBtn.disabled = false; pBtn.innerHTML = `<i class="ph-bold ph-scan text-xl"></i> Initialize Biometric Scanner`;
                     lockMsg.classList.add('hidden');
                 } else {
@@ -415,41 +441,17 @@
         document.getElementById('btnParticipateNow').addEventListener('click', () => switchView('viewPermissions'));
         document.getElementById('btnGrantPermission').addEventListener('click', startScanner);
         
-        async function loadModels() {
-            if (modelsLoaded) return;
-            const URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-            await Promise.all([
-                faceapi.nets.tinyFaceDetector.loadFromUri(URL),
-                faceapi.nets.faceLandmark68Net.loadFromUri(URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(URL)
-            ]);
-            modelsLoaded = true;
-        }
-
-        // 🟢 PRE-LOAD MODELS & INITIALIZE IDENTITY ON LOAD 🟢
+        // 🟢 MODELS NO LONGER LOADED ON FRONTEND 🟢
+        // Biometric recognition is now handled strictly by ArcFace on the backend for maximum speed and accuracy.
         document.addEventListener('DOMContentLoaded', () => {
-            loadModels();
-            if (typeof STUDENT_DATA !== 'undefined' && STUDENT_DATA.face_encoding) initFaceMatcher();
+            if (typeof STUDENT_DATA !== 'undefined') console.log("Student Data loaded");
         });
-
-        async function initFaceMatcher() {
-            if (faceMatcher || !STUDENT_DATA.face_encoding) return;
-            try {
-                const desc = new Float32Array(JSON.parse(STUDENT_DATA.face_encoding));
-                faceMatcher = new faceapi.FaceMatcher([new faceapi.LabeledFaceDescriptors('student', [desc])], 0.6);
-                console.log("Biometric Identity Initialized");
-            } catch(e) { console.error("Face Init Error", e); }
-        }
 
         async function startScanner() {
             switchView('viewScanner');
             const status = document.getElementById('scanStatus');
             status.innerText = "INITIALIZING SENSORS...";
-            
-            // Ensure ready before proceeding
-            if (!modelsLoaded) await loadModels();
-            if (!faceMatcher) await initFaceMatcher();
-            status.innerText = "AUTHENTICATING SENSORS...";
+            isLocationVerified = false;
 
             try {
                 // 🟢 OPTIMIZED CAMERA CONSTRAINTS 🟢
@@ -462,7 +464,7 @@
                 });
                 const video = document.getElementById('videoFeed');
                 video.srcObject = stream;
-                video.onloadedmetadata = () => { video.play(); startQualityValidation(); startFaceDetection(video); };
+                video.onloadedmetadata = () => { video.play(); startQualityValidation(); startFastPoll(); };
             } catch (err) { alert("Camera Error: " + err.message); closeParticipationModal(); return; }
 
             if (!map) {
@@ -470,6 +472,12 @@
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             }
             
+            // 🟢 INSTANT GLOBAL ATTENDANCE BYPASS 🟢
+            if (currentEvent && currentEvent.is_flag_raising) {
+                isLocationVerified = true;
+                document.getElementById('locStatus').innerHTML = `<i class="ph-bold ph-check-circle text-green-500"></i> GLOBAL ATTENDANCE VERIFIED`;
+            }
+
             navigator.geolocation.watchPosition(pos => {
                 userLat = pos.coords.latitude; userLng = pos.coords.longitude;
                 map.setView([userLat, userLng], 17);
@@ -498,7 +506,7 @@
 
         function startQualityValidation() {
             if (validationInterval) clearInterval(validationInterval);
-            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d', { willReadFrequently: true });
             const video = document.getElementById('videoFeed');
             document.getElementById('qualityMeter').classList.remove('hidden');
             validationInterval = setInterval(() => {
@@ -513,34 +521,32 @@
             }, 200);
         }
 
-        async function startFaceDetection(video) {
+        // 🟢 FAST POLLING FOR QUALITY & UI UPDATES 🟢
+        function startFastPoll() {
             const status = document.getElementById('scanStatus');
-            const interval = setInterval(async () => {
-                if (!stream || !currentEvent) { clearInterval(interval); return; }
-                if (!qualityStatus.isReady) { isFaceVerified = false; status.innerText = "OPTIMIZING SENSOR QUALITY..."; return; }
-                const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                if (det && faceMatcher) {
-                    const match = faceMatcher.findBestMatch(det.descriptor);
-                    if (match.label !== 'unknown' && match.distance < 0.5) {
-                        isFaceVerified = true;
-                        status.innerText = "BIOMETRIC IDENTITY MATCHED! ✅";
-                        status.className = "absolute top-6 left-6 right-6 bg-green-600/90 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center shadow-2xl";
-                    } else {
-                        isFaceVerified = false;
-                        status.innerText = "IDENTITY MISMATCH / SEARCHING...";
-                        status.className = "absolute top-6 left-6 right-6 bg-black/80 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl";
-                    }
+            const pollLoop = () => {
+                if (!stream || !currentEvent) return;
+                
+                if (!qualityStatus.isReady) { 
+                    status.innerText = "OPTIMIZING SENSOR QUALITY..."; 
+                    status.className = "absolute top-6 left-6 right-6 bg-amber-600/90 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center shadow-2xl animate-pulse";
                 } else {
-                    isFaceVerified = false; status.innerText = "FACE NOT DETECTED"; 
-                    status.className = "absolute top-6 left-6 right-6 bg-pup-maroon/80 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center border border-white/10 shadow-2xl";
+                    status.innerText = "SENSOR READY! ALIGN FACE TO CENTER";
+                    status.className = "absolute top-6 left-6 right-6 bg-green-600/90 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center shadow-2xl";
                 }
+                
                 checkAllVerified();
-            }, 500);
+                setTimeout(pollLoop, 200);
+            };
+            pollLoop();
         }
 
+        let isSubmitting = false;
+
         function checkAllVerified() {
+            if (isSubmitting) return; // Prevent loop from overriding button during network request
             const btn = document.getElementById('btnSubmitScan');
-            if (isFaceVerified && isLocationVerified) {
+            if (qualityStatus.isReady && isLocationVerified) {
                 btn.disabled = false; btn.classList.add('bg-green-600');
                 btn.innerHTML = `<i class="ph-bold ph-check-circle text-2xl"></i> Finalize Authorization`;
             } else {
@@ -550,22 +556,32 @@
         }
 
         document.getElementById('btnSubmitScan').addEventListener('click', async () => {
+            if (isSubmitting) return;
+            isSubmitting = true;
             const btn = document.getElementById('btnSubmitScan');
             btn.disabled = true; btn.innerText = "COMMITTING TO SECURE LEDGER...";
             const canvas = document.createElement('canvas'); const video = document.getElementById('videoFeed');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.getContext('2d', { willReadFrequently: true }).drawImage(video, 0, 0);
             const fd = new FormData();
             fd.append('event_id', currentEvent.id); fd.append('face_image', canvas.toDataURL('image/jpeg', 0.8));
-            fd.append('latitude', userLat); fd.append('longitude', userLng);
-            fd.append('is_valid_location', isLocationVerified); fd.append('face_matched', isFaceVerified);
+            fd.append('latitude', userLat || ''); fd.append('longitude', userLng || '');
+            fd.append('is_valid_location', isLocationVerified);
             const csrf = document.cookie.split('; ').find(r => r.startsWith('csrftoken=')).split('=')[1];
             try {
                 const res = await fetch('/student/record-attendance', { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd });
                 const data = await res.json();
                 if (data.status === 'success' || data.status === 'issue') switchView('viewSuccess');
-                else { alert(data.message); btn.disabled = false; }
-            } catch (e) { alert("Institutional Sync Error."); btn.disabled = false; }
+                else { 
+                    alert(data.message); 
+                    isSubmitting = false; 
+                    checkAllVerified(); // Reset button UI immediately
+                }
+            } catch (e) { 
+                alert("Institutional Sync Error."); 
+                isSubmitting = false; 
+                checkAllVerified(); // Reset button UI immediately
+            }
         });
 
         document.getElementById('bgOverlayClose').onclick = closeParticipationModal;

@@ -296,27 +296,28 @@
                 let statusLabel = "";
                 
                 if (e.already_evaluated) {
-                    statusLabel = "COMPLETED";
+                    statusLabel = `<i class="ph-fill ph-check-circle"></i> COMPLETED`;
                     btnHtml = ""; 
                 } else if (!e.is_eligible) {
-                    statusLabel = "RESTRICTED";
+                    statusLabel = `<i class="ph-bold ph-lock-key"></i> RESTRICTED`;
                     btnHtml = `<button disabled class="btn-eval mt-auto w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[7px] sm:text-[10px] uppercase tracking-[0.2em] flex flex-col items-center justify-center gap-0.5 sm:gap-1">
                         <span class="flex items-center gap-2"><i class="ph-bold ph-lock-key"></i> ${e.att_status}</span>
                         <span class="text-[6px] sm:text-[7px] opacity-60">TIME OUT REQUIRED</span>
                       </button>`;
                 } else if (isUpcoming) {
                     const diff = evalOpenTime - now;
-                    statusLabel = `OPENS IN ${formatTimeDiffShort(diff)}`;
+                    statusLabel = `<i class="ph-bold ph-hourglass"></i> OPENS IN ${formatTimeDiffFull(diff)}`;
                     btnHtml = `<button disabled class="btn-eval mt-auto w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[7px] sm:text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                         <i class="ph-bold ph-lock-key"></i> ${formatClockTime(evalOpenTime)}
                       </button>`;
                 } else if (isOpen) {
-                    statusLabel = `OPEN`;
+                    const diff = evalCloseTime - now;
+                    statusLabel = `<i class="ph-fill ph-broadcast animate-pulse"></i> ACTIVE • ${formatTimeDiffFull(diff)}`;
                     btnHtml = `<button class="btn-eval mt-auto w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black text-[7px] sm:text-[10px] uppercase tracking-[0.2em] shadow-xl hover:opacity-90 active:scale-95 transition-all">
                         Initialize Sync
                       </button>`;
                 } else {
-                    statusLabel = "EXPIRED";
+                    statusLabel = `<i class="ph-bold ph-clock-counter-clockwise"></i> EXPIRED`;
                     btnHtml = `<button disabled class="btn-eval mt-auto w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-black text-[7px] sm:text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                         <i class="ph-bold ph-x-circle text-red-500 text-xs sm:text-lg"></i> Closed
                       </button>`;
@@ -364,6 +365,14 @@
             const s = Math.floor((ms % 60000) / 1000);
             if (h > 0) return `${h}H ${m}M`;
             return `${m}M ${s}S`;
+        }
+
+        function formatTimeDiffFull(ms) {
+            const s = Math.floor(ms / 1000);
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const sec = s % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
         }
 
         function formatClockTime(date) {

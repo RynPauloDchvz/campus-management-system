@@ -153,6 +153,7 @@ class Attendance(models.Model):
     
     face_matched = models.BooleanField(default=False) 
     capture_image = models.ImageField(upload_to='attendance_captures/', null=True, blank=True)
+    capture_image_out = models.ImageField(upload_to='attendance_captures/', null=True, blank=True)
     location_zone = models.CharField(max_length=100, null=True, blank=True)
     
     def __str__(self):

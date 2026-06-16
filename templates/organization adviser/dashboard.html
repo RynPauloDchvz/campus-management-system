@@ -54,7 +54,10 @@
     .document-preview-container.active {
         opacity: 1;
         max-height: 3000px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
         transform: translateY(0);
+        overflow-y: auto;
     }
 
     @media (max-width: 640px) {
@@ -210,8 +213,19 @@
                             </span>
                         </div>
                         
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="verification-files-grid">
-                            <!-- Dynamic Content Rendered via Vue/JS -->
+                        <div :class="['grid gap-4', selectedEvent.requirement_mode === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4']" id="verification-files-grid">
+                            <div v-for="doc in activeDocs" :key="doc.label" 
+                                 @click="viewActualDoc(doc.label, doc.url)"
+                                 class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all flex flex-col items-center justify-center group relative overflow-hidden">
+                                <div class="absolute inset-0 bg-pup-maroon dark:bg-pup-gold opacity-0 group-hover:opacity-[0.03] transition-opacity"></div>
+                                <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
+                                    <i :class="['ph-fill', doc.icon, 'text-4xl text-gray-300 dark:text-gray-500 transition-opacity']"></i>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <i class="ph-bold ph-eye text-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-pup-maroon dark:text-pup-gold"></i>
+                                    </div>
+                                </div>
+                                <span class="block text-[8px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">[[ doc.label ]]</span>
+                            </div>
                         </div>
                     </div>
 
@@ -402,6 +416,34 @@
         <i class="ph-bold ph-check-circle text-2xl"></i>
         <span class="font-bold">Event Documents Successfully Verified & Forwarded</span>
     </div>
+
+    <!-- Lightbox Viewer (Image Zoom) -->
+    <div v-if="isDocViewerOpen" v-cloak class="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md transition-opacity" @click="closeDocViewer">
+        <div class="relative w-full max-w-5xl h-full flex flex-col items-center justify-center" @click.stop>
+            <!-- Controls -->
+            <div class="absolute top-4 right-0 flex items-center gap-4 z-[6001]">
+                <a v-if="viewedDocUrl" :href="viewedDocUrl" download class="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all backdrop-blur-md border border-white/20" title="Download Document">
+                    <i class="ph-bold ph-download-simple text-xl"></i>
+                </a>
+                <button @click="closeDocViewer" class="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all shadow-xl active:scale-90" title="Close Viewer">
+                    <i class="ph-bold ph-x text-2xl"></i>
+                </button>
+            </div>
+            <div class="p-2 md:p-6 w-full h-full flex items-center justify-center">
+                <template v-if="viewedDocUrl">
+                    <img :src="viewedDocUrl" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-white/10 animate-in zoom-in duration-300">
+                    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md border border-white/20 px-6 py-2 rounded-full text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                        <i class="ph-bold ph-eye"></i> Viewing: [[ viewedDocTitle ]]
+                    </div>
+                </template>
+                <div v-else class="text-center bg-gray-900 p-12 rounded-3xl border border-gray-800">
+                    <i class="ph-fill ph-image-broken text-8xl text-red-500/50 mb-4 block"></i>
+                    <h2 class="text-2xl font-black text-white mb-2 uppercase tracking-wide">Image Not Found</h2>
+                    <p class="text-sm text-gray-400 max-w-sm mx-auto font-medium">The document image is either missing from the server or was not uploaded properly by the organization.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
@@ -410,37 +452,8 @@
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Lightbox logic ---
-        document.addEventListener('click', (e) => {
-            const viewImgBtn = e.target.closest('.view-image-btn');
-            if (viewImgBtn) {
-                const src = viewImgBtn.getAttribute('data-img-src');
-                if (src && src !== 'undefined' && src !== 'null' && src !== '') {
-                    const previewImageElement = document.getElementById('preview-image-element');
-                    const imagePreviewModal = document.getElementById('image-preview-modal');
-                    if (previewImageElement && imagePreviewModal) {
-                        previewImageElement.src = src;
-                        imagePreviewModal.classList.remove('hidden');
-                    }
-                } else {
-                    alert("No document image available.");
-                }
-            }
 
-            if (e.target.closest('#close-preview-btn')) {
-                const imagePreviewModal = document.getElementById('image-preview-modal');
-                if (imagePreviewModal) {
-                    imagePreviewModal.classList.add('hidden');
-                }
-            }
-
-            const imagePreviewModalClick = document.getElementById('image-preview-modal');
-            if (imagePreviewModalClick && e.target === imagePreviewModalClick) {
-                imagePreviewModalClick.classList.add('hidden');
-            }
-        });
-
-        const { createApp, ref, computed, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted, nextTick } = Vue;
         
         window.appInstance = createApp({
             delimiters: ['[[', ']]'],
@@ -455,6 +468,10 @@
                 const isRejecting = ref(false);
                 const rejectReason = ref('');
                 const assignedOrgAcronym = ref('{{ assigned_org }}' || 'All Organizations');
+
+                const isDocViewerOpen = ref(false);
+                const viewedDocTitle = ref('');
+                const viewedDocUrl = ref('');
 
                 let parsedData = [];
                 try {
@@ -477,11 +494,9 @@
 
                 const switchDocTab = (tab) => {
                     activeTab.value = tab;
-                    // Force scaling update after tab switch
                     setTimeout(updateMobileScale, 100);
                 };
 
-                // --- 📱 Responsive Document Scaling Logic 📱 ---
                 const updateMobileScale = () => {
                     const wrapper = document.querySelector('.document-wrapper');
                     const page = document.getElementById('document-preview-card');
@@ -512,7 +527,6 @@
                         isLoading.value = false;
                         window.addEventListener('resize', updateMobileScale);
                         
-                        // Check for URL parameter to open specific event
                         const urlParams = new URLSearchParams(window.location.search);
                         const eventId = urlParams.get('id');
                         if (eventId) {
@@ -567,6 +581,26 @@
                     }
                 });
 
+                const activeDocs = computed(() => {
+                    if (!selectedEvent.value) return [];
+                    const e = selectedEvent.value;
+                    const mode = e.requirement_mode || 4;
+
+                    if (mode == 2) {
+                        return [
+                            { label: 'Letter of Reschedule', icon: 'ph-file-text', url: e.letter_of_reschedule || e.letter_url },
+                            { label: 'Event Reschedule Cover Photo', icon: 'ph-image', url: e.reschedule_cover_photo || e.event_cover_photo }
+                        ];
+                    } else {
+                        return [
+                            { label: 'Request Letter', icon: 'ph-file-text', url: e.letter_url }, 
+                            { label: 'Event Permit', icon: 'ph-certificate', url: e.permit_url },
+                            { label: 'Excuse Letter & Equipment', icon: 'ph-toolbox', url: e.equipment_url },
+                            { label: 'Event Cover Photo', icon: 'ph-image', url: e.event_cover_photo }
+                        ];
+                    }
+                });
+
                 const openModal = (event) => {
                     selectedEvent.value = event;
                     activeTab.value = 'main';
@@ -575,52 +609,25 @@
                     isModalOpen.value = true;
                     document.body.style.overflow = 'hidden';
 
-                    setTimeout(() => {
+                    nextTick(() => {
                         updateMobileScale();
-                        
-                        const verificationFilesGrid = document.getElementById('verification-files-grid');
-                        if(verificationFilesGrid && selectedEvent.value.status === 'PERMIT VERIFICATION') {
-                             const e = selectedEvent.value;
-                             const mode = e.requirement_mode || 4;
-
-                             verificationFilesGrid.innerHTML = '';
-
-                             let files = [];
-                             if (mode == 2) {
-                                files = [
-                                    { label: 'Letter of Reschedule', icon: 'ph-file-text', url: e.letter_url },
-                                    { label: 'Event Reschedule Cover Photo', icon: 'ph-image', url: e.reschedule_cover_photo }
-                                ];
-                             } else {
-                                files = [
-                                    { label: 'Request Letter', icon: 'ph-file-text', url: e.letter_url }, 
-                                    { label: 'Event Permit', icon: 'ph-certificate', url: e.permit_url },
-                                    { label: 'Excuse Letter & Equipment', icon: 'ph-toolbox', url: e.equipment_url },
-                                    { label: 'Event Cover Photo', icon: 'ph-image', url: e.event_cover_photo }
-                                ];
-                             }
-
-                             files.forEach(f => {
-                                verificationFilesGrid.innerHTML += `
-                                    <div class="view-image-btn bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all flex flex-col items-center justify-center group" data-img-src="${f.url || ''}">      
-                                        <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
-                                            <i class="ph-fill ${f.icon} text-4xl text-gray-300 dark:text-gray-500 transition-opacity"></i>
-                                            <div class="absolute inset-0 flex items-center justify-center">
-                                                <i class="ph-bold ph-eye text-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-pup-maroon dark:text-pup-gold"></i>
-                                            </div>
-                                        </div>
-                                        <span class="block text-[8px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">${f.label}</span>
-                                    </div>
-                                `;
-                             });
-                        }
-                    }, 50);
+                    });
                 };
 
                 const closeModal = () => {
                     isModalOpen.value = false;
                     document.body.style.overflow = '';
                     setTimeout(() => { selectedEvent.value = null; }, 300);
+                };
+
+                const viewActualDoc = (title, url) => {
+                    viewedDocTitle.value = title;
+                    viewedDocUrl.value = url || '';
+                    isDocViewerOpen.value = true;
+                };
+
+                const closeDocViewer = () => {
+                    isDocViewerOpen.value = false;
                 };
 
                 const updateEventStatus = async (status, remarks = "") => {
@@ -642,7 +649,7 @@
                                     setTimeout(() => {
                                         toast.classList.remove('translate-y-0', 'opacity-100');
                                         toast.classList.add('translate-y-20', 'opacity-0');
-                                        window.location.reload(); // Reload to update stats
+                                        window.location.reload();
                                     }, 2000);
                                  }
                             } else {
@@ -666,7 +673,9 @@
                     isLoading, events, filteredEvents, searchQuery, isModalOpen, selectedEvent,
                     actionLoading, isRejecting, rejectReason, activeTab, activeTabLabel,
                     openModal, closeModal, approveEvent, initiateReject, cancelReject, confirmReject,
-                    parsedDescription, switchDocTab, assignedOrgAcronym
+                    parsedDescription, switchDocTab, assignedOrgAcronym,
+                    isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
+                    activeDocs
                 }
             }
         }).mount('#app');
