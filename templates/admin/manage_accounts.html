@@ -45,6 +45,36 @@
     .profile-card-stat { border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px; text-align: center; background: #ffffff; }
     .profile-card-stat small { display: block; font-size: 0.65rem; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-family: 'Inter', sans-serif; }
     .profile-card-stat span { display: block; font-size: 1rem; font-weight: 800; color: #111827; font-family: 'Inter', sans-serif; }
+    
+    /* Stylized UI Elements for Modal */
+    .cheesecake-title { font-family: 'Arial Black', Gadget, sans-serif; letter-spacing: -2px; opacity: 0.1; user-select: none; pointer-events: none; }
+    .name-tag { background-color: #2a211a; border: 2px solid #5a3a2a; color: #e5c7b3; box-shadow: 4px 4px 0px rgba(0,0,0,0.2); }
+    .info-box { background-color: #ffffff; border: 1px solid #e5e7eb; transition: background-color 0.3s, border-color 0.3s; }
+    [data-theme="dark"] .info-box { background-color: #151515; border-color: #1f2937; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* 🟢 MANAGE ACCOUNTS MOBILE RESPONSIVENESS 🟢 */
+    .manage-accounts-control { display: flex; gap: 15px; align-items: center; justify-content: flex-start; flex-wrap: wrap; }
+    .manage-accounts-control .search-box { flex-grow: 1; min-width: 250px; }
+    .manage-accounts-control .history-btn { display: flex; align-items: center; gap: 8px; text-decoration: none; margin-left: auto; }
+    
+    @media (max-width: 900px) {
+        .manage-accounts-control { padding: 15px !important; gap: 10px; }
+        .manage-accounts-control .custom-select { order: 1; flex-grow: 1; width: calc(100% - 55px); }
+        .manage-accounts-control .history-btn { order: 2; width: 45px; height: 42px; padding: 0 !important; justify-content: center; flex-shrink: 0; margin-left: 0; border-radius: 8px; }
+        .manage-accounts-control .history-btn-text { display: none; }
+        .manage-accounts-control .search-box { order: 3; width: 100% !important; margin-top: 5px; }
+
+        /* Slide-up Bottom Sheet Modal for Profile details on Mobile */
+        #profileModal { align-items: flex-end; padding: 0; }
+        #profileModalBox { 
+            width: 100%; max-width: 100%; border-radius: 24px 24px 0 0; 
+            transform: translateY(100%) !important; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            margin: 0; max-height: 85vh; overflow-y: auto;
+        }
+        #profileModal.active #profileModalBox { transform: translateY(0) !important; }
+    }
 </style>
 {% endblock %}
 
@@ -53,12 +83,10 @@
 {% block content %}
 <!-- 🟢 SKELETON LOADING STATE 🟢 -->
 <div id="skeleton-loader" class="fade-in">
-    <div class="control-bar" style="display: flex; justify-content: space-between; gap: 15px;">
-        <div class="filter-group flex gap-3">
-            <div class="w-48 h-10 skeleton-shimmer rounded-lg"></div>
-            <div class="w-64 h-10 skeleton-shimmer rounded-lg"></div>
-        </div>
-        <div class="w-40 h-10 skeleton-shimmer rounded-lg"></div>
+    <div class="control-bar manage-accounts-control">
+        <div class="w-48 h-10 skeleton-shimmer rounded-lg custom-select"></div>
+        <div class="w-64 h-10 skeleton-shimmer rounded-lg search-box"></div>
+        <div class="w-40 h-10 skeleton-shimmer rounded-lg history-btn"></div>
     </div>
     <div class="table-section">
         <div style="overflow-x: auto;">
@@ -151,31 +179,30 @@
 
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
 <div id="main-content-area" style="display: none;" class="fade-in">
-    <div class="control-bar" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
-        <div class="filter-group">
-            <select id="orgFilter" class="custom-select" onchange="filterUsers()">
-                <option value="all">All Organizations</option>
-                <option value="ITO">ITO</option>
-                <option value="ITS">ITS</option>
-                <option value="YEO">YEO</option>
-                <option value="FTO">FTO</option>
-                <option value="PAS">PAS</option>
-                <option value="CAO">CAO</option>
-                <option value="NEWS">NEWS (NEWSETTE)</option>
-                <option value="PRIDE">PRIDE (PRIDEVerse)</option>
-                <option value="ROTC">ROTC</option>
-                <option value="PUSO">PUSO</option>
-                <option value="SSC">SSC</option>
-            </select>
-            <div class="search-box">
-                <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-                <input type="text" id="searchInput" class="search-input" placeholder="Search name or student ID..." onkeyup="filterUsers()">
-            </div>
+    <div class="control-bar manage-accounts-control">
+        <select id="orgFilter" class="custom-select" onchange="filterUsers()">
+            <option value="all">All Organizations</option>
+            <option value="ITO">ITO</option>
+            <option value="ITS">ITS</option>
+            <option value="YEO">YEO</option>
+            <option value="FTO">FTO</option>
+            <option value="PAS">PAS</option>
+            <option value="CAO">CAO</option>
+            <option value="NEWS">NEWS (NEWSETTE)</option>
+            <option value="PRIDE">PRIDE (PRIDEVerse)</option>
+            <option value="ROTC">ROTC</option>
+            <option value="PUSO">PUSO</option>
+            <option value="SSC">SSC</option>
+        </select>
+        
+        <div class="search-box">
+            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search name or student ID..." onkeyup="filterUsers()" style="width: 100%;">
         </div>
         
         <!-- 🟢 HISTORY BUTTON 🟢 -->
-        <a href="{% url 'account_history' %}" class="btn-cancel" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
-            <i class="ph-bold ph-clock-counter-clockwise"></i> Account History
+        <a href="{% url 'account_history' %}" class="btn-cancel history-btn">
+            <i class="ph-bold ph-clock-counter-clockwise" style="font-size: 1.2rem;"></i> <span class="history-btn-text">Account History</span>
         </a>
     </div>
 
@@ -202,26 +229,59 @@
 
 {% block modals %}
 <!-- 🟢 PROFILE VIEW MODAL 🟢 -->
-<div id="profileModal" class="modal">
-    <div class="modal-box" id="profileModalBox">
-        <div class="profile-cover" id="viewCover">
-            <button class="profile-close" onclick="closeModal('profileModal')">✕</button>
-        </div>
-        <div class="profile-info">
-            <div class="profile-avatar-container">
-                <img src="" id="viewAvatar" alt="Profile">
-            </div>
-            <h2 class="profile-name" id="viewName">--</h2>
-            <div class="profile-id" id="viewId">--</div>
-            
-            <div class="profile-grid">
-                <div class="profile-card-stat">
-                    <small>Year Level</small>
-                    <span id="viewYear">--</span>
+<div id="profileModal" class="modal font-sans z-[5000]">
+    <div class="modal-box bg-white dark:bg-[#151515] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden border-t sm:border border-gray-200 dark:border-gray-800 transition-colors p-0 text-left" id="profileModalBox">
+        
+        <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-4 sm:hidden shrink-0"></div>
+
+        <button onclick="closeModal('profileModal')" class="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-[60] backdrop-blur-md border-none cursor-pointer">
+            <i class="ph-bold ph-x text-xl"></i>
+        </button>
+
+        <div class="overflow-y-auto hide-scrollbar flex-grow w-full">
+            <!-- Cover Photo Area -->
+            <div class="h-40 sm:h-48 w-full relative bg-gray-200 dark:bg-gray-800 shrink-0">
+                <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover opacity-90" id="viewCover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                
+                <div class="absolute inset-x-0 bottom-4 text-center">
+                    <h3 class="cheesecake-title text-4xl font-black italic tracking-tighter text-white uppercase select-none m-0">CHEESECAKE</h3>
                 </div>
-                <div class="profile-card-stat">
-                    <small>Birthdate</small>
-                    <span id="viewBirth">--</span>
+            </div>
+
+            <!-- Profile Identity Section -->
+            <div class="px-6 sm:px-8 pb-6 relative -mt-12 flex flex-col sm:flex-row items-center sm:items-end gap-5">
+                <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-[#151515] overflow-hidden bg-white dark:bg-gray-900 shadow-xl shrink-0 z-20">
+                    <img id="viewAvatar" src="" class="w-full h-full object-cover">
+                </div>
+                
+                <div class="flex-1 name-tag py-3 px-6 rounded-2xl flex items-center justify-center text-center shadow-lg mb-2 sm:mb-4 w-full sm:w-auto">
+                    <h4 id="viewName" class="text-lg sm:text-xl font-black uppercase tracking-tight leading-tight m-0">--</h4>
+                </div>
+            </div>
+
+            <!-- Info Grid -->
+            <div class="px-6 sm:px-8 pb-8">
+                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
+                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Student No.</span>
+                        <span id="viewId" class="block text-sm sm:text-base font-black text-red-600 dark:text-red-500 tracking-tight">--</span>
+                    </div>
+                    
+                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
+                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Organization</span>
+                        <span id="viewOrg" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
+                    </div>
+                    
+                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
+                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Year Level</span>
+                        <span id="viewYear" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
+                    </div>
+
+                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
+                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Birthdate</span>
+                        <span id="viewBirth" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -332,6 +392,7 @@
         document.getElementById('viewAvatar').src = user.avatar;
         document.getElementById('viewName').innerText = user.name;
         document.getElementById('viewId').innerText = user.username; 
+        document.getElementById('viewOrg').innerText = user.org;
         document.getElementById('viewYear').innerText = user.year || 'Not Provided';
         if (user.birthdate) {
             let dateObj = new Date(user.birthdate);

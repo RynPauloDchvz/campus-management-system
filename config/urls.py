@@ -35,7 +35,7 @@ urlpatterns = [
     # 🟢 BAGONG API PARA SA ADMIN APPROVE/REJECT EVENTS 🟢
     path('admin/api/event-action/', views.admin_api_action, name='admin_api_action'),
 
-    path('admin/', admin.site.urls),
+    path('django-admin/', admin.site.urls),
 
     path('adviser/dashboard/', views.adviser_dashboard, name='adviser_dashboard'),
     path('adviser/history/', views.adviser_history, name='adviser_history'),

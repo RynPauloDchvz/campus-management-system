@@ -65,13 +65,13 @@ def verify_face(live_base64, anchor_base64):
             cv2.imwrite(f1.name, img1)
             cv2.imwrite(f2.name, img2)
             
-            # 🟢 Facenet + opencv provides the best balance of speed and accuracy for webcams/CPUs
-            # 🟢 RetinaFace is too slow for real-time web verification, so we use opencv
+            # 🟢 ArcFace provides superior accuracy for face recognition
+            # 🟢 Using opencv backend as it is much faster for web/CPU compared to RetinaFace
             result = DeepFace.verify(
                 img1_path=f1.name, 
                 img2_path=f2.name, 
                 enforce_detection=False,
-                model_name='Facenet', 
+                model_name='ArcFace', 
                 detector_backend='opencv'
             )
             
@@ -79,19 +79,14 @@ def verify_face(live_base64, anchor_base64):
             os.unlink(f2.name)
             return result['verified'], result['distance']
     except Exception as e:
-        print(f"DeepFace Error: {str(e)}")
-        # Fallback to an even lighter model if Facenet fails
+        print(f"DeepFace ArcFace Error: {str(e)}")
+        # Clean up files if error occurs
         try:
-             result = DeepFace.verify(
-                img1_path=f1.name, 
-                img2_path=f2.name, 
-                enforce_detection=False,
-                model_name='VGG-Face',
-                detector_backend='opencv'
-            )
-             return result['verified'], result['distance']
+            if os.path.exists(f1.name): os.unlink(f1.name)
+            if os.path.exists(f2.name): os.unlink(f2.name)
         except:
-            return False, 1.0
+            pass
+        return False, 1.0
 
 def get_sentiment(text):
     """

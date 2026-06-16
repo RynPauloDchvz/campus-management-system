@@ -254,20 +254,61 @@
         .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px;}
 
         .mobile-navbar { display: none; }
-        .mobile-menu { display: none; }
+        .mobile-bottom-nav { display: none; }
+        .profile-bubble-overlay, .profile-bubble-card { display: none; }
+        .bottom-sheet-overlay, .bottom-sheet { display: none; }
 
         @media (max-width: 900px) {
             .sidebar { display: none; }
             .mobile-navbar { display: flex; position: sticky; top: 0; z-index: 1000; justify-content: space-between; align-items: center; padding: 15px 5%; background: var(--card-bg); border-bottom: 1px solid var(--border); }
-            .mobile-menu { display: none; position: fixed; top: 65px; left: 0; width: 100%; background: var(--card-bg); padding: 20px; z-index: 999; flex-direction: column; gap: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-            .mobile-menu.active { display: flex; }
-            .main-content { margin-left: 0; width: 100%; padding: 20px; }
+            /* Hide the old desktop top bar logic in mobile */
+            .main-content { margin-left: 0; width: 100%; padding: 15px; padding-bottom: 90px; }
             body.sidebar-expanded .main-content { margin-left: 0; width: 100%; }
-            .top-bar { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .admin-profile { align-self: flex-end; margin-top: -45px; }
+            .top-bar { display: none; } /* Hide the desktop top bar in mobile since mobile-navbar handles it */
             
-            .nav-submenu { position: static; display: none; padding-left: 32px; box-shadow: none; border: none; width: 100%; background: transparent; }
-            .nav-item-dropdown.open .nav-submenu { display: flex; }
+            /* Bottom Nav CSS */
+            .mobile-bottom-nav { display: block; position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; padding: 0 10px 10px 10px; pointer-events: none; }
+            .mobile-bottom-nav-inner { position: relative; width: 100%; height: 64px; background: var(--pup-maroon); border-radius: 16px; display: flex; box-shadow: 0 10px 25px rgba(0,0,0,0.3); pointer-events: auto; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
+            .mobile-nav-scroll { display: flex; align-items: center; height: 100%; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding: 0 10px; gap: 5px; scroll-behavior: smooth; z-index: 20; position: relative; flex-grow: 1; }
+            .mobile-nav-scroll::-webkit-scrollbar { display: none; }
+            
+            .nav-item-btn { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px; height: 100%; cursor: pointer; z-index: 30; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+            .nav-item-btn i { font-size: 1.5rem; color: rgba(255,255,255,0.6); transition: 0.3s; }
+            .nav-item-btn span { font-size: 0.55rem; font-weight: 800; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-top: 4px; transition: 0.3s; letter-spacing: 0.5px; }
+            
+            .nav-item-btn.active { transform: scale(1.1); }
+            .nav-item-btn.active i { color: #fff; }
+            .nav-item-btn.active span { color: #fff; }
+            
+            .nav-indicator-box { position: absolute; height: 54px; top: 5px; background: #000; border-radius: 12px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; z-index: 10; border: 2px solid rgba(255,255,255,0.1); box-shadow: 0 10px 15px rgba(0,0,0,0.5); }
+            [data-theme="light"] .nav-indicator-box { background: #fff; border-color: rgba(0,0,0,0.05); }
+            [data-theme="light"] .nav-item-btn.active i { color: var(--pup-maroon); }
+            [data-theme="light"] .nav-item-btn.active span { color: var(--pup-maroon); }
+            
+            /* Mobile Grid overrides for Admin Dashboard */
+            .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+            .stat-card { padding: 15px !important; }
+            .stat-value { font-size: 1.5rem !important; }
+            .stat-label { font-size: 0.65rem !important; }
+            .stat-icon { font-size: 2rem !important; right: 10px !important; }
+            .charts-container { grid-template-columns: 1fr !important; }
+            
+            /* Profile Bubble Overlay CSS */
+            .profile-bubble-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 2999; }
+            .profile-bubble-overlay.active { display: block; }
+            .profile-bubble-card { display: block; position: fixed; top: 75px; right: 15px; width: 280px; background: var(--card-bg); border-radius: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); border: 1px solid var(--border); overflow: hidden; transform: translateY(-10px) scale(0.95); opacity: 0; pointer-events: none; transition: 0.2s ease-out; z-index: 3000; font-family: 'Inter'; }
+            .profile-bubble-card.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+            
+            /* Bottom Sheet Modal CSS */
+            .bottom-sheet-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; }
+            .bottom-sheet-overlay.active { display: block; }
+            .bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; background: var(--card-bg); border-radius: 24px 24px 0 0; padding: 20px; z-index: 3001; transition: 0.3s ease-in-out; box-shadow: 0 -10px 25px rgba(0,0,0,0.3); border-top: 1px solid var(--border); max-height: 80vh; display: flex; flex-direction: column; }
+            .bottom-sheet.active { bottom: 0; }
+            .bottom-sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+            .bottom-sheet-content { overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+            .bottom-sheet-btn { display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--input-bg); border-radius: 12px; color: var(--text-main); text-decoration: none; font-weight: 700; transition: 0.2s; border: 1px solid transparent; }
+            .bottom-sheet-btn i { font-size: 1.5rem; color: var(--accent); }
+            .bottom-sheet-btn:active { background: var(--hover-bg); border-color: var(--border); }
         }
     </style>
     
@@ -295,7 +336,7 @@
         </a>
         
         <div class="nav-item-dropdown" id="manageDropdown">
-            <a href="javascript:void(0)" onclick="document.getElementById('manageDropdown').classList.toggle('open')" data-title="Manage Accounts" class="nav-link {% if 'manage' in request.path %}active{% endif %}">
+            <a href="javascript:void(0)" onclick="document.getElementById('manageDropdown').classList.toggle('open')" data-title="Manage Accounts" class="nav-link {% if 'manage' in request.path or 'account-history' in request.path %}active{% endif %}">
                 <i class="ph-bold ph-users-three"></i> 
                 <span class="nav-text">Manage Accounts</span>
             </a>
@@ -355,44 +396,127 @@
     <nav class="mobile-navbar">
         <div style="display:flex; align-items:center; gap: 10px;">
             <img src="{% static 'images/PUPLogo.png' %}" style="height:35px;" alt="PUP Logo">
-            <span style="font-weight:bold; color:var(--accent);">ADMIN</span>
+            <span style="font-weight:900; color:var(--accent); letter-spacing: 0.5px;">ADMIN</span>
         </div>
-        <i class="ph-bold ph-list" style="font-size:2rem; color:var(--accent); cursor:pointer;" onclick="document.getElementById('mobileMenu').classList.toggle('active')"></i>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <!-- Notification Bell Mobile -->
+            <div style="position: relative;">
+                <button onclick="window.location.href='/admin/notifications/'" style="width: 40px; height: 40px; border-radius: 50%; background: var(--input-bg); border: 2px solid transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; outline: none;">
+                    <i id="notifBellMobile" class="ph-fill ph-bell" style="font-size: 1.5rem; color: var(--accent);"></i>
+                </button>
+                <span id="notifBadgeMobile" style="position: absolute; top: -2px; right: -2px; background: #dc3545; color: white; font-size: 0.6rem; font-weight: 900; width: 18px; height: 18px; border-radius: 50%; display: none; align-items: center; justify-content: center; border: 2px solid var(--card-bg);">0</span>
+            </div>
+
+            <!-- Profile Avatar Mobile -->
+            <div style="position: relative;">
+                <button onclick="toggleProfileBubble()" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); background: var(--pup-maroon); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; outline: none; overflow: hidden; font-weight: bold; font-size: 0.9rem;">
+                    AD
+                </button>
+            </div>
+        </div>
     </nav>
     
-    <div id="mobileMenu" class="mobile-menu">
-        <a href="/admin/" style="color:var(--text-main); text-decoration:none; padding:10px;"><i class="ph-bold ph-squares-four"></i> Dashboard</a>
-        <div style="display: flex; flex-direction: column;">
-            <a href="javascript:void(0)" onclick="document.getElementById('mobileManageMenu').classList.toggle('active')" style="color:var(--text-main); text-decoration:none; padding:10px; display:flex; justify-content:space-between; align-items:center;">
-                <span style="display: flex; align-items: center; gap: 5px;"><i class="ph-bold ph-users-three"></i> Manage Accounts</span>
-            </a>
-            <div id="mobileManageMenu" class="mobile-submenu">
-                <a href="/admin/manage-accounts/" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;"><i class="ph-bold ph-student"></i> Students</a>
-                <a href="/admin/manage-organizers/" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;"><i class="ph-bold ph-users"></i> Student Orgs</a>
-            </div>
+    <!-- Profile Bubble Modal (Mobile) -->
+    <div id="profileBubbleOverlay" class="profile-bubble-overlay" onclick="toggleProfileBubble()"></div>
+    <div id="profileBubbleCard" class="profile-bubble-card">
+        <div style="height: 80px; background: var(--pup-maroon); position: relative;">
+            <button class="theme-toggle" onclick="toggleTheme()" style="position: absolute; top: 12px; left: 12px; background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer;" title="Toggle Theme">
+                <i class="ph-fill ph-moon" style="font-size: 1.3rem;"></i>
+            </button>
+            <button onclick="toggleProfileBubble()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer;"><i class="ph-bold ph-x" style="font-size: 1.2rem;"></i></button>
         </div>
-        <a href="/admin/event-approvals/" style="color:var(--text-main); text-decoration:none; padding:10px;"><i class="ph-bold ph-check-circle"></i> Event Approvals</a>
-        
-        <div style="display: flex; flex-direction: column;">
-            <a href="javascript:void(0)" onclick="document.getElementById('mobileOrgMenu').classList.toggle('active')" style="color:var(--text-main); text-decoration:none; padding:10px; display:flex; justify-content:space-between; align-items:center;">
-                <span style="display: flex; align-items: center; gap: 5px;"><i class="ph-bold ph-buildings"></i> Org Monitors</span>
-            </a>
-            <div id="mobileOrgMenu" class="mobile-submenu custom-scrollbar" style="max-height: 200px; overflow-y: auto;">
-                <a href="{% url 'org_monitor' %}?org=ITO" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">ITO</a>
-                <a href="{% url 'org_monitor' %}?org=ITS" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">ITS</a>
-                <a href="{% url 'org_monitor' %}?org=YEO" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">YEO</a>
-                <a href="{% url 'org_monitor' %}?org=FTO" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">FTO</a>
-                <a href="{% url 'org_monitor' %}?org=PAS" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">PAS</a>
-                <a href="{% url 'org_monitor' %}?org=CAO" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">CAO</a>
-                <a href="{% url 'org_monitor' %}?org=NEWS" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">NEWS</a>
-                <a href="{% url 'org_monitor' %}?org=PRIDE" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">PRIDE</a>
-                <a href="{% url 'org_monitor' %}?org=ROTC" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">ROTC</a>
-                <a href="{% url 'org_monitor' %}?org=PUSO" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">PUSO</a>
-                <a href="{% url 'org_monitor' %}?org=SSC" style="color:var(--text-muted); text-decoration:none; padding:10px 10px 10px 30px;">SSC</a>
+        <div style="padding: 20px; padding-top: 40px; text-align: center; position: relative;">
+            <div style="position: absolute; top: -40px; left: 50%; transform: translateX(-50%); width: 80px; height: 80px; border-radius: 50%; border: 4px solid var(--card-bg); background: var(--pup-maroon); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                AD
             </div>
+            <h3 style="font-weight: 900; color: var(--text-main); font-size: 1.1rem; text-transform: uppercase; margin-bottom: 2px;">{{ request.user.username|default:"Admin User" }}</h3>
+            <p style="font-size: 0.65rem; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">Super Admin</p>
+            
+            <button onclick="toggleProfileBubble(); confirmLogout();" style="width: 100%; padding: 12px; border-radius: 12px; background: var(--danger); color: white; border: none; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="ph-bold ph-sign-out" style="font-size: 1.1rem;"></i> Sign Out
+            </button>
         </div>
+    </div>
 
-        <a href="javascript:void(0)" onclick="confirmLogout()" style="color:var(--danger); text-decoration:none; padding:10px;"><i class="ph-bold ph-sign-out"></i> Logout</a>
+    <!-- Bottom Navigation Bar (Mobile) -->
+    <div class="mobile-bottom-nav lg:hidden">
+        <div class="mobile-bottom-nav-inner">
+            <div id="mobileNavScroll" class="mobile-nav-scroll">
+                <div id="navIndicator" class="nav-indicator-box"></div>
+                
+                <div class="nav-item-btn {% if request.path == '/admin/' %}active{% endif %}" onclick="navigateBottomNav(this, '/admin/')">
+                    <i class="{% if request.path == '/admin/' %}ph-fill{% else %}ph-bold{% endif %} ph-squares-four"></i>
+                    <span>Dashboard</span>
+                </div>
+                
+                <div class="nav-item-btn {% if 'manage' in request.path or 'account-history' in request.path %}active{% endif %}" onclick="openBottomSheet('manageAccountsSheet', this)">
+                    <i class="{% if 'manage' in request.path or 'account-history' in request.path %}ph-fill{% else %}ph-bold{% endif %} ph-users-three"></i>
+                    <span>Manage</span>
+                </div>
+                
+                <div class="nav-item-btn {% if request.path == '/admin/event-approvals/' %}active{% endif %}" onclick="navigateBottomNav(this, '/admin/event-approvals/')">
+                    <i class="{% if request.path == '/admin/event-approvals/' %}ph-fill{% else %}ph-bold{% endif %} ph-check-circle"></i>
+                    <span>Approvals</span>
+                </div>
+                
+                <div class="nav-item-btn {% if request.path == '/admin/audit-logs/' %}active{% endif %}" onclick="navigateBottomNav(this, '/admin/audit-logs/')">
+                    <i class="{% if request.path == '/admin/audit-logs/' %}ph-fill{% else %}ph-bold{% endif %} ph-shield-check"></i>
+                    <span>Audit Logs</span>
+                </div>
+                
+                <div class="nav-item-btn {% if 'org-monitor' in request.path %}active{% endif %}" onclick="openBottomSheet('orgMonitorsSheet', this)">
+                    <i class="{% if 'org-monitor' in request.path %}ph-fill{% else %}ph-bold{% endif %} ph-buildings"></i>
+                    <span>Monitors</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Sheet Modal: Manage Accounts -->
+    <div id="manageAccountsOverlay" class="bottom-sheet-overlay" onclick="closeBottomSheet('manageAccountsSheet')"></div>
+    <div id="manageAccountsSheet" class="bottom-sheet">
+        <div class="bottom-sheet-header">
+            <h3 style="margin: 0; color: var(--text-main); font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;"><i class="ph-fill ph-users-three" style="color: var(--accent);"></i> Manage Accounts</h3>
+            <button onclick="closeBottomSheet('manageAccountsSheet')" style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="bottom-sheet-content">
+            <a href="/admin/manage-accounts/" class="bottom-sheet-btn">
+                <i class="ph-fill ph-student" style="color: var(--pup-maroon);"></i>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 1rem;">Students</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">Manage student accounts and records</span>
+                </div>
+            </a>
+            <a href="/admin/manage-organizers/" class="bottom-sheet-btn">
+                <i class="ph-fill ph-users" style="color: var(--pup-gold);"></i>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 1rem;">Student Orgs</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">Manage organizer credentials</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Bottom Sheet Modal: Org Monitors -->
+    <div id="orgMonitorsOverlay" class="bottom-sheet-overlay" onclick="closeBottomSheet('orgMonitorsSheet')"></div>
+    <div id="orgMonitorsSheet" class="bottom-sheet">
+        <div class="bottom-sheet-header">
+            <h3 style="margin: 0; color: var(--text-main); font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;"><i class="ph-fill ph-buildings" style="color: var(--accent);"></i> Org Monitors</h3>
+            <button onclick="closeBottomSheet('orgMonitorsSheet')" style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="bottom-sheet-content custom-scrollbar">
+            <a href="{% url 'org_monitor' %}?org=ITO" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> Information Technology Org (ITO)</a>
+            <a href="{% url 'org_monitor' %}?org=ITS" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> Institute of Technology Society (ITS)</a>
+            <a href="{% url 'org_monitor' %}?org=YEO" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> Young Entrepreneurship Org (YEO)</a>
+            <a href="{% url 'org_monitor' %}?org=FTO" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> Future Teacher Org (FTO)</a>
+            <a href="{% url 'org_monitor' %}?org=PAS" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> Public Administration Society (PAS)</a>
+            <a href="{% url 'org_monitor' %}?org=CAO" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> Culture and Arts (CAO)</a>
+            <a href="{% url 'org_monitor' %}?org=NEWS" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> NEWSETTE</a>
+            <a href="{% url 'org_monitor' %}?org=PRIDE" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> PRIDEVerse</a>
+            <a href="{% url 'org_monitor' %}?org=ROTC" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> ROTC</a>
+            <a href="{% url 'org_monitor' %}?org=PUSO" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> PUP Unisan Sports Org (PUSO)</a>
+            <a href="{% url 'org_monitor' %}?org=SSC" class="bottom-sheet-btn" style="padding: 10px 15px;"><i class="ph-bold ph-users"></i> Supreme Student Council (SSC)</a>
+        </div>
     </div>
 
     <main class="main-content">
@@ -521,7 +645,6 @@
         }
         
         function confirmLogout() { 
-            document.getElementById('mobileMenu').classList.remove('active');
             const modal = document.getElementById('logoutModal');
             modal.style.display = 'flex'; 
             setTimeout(() => { modal.classList.add('active'); }, 10);
@@ -583,17 +706,29 @@
             const badge = document.getElementById('notifBadge');
             const dropBadge = document.getElementById('notifDropdownBadge');
             const list = document.getElementById('notifList');
+            const mobileBell = document.getElementById('notifBellMobile');
+            const mobileBadge = document.getElementById('notifBadgeMobile');
 
             if(unreadCount > 0) {
-                bell.classList.add('notify-active');
-                badge.style.display = 'block';
-                badge.innerText = unreadCount;
-                dropBadge.innerText = unreadCount + ' New';
+                if (bell) bell.classList.add('notify-active');
+                if (badge) { badge.style.display = 'block'; badge.innerText = unreadCount; }
+                if (dropBadge) dropBadge.innerText = unreadCount + ' New';
+                
+                if (mobileBell) mobileBell.classList.add('notify-active');
+                if (mobileBadge) {
+                    mobileBadge.style.display = 'flex';
+                    mobileBadge.innerText = unreadCount > 9 ? '9+' : unreadCount;
+                }
             } else {
-                bell.classList.remove('notify-active');
-                badge.style.display = 'none';
-                dropBadge.innerText = '0 New';
+                if (bell) bell.classList.remove('notify-active');
+                if (badge) badge.style.display = 'none';
+                if (dropBadge) dropBadge.innerText = '0 New';
+                
+                if (mobileBell) mobileBell.classList.remove('notify-active');
+                if (mobileBadge) mobileBadge.style.display = 'none';
             }
+
+            if(!list) return;
 
             if(adminNotifications.length === 0) {
                 list.innerHTML = `
@@ -680,8 +815,90 @@
             }, 6000);
         }
 
+        // --- Mobile Layout Logic (Bottom Nav & Modals) ---
+        function toggleProfileBubble() {
+            const overlay = document.getElementById('profileBubbleOverlay');
+            const card = document.getElementById('profileBubbleCard');
+            if (overlay.classList.contains('active')) {
+                overlay.classList.remove('active');
+                card.classList.remove('active');
+            } else {
+                overlay.classList.add('active');
+                card.classList.add('active');
+            }
+        }
+
+        function openBottomSheet(sheetId, btnEl) {
+            const overlayId = sheetId.replace('Sheet', 'Overlay');
+            document.getElementById(overlayId).classList.add('active');
+            document.getElementById(sheetId).classList.add('active');
+            updateNavIndicator(btnEl);
+        }
+
+        function closeBottomSheet(sheetId) {
+            const overlayId = sheetId.replace('Sheet', 'Overlay');
+            document.getElementById(overlayId).classList.remove('active');
+            document.getElementById(sheetId).classList.remove('active');
+            
+            // Revert indicator back to the truly active link
+            setTimeout(() => {
+                const trulyActive = document.querySelector('.mobile-nav-scroll .nav-item-btn.active');
+                if (trulyActive) updateNavIndicator(trulyActive);
+            }, 300);
+        }
+
+        function navigateBottomNav(btnEl, url) {
+            updateNavIndicator(btnEl);
+            setTimeout(() => {
+                window.location.href = url;
+            }, 200);
+        }
+
+        function updateNavIndicator(targetEl) {
+            const indicator = document.getElementById('navIndicator');
+            const scrollContainer = document.getElementById('mobileNavScroll');
+            if (!indicator || !targetEl || !scrollContainer) return;
+            
+            // Remove active classes from others visually
+            document.querySelectorAll('.mobile-nav-scroll .nav-item-btn').forEach(btn => {
+                if(btn !== targetEl && !btn.classList.contains('active')) {
+                    btn.querySelector('i').classList.replace('ph-fill', 'ph-bold');
+                }
+            });
+
+            // Make target visually active
+            targetEl.querySelector('i').classList.replace('ph-bold', 'ph-fill');
+
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
+            
+            // Calculate relative position accounting for scroll
+            const offsetLeft = targetRect.left - containerRect.left + scrollContainer.scrollLeft;
+            
+            indicator.style.width = `${targetRect.width}px`;
+            indicator.style.left = `${offsetLeft}px`;
+            indicator.style.opacity = '1';
+        }
+
+        function initMobileNav() {
+            if (window.innerWidth > 900) return;
+            const activeNav = document.querySelector('.mobile-nav-scroll .nav-item-btn.active');
+            if (activeNav) {
+                // Ensure layout is rendered before calculating width
+                setTimeout(() => updateNavIndicator(activeNav), 100);
+                // Center the active item in the scroll view
+                activeNav.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 900) initMobileNav();
+        });
+
         window.addEventListener('load', () => { 
             initTheme(); 
+            initMobileNav();
+
             fetchAdminNotifs();
             setInterval(fetchAdminNotifs, 15000); // Poll every 15s
 

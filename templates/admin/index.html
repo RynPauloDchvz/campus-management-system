@@ -253,6 +253,12 @@
         const maroon = '#800000';
 
         const ctxRating = document.getElementById('ratingChart').getContext('2d');
+        
+        // Create gradient for rating bars
+        const ratingGradient = ctxRating.createLinearGradient(0, 0, 400, 0);
+        ratingGradient.addColorStop(0, 'rgba(212, 175, 55, 0.8)'); // gold
+        ratingGradient.addColorStop(1, 'rgba(212, 175, 55, 1)');
+        
         ratingChart = new Chart(ctxRating, {
             type: 'bar',
             data: {
@@ -260,17 +266,27 @@
                 datasets: [{
                     label: 'Ratings',
                     data: {{ ratings_data|safe }},
-                    backgroundColor: [gold, gold, '#17a2b8', '#ffc107', '#dc3545'],
-                    borderRadius: 6
+                    backgroundColor: [
+                        ratingGradient,
+                        ratingGradient,
+                        'rgba(23, 162, 184, 0.8)', // info
+                        'rgba(255, 193, 7, 0.8)', // warning
+                        'rgba(220, 53, 69, 0.8)'  // danger
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false
                 }]
             },
             options: { 
                 indexAxis: 'y', responsive: true, maintainAspectRatio: false, 
                 scales: { 
-                    x: { grid: { color: gridColor }, ticks: { color: textColor, precision: 0 } }, 
-                    y: { grid: { display: false }, ticks: { color: textColor, font: {weight: 'bold'} } } 
+                    x: { grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, precision: 0, font: {family: 'Inter', weight: 600} } }, 
+                    y: { grid: { display: false }, ticks: { color: textColor, font: {family: 'Inter', weight: 'bold'} } } 
                 }, 
-                plugins: { legend: { display: false } } 
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleFont: {family: 'Inter'}, bodyFont: {family: 'Inter'}, padding: 12, cornerRadius: 8 }
+                } 
             }
         });
 
@@ -281,17 +297,27 @@
                 labels: ['Positive', 'Neutral', 'Negative'],
                 datasets: [{
                     data: {{ sentiment_data|safe }},
-                    backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
-                    borderWidth: 0, hoverOffset: 4
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], // Modern Tailwind colors
+                    borderWidth: 0, hoverOffset: 8
                 }]
             },
             options: { 
-                responsive: true, maintainAspectRatio: false, cutout: '70%',
-                plugins: { legend: { position: 'bottom', labels: { color: textColor, padding: 20, usePointStyle: true } } } 
+                responsive: true, maintainAspectRatio: false, cutout: '75%',
+                layout: { padding: 10 },
+                plugins: { 
+                    legend: { position: 'bottom', labels: { color: textColor, padding: 20, usePointStyle: true, pointStyle: 'circle', font: {family: 'Inter', weight: 600} } },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', bodyFont: {family: 'Inter', size: 14}, padding: 12, cornerRadius: 8 }
+                } 
             }
         });
 
         const ctxEvent = document.getElementById('eventChart').getContext('2d');
+        
+        // Create gradient for area chart
+        const eventGradient = ctxEvent.createLinearGradient(0, 0, 0, 300);
+        eventGradient.addColorStop(0, 'rgba(128, 0, 0, 0.4)');
+        eventGradient.addColorStop(1, 'rgba(128, 0, 0, 0.0)');
+
         eventChart = new Chart(ctxEvent, {
             type: 'line',
             data: {
@@ -299,18 +325,23 @@
                 datasets: [{
                     label: 'Events Held',
                     data: {{ event_freq_values|safe }},
-                    borderColor: maroon, backgroundColor: 'rgba(128, 0, 0, 0.1)',
-                    borderWidth: 3, tension: 0.4, fill: true,
-                    pointBackgroundColor: gold, pointRadius: 4
+                    borderColor: maroon, 
+                    backgroundColor: eventGradient,
+                    borderWidth: 3, tension: 0.5, fill: true, // Smoother curve with tension 0.5
+                    pointBackgroundColor: gold, pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7
                 }]
             },
             options: { 
                 responsive: true, maintainAspectRatio: false, 
+                interaction: { mode: 'index', intersect: false },
                 scales: { 
-                    y: { beginAtZero: true, ticks: { color: textColor, precision: 0 }, grid: { color: gridColor } }, 
-                    x: { ticks: { color: textColor }, grid: { display: false } } 
+                    y: { beginAtZero: true, ticks: { color: textColor, precision: 0, font: {family: 'Inter'} }, grid: { color: gridColor, drawBorder: false } }, 
+                    x: { ticks: { color: textColor, font: {family: 'Inter', weight: 600} }, grid: { display: false } } 
                 }, 
-                plugins: { legend: { display: false } } 
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleFont: {family: 'Inter'}, bodyFont: {family: 'Inter', weight: 'bold'}, padding: 12, cornerRadius: 8, displayColors: false }
+                } 
             }
         });
     }

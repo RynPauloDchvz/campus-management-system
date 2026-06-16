@@ -35,6 +35,23 @@
     .form-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
     .form-input { padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-family: 'Inter'; font-size: 0.9rem; width: 100%; outline: none; }
     .form-input:focus { border-color: var(--accent); }
+
+    /* 🟢 STUDENT ORG MOBILE RESPONSIVENESS 🟢 */
+    .manage-accounts-control { display: flex; gap: 15px; align-items: center; justify-content: flex-start; flex-wrap: wrap; }
+    .manage-accounts-control .search-box { flex-grow: 1; min-width: 250px; }
+    .action-buttons-group { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+    .manage-accounts-control .history-btn, .manage-accounts-control .create-btn { display: flex; align-items: center; gap: 8px; text-decoration: none; height: 42px; border-radius: 8px; padding: 0 15px; font-weight: 700; cursor: pointer; border: none; }
+    
+    @media (max-width: 900px) {
+        .manage-accounts-control { padding: 15px !important; gap: 10px; flex-direction: row; align-items: stretch; }
+        .manage-accounts-control .custom-select { order: 1; flex-grow: 1; width: calc(100% - 110px); }
+        .action-buttons-group { order: 2; margin-left: 0; flex-shrink: 0; gap: 5px; }
+        
+        .manage-accounts-control .history-btn, .manage-accounts-control .create-btn { width: 45px; padding: 0 !important; justify-content: center; }
+        .btn-text-hide { display: none; }
+        
+        .manage-accounts-control .search-box { order: 3; width: 100% !important; margin-top: 5px; }
+    }
 </style>
 {% endblock %}
 
@@ -130,37 +147,36 @@
 
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
 <div id="main-content-area" style="display: none;" class="fade-in">
-    <div class="control-bar" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
-        <div class="filter-group">
-            <select id="orgFilter" class="custom-select" onchange="filterUsers()">
-                <option value="all">All Organizations</option>
-                <option value="ITO">ITO</option>
-                <option value="ITS">ITS</option>
-                <option value="YEO">YEO</option>
-                <option value="FTO">FTO</option>
-                <option value="PAS">PAS</option>
-                <option value="CAO">CAO</option>
-                <option value="NEWS">NEWS (NEWSETTE)</option>
-                <option value="PRIDE">PRIDE (PRIDEVerse)</option>
-                <option value="ROTC">ROTC</option>
-                <option value="PUSO">PUSO</option>
-                <option value="SSC">SSC</option>
-            </select>
-            <div class="search-box">
-                <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-                <input type="text" id="searchInput" class="search-input" placeholder="Search name or username..." onkeyup="filterUsers()">
-            </div>
+    <div class="control-bar manage-accounts-control">
+        <select id="orgFilter" class="custom-select" onchange="filterUsers()">
+            <option value="all">All Organizations</option>
+            <option value="ITO">ITO</option>
+            <option value="ITS">ITS</option>
+            <option value="YEO">YEO</option>
+            <option value="FTO">FTO</option>
+            <option value="PAS">PAS</option>
+            <option value="CAO">CAO</option>
+            <option value="NEWS">NEWS (NEWSETTE)</option>
+            <option value="PRIDE">PRIDE (PRIDEVerse)</option>
+            <option value="ROTC">ROTC</option>
+            <option value="PUSO">PUSO</option>
+            <option value="SSC">SSC</option>
+        </select>
+        
+        <div class="search-box">
+            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search name or username..." onkeyup="filterUsers()" style="width: 100%;">
         </div>
         
-        <div style="display: flex; gap: 10px; align-items: center;">
+        <div class="action-buttons-group">
             <!-- 🟢 HISTORY BUTTON 🟢 -->
-            <a href="{% url 'account_history' %}" class="btn-cancel" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
-                <i class="ph-bold ph-clock-counter-clockwise"></i> Account History
+            <a href="{% url 'account_history' %}" class="btn-cancel history-btn" title="Account History">
+                <i class="ph-bold ph-clock-counter-clockwise" style="font-size: 1.2rem;"></i> <span class="btn-text-hide">Account History</span>
             </a>
 
             <!-- 🟢 CREATE BUTTON FOR STUDENT ORG 🟢 -->
-            <button class="btn-primary" onclick="openModal('createOrgModal')" style="display: flex; align-items: center; gap: 8px;">
-                <i class="ph-bold ph-user-plus"></i> Create Org Account
+            <button class="btn-primary create-btn" onclick="openModal('createOrgModal')" title="Create Org Account">
+                <i class="ph-bold ph-user-plus" style="font-size: 1.2rem;"></i> <span class="btn-text-hide">Create Org Account</span>
             </button>
         </div>
     </div>
