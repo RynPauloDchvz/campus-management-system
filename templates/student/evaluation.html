@@ -39,6 +39,7 @@
         .evaluation-card h3 {
             font-size: 0.9rem !important;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             display: -webkit-box;
             -webkit-box-orient: vertical;
             white-space: normal !important;
@@ -75,9 +76,15 @@
                     <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Active participation window</p>
                 </div>
             </div>
-            <div class="relative w-full sm:w-72">
-                <input type="text" id="openSearch" placeholder="Search sessions..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-[10px] font-black uppercase tracking-widest shadow-inner transition-all">
-                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto shrink-0">
+                <div class="relative w-full sm:w-72">
+                    <input type="text" id="openSearch" placeholder="Search sessions..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-[10px] font-black uppercase tracking-widest shadow-inner transition-all">
+                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                </div>
+                <a href="{% url 'student_event_history' %}" class="w-full sm:w-auto bg-gray-50 hover:bg-gray-200 dark:bg-[#111] dark:hover:bg-[#222] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-xl py-3.5 px-5 flex items-center justify-center gap-2 font-bold text-[10px] uppercase tracking-widest transition-colors shadow-inner">
+                    <i class="ph-bold ph-clock-counter-clockwise text-lg"></i>
+                    <span class="inline sm:hidden lg:inline">Evaluation History</span>
+                </a>
             </div>
         </div>
 

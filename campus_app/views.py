@@ -505,6 +505,9 @@ def student_profile(request):
     return render(request, 'student/profile.html', context)
 
 def get_student_notifications(student):
+    if not student.email_notifications:
+        return []
+
     notifications = []
     now = timezone.now()
     today = now.date()
@@ -2185,6 +2188,12 @@ def organizer_attendance_history(request):
     history_data = []
     for att in org_attendances:
         e = att.event
+        
+        img_url = '/static/images/PUPLogo.png'
+        if e.thumbnail: img_url = e.thumbnail.url
+        elif getattr(e, 'event_cover_photo', None): img_url = e.event_cover_photo.url
+        elif getattr(e, 'cover_photo', None): img_url = e.cover_photo.url
+
         history_data.append({
             'id': e.id,
             'title': e.event_title,
@@ -2192,7 +2201,7 @@ def organizer_attendance_history(request):
             'time': att.time_in.strftime('%I:%M %p') if att.time_in else '--',
             'venue': e.venue,
             'type': 'Attendance',
-            'img': e.thumbnail.url if e.thumbnail else '/static/images/PUPLogo.png',
+            'img': img_url,
             'capture_img': att.capture_image.url if att.capture_image else '/static/images/PUPLogo.png',
             'matched': att.face_matched,
             'location': att.location_zone or "Verified inside PUP Campus Perimeter."

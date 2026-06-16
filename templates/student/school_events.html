@@ -37,12 +37,21 @@
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">
 
-    <div class="text-center mb-12">
-        <h1 class="font-black text-3xl sm:text-5xl text-pup-maroon dark:text-pup-gold mb-4 uppercase tracking-tighter">Participation Hub</h1>
-        
-        <div class="relative max-w-2xl mx-auto">
-            <input type="text" id="eventSearch" placeholder="Search for approved campus events..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-2xl py-4 pl-12 pr-6 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-lg transition-all text-sm sm:text-base font-bold uppercase tracking-tight">
-            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+        <div>
+            <h1 class="font-black text-3xl sm:text-5xl text-pup-maroon dark:text-pup-gold mb-2 uppercase tracking-tighter leading-none">Participation Hub</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium leading-relaxed max-w-xl">Browse, verify, and authorize your participation in approved institutional campus events through biometric synchronization.</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
+            <div class="relative w-full sm:w-80">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" id="eventSearch" placeholder="Search events..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm font-bold uppercase tracking-tight">
+            </div>
+            <a href="{% url 'student_event_history' %}" class="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 dark:bg-[#111] dark:hover:bg-[#222] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-800 rounded-xl py-3.5 px-5 flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest transition-colors">
+                <i class="ph-bold ph-clock-counter-clockwise text-lg"></i>
+                <span class="inline sm:hidden lg:inline">Attendance History</span>
+            </a>
         </div>
     </div>
 

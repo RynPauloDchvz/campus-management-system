@@ -75,22 +75,8 @@
         </div>
     </div>
 
-    <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden mb-10">
-        <div class="overflow-x-auto hide-scrollbar">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50 dark:bg-[#111] border-b border-gray-100 dark:border-gray-800 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                    <tr>
-                        <th class="p-5 pl-8 whitespace-nowrap">Event Record</th>
-                        <th class="p-5 whitespace-nowrap">Venue</th>
-                        <th class="p-5 whitespace-nowrap">Timestamp Log</th>
-                        <th class="p-5 pr-8 whitespace-nowrap">Security Status</th>
-                    </tr>
-                </thead>
-                <tbody id="historyGrid" class="divide-y divide-gray-100 dark:divide-gray-800">
-                    <!-- Data injected here -->
-                </tbody>
-            </table>
-        </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 pb-10" id="historyGrid">
+        <!-- Data injected here -->
     </div>
     
     <div id="noResults" class="hidden text-center py-10 w-full col-span-full">
@@ -101,12 +87,12 @@
 
 </div>
 
-<div id="historyModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-0 sm:p-6 font-sans">
+<div id="historyModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-0 sm:p-4 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose" onclick="closeHistoryModal()"></div>
     
-    <div class="mobile-fullscreen relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors">
+    <div id="modalContentBlock" class="mobile-fullscreen relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700 z-10 transition-colors transform transition-transform scale-95 opacity-0 duration-300">
         
-        <button id="btnTopClose" onclick="closeHistoryModal()" class="fixed-close-btn absolute top-4 right-4 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors">
+        <button id="btnTopClose" onclick="closeHistoryModal()" class="fixed-close-btn absolute top-6 right-6 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-20">
             <i class="ph-bold ph-x"></i>
         </button>
 
@@ -160,6 +146,7 @@
 {% block extra_js %}
 <script id="history-data" type="application/json">{{ history_data_json|safe }}</script>
 <script>
+function initHistoryLogic() {
     const APP_STATIC_URL = "{% static 'images/' %}";
     const DEFAULT_IMG = "{% static 'images/PUPLogo.png' %}";
 
@@ -182,36 +169,32 @@
 
         filtered.forEach(item => {
             const isVerified = item.matched;
-            const statusClass = isVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+            const badgeClass = isVerified ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+            const icon = isVerified ? 'ph-check-circle' : 'ph-x-circle';
             const statusText = isVerified ? 'Verified' : 'Unmatched';
             
             const html = `
-                <tr class="hover:bg-gray-50/50 dark:hover:bg-[#111]/50 transition-colors cursor-pointer group" onclick="openHistoryModal(${item.id})">
-                    <td class="p-5 pl-8">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 border-2 border-gray-100 dark:border-gray-800">
-                                <img src="${item.img}" class="w-full h-full object-cover" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-1');">
-                            </div>
-                            <div class="min-w-0">
-                                <h4 class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm leading-none mb-1 truncate max-w-[200px] sm:max-w-[300px]">
-                                    ${item.title}
-                                </h4>
-                                <p class="text-[10px] text-pup-maroon dark:text-pup-gold font-black uppercase tracking-widest">${item.date}</p>
-                            </div>
+                <div class="bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" onclick="openHistoryModal(${item.id})">
+                    <div class="w-24 sm:w-full h-24 sm:h-32 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] border-r sm:border-r-0 sm:border-b border-gray-200 dark:border-gray-800">
+                        <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                        <div class="absolute top-2 right-2 hidden sm:block">
+                            <span class="text-[0.65rem] font-bold px-2 py-1 rounded-md uppercase ${badgeClass} shadow-sm"><i class="ph-fill ${icon}"></i> ${statusText}</span>
                         </div>
-                    </td>
-                    <td class="p-5 text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight truncate max-w-[150px]"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold mr-1"></i>${item.venue}</td>
-                    <td class="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">IN: ${item.time}</td>
-                    <td class="p-5 pr-8">
-                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-current opacity-80 ${statusClass}">${statusText}</span>
-                    </td>
-                </tr>
+                    </div>
+                    <div class="p-3 sm:p-4 flex flex-col justify-center flex-grow min-w-0">
+                        <div class="flex justify-between items-start mb-1">
+                            <div class="text-[0.65rem] font-bold text-pup-maroon dark:text-pup-gold truncate">${item.date}</div>
+                        </div>
+                        <h3 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white leading-tight mb-1 truncate">${item.title}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">${item.venue}</span></p>
+                    </div>
+                </div>
             `;
             grid.insertAdjacentHTML('beforeend', html);
         });
     }
 
-    function openHistoryModal(id) {
+    window.openHistoryModal = function(id) {
         const item = historyData.find(i => i.id === id);
         if(!item) return;
 
@@ -245,19 +228,47 @@
 
         document.getElementById('viewAttendanceProof').classList.remove('hidden');
 
-        document.getElementById('historyModal').classList.remove('hidden');
-        document.getElementById('historyModal').classList.add('flex');
+        const modal = document.getElementById('historyModal');
+        const modalContent = document.getElementById('modalContentBlock');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            if (modalContent) {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }
+        }, 10);
     }
 
-    function closeHistoryModal() {
-        document.getElementById('historyModal').classList.add('hidden');
-        document.getElementById('historyModal').classList.remove('flex');
-        document.body.style.overflow = '';
+    window.closeHistoryModal = function() {
+        const modal = document.getElementById('historyModal');
+        const modalContent = document.getElementById('modalContentBlock');
+        if (modalContent) {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+        }
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }, 300);
     }
 
     const searchInput = document.getElementById('historySearch');
     if (searchInput) searchInput.addEventListener('input', renderHistory);
-    document.addEventListener('DOMContentLoaded', renderHistory);
+    
+    // Initial render
+    renderHistory();
+}
+
+window.addEventListener('load', () => {
+    const checkInterval = setInterval(() => {
+        if (window.VUE_APP_MOUNTED) {
+            clearInterval(checkInterval);
+            initHistoryLogic();
+        }
+    }, 100);
+});
 </script>
 {% endblock extra_js %}

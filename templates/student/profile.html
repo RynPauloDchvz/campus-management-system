@@ -391,8 +391,8 @@
             </button>
             <div class="flex items-center justify-between gap-4 bg-gray-50 dark:bg-[#111] p-4 rounded-xl border border-gray-200 dark:border-gray-800">
                 <div>
-                    <h4 class="text-base font-bold text-gray-900 dark:text-white mb-0.5">Email Notifications</h4>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Receive alerts directly to your inbox.</p>
+                    <h4 class="text-base font-bold text-gray-900 dark:text-white mb-0.5">System & Email Notifications</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Receive alerts in your portal and directly to your inbox.</p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer shrink-0">
                     <input type="checkbox" id="emailNotifToggle" onchange="toggleEmailNotifications(this.checked)" {% if student.email_notifications %}checked{% endif %} class="sr-only peer">
@@ -646,12 +646,31 @@
         }
     }
 
+</script>
+
+<!-- SAFE DATA INJECTION to prevent VS Code syntax errors -->
+<script id="notifications-data" type="application/json">
+[
+    {% for notif in notifications %}
+    {
+        "id": "{{ notif.id }}",
+        "title": "{{ notif.title|escapejs }}",
+        "message": "{{ notif.message|escapejs }}",
+        "type": "{{ notif.type }}",
+        "sender": "{{ notif.sender|escapejs }}",
+        "date": "{{ notif.date }}",
+        "status": "{{ notif.status }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+
+<script>
+    const notificationsText = document.getElementById('notifications-data').textContent;
+    const parsedNotifications = notificationsText.trim() ? JSON.parse(notificationsText) : [];
+
     window.VUE_APP_DATA = {
-        allNotifs: [
-            {% for notif in notifications %}
-            { id: '{{ notif.id }}', title: '{{ notif.title|escapejs }}', message: '{{ notif.message|escapejs }}', type: '{{ notif.type }}', sender: '{{ notif.sender|escapejs }}', date: '{{ notif.date }}', status: '{{ notif.status }}' }{% if not forloop.last %},{% endif %}
-            {% endfor %}
-        ]
+        allNotifs: parsedNotifications
     };
 
     function getCsrfToken() {

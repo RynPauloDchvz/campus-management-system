@@ -441,8 +441,8 @@
 <script>
     window.DEFAULT_LOGO = "{% static 'images/PUPLogo.png' %}";
 
-    let readNotifs = {{ read_notifications_json|safe }};
-    let notifSettingEnabled = {{ email_notifications|yesno:"true,false" }};
+    let readNotifs = JSON.parse("{{ read_notifications_json|escapejs }}" || "[]");
+    let notifSettingEnabled = ("{{ email_notifications|yesno:'true,false' }}" === "true");
 
     function syncReadNotifications() {
         const formData = new FormData();

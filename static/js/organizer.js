@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         },
         mounted() {
+            window.VUE_APP_MOUNTED = true;
             // Safety: Ensure loading always clears
             setTimeout(() => { 
                 this.isLoading = false; 
