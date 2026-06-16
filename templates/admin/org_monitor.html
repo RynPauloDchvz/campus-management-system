@@ -140,7 +140,7 @@
             <i class="ph-fill ph-calendar-check stat-icon" style="color: #3b82f6;"></i>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Total Attendees</span>
+            <span class="stat-label">Total Respondents</span>
             <span class="stat-value" id="statTotalAttendees">0</span>
             <i class="ph-fill ph-users stat-icon" style="color: #10b981;"></i>
         </div>
@@ -167,71 +167,13 @@
 </div>
 {% endblock %}
 
-{% block modals %}
-<div id="analyticsModal" class="modal">
-    <div class="modal-box" style="max-width: 850px; text-align: left; padding: 35px; width: 95%;">
-        
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
-            <div>
-                <span id="modalOrgTag" class="badge badge-approved" style="margin-bottom: 10px; font-size: 0.8rem;">--</span>
-                <h2 id="modalEventTitle" style="font-size: 1.8rem; font-weight: 900; color: var(--text-main); margin-bottom: 5px; letter-spacing: -0.5px;">--</h2>
-                <p id="modalDate" style="color: var(--text-muted); font-size: 0.95rem; font-weight: 600;"><i class="ph-bold ph-calendar-blank"></i> --</p>
-            </div>
-            <button onclick="closeModal('analyticsModal')" style="background: none; border: none; font-size: 2rem; color: var(--text-muted); cursor: pointer; transition: 0.2s;"><i class="ph-bold ph-x"></i></button>
-        </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-            <div class="modal-stat-box">
-                <span class="modal-stat-label">Avg Score</span>
-                <span class="modal-stat-value" style="color: #3b82f6;" id="modalScore">--</span>
-            </div>
-            <div class="modal-stat-box">
-                <span class="modal-stat-label">Sentiment</span>
-                <span class="modal-stat-value" style="color: #10b981;" id="modalSent">--</span>
-            </div>
-            <div class="modal-stat-box">
-                <span class="modal-stat-label">Attendees</span>
-                <span class="modal-stat-value" id="modalAttendees">--</span>
-            </div>
-            <div class="modal-stat-box">
-                <span class="modal-stat-label">Top Rated Area</span>
-                <span class="modal-stat-value" style="font-size: 1.2rem; display: flex; height: 100%; align-items: center; justify-content: center;" id="modalTopArea">--</span>
-            </div>
-        </div>
-
-        <div class="modal-charts">
-            <div class="chart-panel">
-                <h4>Ratings per Criteria</h4>
-                <div style="position: relative; height: 220px; width: 100%;">
-                    <canvas id="modalBarChart"></canvas>
-                </div>
-            </div>
-            <div class="chart-panel">
-                <h4 style="text-align: center;">Attendee Demographics</h4>
-                <div style="position: relative; height: 220px; width: 100%; display: flex; justify-content: center;">
-                    <canvas id="modalPieChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-{% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // 🟢 DUMMY DATA FOR ALL ORGS 🟢
-    const systemEvents = [
-        { id: 1, org: 'ITO', title: "Seminar: AI Ethics", date: "May 12, 2026", attendees: 120, score: 4.8, sentiment: 92, topArea: 'Guest Speaker', barData: [4.9, 4.8, 4.2, 3.8, 4.7], pieData: [45, 30, 25, 20] },
-        { id: 2, org: 'YEO', title: "Startup Pitch Deck 101", date: "April 20, 2026", attendees: 80, score: 4.5, sentiment: 85, topArea: 'Relevance', barData: [4.5, 4.6, 4.0, 4.8, 4.5], pieData: [10, 40, 30, 0] },
-        { id: 3, org: 'ITO', title: "Web Dev Bootcamp", date: "May 05, 2026", attendees: 210, score: 3.9, sentiment: 65, topArea: 'Facilities', barData: [3.5, 3.8, 4.0, 4.2, 3.9], pieData: [100, 60, 40, 10] },
-        { id: 4, org: 'FTO', title: "Future Educators Symposium", date: "March 15, 2026", attendees: 150, score: 4.9, sentiment: 96, topArea: 'Time Mgt.', barData: [5.0, 4.9, 4.8, 4.7, 4.9], pieData: [50, 50, 25, 25] },
-        { id: 5, org: 'SSC', title: "General Assembly 2026", date: "Feb 10, 2026", attendees: 500, score: 4.1, sentiment: 75, topArea: 'Overall', barData: [4.0, 4.1, 4.5, 3.5, 4.2], pieData: [200, 150, 100, 50] },
-        { id: 6, org: 'PAS', title: "Public Policy Forum", date: "Jan 22, 2026", attendees: 95, score: 4.6, sentiment: 88, topArea: 'Relevance', barData: [4.8, 4.5, 4.6, 4.0, 4.7], pieData: [20, 25, 30, 20] }
-    ];
-
-    let barChartInstance = null;
-    let pieChartInstance = null;
+    // 🟢 REAL DATA FROM BACKEND 🟢
+    const systemEvents = JSON.parse('{{ history_data_json|escapejs|default:"[]" }}');
 
     // 🟢 Kunin ang Org parameter sa URL at I-set ang Variable 🟢
     const urlParams = new URLSearchParams(window.location.search);
@@ -269,11 +211,20 @@
         }
         
         let totalAtt = 0, totalScore = 0, totalSent = 0;
-        data.forEach(e => { totalAtt += e.attendees; totalScore += e.score; totalSent += e.sentiment; });
+        let eventsWithEvals = 0;
+        
+        data.forEach(e => { 
+            totalAtt += e.respondents; 
+            if (e.respondents > 0) {
+                totalScore += e.score; 
+                totalSent += e.sentiment; 
+                eventsWithEvals++;
+            }
+        });
         
         document.getElementById('statTotalAttendees').innerText = totalAtt;
-        document.getElementById('statAvgRating').innerText = (totalScore / data.length).toFixed(1);
-        document.getElementById('statAvgSentiment').innerText = Math.round(totalSent / data.length) + '%';
+        document.getElementById('statAvgRating').innerText = eventsWithEvals > 0 ? (totalScore / eventsWithEvals).toFixed(1) : '0.0';
+        document.getElementById('statAvgSentiment').innerText = eventsWithEvals > 0 ? Math.round(totalSent / eventsWithEvals) + '%' : '0%';
     }
 
     function renderList(data) {
@@ -289,14 +240,14 @@
             let scoreColor = event.score >= 4.0 ? '#10b981' : '#f59e0b';
             
             const card = `
-                <div class="event-row" onclick="openAnalyticsModal(${event.id})">
+                <div class="event-row" onclick="window.location.href='/admin/org-monitor/detail/?event_id=' + ${event.id}">
                     <div class="event-info">
                         <div class="event-icon">${event.org}</div>
                         <div>
                             <span class="event-title">${event.title}</span>
                             <div class="event-meta">
                                 <span><i class="ph-bold ph-calendar-blank"></i> ${event.date}</span>
-                                <span><i class="ph-bold ph-users"></i> ${event.attendees}</span>
+                                <span><i class="ph-bold ph-users"></i> ${event.respondents} Respondents</span>
                                 <span style="color: ${scoreColor}; font-weight: 800;"><i class="ph-fill ph-star"></i> ${event.score.toFixed(1)}</span>
                             </div>
                         </div>
@@ -308,74 +259,7 @@
         });
     }
 
-    // 🟢 MODAL LOGIC & CHARTS 🟢
-    function openAnalyticsModal(id) {
-        const event = systemEvents.find(e => e.id === id);
-        if (!event) return;
 
-        document.getElementById('modalOrgTag').innerText = event.org + " Event";
-        document.getElementById('modalEventTitle').innerText = event.title;
-        document.getElementById('modalDate').innerText = event.date;
-        document.getElementById('modalScore').innerText = event.score.toFixed(1);
-        document.getElementById('modalSent').innerText = event.sentiment + '%';
-        document.getElementById('modalAttendees').innerText = event.attendees;
-        document.getElementById('modalTopArea').innerText = event.topArea;
-
-        // Gamitin ang built-in modal function ng admin_base
-        const modal = document.getElementById('analyticsModal');
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
-        
-        setTimeout(() => renderCharts(event.barData, event.pieData), 100);
-    }
-
-    function renderCharts(barData, pieData) {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDark ? '#9ca3af' : '#6b7280';
-        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-
-        // BAR CHART
-        const ctxBar = document.getElementById('modalBarChart').getContext('2d');
-        if (barChartInstance) barChartInstance.destroy();
-        barChartInstance = new Chart(ctxBar, {
-            type: 'bar',
-            data: {
-                labels: ['Relevance', 'Speaker', 'Time Mgt.', 'Facilities', 'Overall'],
-                datasets: [{
-                    data: barData,
-                    backgroundColor: ['#3b82f6', '#3b82f6', '#f59e0b', '#ef4444', '#10b981'],
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { max: 5.0, grid: { color: gridColor }, ticks: { color: textColor, font: {family: 'Inter', weight: 'bold'} } },
-                    y: { grid: { display: false }, ticks: { color: textColor, font: {family: 'Inter', weight: 'bold'} } }
-                }
-            }
-        });
-
-        // PIE CHART
-        const ctxPie = document.getElementById('modalPieChart').getContext('2d');
-        if (pieChartInstance) pieChartInstance.destroy();
-        pieChartInstance = new Chart(ctxPie, {
-            type: 'doughnut',
-            data: {
-                labels: ['1st Yr', '2nd Yr', '3rd Yr', '4th Yr'],
-                datasets: [{
-                    data: pieData,
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#800000'],
-                    borderWidth: 0, hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, cutout: '70%',
-                plugins: { legend: { position: 'bottom', labels: { color: textColor, font: {family: 'Inter', weight: 'bold'} } } }
-            }
-        });
-    }
 
     window.addEventListener('load', () => {
         setTimeout(() => {

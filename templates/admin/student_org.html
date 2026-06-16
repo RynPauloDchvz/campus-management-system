@@ -38,12 +38,7 @@
 </style>
 {% endblock %}
 
-{% block tabs %}
-<div class="tab-container">
-    <a href="{% url 'manage_accounts' %}" class="tab-link">Student</a>
-    <a href="{% url 'manage_organizers' %}" class="tab-link active">Student Org</a>
-</div>
-{% endblock %}
+
 
 {% block content %}
 <!-- 🟢 SKELETON LOADING STATE 🟢 -->
@@ -207,10 +202,7 @@
                 <label class="form-label">Full Name (Representative)</label>
                 <input type="text" id="c_name" required placeholder="e.g. Juan Dela Cruz" class="form-input">
             </div>
-            <div class="form-group">
-                <label class="form-label">Email Address (For Password Reset)</label>
-                <input type="email" id="c_email" required placeholder="organizer@email.com" class="form-input">
-            </div>
+
             <div class="form-group">
                 <label class="form-label">Assign Organization</label>
                 <select id="c_org" required class="form-input" style="cursor: pointer;">
@@ -234,11 +226,14 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Login Password</label>
-                <input type="password" id="c_password" required placeholder="Enter secure password" class="form-input">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="c_password" required placeholder="Click generate code" class="form-input" style="flex: 1;" readonly>
+                    <button type="button" class="btn-primary" onclick="generatePassword()" style="white-space: nowrap;"><i class="ph-bold ph-key"></i> Generate Code</button>
+                </div>
             </div>
             <div class="modal-actions" style="justify-content: flex-end; margin-top: 25px;">
                 <button type="button" class="btn-cancel" onclick="closeModal('createOrgModal')">Cancel</button>
-                <button type="button" class="btn-primary" onclick="submitAction('create')">Create Account</button>
+                <button type="button" id="btn-create" class="btn-primary" onclick="submitAction('create')">Create Account</button>
             </div>
         </form>
     </div>
@@ -260,10 +255,7 @@
                 <label class="form-label">Full Name</label>
                 <input type="text" id="e_name" required class="form-input">
             </div>
-            <div class="form-group">
-                <label class="form-label">Email Address</label>
-                <input type="email" id="e_email" required class="form-input">
-            </div>
+
             <div class="form-group">
                 <label class="form-label">Organization</label>
                 <select id="e_org" required class="form-input" style="cursor: pointer;">
@@ -286,11 +278,14 @@
             </div>
             <div class="form-group">
                 <label class="form-label">New Password (Optional)</label>
-                <input type="password" id="e_password" placeholder="Leave blank to keep current password" class="form-input">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="e_password" placeholder="Click generate or type password" class="form-input" style="flex: 1;">
+                    <button type="button" class="btn-primary" onclick="generateEditPassword()" style="white-space: nowrap;"><i class="ph-bold ph-key"></i> Generate Code</button>
+                </div>
             </div>
             <div class="modal-actions" style="justify-content: flex-end; margin-top: 25px;">
                 <button type="button" class="btn-cancel" onclick="closeModal('editOrgModal')">Cancel</button>
-                <button type="button" class="btn-primary" onclick="submitAction('edit')">Save Changes</button>
+                <button type="button" id="btn-edit" class="btn-primary" onclick="submitAction('edit')">Save Changes</button>
             </div>
         </form>
     </div>
@@ -307,8 +302,34 @@
         <input type="hidden" id="d_id">
         <div class="modal-actions">
             <button type="button" class="btn-cancel" onclick="closeModal('deleteModal')">Cancel</button>
-            <button type="button" class="btn-primary" style="background: var(--danger);" onclick="submitAction('delete')">Yes, Deactivate</button>
+            <button type="button" id="btn-delete" class="btn-primary" style="background: var(--danger);" onclick="submitAction('delete')">Yes, Deactivate</button>
         </div>
+    </div>
+</div>
+
+<!-- 🟢 GENERATED PASSWORD MODAL 🟢 -->
+<div id="generatedPasswordModal" class="modal" style="z-index: 9999;">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <i class="ph-fill ph-key" style="font-size: 4rem; color: var(--accent); margin-bottom: 15px;"></i>
+        <h3 class="modal-title" style="margin-bottom: 10px;">Generated Password</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">
+            Please save this password and provide it to the organizer.
+        </p>
+        <div style="background: var(--input-bg); border: 1px dashed var(--border); padding: 15px; border-radius: 8px; font-size: 1.5rem; font-family: monospace; font-weight: bold; letter-spacing: 2px; color: var(--text-main); margin-bottom: 25px;" id="generatedPasswordDisplay">
+        </div>
+        <div class="modal-actions" style="justify-content: center;">
+            <button type="button" class="btn-primary" onclick="closeModal('generatedPasswordModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🟢 SUCCESS MODAL 🟢 -->
+<div id="successModal" class="modal" style="z-index: 10000;">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <i class="ph-fill ph-check-circle" style="font-size: 5rem; color: var(--success); margin-bottom: 15px;"></i>
+        <h3 class="modal-title" style="margin-bottom: 10px;">Success!</h3>
+        <p id="successMessage" style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 25px;">Action completed successfully.</p>
+        <button type="button" class="btn-primary" style="width: 100%;" onclick="location.reload()">Continue</button>
     </div>
 </div>
 {% endblock %}
@@ -410,7 +431,6 @@
         const user = usersData.find(u => u.id === id);
         document.getElementById('e_id').value = user.id;
         document.getElementById('e_name').value = user.name;
-        document.getElementById('e_email').value = user.email || '';
         document.getElementById('e_org').value = user.org;
         document.getElementById('e_username').value = user.username;
         document.getElementById('e_password').value = ''; 
@@ -424,30 +444,58 @@
         openModal('deleteModal');
     }
 
+    function generatePassword() {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        let password = "";
+        for (let i = 0; i < 12; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById('c_password').value = password;
+        document.getElementById('generatedPasswordDisplay').innerText = password;
+        openModal('generatedPasswordModal');
+    }
+
+    function generateEditPassword() {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        let password = "";
+        for (let i = 0; i < 12; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById('e_password').value = password;
+        document.getElementById('generatedPasswordDisplay').innerText = password;
+        openModal('generatedPasswordModal');
+    }
+
     // 🟢 DATABASE API REQUESTS (CREATE, EDIT, DELETE) 🟢
     async function submitAction(action) {
         let payload = { action: action };
+        let btn;
 
         if (action === 'create') {
             payload.name = document.getElementById('c_name').value;
-            payload.email = document.getElementById('c_email').value;
             payload.org = document.getElementById('c_org').value;
             payload.username = document.getElementById('c_username').value;
             payload.password = document.getElementById('c_password').value;
-            if(!payload.name || !payload.email || !payload.org || !payload.username || !payload.password) return alert("Fill all fields.");
+            if(!payload.name || !payload.org || !payload.username || !payload.password) return alert("Fill all fields.");
+            btn = document.getElementById('btn-create');
         } 
         else if (action === 'edit') {
             payload.id = document.getElementById('e_id').value;
             payload.name = document.getElementById('e_name').value;
-            payload.email = document.getElementById('e_email').value;
             payload.org = document.getElementById('e_org').value;
             payload.username = document.getElementById('e_username').value;
             payload.password = document.getElementById('e_password').value; // optional
-            if(!payload.name || !payload.email || !payload.org || !payload.username) return alert("Name, Email, Org, and Username are required.");
+            if(!payload.name || !payload.org || !payload.username) return alert("Name, Org, and Username are required.");
+            btn = document.getElementById('btn-edit');
         } 
         else if (action === 'delete') {
             payload.id = document.getElementById('d_id').value;
+            btn = document.getElementById('btn-delete');
         }
+
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="ph-bold ph-spinner ph-spin" style="animation: spin 1s linear infinite;"></i> Saving...`;
+        btn.disabled = true;
 
         const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
         const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
@@ -461,13 +509,21 @@
 
             const data = await response.json();
             if(data.status === 'success') {
-                alert(data.message);
-                location.reload(); // Refresh para makita ang update galing database
+                closeModal('createOrgModal');
+                closeModal('editOrgModal');
+                closeModal('deleteModal');
+                
+                document.getElementById('successMessage').innerText = data.message;
+                openModal('successModal');
             } else {
                 alert("Error: " + data.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         } catch (error) {
             alert("Server Error. Please try again.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     }
 

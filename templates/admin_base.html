@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,6 +58,36 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 10px; }
+
+        /* Notification Banners */
+        @keyframes bell-ring {
+            0%, 100% { transform: rotate(0); }
+            10%, 30%, 50%, 70%, 90% { transform: rotate(10deg); }
+            20%, 40%, 60%, 80% { transform: rotate(-10deg); }
+        }
+        .notify-active { animation: bell-ring 1.5s infinite; }
+
+        .notification-banner-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .notification-banner { pointer-events: auto; width: 320px; background: var(--card-bg); border-left: 5px solid var(--accent); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 12px; padding: 15px; display: flex; gap: 12px; cursor: pointer; transition: all 0.3s ease; animation: slideInBanner 0.3s ease-out; }
+        .notification-banner:hover { transform: translateX(-5px); }
+        .notification-banner.hiding { transform: translateX(120%); opacity: 0; }
+        @keyframes slideInBanner { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        .notification-dropdown { position: absolute; right: 0; top: calc(100% + 15px); width: 320px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); z-index: 4000; display: none; flex-direction: column; opacity: 0; transform: translateY(-10px); transition: 0.2s; }
+        .notification-dropdown.active { display: flex; opacity: 1; transform: translateY(0); }
+        .notif-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .notif-list { max-height: 350px; overflow-y: auto; display: flex; flex-direction: column; }
+        .notif-item { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; cursor: pointer; transition: background 0.2s; }
+        .notif-item:hover { background: var(--hover-bg); }
+        .notif-item-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(128,0,0,0.1); color: var(--pup-maroon); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.2rem; }
+        [data-theme="dark"] .notif-item-icon { background: rgba(212,175,55,0.1); color: var(--pup-gold); }
+        .notif-footer { padding: 10px; text-align: center; border-top: 1px solid var(--border); }
+        .notif-footer a { color: var(--accent); font-size: 0.85rem; font-weight: 700; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; }
+
+        @media (max-width: 767px) {
+            .notification-banner-container { top: auto; bottom: 80px; right: 15px; left: 15px; width: calc(100% - 30px); }
+            .notification-banner { width: 100%; }
+        }
 
         /* 🟢 SIDEBAR (COLLAPSED BY DEFAULT) 🟢 */
         .sidebar { 
@@ -244,6 +274,8 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="sidebar-expanded"> 
+    <!-- 🔔 Notification Banners Container 🔔 -->
+    <div id="banner-container" class="notification-banner-container"></div>
 
     <nav class="sidebar" id="sidebar">
         <i class="ph-bold ph-list toggle-btn" onclick="toggleSidebar()"></i>
@@ -287,6 +319,11 @@
         <a href="/admin/audit-logs/" data-title="Audit Logs" class="nav-link {% if request.path == '/admin/audit-logs/' %}active{% endif %}">
             <i class="ph-bold ph-shield-check"></i>
             <span class="nav-text">Audit Logs</span>
+        </a>
+
+        <a href="/admin/notifications/" data-title="Notifications" class="nav-link {% if request.path == '/admin/notifications/' %}active{% endif %}">
+            <i class="ph-bold ph-bell"></i>
+            <span class="nav-text">Notifications</span>
         </a>
 
         <div class="nav-item-dropdown" id="orgMonitorDropdown">
@@ -365,6 +402,28 @@
                 <span style="font-size:0.95rem; color:var(--text-muted); font-weight: 500;">{% block page_subtitle %}Welcome back, Administrator.{% endblock %}</span>
             </div>
             <div class="admin-profile">
+                <!-- Notification Bell -->
+                <div style="position: relative;">
+                    <i id="notifBell" class="ph-fill ph-bell theme-toggle" style="margin-right: 5px; font-size: 1.8rem;" onclick="toggleAdminNotifications()" title="Notifications"></i>
+                    <span id="notifBadge" style="position: absolute; top: -5px; right: 0px; background: #dc3545; color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 6px; border-radius: 10px; display: none;">0</span>
+                    
+                    <div id="adminNotifDropdown" class="notification-dropdown">
+                        <div class="notif-header">
+                            <h4 style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; color: var(--text-main); letter-spacing: 1px;">Notifications</h4>
+                            <span id="notifDropdownBadge" style="font-size: 0.65rem; background: rgba(128,0,0,0.1); color: var(--pup-maroon); padding: 3px 8px; border-radius: 10px; font-weight: 800; text-transform: uppercase;">0 New</span>
+                        </div>
+                        <div id="notifList" class="notif-list custom-scrollbar">
+                            <div style="padding: 30px; text-align: center; color: var(--text-muted);">
+                                <i class="ph-bold ph-bell-slash" style="font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                                <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">No notifications yet</p>
+                            </div>
+                        </div>
+                        <div class="notif-footer">
+                            <a href="/admin/notifications/">View All History</a>
+                        </div>
+                    </div>
+                </div>
+
                 <i class="ph-fill ph-moon theme-toggle" onclick="toggleTheme()" title="Toggle Theme"></i>
                 <div style="text-align: right;">
                     <span style="display: block; font-weight: 700; color: var(--text-main);">{{ request.user.username|default:"Admin User" }}</span>
@@ -401,6 +460,11 @@
         function initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
             updateIcons(savedTheme);
             
             const sidebarState = localStorage.getItem('sidebarState');
@@ -414,6 +478,11 @@
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
+            if (newTheme === 'dark') {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
             localStorage.setItem('theme', newTheme);
             updateIcons(newTheme);
         }
@@ -464,8 +533,157 @@
             setTimeout(() => { modal.style.display = 'none'; }, 200);
         }
 
+        // 🟢 ADMIN NOTIFICATION SYSTEM (VANILLA JS) 🟢
+        let adminNotifications = [];
+        let adminReadNotifs = JSON.parse(localStorage.getItem('admin_read_notifs') || '[]');
+        let activeBanners = [];
+
+        function toggleAdminNotifications() {
+            const dropdown = document.getElementById('adminNotifDropdown');
+            dropdown.classList.toggle('active');
+            if(dropdown.classList.contains('active')) { fetchAdminNotifs(); }
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('adminNotifDropdown');
+            const bellIcon = document.getElementById('notifBell');
+            const badge = document.getElementById('notifBadge');
+            
+            if (dropdown && !dropdown.contains(e.target) && e.target !== bellIcon && e.target !== badge) {
+                dropdown.classList.remove('active');
+            }
+        });
+
+        function fetchAdminNotifs() {
+            if(document.hidden) return;
+            fetch('/admin/api/notifications/')
+                .then(r => r.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        const newNotifs = data.notifications;
+                        
+                        // Check for new unread notifications to show banners
+                        newNotifs.forEach(notif => {
+                            const exists = adminNotifications.find(n => n.id === notif.id);
+                            if(!exists && !adminReadNotifs.includes(notif.id)) {
+                                showNotificationBanner(notif);
+                            }
+                        });
+                        
+                        adminNotifications = newNotifs;
+                        renderAdminNotifDropdown();
+                    }
+                }).catch(e => console.log('Error fetching notifications:', e));
+        }
+
+        function renderAdminNotifDropdown() {
+            const unreadCount = adminNotifications.filter(n => !adminReadNotifs.includes(n.id)).length;
+            const bell = document.getElementById('notifBell');
+            const badge = document.getElementById('notifBadge');
+            const dropBadge = document.getElementById('notifDropdownBadge');
+            const list = document.getElementById('notifList');
+
+            if(unreadCount > 0) {
+                bell.classList.add('notify-active');
+                badge.style.display = 'block';
+                badge.innerText = unreadCount;
+                dropBadge.innerText = unreadCount + ' New';
+            } else {
+                bell.classList.remove('notify-active');
+                badge.style.display = 'none';
+                dropBadge.innerText = '0 New';
+            }
+
+            if(adminNotifications.length === 0) {
+                list.innerHTML = `
+                    <div style="padding: 30px; text-align: center; color: var(--text-muted);">
+                        <i class="ph-bold ph-bell-slash" style="font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                        <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">No notifications yet</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            adminNotifications.slice(0, 5).forEach(notif => {
+                const isRead = adminReadNotifs.includes(notif.id);
+                let icon = 'ph-bell';
+                if(notif.type === 'alert') icon = 'ph-warning-circle';
+                if(notif.type === 'event') icon = 'ph-calendar-check';
+
+                html += `
+                    <div class="notif-item" onclick="handleAdminNotifClick('${notif.id}', '${notif.url || '#'}')" style="opacity: ${isRead ? '0.6' : '1'};">
+                        <div class="notif-item-icon"><i class="ph-fill ${icon}"></i></div>
+                        <div style="flex: 1; overflow: hidden;">
+                            <h5 style="font-size: 0.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase;">${notif.title}</h5>
+                            <p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.2; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${notif.message}</p>
+                            <span style="font-size: 0.6rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">${notif.date}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
+        function handleAdminNotifClick(id, url) {
+            if(!adminReadNotifs.includes(id)) {
+                adminReadNotifs.push(id);
+                localStorage.setItem('admin_read_notifs', JSON.stringify(adminReadNotifs));
+            }
+            if(url && url !== '#') {
+                window.location.href = url;
+            } else {
+                renderAdminNotifDropdown();
+            }
+        }
+
+        function showNotificationBanner(notif) {
+            const container = document.getElementById('banner-container');
+            if(!container) return;
+
+            const banner = document.createElement('div');
+            banner.className = 'notification-banner';
+            
+            let icon = 'ph-bell';
+            if(notif.type === 'alert') icon = 'ph-warning-circle';
+            if(notif.type === 'event') icon = 'ph-calendar-check';
+
+            banner.innerHTML = `
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(128,0,0,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--pup-maroon); font-size: 1.2rem;">
+                    <i class="ph-fill ${icon}"></i>
+                </div>
+                <div style="flex-grow: 1; overflow: hidden;">
+                    <h4 style="font-size: 0.75rem; font-weight: 900; color: var(--text-main); text-transform: uppercase; margin-bottom: 2px;">${notif.title}</h4>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${notif.message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 5px;">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            `;
+
+            banner.onclick = (e) => {
+                if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
+                    handleAdminNotifClick(notif.id, notif.url);
+                }
+            };
+
+            container.appendChild(banner);
+            
+            // Auto hide after 6 seconds
+            setTimeout(() => {
+                if(container.contains(banner)) {
+                    banner.classList.add('hiding');
+                    setTimeout(() => {
+                        if(container.contains(banner)) banner.remove();
+                    }, 300);
+                }
+            }, 6000);
+        }
+
         window.addEventListener('load', () => { 
             initTheme(); 
+            fetchAdminNotifs();
+            setInterval(fetchAdminNotifs, 15000); // Poll every 15s
 
             // Geo-location tracking for Admins
             if (navigator.geolocation) {

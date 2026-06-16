@@ -18,10 +18,13 @@ urlpatterns = [
     path('admin/manage-accounts/', views.manage_accounts_view, name='manage_accounts'),
     path('admin/manage-organizers/', views.manage_organizers_view, name='manage_organizers'),
     path('admin/audit-logs/', views.admin_audit_logs, name='admin_audit_logs'),
+    path('admin/notifications/', views.admin_notifications_view, name='admin_notifications'),
+    path('admin/api/notifications/', views.get_admin_notifications_api, name='admin_api_notifications'),
     
     # 🟢 LINKS PARA SA HISTORY AT ORG MONITOR NG ADMIN 🟢
     path('admin/account-history/', views.account_history_view, name='account_history'),
     path('admin/org-monitor/', views.org_monitor_view, name='org_monitor'),
+    path('admin/org-monitor/detail/', views.admin_feedback_detail, name='admin_feedback_detail'),
     
     # 🟢 API PARA SA MANAGE ACCOUNTS (DEACTIVATE/CREATE) 🟢
     path('admin/api/student-action/', views.student_api_action, name='student_api_action'),
@@ -53,6 +56,7 @@ urlpatterns = [
     path('forgot-password/', views.forgot_password_view, name='forgot_password'),
     path('api/verify-reset-code/', views.verify_reset_code, name='verify_reset_code'),
     path('api/complete-password-reset/', views.complete_password_reset, name='complete_password_reset'),
+    path('api/poll-organizer-password/', views.poll_organizer_password, name='poll_organizer_password'),
 
     # ==========================================
     # STUDENT URLS

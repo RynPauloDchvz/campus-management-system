@@ -1,0 +1,223 @@
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    /* Malambot na transition para sa Hover Effects */
+    .notif-card-transition { 
+        transition: all 0.2s ease-in-out; 
+    }
+    .notif-card-transition:hover { 
+        transform: translateX(5px); 
+        box-shadow: 0 6px 15px rgba(0,0,0,0.05); 
+    }
+    
+    /* Pumuputol sa mahabang text para hindi lumaki ang box */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;  
+        overflow: hidden;
+    }
+</style>
+{% endblock extra_head %}
+
+{% block skeleton %}
+<div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen pt-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <div class="w-32 h-4 rounded skeleton-shimmer"></div>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+            <div class="w-64 h-10 rounded-lg skeleton-shimmer"></div>
+            <div class="w-full sm:w-80 h-12 rounded-xl skeleton-shimmer"></div>
+        </div>
+        <div class="flex flex-col gap-4">
+            <div v-for="i in 6" :key="i" class="h-32 bg-white dark:bg-[#151515] rounded-2xl border border-gray-100 dark:border-gray-800 p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-start sm:items-center gap-4 flex-1 w-full">
+                    <div class="w-12 h-12 rounded-full skeleton-shimmer shrink-0"></div>
+                    <div class="space-y-2 flex-1">
+                        <div class="w-48 h-5 rounded skeleton-shimmer"></div>
+                        <div class="w-24 h-3 rounded skeleton-shimmer"></div>
+                        <div class="w-full h-4 rounded skeleton-shimmer"></div>
+                    </div>
+                </div>
+                <div class="w-20 h-4 rounded skeleton-shimmer shrink-0"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock skeleton %}
+
+{% block content %}
+<div v-pre>
+
+<div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300 pt-8">
+    
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+            <h1 class="text-3xl sm:text-4xl font-black text-pup-maroon dark:text-pup-gold uppercase tracking-wide flex items-center gap-3">
+                <i class="ph-fill ph-bell text-3xl"></i> Admin Notifications
+            </h1>
+            
+            <div class="relative w-full sm:w-80 shrink-0">
+                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" id="searchInput" onkeyup="filterNotifications()" placeholder="Search title, sender, or content..." class="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#151515] rounded-xl pl-10 pr-4 py-3 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition shadow-sm">
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-4" id="notificationsContainer">
+            <!-- Notifications will be injected here -->
+        </div>
+
+    </div>
+
+</div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script id="django-notifs-data" type="application/json">
+    {{ notifications_json|safe }}
+</script>
+<script>
+    let notifications = [];
+    let currentFiltered = [];
+    let readNotifs = JSON.parse(localStorage.getItem('admin_read_notifs') || '[]');
+
+    function renderNotifications(dataList) {
+        const container = document.getElementById('notificationsContainer');
+        if (!container) return;
+        
+        if (dataList.length === 0) {
+            container.innerHTML = `
+                <div class="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200 border-dashed dark:border-gray-800 p-12 text-center shadow-sm">
+                    <i class="ph-fill ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-700 mb-3 block"></i>
+                    <h3 class="font-bold text-gray-500 dark:text-gray-400 text-lg">No notifications found.</h3>
+                </div>
+            `;
+            return;
+        }
+
+        let htmlString = '';
+        dataList.forEach((notif, index) => {
+            const isRead = readNotifs.includes(notif.id);
+            
+            let borderClass = 'border-l-blue-500';
+            let iconBg = 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+            let iconClass = 'ph-megaphone';
+
+            if (notif.type === 'student') {
+                borderClass = 'border-l-blue-500';
+                iconBg = 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+                iconClass = 'ph-user-plus';
+            } else if (notif.type === 'alert') {
+                borderClass = 'border-l-red-500';
+                iconBg = 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+                iconClass = 'ph-warning-circle';
+            } else if (notif.type === 'event') {
+                if (notif.status === 'Approved') {
+                    borderClass = 'border-l-green-500';
+                    iconBg = 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+                    iconClass = 'ph-calendar-check';
+                } else if (notif.status === 'Rejected') {
+                    borderClass = 'border-l-red-500';
+                    iconBg = 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+                    iconClass = 'ph-x-circle';
+                } else {
+                    borderClass = 'border-l-yellow-500';
+                    iconBg = 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400';
+                    iconClass = 'ph-calendar-star';
+                }
+            } else if (notif.type === 'message') {
+                borderClass = 'border-l-pup-maroon dark:border-l-pup-gold';
+                iconBg = 'bg-maroon-50 text-pup-maroon dark:bg-gold-900/10 dark:text-pup-gold';
+                iconClass = 'ph-chats-teardrop';
+            }
+
+            const readClass = isRead 
+                ? 'opacity-60 bg-gray-50 dark:bg-[#111111] border-gray-300 dark:border-gray-800' 
+                : 'bg-white dark:bg-[#151515] shadow-sm hover:shadow-md border-gray-200 dark:border-gray-700';
+
+            htmlString += `
+                <div onclick="handleNotifClick(${index})" 
+                     class="notif-card-transition cursor-pointer border-l-[5px] rounded-2xl p-5 sm:p-6 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${borderClass} ${readClass}">
+                    
+                    <div class="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-xl shadow-inner ${iconBg}">
+                            <i class="ph-fill ${iconClass}"></i>
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-gray-900 dark:text-white text-base truncate mb-1">${notif.title}</h4>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                    ${notif.sender}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                                ${notif.message}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="shrink-0 sm:text-right mt-2 sm:mt-0">
+                        <span class="text-xs font-bold text-pup-maroon dark:text-pup-gold block uppercase tracking-wider">${notif.date}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = htmlString;
+    }
+
+    function filterNotifications() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        if (query === "") {
+            currentFiltered = notifications;
+        } else {
+            currentFiltered = notifications.filter(n => 
+                (n.title || '').toLowerCase().includes(query) || 
+                (n.sender || '').toLowerCase().includes(query) || 
+                (n.message || '').toLowerCase().includes(query)
+            );
+        }
+        renderNotifications(currentFiltered);
+    }
+
+    function handleNotifClick(index) {
+        const notif = currentFiltered[index];
+        if (!readNotifs.includes(notif.id)) {
+            readNotifs.push(notif.id);
+            localStorage.setItem('admin_read_notifs', JSON.stringify(readNotifs));
+        }
+        if (notif.url && notif.url !== '#') {
+            window.location.href = notif.url;
+        }
+    }
+
+    function initNotifications() {
+        try {
+            const rawData = document.getElementById('django-notifs-data').textContent;
+            if (rawData && rawData.trim() !== '') {
+                notifications = JSON.parse(rawData.trim());
+                currentFiltered = notifications;
+                renderNotifications(notifications);
+            } else {
+                renderNotifications([]);
+            }
+        } catch (error) {
+            console.error("Error loading notifications:", error);
+            renderNotifications([]);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', initNotifications);
+    } else {
+        initNotifications();
+    }
+</script>
+{% endblock extra_js %}
