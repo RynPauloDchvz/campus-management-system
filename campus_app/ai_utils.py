@@ -3,6 +3,7 @@ import os
 import tempfile
 import cv2
 import numpy as np
+# pyrefly: ignore [missing-import]
 from deepface import DeepFace
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer, NEGATE, BOOSTER_DICT
 
