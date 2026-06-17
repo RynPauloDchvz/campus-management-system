@@ -1918,15 +1918,17 @@ def organizer_manage_attendance(request):
             'number': number,
             'program': program,
             'year': str(year),
-            'time': att.time_in.strftime('%I:%M %p'),
-            'date': att.time_in.strftime('%b %d, %Y'),
+            'time': timezone.localtime(att.time_in).strftime('%I:%M %p'),
+            'date': timezone.localtime(att.time_in).strftime('%b %d, %Y'),
             'has_timed_out': att.time_out is not None,
-            'time_out': att.time_out.strftime('%I:%M %p') if att.time_out else None,
+            'time_out': timezone.localtime(att.time_out).strftime('%I:%M %p') if att.time_out else None,
             'status': status,
             'event': att.event.event_title,
             'venue': att.event.venue,
             'lat': float(att.latitude) if att.latitude else 13.8392,
             'lng': float(att.longitude) if att.longitude else 121.9861,
+            'lat_out': float(att.latitude_out) if getattr(att, 'latitude_out', None) else None,
+            'lng_out': float(att.longitude_out) if getattr(att, 'longitude_out', None) else None,
             'img': img,
             'captured_face': att.capture_image.url if att.capture_image else None,
             'captured_face_out': att.capture_image_out.url if att.capture_image_out else None,
@@ -2207,7 +2209,7 @@ def get_all_org_notifications(org_acronym):
                     'id': f"eval_{log.id}", 'type': 'message', 'title': 'New Event Feedback',
                     'message': f"Mabuhay! A student just submitted an evaluation for '{event.event_title}'.",
                     'sender': 'Evaluation Hub', 'date': log.timestamp.strftime('%b %d, %Y'), 'timestamp': log.timestamp.timestamp(),
-                    'url': f"/organizer/feedback?event_id={event.id}"
+                    'url': f"/organizer/feedback/detail?event_id={event.id}"
                 })
             except: continue
     except Exception: pass
@@ -2629,7 +2631,7 @@ def organizer_feedback_detail(request):
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
 def event_approvals_view(request): 
     # PENDING EVENTS (Action Required)
-    pending = Event.objects.filter(event_status__in=['Pending Admin', 'Final Admin Review']).order_by('-created_at')
+    pending = Event.objects.filter(event_status__in=['Pending Admin', 'Final Admin Review']).exclude(is_flag_raising=True).order_by('-created_at')
     pending_data = []
     for e in pending:
         full_org_name = ORG_FULL_NAMES.get(e.org_id, e.org_id)
@@ -2653,7 +2655,7 @@ def event_approvals_view(request):
         
     # ALL EVENTS FOR CONFLICT DETECTION (Global Record Log)
     # Admin wants to see everything to check for date/time conflicts
-    history = Event.objects.all().order_by('-created_at')
+    history = Event.objects.exclude(is_flag_raising=True).order_by('-created_at')
     history_data = []
     for e in history:
         att_count = Attendance.objects.filter(event=e).count()
@@ -2713,7 +2715,11 @@ def record_attendance(request):
             # Check for existing attendance
             # 🟢 HUMAN-READABLE LOCATION (Reverse Geocoding Logic) 🟢
             location_name = "Unknown Location"
-            if lat and lng and lat != 'null' and lng != 'null':
+            is_flag_raising_event = getattr(event, 'is_flag_raising', False) or 'flag' in event.event_title.lower() or 'ceremony' in event.event_title.lower()
+
+            if is_flag_raising_event:
+                location_name = "Global Remote Access"
+            elif lat and lng and lat != 'null' and lng != 'null':
                 lat_f, lng_f = float(lat), float(lng)
                 zones = [
                     {'name': 'Main Building', 'lat': 13.84615, 'lng': 121.96955},
@@ -3415,9 +3421,9 @@ def adviser_dashboard(request):
             break
             
     if assigned_org:
-        events_qs = Event.objects.filter(org_id__iexact=assigned_org)
+        events_qs = Event.objects.filter(org_id__iexact=assigned_org).exclude(is_flag_raising=True)
     else:
-        events_qs = Event.objects.all()
+        events_qs = Event.objects.exclude(is_flag_raising=True)
 
     # Current month stats
     now = timezone.now()
@@ -3480,9 +3486,9 @@ def adviser_history(request):
     # Actually, the user wants to see what they've approved. 
     # Events move to 'Pending Admin' after Adviser approval.
     if assigned_org:
-        events = Event.objects.filter(org_id__iexact=assigned_org).exclude(event_status='Pending Adviser').order_by('-created_at')
+        events = Event.objects.filter(org_id__iexact=assigned_org).exclude(event_status='Pending Adviser').exclude(is_flag_raising=True).order_by('-created_at')
     else:
-        events = Event.objects.exclude(event_status='Pending Adviser').order_by('-created_at')
+        events = Event.objects.exclude(event_status='Pending Adviser').exclude(is_flag_raising=True).order_by('-created_at')
 
     events_data = []
     for e in events:
@@ -3643,14 +3649,14 @@ def admin_dashboard(request):
     Aggregates real-time statistics and historical data for analytics.
     """
     # 1. Stats Grid Data
-    total_events = Event.objects.count()
-    pending_approval = Event.objects.filter(event_status__in=['Pending Admin', 'Final Admin Review']).count()
+    total_events = Event.objects.exclude(is_flag_raising=True).count()
+    pending_approval = Event.objects.filter(event_status__in=['Pending Admin', 'Final Admin Review']).exclude(is_flag_raising=True).count()
     active_orgs = OrgProfile.objects.count()
     engaged_students = Student.objects.filter(is_verified=True).count()
     total_attendances = Attendance.objects.count()
 
     # 2. Recent Event Requests (Top 5)
-    recent_events = Event.objects.order_by('-created_at')[:5]
+    recent_events = Event.objects.exclude(is_flag_raising=True).order_by('-created_at')[:5]
     
     # 3. Chart Data: Ratings Overview (Aggregated from AuditLog)
     ratings_data = [0, 0, 0, 0, 0] # [1 Star, 2 Star, 3 Star, 4 Star, 5 Star]
@@ -3693,7 +3699,7 @@ def admin_dashboard(request):
     for i in range(5, -1, -1):
         first_day = (today.replace(day=1) - timedelta(days=i*30)).replace(day=1)
         month_label = first_day.strftime('%b')
-        month_count = Event.objects.filter(event_date__month=first_day.month, event_date__year=first_day.year).count()
+        month_count = Event.objects.filter(event_date__month=first_day.month, event_date__year=first_day.year).exclude(is_flag_raising=True).count()
         
         event_freq_labels.append(month_label)
         event_freq_values.append(month_count)

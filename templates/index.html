@@ -8,6 +8,7 @@
     
     <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
     
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -551,11 +552,11 @@
                             </button>
                             
                             <button v-if="isCameraActive && !faceCaptured" @click="captureFace" 
-                                    :disabled="!qualityStatus.isReady || qualityStatus.obstructed"
+                                    :disabled="!qualityStatus.isReady || qualityStatus.obstructed || qualityStatus.noFaceDetail"
                                     class="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-lg disabled:opacity-30 disabled:grayscale transition-all duration-500">
                                 <i v-if="qualityStatus.isReady" class="ph-bold ph-bounding-box text-lg animate-pulse"></i>
                                 <i v-else class="ph-bold ph-spinner animate-spin text-lg"></i>
-                                <span v-text="qualityStatus.obstructed ? 'Obstruction Detected' : (qualityStatus.noFaceDetail ? 'Searching for Face...' : (qualityStatus.isReady ? 'Secure Identity Data' : 'Optimizing Quality...'))"></span>
+                                <span v-text="qualityStatus.obstructed ? 'No Face Detected' : (qualityStatus.noFaceDetail ? 'Multiple Faces Detected' : (qualityStatus.isReady ? 'Secure Identity Data' : 'Optimizing Quality...'))"></span>
                             </button>
                             
                             <div v-if="faceCaptured" class="flex flex-col gap-3">
@@ -597,6 +598,8 @@
                     lockoutTime: {{ remaining|default:0 }},
                     lockoutInterval: null,
                     showAttemptModal: false,
+                    
+                    modelsLoaded: false,
                     attemptCount: 0,
 
                     // LOGIN DATA
@@ -758,6 +761,12 @@
                         }
 
                         this.isCameraActive = false; 
+                        
+                        if (!this.modelsLoaded) {
+                            await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
+                            this.modelsLoaded = true;
+                        }
+
                         const stream = await navigator.mediaDevices.getUserMedia({ 
                             video: { 
                                 facingMode: 'user', 
@@ -800,59 +809,46 @@
                         canvas.width = 64; canvas.height = 64; 
                         ctx.drawImage(video, 0, 0, 64, 64);
                         
-                        const imageData = ctx.getImageData(0, 0, 64, 64);
-                        const data = imageData.data;
+                        const data = ctx.getImageData(0, 0, 64, 64).data;
                         let brightness = 0;
-                        let detailLevel = 0;
-                        let variance = 0;
                         
-                        // 🟢 STEP 1: CALCULATE BRIGHTNESS & CENTER DETAIL 🟢
-                        for (let y = 1; y < 63; y++) {
-                            for (let x = 1; x < 63; x++) {
-                                const idx = (y * 64 + x) * 4;
-                                const val = (data[idx] + data[idx+1] + data[idx+2]) / 3;
-                                brightness += val;
-                                
-                                // Focus high detail detection on the center 60% of the frame
-                                if (y > 12 && y < 52 && x > 12 && x < 52) {
-                                    const left = (data[idx-4] + data[idx-3] + data[idx-2]) / 3;
-                                    detailLevel += Math.abs(val - left);
-                                }
-                            }
+                        for (let i = 0; i < data.length; i += 4) {
+                            brightness += (data[i] + data[i+1] + data[i+2]) / 3;
                         }
                         
                         const avgBrightness = brightness / (64 * 64);
-                        const centerDetail = detailLevel / (40 * 40); // Detail in the center block
-
-                        for (let i = 0; i < data.length; i += 8) {
-                            const val = (data[i] + data[i+1] + data[i+2]) / 3;
-                            variance += Math.abs(val - avgBrightness);
-                        }
-                        const avgVariance = variance / (data.length / 8);
-
-                        // 🟢 STEP 2: TUNED LOGIC (HIGH SPEED) 🟢
+                        
+                        // 🟢 SIMPLIFIED LOGIC: Trust Backend ArcFace & RetinaFace 🟢
                         this.qualityStatus.tooDark = avgBrightness < 40; 
                         this.qualityStatus.tooBright = avgBrightness > 230; 
-                        this.qualityStatus.obstructed = avgVariance < 10 && !this.qualityStatus.tooDark; 
                         
-                        // Center feature check: Higher detail means features are centered
-                        this.qualityStatus.noFaceDetail = centerDetail < 12; 
+                        // Async strict face check
+                        faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.7 })).then(faces => {
+                            this.qualityStatus.obstructed = faces.length === 0;
+                            this.qualityStatus.noFaceDetail = faces.length > 1; // Reuse this variable for multiple faces
+                            
+                            if (faces.length === 0) {
+                                this.qualityScore = 0;
+                                this.qualityStatus.isReady = false;
+                                return;
+                            }
+                            if (faces.length > 1) {
+                                this.qualityScore = 10;
+                                this.qualityStatus.isReady = false;
+                                return;
+                            }
 
-                        // 🟢 STEP 3: SCORE & READY STATE 🟢
-                        let score = 0;
-                        if (!this.qualityStatus.tooDark && !this.qualityStatus.tooBright) score += 40;
-                        if (!this.qualityStatus.obstructed) score += 30;
-                        if (!this.qualityStatus.noFaceDetail) score += 30;
+                            // 🟢 SCORE & READY STATE 🟢
+                            this.qualityScore = (this.qualityStatus.tooDark || this.qualityStatus.tooBright) ? 30 : 100;
+                            this.qualityStatus.isReady = this.qualityScore === 100;
+                        });
                         
-                        this.qualityScore = score;
-                        this.qualityStatus.isReady = score >= 75; // Even more lenient for speed
-                        
-                    }, 150); // Doubled the polling frequency
+                    }, 300); // Polling frequency
                 },
 
                 captureFace() {
                     // 🟢 FINAL GUARD: Re-check quality before capturing 🟢
-                    if (!this.qualityStatus.isReady || this.qualityStatus.obstructed) {
+                    if (!this.qualityStatus.isReady || this.qualityStatus.obstructed || this.qualityStatus.noFaceDetail) {
                         alert("Biometric alignment failed. Please fix scanner issues.");
                         return;
                     }

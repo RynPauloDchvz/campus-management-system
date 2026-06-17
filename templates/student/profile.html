@@ -534,7 +534,7 @@
     }
 
     async function loadUpdateModels() {
-        // Models are no longer loaded on frontend, backend handles verification
+        await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
         modelsLoaded = true;
     }
 
@@ -552,24 +552,59 @@
                 video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } } 
             });
             video.srcObject = updateStream;
-            video.play();
             
-            status.innerText = "SEARCHING FOR FACE...";
-            qualityMeter.classList.remove('opacity-0');
-
-            const detectUpdateLoop = async () => {
-                if (!updateStream) return;
+            video.onloadedmetadata = () => {
+                video.play();
                 
-                // Without face-api, we just wait a moment to ensure camera is adjusted
-                // In a production scenario, you might add a lightweight brightness check here
-                btn.disabled = false;
-                status.innerText = "SENSOR READY. CLICK CONFIRM.";
-                status.className = "absolute top-4 left-4 right-4 bg-green-600/90 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center shadow-2xl z-20";
-                updateQuality(true);
-            };
+                status.innerText = "SEARCHING FOR FACE...";
+                qualityMeter.classList.remove('opacity-0');
 
-            // Delay just to let camera exposure settle
-            setTimeout(detectUpdateLoop, 1500);
+                const detectUpdateLoop = async () => {
+                    if (!updateStream) return;
+                    if (video.videoWidth === 0) {
+                        setTimeout(detectUpdateLoop, 100);
+                        return;
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64; canvas.height = 64;
+                    const ctx = canvas.getContext('2d', {willReadFrequently: true});
+                    ctx.drawImage(video, 0, 0, 64, 64);
+                    const data = ctx.getImageData(0, 0, 64, 64).data;
+                    let brightness = 0;
+                    for (let i = 0; i < data.length; i += 4) brightness += (data[i] + data[i+1] + data[i+2]) / 3;
+                    const avgBrightness = brightness / (64 * 64);
+                    const isValidLighting = avgBrightness > 40 && avgBrightness < 230;
+
+                    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.7 }));
+
+                    if (!isValidLighting) {
+                        btn.disabled = true;
+                        status.innerText = "ADJUSTING LIGHTING...";
+                        status.className = "absolute top-4 left-4 right-4 bg-amber-600/90 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center shadow-2xl z-20";
+                        updateQuality(false);
+                    } else if (detections.length === 0) {
+                        btn.disabled = true;
+                        status.innerText = "NO FACE DETECTED";
+                        status.className = "absolute top-4 left-4 right-4 bg-amber-600/90 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center shadow-2xl z-20";
+                        updateQuality(false);
+                    } else if (detections.length > 1) {
+                        btn.disabled = true;
+                        status.innerText = "MULTIPLE FACES DETECTED";
+                        status.className = "absolute top-4 left-4 right-4 bg-amber-600/90 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center shadow-2xl z-20";
+                        updateQuality(false);
+                    } else {
+                        btn.disabled = false;
+                        status.innerText = "SENSOR READY. CLICK CONFIRM.";
+                        status.className = "absolute top-4 left-4 right-4 bg-green-600/90 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center shadow-2xl z-20";
+                        updateQuality(true);
+                    }
+
+                    if (updateStream) setTimeout(detectUpdateLoop, 300);
+                };
+
+                detectUpdateLoop();
+            };
 
             btn.onclick = async () => {
                 btn.disabled = true;

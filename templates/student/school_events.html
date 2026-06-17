@@ -17,6 +17,9 @@
     .dark .status-ended { background-color: #D4AF37; color: #fff; opacity: 0.7; }
     .dark .status-upcoming { background-color: #D4AF37; color: #fff; opacity: 0.5; }
 
+    .status-completed { background-color: #059669; }
+    .dark .status-completed { background-color: #10B981; color: #fff; }
+
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -315,7 +318,7 @@
 
                 if (e.has_timed_out) {
                     el.innerHTML = `<i class="ph-fill ph-check-circle"></i> COMPLETED`;
-                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ended";
+                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-completed";
                 } else if (e.already_attended) {
                     const endISO = e.end_time_iso ? `${e.date}T${e.end_time_iso}` : null;
                     const endDt = endISO ? new Date(endISO) : null;
@@ -453,6 +456,11 @@
             status.innerText = "INITIALIZING SENSORS...";
             isLocationVerified = false;
 
+            if (!modelsLoaded) {
+                await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
+                modelsLoaded = true;
+            }
+
             try {
                 // 🟢 OPTIMIZED CAMERA CONSTRAINTS 🟢
                 stream = await navigator.mediaDevices.getUserMedia({ 
@@ -524,19 +532,34 @@
         // 🟢 FAST POLLING FOR QUALITY & UI UPDATES 🟢
         function startFastPoll() {
             const status = document.getElementById('scanStatus');
-            const pollLoop = () => {
+            const video = document.getElementById('videoFeed');
+            const pollLoop = async () => {
                 if (!stream || !currentEvent) return;
                 
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.7 }));
+                let validFace = false;
+
                 if (!qualityStatus.isReady) { 
                     status.innerText = "OPTIMIZING SENSOR QUALITY..."; 
                     status.className = "absolute top-6 left-6 right-6 bg-amber-600/90 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center shadow-2xl animate-pulse";
+                } else if (detections.length === 0) {
+                    status.innerText = "NO FACE DETECTED"; 
+                    status.className = "absolute top-6 left-6 right-6 bg-amber-600/90 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center shadow-2xl animate-pulse";
+                } else if (detections.length > 1) {
+                    status.innerText = "MULTIPLE FACES DETECTED"; 
+                    status.className = "absolute top-6 left-6 right-6 bg-amber-600/90 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center shadow-2xl animate-pulse";
                 } else {
+                    validFace = true;
                     status.innerText = "SENSOR READY! ALIGN FACE TO CENTER";
                     status.className = "absolute top-6 left-6 right-6 bg-green-600/90 backdrop-blur-2xl px-4 py-3 rounded-full text-white text-[9px] font-black uppercase tracking-[0.25em] text-center shadow-2xl";
                 }
                 
+                const oldIsReady = qualityStatus.isReady;
+                qualityStatus.isReady = qualityStatus.isReady && validFace;
                 checkAllVerified();
-                setTimeout(pollLoop, 200);
+                qualityStatus.isReady = oldIsReady;
+
+                setTimeout(pollLoop, 300);
             };
             pollLoop();
         }
