@@ -1978,12 +1978,15 @@ def organizer_analytics(request):
         
         if e_count > 0:
             e_total_rating = 0
+            e_total_raw_score = 0
             e_pos = 0
             for log in e_logs:
                 try:
                     changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
                     r = float(changes.get('rating', 0))
+                    raw_score = int(changes.get('total_raw_score', 0))
                     e_total_rating += r
+                    e_total_raw_score += raw_score
                     idx = int(round(r)) - 1
                     if 0 <= idx <= 4:
                         e_dist[idx] += 1
@@ -2000,13 +2003,18 @@ def organizer_analytics(request):
             total_rating += e_total_rating
             positive_count += e_pos
             
+        if e_count > 0:
+            e_sentiment = int(round((e_total_raw_score / e_count / 125) * 100))
+        else:
+            e_sentiment = 0
+
         event_analytics_data.append({
             'id': e.id,
             'title': e.event_title,
             'date': e.event_date.strftime('%b %d, %Y'),
             'respondents': e_count,
             'score': round(e_rating, 1),
-            'sentiment': int((e_pos / e_count * 100)) if e_count > 0 else 0,
+            'sentiment': e_sentiment,
             'dist': e_dist
         })
 
@@ -2043,23 +2051,25 @@ def organizer_profile(request):
     for evt in completed_events_qs:
         logs = AuditLog.objects.filter(action='EVALUATION', target_model='Event', target_id=str(evt.id), status='Success')
         total_rating = 0
-        total_compound = 0
+        total_raw_score_sum = 0
         count = 0
         
         for log in logs:
             if log.changes:
                 try:
-                    rating = float(log.changes.get('rating', 0))
-                    compound = float(log.changes.get('sentiment', {}).get('compound', 0))
+                    changes_dict = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
+                    rating = float(changes_dict.get('rating', 0))
+                    raw_score = int(changes_dict.get('total_raw_score', 0))
                     total_rating += rating
-                    total_compound += compound
+                    total_raw_score_sum += raw_score
                     count += 1
                 except: pass
                 
         if count > 0:
             avg_rating = round(total_rating / count, 1)
-            # Map compound (-1 to +1) to percentage (0% to 100%)
-            sentiment_percent = int(((total_compound / count) + 1) / 2 * 100)
+            # Match student calculation: max 125 raw score
+            avg_raw_score = total_raw_score_sum / count
+            sentiment_percent = int(round((avg_raw_score / 125) * 100))
         else:
             avg_rating = 0.0
             sentiment_percent = 0
@@ -2297,18 +2307,47 @@ def organizer_attendance_history(request):
         elif getattr(e, 'event_cover_photo', None): img_url = e.event_cover_photo.url
         elif getattr(e, 'cover_photo', None): img_url = e.cover_photo.url
 
+        time_in_local = timezone.localtime(att.time_in)
+
+        # 1. TIME IN CARD
         history_data.append({
-            'id': e.id,
+            'id': f"attin_{att.id}",
             'title': e.event_title,
-            'date': e.event_date.strftime('%b %d, %Y') if e.event_date else 'No Date',
-            'time': att.time_in.strftime('%I:%M %p') if att.time_in else '--',
+            'date': time_in_local.strftime('%b %d, %Y'),
+            'time': time_in_local.strftime('%I:%M %p'),
             'venue': e.venue,
-            'type': 'Attendance',
+            'type': 'Time In',
             'img': img_url,
-            'capture_img': att.capture_image.url if att.capture_image else '/static/images/PUPLogo.png',
-            'matched': att.face_matched,
-            'location': att.location_zone or "Verified inside PUP Campus Perimeter."
+            'details': {
+                'face_matched': att.face_matched,
+                'is_valid_location': att.is_valid_location,
+                'timestamp': time_in_local.strftime('%B %d, %Y at %I:%M %p'),
+                'capture_url': att.capture_image.url if att.capture_image else None,
+                'coords': f"{att.latitude}, {att.longitude}" if att.latitude else "N/A",
+                'location_zone': getattr(att, 'location_zone', '')
+            }
         })
+
+        # 2. TIME OUT CARD (If exists)
+        if att.time_out:
+            time_out_local = timezone.localtime(att.time_out)
+            history_data.append({
+                'id': f"attout_{att.id}",
+                'title': e.event_title,
+                'date': time_out_local.strftime('%b %d, %Y'),
+                'time': time_out_local.strftime('%I:%M %p'),
+                'venue': e.venue,
+                'type': 'Time Out',
+                'img': img_url,
+                'details': {
+                    'face_matched': att.face_matched,
+                    'is_valid_location': getattr(att, 'is_valid_location_out', att.is_valid_location),
+                    'timestamp': time_out_local.strftime('%B %d, %Y at %I:%M %p'),
+                    'capture_url': getattr(att, 'capture_image_out', None).url if hasattr(att, 'capture_image_out') and getattr(att, 'capture_image_out', None) else (att.capture_image.url if att.capture_image else None),
+                    'coords': f"{att.latitude_out}, {att.longitude_out}" if att.latitude_out else "N/A",
+                    'location_zone': getattr(att, 'location_zone', '')
+                }
+            })
 
     context = {
         'org_acronym': org_acronym, 
@@ -2546,7 +2585,10 @@ def organizer_feedback_detail(request):
         total_evals = eval_logs.count()
         
         avg_rating = 0
+        total_raw_score_sum = 0
         pos_count = 0
+        neu_count = 0
+        neg_count = 0
         criteria_scores = [0, 0, 0, 0, 0] # Match labels in template
         year_dist = {'1st Year': 0, '2nd Year': 0, '3rd Year': 0, '4th Year': 0}
         comments = []
@@ -2555,8 +2597,9 @@ def organizer_feedback_detail(request):
             try:
                 changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
                 r = float(changes.get('rating', 0))
+                raw_score = int(changes.get('total_raw_score', 0))
                 avg_rating += r
-                if r >= 4: pos_count += 1
+                total_raw_score_sum += raw_score
                 
                 # Criteria logic (details is a list of dicts from frontend)
                 details = changes.get('detailed_scores', [])
@@ -2580,6 +2623,10 @@ def organizer_feedback_detail(request):
                     feedback_text = changes.get('feedback', '')
                     sentiment = get_sentiment(feedback_text).get('label', 'neutral')
                 
+                if sentiment == 'positive': pos_count += 1
+                elif sentiment == 'negative': neg_count += 1
+                else: neu_count += 1
+                
                 # Get student year level
                 student = Student.objects.filter(user=log.actor).first()
                 y_level = student.year_level if student else 'Unknown'
@@ -2598,9 +2645,20 @@ def organizer_feedback_detail(request):
         if total_evals > 0:
             avg_rating /= total_evals
             criteria_scores = [round(s/total_evals, 1) for s in criteria_scores]
-            pos_sentiment = int((pos_count / total_evals) * 100)
+            
+            # Overall Sentiment (Student Mood) -> Max 125 raw score algorithm
+            avg_raw_score = total_raw_score_sum / total_evals
+            pos_sentiment = int(round((avg_raw_score / 125) * 100))
+            
+            # Text sentiment percentages
+            pos_percent = int(round((pos_count / total_evals) * 100))
+            neu_percent = int(round((neu_count / total_evals) * 100))
+            neg_percent = int(round((neg_count / total_evals) * 100))
         else:
             pos_sentiment = 0
+            pos_percent = 0
+            neu_percent = 0
+            neg_percent = 0
 
         # 2. ATTENDANCE DATA (For matching)
         att_count = Attendance.objects.filter(event=event).count()
@@ -2616,6 +2674,9 @@ def organizer_feedback_detail(request):
             'att_count': att_count,
             'avg_rating': round(avg_rating, 1),
             'pos_sentiment': pos_sentiment,
+            'pos_percent': pos_percent,
+            'neu_percent': neu_percent,
+            'neg_percent': neg_percent,
             'highest_area': highest_area,
             'criteria_scores': json.dumps(criteria_scores),
             'year_dist': json.dumps(list(year_dist.values())),

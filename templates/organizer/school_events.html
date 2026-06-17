@@ -706,13 +706,23 @@
             btnSubmitScan.addEventListener('click', async () => {
                 if (isSubmitting) return;
                 isSubmitting = true;
+                
+                // ADD LOADING STATE TO BUTTON
+                const originalText = btnSubmitScan.innerHTML;
+                btnSubmitScan.innerHTML = `<i class="ph-bold ph-spinner animate-spin text-xl"></i> VERIFYING IDENTITY...`;
+                btnSubmitScan.classList.add('opacity-80', 'cursor-not-allowed');
+
                 try {
                     const v = document.getElementById('video');
                     const canvas = document.createElement('canvas');
-                    canvas.width = v.videoWidth; canvas.height = v.videoHeight;
-                    canvas.getContext('2d', { willReadFrequently: true }).drawImage(v, 0, 0);
+                    // Downscale to max 640px to prevent payload issues
+                    const MAX_WIDTH = 640;
+                    const scale = Math.min(1, MAX_WIDTH / v.videoWidth);
+                    canvas.width = v.videoWidth * scale;
+                    canvas.height = v.videoHeight * scale;
+                    canvas.getContext('2d', { willReadFrequently: true }).drawImage(v, 0, 0, canvas.width, canvas.height);
                     const faceImage = canvas.toDataURL('image/jpeg', 0.8);
-
+                    
                     const fd = new FormData();
                     fd.append('event_id', currentEvent.id);
                     fd.append('face_image', faceImage);
@@ -720,10 +730,12 @@
                     fd.append('is_valid_location', isLocationVerified);
                     fd.append('latitude', userLat || '');
                     fd.append('longitude', userLng || '');
+                    
                     let csrf = '';
                     const csrfMatch = document.cookie.match(/csrftoken=([^;]+)/);
                     if (csrfMatch) csrf = csrfMatch[1];
-                    const res = await fetch('/record-attendance/', { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd });
+                    
+                    const res = await fetch('{% url "record_attendance" %}', { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd });
                     if (!res.ok) throw new Error("Server returned " + res.status);
                     const data = await res.json();
                     if (data.status === 'success' || data.status === 'issue') {
@@ -731,8 +743,15 @@
                     } else { 
                         alert(data.message); 
                         isSubmitting = false; 
+                        btnSubmitScan.innerHTML = originalText;
+                        btnSubmitScan.classList.remove('opacity-80', 'cursor-not-allowed');
                     }
-                } catch (e) { alert("Submission failed: " + e.message); isSubmitting = false; }
+                } catch (e) { 
+                    alert("Submission failed: " + e.message); 
+                    isSubmitting = false; 
+                    btnSubmitScan.innerHTML = originalText;
+                    btnSubmitScan.classList.remove('opacity-80', 'cursor-not-allowed');
+                }
             });
         }
         if (document.getElementById('btnCancelScan')) {
@@ -783,7 +802,12 @@
 
         if(searchInput) searchInput.addEventListener('input', () => renderEvents(searchInput.value));
         const overlay = document.getElementById('modalOverlay');
-        if(overlay) overlay.addEventListener('click', () => { closeEventDetailsModal(); resetCurrentEvent(); });
+        if(overlay) overlay.addEventListener('click', (e) => { 
+            if (e.target === overlay) {
+                closeEventDetailsModal(); 
+                resetCurrentEvent(); 
+            }
+        });
         const closeBtn = document.getElementById('btnClose');
         if(closeBtn) closeBtn.addEventListener('click', () => { closeEventDetailsModal(); resetCurrentEvent(); });
 

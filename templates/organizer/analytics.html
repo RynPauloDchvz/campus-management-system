@@ -155,8 +155,12 @@
                 </div>
                 <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm text-center transition-colors">
                     <span class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Student Mood</span>
-                    <div class="flex items-center justify-center">
-                        <span class="text-4xl font-black text-green-600 dark:text-green-500" id="modalSentiment">--</span>
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="flex items-baseline justify-center gap-2">
+                            <span class="text-4xl" id="modalEvalEmoji">--</span>
+                            <span class="text-3xl font-black text-green-600 dark:text-green-500" id="modalSentiment">--</span>
+                        </div>
+                        <span class="text-[0.65rem] font-black mt-1 uppercase tracking-tighter" id="modalEvalGrade">--</span>
                     </div>
                 </div>
             </div>
@@ -255,12 +259,17 @@
         document.getElementById('modalEventTitle').innerText = event.title;
         document.getElementById('modalAvgScore').innerText = event.score.toFixed(1);
         
+        const percent = event.sentiment;
+        const emojiEl = document.getElementById('modalEvalEmoji');
+        const gradeEl = document.getElementById('modalEvalGrade');
         const sentimentEl = document.getElementById('modalSentiment');
-        sentimentEl.innerText = event.sentiment + '%';
         
-        if (event.sentiment >= 80) sentimentEl.className = "text-4xl font-black text-green-600 dark:text-green-500";
-        else if (event.sentiment >= 60) sentimentEl.className = "text-4xl font-black text-green-600 dark:text-green-500"; 
-        else sentimentEl.className = "text-4xl font-black text-orange-600 dark:text-orange-500";
+        sentimentEl.innerText = percent + '%';
+        
+        if (percent >= 90) { emojiEl.innerText = '🤩'; gradeEl.innerText = 'Outstanding'; sentimentEl.className = 'text-3xl font-black text-green-600 dark:text-green-500'; gradeEl.className = 'text-[0.65rem] font-black text-green-600 dark:text-green-400 mt-1 uppercase tracking-tighter'; }
+        else if (percent >= 75) { emojiEl.innerText = '😊'; gradeEl.innerText = 'Satisfactory'; sentimentEl.className = 'text-3xl font-black text-blue-600 dark:text-blue-500'; gradeEl.className = 'text-[0.65rem] font-black text-blue-600 dark:text-blue-400 mt-1 uppercase tracking-tighter'; }
+        else if (percent >= 50) { emojiEl.innerText = '😐'; gradeEl.innerText = 'Average'; sentimentEl.className = 'text-3xl font-black text-yellow-600 dark:text-yellow-500'; gradeEl.className = 'text-[0.65rem] font-black text-yellow-600 dark:text-yellow-400 mt-1 uppercase tracking-tighter'; }
+        else { emojiEl.innerText = '😡'; gradeEl.innerText = 'Needs Improvement'; sentimentEl.className = 'text-3xl font-black text-red-600 dark:text-red-500'; gradeEl.className = 'text-[0.65rem] font-black text-red-600 dark:text-red-400 mt-1 uppercase tracking-tighter'; }
 
         // 🟢 SET FEEDBACK LINK 🟢
         const fbBtn = document.getElementById('modalFeedbackBtn');

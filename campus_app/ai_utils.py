@@ -72,7 +72,16 @@ def verify_face(live_base64, anchor_base64):
             detector_backend='opencv'
         )
         
-        return result['verified'], result['distance']
+        is_match = result['verified']
+        dist = result.get('distance', 1.0)
+        
+        # OpenCV Haar Cascades often produce poorly aligned face crops.
+        # ArcFace's default threshold (0.68) is too strict for misaligned crops.
+        # We manually increase the leniency to 0.85 to compensate for the fast but inaccurate opencv detector.
+        if not is_match and dist < 0.85:
+            is_match = True
+            
+        return is_match, dist
     except Exception as e:
         print(f"DeepFace ArcFace Error: {str(e)}")
         return False, 1.0

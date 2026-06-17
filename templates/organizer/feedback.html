@@ -233,6 +233,36 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4 transition-colors">
+            <div class="w-12 h-12 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400">
+                <i class="ph-fill ph-smiley text-2xl"></i>
+            </div>
+            <div>
+                <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Positive Responses</span>
+                <span class="text-2xl font-black text-gray-900 dark:text-white">{{ pos_percent }}%</span>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4 transition-colors">
+            <div class="w-12 h-12 rounded-full bg-gray-50 dark:bg-gray-800/30 flex items-center justify-center text-gray-600 dark:text-gray-400">
+                <i class="ph-fill ph-smiley-meh text-2xl"></i>
+            </div>
+            <div>
+                <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Neutral Responses</span>
+                <span class="text-2xl font-black text-gray-900 dark:text-white">{{ neu_percent }}%</span>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4 transition-colors">
+            <div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-600 dark:text-red-400">
+                <i class="ph-fill ph-smiley-sad text-2xl"></i>
+            </div>
+            <div>
+                <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Needs Improvement</span>
+                <span class="text-2xl font-black text-gray-900 dark:text-white">{{ neg_percent }}%</span>
+            </div>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         
         <div class="lg:col-span-2 bg-white dark:bg-[#151515] p-6 sm:p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm transition-colors flex flex-col">
