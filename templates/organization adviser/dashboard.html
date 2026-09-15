@@ -110,6 +110,7 @@
     </div>
 </div>
 
+
 <!-- Action Bar -->
 <div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center mb-6 transition-colors duration-300 gap-4">
     <div v-if="isLoading" class="flex justify-between items-center w-full">
@@ -119,6 +120,10 @@
     <template v-else>
         <div class="flex items-center gap-3">
             <span class="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2 uppercase tracking-widest"><i class="ph-bold ph-clock"></i> Action Required</span>
+            <!-- View Calendar Button -->
+            <button @click="isCalendarOpen = true" class="ml-4 px-4 py-2 bg-pup-maroon hover:bg-maroon-800 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg shadow-md transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-calendar"></i> View Event Calendar
+            </button>
         </div>
         <div class="relative w-full sm:w-80">
             <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
@@ -230,7 +235,7 @@
                     </div>
 
                     <!-- Modern Tab Layout (Organizer Style) - NOW BELOW FILES -->
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-4" v-if="!selectedEvent.letter_url && selectedEvent.status !== 'REJECTED'">
                         <div @click="switchDocTab('main')" :class="activeTab === 'main' ? 'border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10' : 'border-gray-200 dark:border-gray-800'" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm">
                             <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg shrink-0">
                                 <i class="ph-fill ph-seal-check"></i>
@@ -253,7 +258,7 @@
                     </div>
 
                     <!-- Modern Document Preview (Bottom Section) -->
-                    <div class="document-preview-container active" id="document-preview-container">
+                    <div class="document-preview-container active" id="document-preview-container" v-if="!selectedEvent.letter_url && selectedEvent.status !== 'REJECTED'">
                         <div class="document-wrapper mx-auto">
                             <div class="document-page mx-auto shadow-2xl" id="document-preview-card">
                                 
@@ -444,11 +449,113 @@
             </div>
         </div>
     </div>
+    <!-- Calendar Modal -->
+    <div v-if="isCalendarOpen" v-cloak class="fixed inset-0 bg-black/70 z-[6000] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" @click.self="isCalendarOpen = false">
+        <div class="bg-white dark:bg-pup-darkcard w-full max-w-6xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col max-h-[95vh]">
+            <!-- Header -->
+            <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-[#111]">
+                <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-3">
+                    <i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold"></i> Global Event Calendar
+                </h2>
+                <button @click="isCalendarOpen = false" class="w-10 h-10 rounded-full hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 text-gray-500 flex items-center justify-center transition-colors">
+                    <i class="ph-bold ph-x text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Calendar Body -->
+            <div class="p-6 overflow-y-auto custom-scrollbar bg-white dark:bg-pup-darkcard">
+                <div class="flex items-center justify-between mb-6">
+                    <button @click="prevMonth" class="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold transition flex items-center gap-2">
+                        <i class="ph-bold ph-caret-left"></i> Prev
+                    </button>
+                    <h3 class="text-2xl font-black text-gray-800 dark:text-white uppercase tracking-widest">[[ monthNames[currentMonth] ]] [[ currentYear ]]</h3>
+                    <button @click="nextMonth" class="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold transition flex items-center gap-2">
+                        Next <i class="ph-bold ph-caret-right"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                    <!-- Days Header -->
+                    <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="bg-gray-50 dark:bg-[#111] py-3 text-center text-xs font-black text-gray-500 uppercase tracking-widest">
+                        [[ day ]]
+                    </div>
+                    
+                    <!-- Calendar Grid -->
+                    <div v-for="(day, index) in calendarDays" :key="index" class="bg-white dark:bg-pup-darkcard min-h-[140px] p-2 relative group transition hover:bg-gray-50 dark:hover:bg-gray-900/50">
+                        <template v-if="day.day">
+                            <span :class="['absolute top-2 right-2 text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full', day.isToday ? 'bg-pup-maroon text-white dark:bg-pup-gold dark:text-black shadow-md' : 'text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white']">
+                                [[ day.day ]]
+                            </span>
+                            <div class="mt-10 flex flex-col gap-2 h-[100px] overflow-y-auto pr-1 custom-scrollbar">
+                                <div v-for="evt in day.events" :key="evt.id" @click.stop="selectedCalendarEvent = evt" :class="['text-xs p-2 rounded-lg leading-tight border-l-4 shadow-sm cursor-pointer hover:opacity-80 transition-opacity', evt.status === 'APPROVED' ? 'bg-green-50 text-green-900 border-green-500 dark:bg-green-900/20 dark:text-green-300' : 'bg-blue-50 text-blue-900 border-blue-500 dark:bg-blue-900/20 dark:text-blue-300']" :title="evt.title + ' - ' + evt.status">
+                                    <strong class="block text-pup-maroon dark:text-pup-gold truncate mb-0.5">[[ evt.org ]]</strong>
+                                    <span class="block font-bold truncate">[[ evt.title ]]</span>
+                                    <span class="block mt-0.5 opacity-80 text-[10px]"><i class="ph-bold ph-clock"></i> [[ evt.time ]]</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Calendar Event Details Modal -->
+                <div v-if="selectedCalendarEvent" v-cloak class="absolute inset-0 bg-black/80 z-[7000] flex items-center justify-center p-4 backdrop-blur-md animate-fade-in" @click.self="selectedCalendarEvent = null">
+                    <div class="bg-white dark:bg-[#151515] w-full max-w-xl rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col relative transform transition-all">
+                        <!-- Close Button -->
+                        <button @click="selectedCalendarEvent = null" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-red-600 text-white flex items-center justify-center transition-colors z-10 backdrop-blur-sm border border-white/20">
+                            <i class="ph-bold ph-x text-lg"></i>
+                        </button>
+
+                        <!-- Cover Photo Header -->
+                        <div class="h-48 sm:h-56 w-full relative bg-gray-900 flex-shrink-0">
+                            <img v-if="selectedCalendarEvent.cover_photo" :src="selectedCalendarEvent.cover_photo" class="w-full h-full object-cover opacity-90">
+                            <div v-else class="w-full h-full flex items-center justify-center bg-gray-800">
+                                <i class="ph-fill ph-image text-4xl text-gray-600"></i>
+                            </div>
+                            <div class="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-[#151515] to-transparent"></div>
+                        </div>
+
+                        <!-- Details Content -->
+                        <div class="px-8 pb-8 pt-4 -mt-10 relative z-10 text-center">
+                            <span class="inline-block px-4 py-1 rounded-full bg-pup-maroon/20 text-pup-maroon dark:bg-pup-gold/20 dark:text-pup-gold text-xs font-black uppercase tracking-widest border border-pup-maroon/30 dark:border-pup-gold/30 mb-4 shadow-sm">
+                                [[ selectedCalendarEvent.org ]]
+                            </span>
+                            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-6 leading-tight">[[ selectedCalendarEvent.title ]]</h2>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                                <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex items-center gap-4 transition hover:bg-gray-100 dark:hover:bg-[#222]">
+                                    <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                        <i class="ph-bold ph-calendar-blank text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Date & Time</span>
+                                        <strong class="text-gray-900 dark:text-white block text-sm">[[ selectedCalendarEvent.date ]]</strong>
+                                        <span class="text-gray-500 dark:text-gray-400 text-xs font-medium">[[ selectedCalendarEvent.time ]]</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex items-center gap-4 transition hover:bg-gray-100 dark:hover:bg-[#222]">
+                                    <div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                                        <i class="ph-bold ph-map-pin text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Venue</span>
+                                        <strong class="text-gray-900 dark:text-white block text-sm truncate w-full" :title="selectedCalendarEvent.venue">[[ selectedCalendarEvent.venue || 'TBA' ]]</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     window.DJANGO_EVENTS_DATA = JSON.parse('{{ events_json|escapejs|default:"[]" }}');
+    window.DJANGO_CALENDAR_EVENTS_DATA = JSON.parse('{{ calendar_events_json|escapejs|default:"[]" }}');
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -460,6 +567,8 @@
             setup() {
                 const isLoading = ref(true);
                 const isModalOpen = ref(false);
+                const isCalendarOpen = ref(false);
+                const selectedCalendarEvent = ref(null);
                 const selectedEvent = ref(null);
                 const actionLoading = ref(false);
                 const searchQuery = ref('');
@@ -484,6 +593,54 @@
                 }
 
                 const events = ref(parsedData);
+
+                let calendarParsedData = [];
+                try {
+                    calendarParsedData = window.DJANGO_CALENDAR_EVENTS_DATA || [];
+                    if (typeof calendarParsedData === 'string') {
+                        calendarParsedData = JSON.parse(calendarParsedData);
+                    }
+                } catch(e) {
+                    console.error("Adviser Dashboard: Error parsing calendar data:", e);
+                }
+                const calendarEvents = ref(calendarParsedData);
+
+                // Calendar Logic
+                const currentMonth = ref(new Date().getMonth());
+                const currentYear = ref(new Date().getFullYear());
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+                const calendarDays = computed(() => {
+                    const year = currentYear.value;
+                    const month = currentMonth.value;
+                    const firstDay = new Date(year, month, 1).getDay();
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    
+                    const days = [];
+                    for (let i = 0; i < firstDay; i++) {
+                        days.push({ day: null, events: [] });
+                    }
+                    
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const m = (month + 1).toString().padStart(2, '0');
+                        const d = i.toString().padStart(2, '0');
+                        const dateString = `${year}-${m}-${d}`;
+                        
+                        const dayEvents = calendarEvents.value.filter(e => e.date === dateString);
+                        days.push({ day: i, events: dayEvents, isToday: new Date().toDateString() === new Date(year, month, i).toDateString() });
+                    }
+                    return days;
+                });
+
+                const prevMonth = () => {
+                    if (currentMonth.value === 0) { currentMonth.value = 11; currentYear.value--; }
+                    else { currentMonth.value--; }
+                };
+
+                const nextMonth = () => {
+                    if (currentMonth.value === 11) { currentMonth.value = 0; currentYear.value++; }
+                    else { currentMonth.value++; }
+                };
 
                 const activeTabLabel = computed(() => {
                     if (!selectedEvent.value) return 'Request Letter';
@@ -675,7 +832,7 @@
                     openModal, closeModal, approveEvent, initiateReject, cancelReject, confirmReject,
                     parsedDescription, switchDocTab, assignedOrgAcronym,
                     isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
-                    activeDocs
+                    activeDocs, currentMonth, currentYear, monthNames, calendarDays, prevMonth, nextMonth, isCalendarOpen, selectedCalendarEvent
                 }
             }
         }).mount('#app');

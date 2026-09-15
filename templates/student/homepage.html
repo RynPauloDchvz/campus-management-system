@@ -52,38 +52,47 @@
         border: 2px solid #D4AF37 !important;
     }
 
-    /* Slideshow Layout Refinement */
-    .slideshow-container {
-        background: #000;
-        position: relative;
-        overflow: hidden;
+    /* Slideshow Train Effect */
+    .slide-track-container {
         width: 100%;
-        height: 100%;
-        min-height: 250px; 
-        border-top-left-radius: 1.5rem;
-        border-bottom-left-radius: 1.5rem;
+        overflow: hidden;
+        position: relative;
+        transform: skewY(-3deg);
+        transform-origin: top left;
+        padding-bottom: 2rem;
     }
-    @media (max-width: 1024px) {
-        .slideshow-container { 
-            border-bottom-left-radius: 0;
-            border-top-right-radius: 1.5rem;
+    .unskew-content {
+        transform: skewY(3deg) skewX(6deg);
+    }
+    .slide-track {
+        display: flex;
+        width: max-content;
+        animation: slideTrain 40s linear infinite;
+    }
+    .slide-track:hover {
+        animation-play-state: paused;
+    }
+    @keyframes slideTrain {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    .train-card {
+        height: 250px;
+        transform: skewX(-6deg);
+    }
+    .train-card > img {
+        transform: skewX(6deg) scale(1.15);
+    }
+    @media (max-width: 640px) {
+        .train-card {
+            height: 180px;
         }
     }
-    .slide {
-        display: none;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        position: absolute;
-        inset: 0;
-        animation: fadeEffect 1s;
+
+    /* Slanted Banner */
+    .hero-slanted {
+        clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
     }
-    .logo-slide {
-        object-fit: contain !important;
-        background: white !important;
-        padding: 2.5rem;
-    }
-    @keyframes fadeEffect { from {opacity: 0.4;} to {opacity: 1;} }
 </style>
 
 <script>
@@ -93,7 +102,12 @@
         actionRequired: {{ action_required_json|safe }},
         filteredCalendarEvents: [],
         calendarFilterDate: null,
-        calendarCurrentMonth: new Date()
+        calendarFilterDate: null,
+        calendarCurrentMonth: new Date(),
+        viewedEventIds: [],
+        activeDrawer: null,
+        orgOfficers: {{ org_officers_json|default:"[]"|safe }},
+        activeOfficerDrawer: null
     });
 
     // 🟢 Reliable External Bridge for FullCalendar 🟢
@@ -106,73 +120,180 @@
 {% endblock extra_head %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 sm:py-8 w-full">
-
-    <!-- 1. HERO BANNER -->
-    <div class="hero-container relative w-full h-[180px] sm:h-[250px] md:h-[300px] rounded-2xl overflow-hidden shadow-lg mb-8 bg-gray-900 transition-all">
+    <!-- 1. HERO BANNER (Full Width) -->
+    <div class="hero-slanted relative w-full h-[200px] sm:h-[300px] md:h-[350px] overflow-hidden shadow-lg bg-gray-900 transition-all z-0">
         <img src="{% static 'images/banner/banner.jpg' %}" alt="PUP Banner" class="absolute inset-0 w-full h-full object-cover z-0">
         <div class="absolute inset-0 bg-black/40 z-0"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-pup-maroon/60 via-transparent to-transparent z-0"></div>
-        <div class="relative z-10 flex flex-col items-center justify-center text-center h-full px-6">
-            <h1 class="font-black text-2xl sm:text-4xl md:text-5xl text-pup-gold mb-2 drop-shadow-md uppercase tracking-tight">Mabuhay, Iskolar!</h1>
-            <p class="text-white/90 text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase">Ang Iyong Sentro para sa mga Aktibidad at Buhay-Kampus</p>
+        
+        <!-- Text Content -->
+        <div class="relative z-10 flex flex-col items-start justify-start pt-12 sm:pt-16 text-left h-full px-8 sm:px-12 w-full max-w-2xl">
+            <h1 class="font-black text-3xl sm:text-5xl md:text-6xl text-pup-gold mb-2 sm:mb-3 drop-shadow-md uppercase tracking-tight leading-none">Mabuhay, Iskolar!</h1>
+            <p class="text-white/90 text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase drop-shadow-md">Ang Iyong Sentro para sa mga Aktibidad at Buhay-Kampus</p>
         </div>
     </div>
 
-    <!-- 2. ABOUT ORG SECTION -->
-    <div class="about-section mb-12 shadow-sm">
-        <div class="flex flex-col lg:flex-row">
-            <div class="lg:w-1/2">
-                <div class="slideshow-container bg-black">
+    <!-- 2. ABOUT ORG SECTION (TRAIN SLIDESHOW) -->
+    <div class="slide-track-container mb-8 sm:mb-12 pb-4 -mt-12 sm:-mt-16 relative z-20">
+        <div class="slide-track items-stretch">
+            
+            <!-- ORIGINAL SET -->
+            <!-- Card 1: Org Information -->
+            <div class="train-card flex-shrink-0 w-[80vw] sm:w-[450px] bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-5 sm:p-8 flex flex-col sm:flex-row items-center sm:items-center gap-4 text-center sm:text-left mr-4 sm:mr-6">
+                <!-- Org Logo -->
+                <div class="w-16 h-16 sm:w-24 sm:h-24 shrink-0 bg-gray-50 dark:bg-white rounded-2xl p-2 sm:p-3 border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden shadow-sm unskew-content">
                     {% for img in slideshow_images %}
-                        <img class="slide {% if img.is_logo %}logo-slide{% endif %}" src="{{ img.url }}" alt="Org Photo">
+                        {% if img.is_logo %}
+                            <img src="{{ img.url }}" class="w-full h-full object-contain">
+                        {% endif %}
                     {% endfor %}
                 </div>
-            </div>
-            <div class="lg:w-1/2 p-8 sm:p-10 flex flex-col justify-center">
-                <div class="mb-5">
-                    <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1">
-                        {{ org_acronym }}
-                    </h2>
-                    <p class="text-pup-maroon dark:text-pup-gold text-xs sm:text-sm font-bold uppercase tracking-widest">{{ full_org_name }}</p>
+                <!-- Org Info -->
+                <div class="flex flex-col justify-center h-full unskew-content">
+                    <div class="mb-2 sm:mb-3">
+                        <h2 class="text-xl sm:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1">
+                            {{ org_acronym }}
+                        </h2>
+                        <p class="text-pup-maroon dark:text-pup-gold text-[10px] font-bold uppercase tracking-widest">{{ full_org_name }}</p>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs leading-relaxed font-medium italic border-l-0 sm:border-l-4 border-pup-maroon dark:border-pup-gold pl-0 sm:pl-3 line-clamp-3">
+                        "{{ org_about }}"
+                    </p>
                 </div>
-                <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base leading-relaxed font-medium italic border-l-4 border-pup-maroon dark:border-pup-gold pl-5">
-                    "{{ org_about }}"
-                </p>
             </div>
+            
+            <!-- Following Cards: Org Images -->
+            {% for img in slideshow_images %}
+                {% if not img.is_logo %}
+                <div class="train-card flex-shrink-0 w-[60vw] sm:w-[300px] bg-gray-100 dark:bg-black rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden mr-4 sm:mr-6 flex items-center justify-center">
+                    <img src="{{ img.url }}" class="w-full h-full object-cover" alt="Org Photo">
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- DUPLICATED SET (For seamless looping) -->
+            <!-- Card 1: Org Information -->
+            <div class="train-card flex-shrink-0 w-[80vw] sm:w-[450px] bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-5 sm:p-8 flex flex-col sm:flex-row items-center sm:items-center gap-4 text-center sm:text-left mr-4 sm:mr-6">
+                <!-- Org Logo -->
+                <div class="w-16 h-16 sm:w-24 sm:h-24 shrink-0 bg-gray-50 dark:bg-white rounded-2xl p-2 sm:p-3 border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden shadow-sm unskew-content">
+                    {% for img in slideshow_images %}
+                        {% if img.is_logo %}
+                            <img src="{{ img.url }}" class="w-full h-full object-contain">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <!-- Org Info -->
+                <div class="flex flex-col justify-center h-full unskew-content">
+                    <div class="mb-2 sm:mb-3">
+                        <h2 class="text-xl sm:text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1">
+                            {{ org_acronym }}
+                        </h2>
+                        <p class="text-pup-maroon dark:text-pup-gold text-[10px] font-bold uppercase tracking-widest">{{ full_org_name }}</p>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs leading-relaxed font-medium italic border-l-0 sm:border-l-4 border-pup-maroon dark:border-pup-gold pl-0 sm:pl-3 line-clamp-3">
+                        "{{ org_about }}"
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Following Cards: Org Images -->
+            {% for img in slideshow_images %}
+                {% if not img.is_logo %}
+                <div class="train-card flex-shrink-0 w-[60vw] sm:w-[300px] bg-gray-100 dark:bg-black rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden mr-4 sm:mr-6 flex items-center justify-center">
+                    <img src="{{ img.url }}" class="w-full h-full object-cover" alt="Org Photo">
+                </div>
+                {% endif %}
+            {% endfor %}
+
         </div>
     </div>
 
+<div class="max-w-7xl mx-auto px-5 sm:px-8 w-full">
     <!-- 3. QUICK ACTIONS -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
-        <a href="{% url 'student_event_calendar' %}" class="action-card bg-white dark:bg-pup-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center group">
-            <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-3 transition-transform group-hover:scale-110">
+        <!-- Calendar -->
+        <div @click="activeDrawer = activeDrawer === 'calendar' ? null : 'calendar'" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center transition-all group" :class="{'ring-2 ring-pup-maroon dark:ring-pup-gold shadow-md': activeDrawer === 'calendar'}">
+            <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-3 transition-transform" :class="{'scale-110': activeDrawer === 'calendar', 'group-hover:scale-110': activeDrawer !== 'calendar'}">
                 <i class="ph-fill ph-calendar-check text-2xl"></i>
             </div>
             <h3 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-widest">Calendar</h3>
             <p class="text-[8px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Schedules</p>
-        </a>
-        <a href="{% url 'student_school_events' %}" class="action-card bg-white dark:bg-pup-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center group">
-            <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-3 transition-transform group-hover:scale-110">
-                <i class="ph-fill ph-scan text-2xl"></i>
+            
+            <div class="grid transition-all duration-300 ease-in-out w-full" :class="activeDrawer === 'calendar' ? 'grid-rows-[1fr] mt-4 opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                <div class="overflow-hidden flex flex-col items-center">
+                    <div class="w-full h-px bg-gray-100 dark:bg-gray-800 mb-3"></div>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                        View upcoming campus activities and manage your schedules per month.
+                    </p>
+                    <a href="{% url 'student_event_calendar' %}" @click.stop class="bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-2.5 px-4 rounded-xl text-[9px] flex items-center justify-center gap-2 uppercase tracking-widest hover:scale-105 transition-transform w-full shadow-sm">
+                        Go to Calendar <i class="ph-bold ph-arrow-right"></i>
+                    </a>
+                </div>
             </div>
-            <h3 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-widest">Scan ID</h3>
+        </div>
+
+        <!-- Face Scan -->
+        <div @click="activeDrawer = activeDrawer === 'scan' ? null : 'scan'" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center transition-all group" :class="{'ring-2 ring-pup-maroon dark:ring-pup-gold shadow-md': activeDrawer === 'scan'}">
+            <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-3 transition-transform" :class="{'scale-110': activeDrawer === 'scan', 'group-hover:scale-110': activeDrawer !== 'scan'}">
+                <i class="ph-fill ph-user-focus text-2xl"></i>
+            </div>
+            <h3 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-widest">Face Scan</h3>
             <p class="text-[8px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Attendance</p>
-        </a>
-        <a href="{% url 'student_evaluation' %}" class="action-card bg-white dark:bg-pup-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center group">
-            <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-3 transition-transform group-hover:scale-110">
+            
+            <div class="grid transition-all duration-300 ease-in-out w-full" :class="activeDrawer === 'scan' ? 'grid-rows-[1fr] mt-4 opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                <div class="overflow-hidden flex flex-col items-center">
+                    <div class="w-full h-px bg-gray-100 dark:bg-gray-800 mb-3"></div>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                        Use face recognition to quickly and securely verify your identity for attendance.
+                    </p>
+                    <a href="{% url 'student_school_events' %}" @click.stop class="bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-2.5 px-4 rounded-xl text-[9px] flex items-center justify-center gap-2 uppercase tracking-widest hover:scale-105 transition-transform w-full shadow-sm">
+                        Open Camera <i class="ph-bold ph-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evaluation -->
+        <div @click="activeDrawer = activeDrawer === 'evaluation' ? null : 'evaluation'" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center transition-all group" :class="{'ring-2 ring-pup-maroon dark:ring-pup-gold shadow-md': activeDrawer === 'evaluation'}">
+            <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-3 transition-transform" :class="{'scale-110': activeDrawer === 'evaluation', 'group-hover:scale-110': activeDrawer !== 'evaluation'}">
                 <i class="ph-fill ph-clipboard-text text-2xl"></i>
             </div>
             <h3 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-widest">Evaluation</h3>
             <p class="text-[8px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">Feedback</p>
-        </a>
-        <a href="{% url 'student_event_history' %}" class="action-card bg-white dark:bg-pup-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center group">
-            <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-3 transition-transform group-hover:scale-110">
+            
+            <div class="grid transition-all duration-300 ease-in-out w-full" :class="activeDrawer === 'evaluation' ? 'grid-rows-[1fr] mt-4 opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                <div class="overflow-hidden flex flex-col items-center">
+                    <div class="w-full h-px bg-gray-100 dark:bg-gray-800 mb-3"></div>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                        Submit feedback and answer evaluation forms for the events you attended.
+                    </p>
+                    <a href="{% url 'student_evaluation' %}" @click.stop class="bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-2.5 px-4 rounded-xl text-[9px] flex items-center justify-center gap-2 uppercase tracking-widest hover:scale-105 transition-transform w-full shadow-sm">
+                        Start Evaluating <i class="ph-bold ph-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Records -->
+        <div @click="activeDrawer = activeDrawer === 'records' ? null : 'records'" class="action-card cursor-pointer bg-white dark:bg-pup-darkcard p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center transition-all group" :class="{'ring-2 ring-pup-maroon dark:ring-pup-gold shadow-md': activeDrawer === 'records'}">
+            <div class="w-12 h-12 bg-pup-maroon/5 dark:bg-pup-gold/5 rounded-2xl flex items-center justify-center text-pup-maroon dark:text-pup-gold mb-3 transition-transform" :class="{'scale-110': activeDrawer === 'records', 'group-hover:scale-110': activeDrawer !== 'records'}">
                 <i class="ph-fill ph-folders text-2xl"></i>
             </div>
             <h3 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-widest">My Records</h3>
             <p class="text-[8px] text-gray-400 dark:text-gray-500 mt-1 uppercase font-bold">History</p>
-        </a>
+            
+            <div class="grid transition-all duration-300 ease-in-out w-full" :class="activeDrawer === 'records' ? 'grid-rows-[1fr] mt-4 opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                <div class="overflow-hidden flex flex-col items-center">
+                    <div class="w-full h-px bg-gray-100 dark:bg-gray-800 mb-3"></div>
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+                        Track your event history, certificates, and overall attendance records.
+                    </p>
+                    <a href="{% url 'student_event_history' %}" @click.stop class="bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-2.5 px-4 rounded-xl text-[9px] flex items-center justify-center gap-2 uppercase tracking-widest hover:scale-105 transition-transform w-full shadow-sm">
+                        View Records <i class="ph-bold ph-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 4. BOTTOM GRID: Announcements (Left) | Schedule (Right) -->
@@ -198,62 +319,138 @@
         </div>
 
         <div class="lg:col-span-1">
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center justify-between mb-8">
                 <h2 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-                    <i class="ph-bold ph-calendar-blank text-pup-maroon dark:text-pup-gold"></i> Schedule
+                    <i class="ph-bold ph-push-pin text-pup-maroon dark:text-pup-gold"></i> Pinned Events
                 </h2>
-                <button v-if="calendarFilterDate" @click="resetCalendarFilter" class="text-[10px] font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest hover:underline">
-                    View Month
-                </button>
+                <div class="flex items-center gap-2">
+                    <button v-if="calendarFilterDate" @click="resetCalendarFilter" class="text-[10px] font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest hover:underline mr-2">
+                        View Month
+                    </button>
+                    <button onclick="openFullCalendarModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 shadow-sm text-pup-maroon dark:text-pup-gold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" title="Open Full Calendar">
+                        <i class="ph-fill ph-calendar text-xl"></i>
+                    </button>
+                </div>
             </div>
             
-            <div class="bg-white dark:bg-pup-darkcard rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm transition-all hover:shadow-md">
-                <div id="calendar" class="w-full mb-6 border-b border-gray-50 dark:border-gray-800/50 pb-6"></div>
-                
-                <div class="mb-4 flex items-center justify-between px-1">
-                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+            <div class="relative bg-[#fffae6] dark:bg-[#2a2a2a] rounded-sm p-6 sm:p-8 shadow-md transform rotate-1 border border-[#e8dfb8] dark:border-gray-700 transition-transform hover:rotate-0">
+                <!-- Push pin -->
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 flex flex-col items-center z-10">
+                    <div class="w-7 h-7 rounded-full bg-red-600 shadow-md border-[3px] border-red-700 relative">
+                        <div class="w-2 h-2 rounded-full bg-white/50 absolute top-1 left-1"></div>
+                    </div>
+                    <div class="w-1 h-3 bg-black/20 -mt-1 -rotate-[15deg]"></div>
+                </div>
+
+                <div class="mb-5 flex items-center justify-between px-1">
+                    <span class="text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-[0.1em]">
                         [[ calendarFilterDate ? 'Events on ' + formatDateShort(calendarFilterDate) : 'Upcoming this Month' ]]
                     </span>
-                    <span class="text-[10px] font-black text-pup-maroon dark:text-pup-gold bg-pup-maroon/5 dark:bg-pup-gold/5 px-2 py-0.5 rounded-full">
+                    <span class="text-[10px] font-black text-pup-maroon dark:text-pup-gold bg-pup-maroon/10 dark:bg-pup-gold/10 px-2 py-0.5 rounded-full">
                         [[ filteredCalendarEvents.length ]]
                     </span>
                 </div>
 
-                <div class="space-y-3 max-h-[350px] overflow-y-auto hide-scrollbar pr-1">
-                    <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="handleCalendarEventClick(evt)" 
-                        class="flex items-center gap-4 p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-800 group relative overflow-hidden">
-                        <div class="date-icon transform group-hover:scale-110 transition-transform">
-                            <span class="date-month">[[ getMonth(evt.date) ]]</span>
-                            <span class="date-day text-gray-900 dark:text-white">[[ getDay(evt.date) ]]</span>
+                <div class="space-y-4 max-h-[500px] overflow-y-auto hide-scrollbar pr-1 pb-4">
+                    <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="markEventViewedAndOpen(evt)" 
+                        class="flex flex-col gap-2 p-3 rounded-xl bg-white dark:bg-pup-darkcard hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md group relative overflow-hidden">
+                        
+                        <!-- Thumbnail Image -->
+                        <div class="w-full h-32 sm:h-40 rounded-lg overflow-hidden relative border border-gray-100 dark:border-gray-800">
+                            <img :src="evt.image || '/static/images/PUPLogo.png'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <!-- Overlay Date Badge -->
+                            <div class="absolute top-2 left-2 bg-white/95 dark:bg-black/95 backdrop-blur-md rounded-lg px-2 py-1 text-center shadow-md border border-gray-100 dark:border-gray-800">
+                                <span class="block text-[9px] font-black text-red-600 dark:text-red-500 uppercase leading-none mb-0.5">[[ getMonth(evt.date) ]]</span>
+                                <span class="block text-sm font-black text-gray-900 dark:text-white leading-none">[[ getDay(evt.date) ]]</span>
+                            </div>
                         </div>
-                        <div class="min-w-0 flex-grow">
-                            <h4 class="font-black text-gray-900 dark:text-white text-[11px] sm:text-xs truncate uppercase tracking-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">[[ evt.title ]]</h4>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-[8px] text-gray-400 font-bold uppercase flex items-center gap-1">
+
+                        <!-- Event Info -->
+                        <div class="min-w-0 w-full mt-1 px-1">
+                            <h4 class="font-black text-gray-900 dark:text-white text-[12px] truncate uppercase tracking-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">[[ evt.title ]]</h4>
+                            <div class="flex items-center gap-2 mt-1.5">
+                                <span class="text-[9px] text-gray-500 font-bold uppercase flex items-center gap-1">
                                     <i class="ph-bold ph-clock"></i> [[ evt.start_time ]]
                                 </span>
-                                <span class="w-1 h-1 bg-gray-200 dark:bg-gray-800 rounded-full"></span>
-                                <span class="text-[8px] text-gray-400 font-bold uppercase truncate flex items-center gap-1">
+                                <span class="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
+                                <span class="text-[9px] text-gray-500 font-bold uppercase truncate flex items-center gap-1">
                                     <i class="ph-bold ph-map-pin"></i> [[ evt.venue || 'Campus' ]]
                                 </span>
                             </div>
                         </div>
-                        <i class="ph-bold ph-caret-right text-gray-300 dark:text-gray-700 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0"></i>
                     </div>
                     
-                    <div v-if="!filteredCalendarEvents.length" class="text-center py-12 bg-gray-50/50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
-                        <i class="ph ph-calendar-x text-4xl text-gray-200 dark:text-gray-800 mb-3 block"></i>
-                        <p class="text-[9px] text-gray-400 font-black uppercase tracking-[0.2em]">No scheduled events</p>
+                    <div v-if="!filteredCalendarEvents.length" class="text-center py-12 bg-white/30 dark:bg-black/10 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                        <i class="ph ph-calendar-check text-4xl text-gray-400 dark:text-gray-500 mb-3 block"></i>
+                        <p class="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">All caught up!</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Separator Line -->
+    <hr class="border-t border-gray-100 dark:border-gray-800 mb-12">
+
+    <!-- 5. MEET THE OFFICERS -->
+    <div class="mb-12">
+        <h2 class="text-lg font-black text-gray-900 dark:text-white mb-8 uppercase tracking-tight flex items-center justify-center gap-2">
+            <i class="ph-bold ph-users-three text-pup-maroon dark:text-pup-gold"></i> Meet the Officers
+        </h2>
+        
+        <div class="relative w-full max-w-full mx-auto group">
+            <!-- Left Button -->
+            <button onclick="document.getElementById('officers-scroll').scrollBy({left: -300, behavior: 'smooth'})" class="hidden md:flex absolute left-0 top-[40%] -translate-y-1/2 -translate-x-3 w-10 h-10 bg-white dark:bg-pup-darkcard rounded-full shadow-lg border border-gray-100 dark:border-gray-800 items-center justify-center text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold hover:scale-110 z-10 transition-all opacity-0 group-hover:opacity-100 focus:outline-none">
+                <i class="ph-bold ph-caret-left text-lg"></i>
+            </button>
+
+            <div id="officers-scroll" class="flex overflow-x-auto hide-scrollbar gap-4 sm:gap-6 w-full snap-x snap-mandatory pt-6 pb-6 px-0 scroll-smooth items-center">
+                <!-- Spacer Left (Allows first item to reach center) -->
+                <div class="flex-shrink-0 w-[calc(50%-30%)] sm:w-[calc(50%-20%)] md:w-[calc(50%-15%)] lg:w-[calc(50%-11%)]"></div>
+
+                <div v-for="officer in orgOfficers" :key="officer.id" class="officer-card-item cursor-pointer flex-shrink-0 w-[60%] sm:w-[40%] md:w-[30%] lg:w-[22%] snap-center bg-white dark:bg-pup-darkcard p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center transition-all duration-300">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden mb-3 ring-2 ring-pup-maroon/20 dark:ring-pup-gold/20 hover:ring-pup-maroon dark:hover:ring-pup-gold transition-all duration-300">
+                        <img :src="officer.image" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <h3 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-widest line-clamp-1 w-full" :title="officer.name">[[ officer.name ]]</h3>
+                    <span class="text-[8px] sm:text-[9px] font-black text-pup-maroon dark:text-pup-gold uppercase tracking-[0.1em] mt-1 line-clamp-2 min-h-[20px] sm:min-h-[24px] flex items-center justify-center leading-tight">[[ officer.position ]]</span>
+                    <div class="w-full h-px bg-gray-100 dark:bg-gray-800 my-2.5"></div>
+                    <span class="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase w-full line-clamp-1">[[ officer.program ]]</span>
+                    <span class="text-[9px] text-gray-400 dark:text-gray-500 italic mt-0.5">[[ officer.year_level ]]</span>
+                </div>
+
+                <!-- Spacer Right (Allows last item to reach center) -->
+                <div class="flex-shrink-0 w-[calc(50%-30%)] sm:w-[calc(50%-20%)] md:w-[calc(50%-15%)] lg:w-[calc(50%-11%)]"></div>
+            </div>
+
+            <!-- Right Button -->
+            <button onclick="document.getElementById('officers-scroll').scrollBy({left: 300, behavior: 'smooth'})" class="hidden md:flex absolute right-0 top-[40%] -translate-y-1/2 translate-x-3 w-10 h-10 bg-white dark:bg-pup-darkcard rounded-full shadow-lg border border-gray-100 dark:border-gray-800 items-center justify-center text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold hover:scale-110 z-10 transition-all opacity-0 group-hover:opacity-100 focus:outline-none">
+                <i class="ph-bold ph-caret-right text-lg"></i>
+            </button>
+        </div>
 </div>
 
 <!-- ========================================== -->
 <!-- MODALS -->
 <!-- ========================================== -->
+
+<!-- Full Calendar Modal -->
+<div id="fullCalendarModal" class="hidden fixed inset-0 z-[5000] items-center justify-center px-4 sm:px-6 py-6">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeFullCalendarModal()"></div>
+    <div class="relative bg-white dark:bg-pup-darkcard w-full max-w-4xl h-full max-h-[800px] rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col animate-slide-up">
+        <div class="flex items-center justify-between p-5 sm:p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-white/5">
+            <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                <i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold"></i> Event Calendar
+            </h2>
+            <button onclick="closeFullCalendarModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                <i class="ph-bold ph-x"></i>
+            </button>
+        </div>
+        <div class="p-4 sm:p-6 overflow-y-auto flex-grow bg-white dark:bg-pup-darkcard">
+            <div id="calendar" class="w-full"></div>
+        </div>
+    </div>
+</div>
 
 <!-- News Modal -->
 <div v-if="isEventModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center px-0 sm:px-4 py-0 sm:py-6" v-cloak>
@@ -337,18 +534,7 @@
 
 {% block extra_js %}
 <script>
-    // 1. Slideshow Logic
-    let slideIndex = 0;
-    function showSlides() {
-        let slides = document.getElementsByClassName("slide");
-        if(!slides.length) return;
-        for (let i = 0; i < slides.length; i++) slides[i].style.display = "none";  
-        slideIndex++;
-        if (slideIndex > slides.length) {slideIndex = 1}    
-        slides[slideIndex-1].style.display = "block";  
-        setTimeout(showSlides, 4000); 
-    }
-    showSlides();
+    // 1. Slideshow Logic (Now handled entirely by CSS keyframes)
 
     // 2. Carousel Focus Effect (Mobile Only)
     function initCarouselFocus() {
@@ -425,6 +611,10 @@
         document.getElementById('calModalVenue').innerText = evt.venue || 'TBD';
         document.getElementById('calModalDesc').innerText = evt.description || 'No description provided.';
         document.getElementById('calModalImg').src = evt.image || '{% static "images/PUPLogo.png" %}';
+        
+        // Ensure calendar modal is hidden before opening event detail
+        closeFullCalendarModal();
+        
         const modal = document.getElementById('calendarEventModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -432,6 +622,22 @@
     }
     function closeCalendarModal() {
         const modal = document.getElementById('calendarEventModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    function openFullCalendarModal() {
+        const modal = document.getElementById('fullCalendarModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            if (calendar) calendar.render();
+        }, 50);
+    }
+    function closeFullCalendarModal() {
+        const modal = document.getElementById('fullCalendarModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         document.body.style.overflow = '';
@@ -448,6 +654,13 @@
             formatDateShort(dateStr) {
                 return new Date(dateStr.split('-').join('/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             },
+            markEventViewedAndOpen(evt) {
+                if (!this.viewedEventIds.includes(evt.id)) {
+                    this.viewedEventIds.push(evt.id);
+                    this.updateFilteredEvents();
+                }
+                handleCalendarEventClick(evt);
+            },
             handleCalendarEventClick(evt) { handleCalendarEventClick(evt); },
             resetCalendarFilter() {
                 this.calendarFilterDate = null;
@@ -462,6 +675,7 @@
                 const allEvts = this.calendarEvents || [];
                 
                 this.filteredCalendarEvents = allEvts.filter(e => {
+                    if (this.viewedEventIds && this.viewedEventIds.includes(e.id)) return false;
                     const d = new Date(e.date.split('-').join('/'));
                     const matchesMonth = d.getFullYear() === year && d.getMonth() === month;
                     if (this.calendarFilterDate) return e.date === this.calendarFilterDate;
@@ -470,5 +684,71 @@
             }
         });
     })();
+</script>
+
+<!-- Officer Carousel Focus Script -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // Wait for Vue to render the elements
+    const checkExist = setInterval(() => {
+        const container = document.getElementById('officers-scroll');
+        const cards = document.querySelectorAll('.officer-card-item');
+        
+        if (container && cards.length > 0) {
+            clearInterval(checkExist);
+            
+            const updateFocus = () => {
+                let minDist = Infinity;
+                let focusedCard = null;
+                // Calculate the center of the scroll container
+                const containerCenter = container.getBoundingClientRect().left + container.offsetWidth / 2;
+                
+                cards.forEach(card => {
+                    const cardCenter = card.getBoundingClientRect().left + card.offsetWidth / 2;
+                    const dist = Math.abs(containerCenter - cardCenter);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        focusedCard = card;
+                    }
+                });
+                
+                cards.forEach(card => {
+                    if (card === focusedCard) {
+                        // Highlight focused card
+                        card.style.transform = 'scale(1.05)';
+                        card.style.opacity = '1';
+                        card.classList.add('ring-2', 'ring-pup-maroon', 'dark:ring-pup-gold', 'shadow-xl');
+                        card.classList.remove('shadow-sm');
+                    } else {
+                        // Shrink non-focused cards
+                        card.style.transform = 'scale(0.85)';
+                        card.style.opacity = '0.5';
+                        card.classList.remove('ring-2', 'ring-pup-maroon', 'dark:ring-pup-gold', 'shadow-xl');
+                        card.classList.add('shadow-sm');
+                    }
+                });
+            };
+
+            // Listen to scroll to update focus dynamically
+            container.addEventListener('scroll', updateFocus);
+            window.addEventListener('resize', updateFocus);
+            
+            // Allow clicking a card to snap it to center
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const containerCenter = container.offsetWidth / 2;
+                    const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+                    container.scrollTo({
+                        left: cardCenter - containerCenter,
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Trigger initially after a short delay to ensure layout is ready
+            setTimeout(updateFocus, 100);
+        }
+    }, 200);
+});
 </script>
 {% endblock extra_js %}

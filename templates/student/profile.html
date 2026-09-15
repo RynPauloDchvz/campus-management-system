@@ -234,7 +234,7 @@
             <div class="flex flex-row items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-800 pb-3 gap-2">
                 <h2 class="text-base sm:text-xl font-black text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-wide truncate">
                     <i class="ph-fill ph-bell text-gray-500 shrink-0"></i> 
-                    <span class="truncate">Alerts</span>
+                    <span class="truncate">Notifications</span>
                 </h2>
                 
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
@@ -276,13 +276,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Logout Button -->
-        <div class="text-center pb-8 mt-12">
-            <button @click.prevent="openLogoutModal" class="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-red-600 dark:text-red-500 font-bold hover:bg-red-50 hover:border-red-200 dark:hover:bg-red-900/10 dark:hover:border-red-900/50 transition-colors text-sm shadow-sm mx-auto">
-                <i class="ph-bold ph-sign-out text-lg"></i> Sign Out Account
-            </button>
         </div>
 
     </div>
@@ -389,7 +382,7 @@
             <button onclick="openPasswordModal()" class="w-full mb-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#111] text-gray-700 dark:text-gray-300 font-bold hover:border-[#800000] dark:hover:border-[#D4AF37] transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
                 <i class="ph-bold ph-lock-key"></i> Change Password
             </button>
-            <div class="flex items-center justify-between gap-4 bg-gray-50 dark:bg-[#111] p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+            <div class="flex items-center justify-between gap-4 bg-gray-50 dark:bg-[#111] p-4 rounded-xl border border-gray-200 dark:border-gray-800 mb-4">
                 <div>
                     <h4 class="text-base font-bold text-gray-900 dark:text-white mb-0.5">System & Email Notifications</h4>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Receive alerts in your portal and directly to your inbox.</p>
@@ -399,6 +392,10 @@
                     <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#800000] dark:peer-checked:bg-[#D4AF37]"></div>
                 </label>
             </div>
+
+            <button @click.prevent="openLogoutModal" class="w-full py-3 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-500 font-bold hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
+                <i class="ph-bold ph-sign-out"></i> Log Out
+            </button>
         </div>
     </div>
 </div>

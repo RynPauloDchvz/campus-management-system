@@ -501,12 +501,17 @@
 
     <!-- 🟢 ACTUAL CONTENT 🟢 -->
     <div v-else class="fade-in">
+
         <!-- 🎯 PENDING APPROVALS SECTION 🎯 -->
         <div class="control-bar">
             <div class="filter-group">
                 <span style="font-weight:900; color:var(--text-main); display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem;">
                     <i class="ph-bold ph-shield-warning" style="color: var(--pup-maroon); font-size: 1.4rem;"></i> Pending Approvals
                 </span>
+                <!-- View Calendar Button -->
+                <button @click="isCalendarOpen = true" class="ml-4 px-4 py-2 bg-pup-maroon hover:bg-maroon-800 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg shadow-md transition-colors flex items-center gap-2" style="border: none; cursor: pointer;">
+                    <i class="ph-bold ph-calendar"></i> View Event Calendar
+                </button>
             </div>
             <div class="search-box">
                 <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
@@ -770,7 +775,7 @@
                         </div>
 
                         <!-- 🏷️ TAB SELECTOR 🏷️ -->
-                        <div class="preview-tabs" v-if="parsedDescription.type !== 'reschedule' && selectedEvent.status !== 'REJECTED'">
+                        <div class="preview-tabs" v-if="parsedDescription.type !== 'reschedule' && !selectedEvent.letter_url && selectedEvent.status !== 'REJECTED'">
                             <button @click="activeTab = 'main'" :class="['preview-tab', activeTab === 'main' ? 'active' : '']">
                                 <i class="ph-bold ph-file-text"></i> Request Letter
                             </button>
@@ -780,7 +785,7 @@
                         </div>
 
                         <!-- 📜 OFFICIAL LETTER PREVIEW 📜 -->
-                        <div v-if="selectedEvent.status !== 'REJECTED'" class="letter-preview fade-in">
+                        <div v-if="!selectedEvent.letter_url && selectedEvent.status !== 'REJECTED'" class="letter-preview fade-in">
                             <!-- Main / Reschedule Letter Content -->
                             <div v-if="activeTab === 'main'">
                                 <p style="margin-bottom: 25px; font-weight: bold;">[[ selectedEvent.date ]]</p>
@@ -965,6 +970,108 @@
         </div>
     </div>
 
+    <!-- Calendar Modal -->
+    <div v-if="isCalendarOpen" v-cloak class="av-modal fade-in" style="z-index: 6000;" @click.self="isCalendarOpen = false">
+        <div class="bg-white dark:bg-pup-darkcard w-full max-w-6xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col max-h-[95vh]" style="background: var(--card-bg);">
+            <!-- Header -->
+            <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-[#111]">
+                <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-3" style="color: var(--text-main);">
+                    <i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold"></i> Global Event Calendar
+                </h2>
+                <button @click="isCalendarOpen = false" class="w-10 h-10 rounded-full hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 text-gray-500 flex items-center justify-center transition-colors" style="border: none; background: transparent; cursor: pointer;">
+                    <i class="ph-bold ph-x text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Calendar Body -->
+            <div class="p-6 overflow-y-auto custom-scrollbar bg-white dark:bg-pup-darkcard" style="background: var(--card-bg);">
+                <div class="flex items-center justify-between mb-6" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <button @click="prevMonth" class="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold transition flex items-center gap-2" style="border: none; cursor: pointer;">
+                        <i class="ph-bold ph-caret-left"></i> Prev
+                    </button>
+                    <h3 class="text-2xl font-black text-gray-800 dark:text-white uppercase tracking-widest" style="color: var(--text-main); font-weight: 900;">[[ monthNames[currentMonth] ]] [[ currentYear ]]</h3>
+                    <button @click="nextMonth" class="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold transition flex items-center gap-2" style="border: none; cursor: pointer;">
+                        Next <i class="ph-bold ph-caret-right"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--border);">
+                    <!-- Days Header -->
+                    <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="bg-gray-50 dark:bg-[#111] py-3 text-center text-xs font-black text-gray-500 uppercase tracking-widest" style="background: var(--input-bg); padding: 12px; text-align: center; font-size: 0.75rem; font-weight: 900;">
+                        [[ day ]]
+                    </div>
+                    
+                    <!-- Calendar Grid -->
+                    <div v-for="(day, index) in calendarDays" :key="index" class="bg-white dark:bg-pup-darkcard min-h-[140px] p-2 relative group transition hover:bg-gray-50 dark:hover:bg-gray-900/50" style="background: var(--card-bg); min-height: 140px; padding: 8px; position: relative;">
+                        <template v-if="day.day">
+                            <span :class="['absolute top-2 right-2 text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full', day.isToday ? 'bg-pup-maroon text-white dark:bg-pup-gold dark:text-black shadow-md' : 'text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white']" style="position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold;">
+                                [[ day.day ]]
+                            </span>
+                            <div class="mt-10 flex flex-col gap-2 h-[100px] overflow-y-auto pr-1 custom-scrollbar" style="margin-top: 40px; display: flex; flex-direction: column; gap: 8px; height: 100px; overflow-y: auto;">
+                                <div v-for="evt in day.events" :key="evt.id" @click.stop="selectedCalendarEvent = evt" :class="['text-xs p-2 rounded-lg leading-tight border-l-4 shadow-sm cursor-pointer hover:opacity-80 transition-opacity', evt.status === 'APPROVED' ? 'bg-green-50 text-green-900 border-green-500 dark:bg-green-900/20 dark:text-green-300' : 'bg-blue-50 text-blue-900 border-blue-500 dark:bg-blue-900/20 dark:text-blue-300']" :title="evt.title + ' - ' + evt.status" style="padding: 8px; border-radius: 8px; font-size: 0.75rem; border-left: 4px solid; cursor: pointer;">
+                                    <strong class="block text-pup-maroon dark:text-pup-gold truncate mb-0.5" style="display: block; margin-bottom: 2px;">[[ evt.org ]]</strong>
+                                    <span class="block font-bold truncate" style="display: block; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">[[ evt.title ]]</span>
+                                    <span class="block mt-0.5 opacity-80 text-[10px]" style="display: block; font-size: 10px; margin-top: 2px;"><i class="ph-bold ph-clock"></i> [[ evt.time ]]</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Calendar Event Details Modal -->
+                <div v-if="selectedCalendarEvent" v-cloak class="absolute inset-0 bg-black/80 z-[7000] flex items-center justify-center p-4 backdrop-blur-md animate-fade-in" @click.self="selectedCalendarEvent = null" style="position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 7000; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(12px);">
+                    <div class="bg-white dark:bg-[#151515] w-full max-w-xl rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col relative transform transition-all" style="background: var(--card-bg); width: 100%; max-width: 36rem; border-radius: 1.5rem; border: 1px solid var(--border); overflow: hidden; position: relative; display: flex; flex-direction: column;">
+                        <!-- Close Button -->
+                        <button @click="selectedCalendarEvent = null" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-red-600 text-white flex items-center justify-center transition-colors z-10 backdrop-blur-sm border border-white/20" style="position: absolute; top: 1rem; right: 1rem; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: rgba(0,0,0,0.5); color: white; display: flex; align-items: center; justify-content: center; z-index: 10; border: none; cursor: pointer;">
+                            <i class="ph-bold ph-x text-lg"></i>
+                        </button>
+
+                        <!-- Cover Photo Header -->
+                        <div class="h-48 sm:h-56 w-full relative bg-gray-900 flex-shrink-0" style="height: 14rem; width: 100%; position: relative; background: #111; flex-shrink: 0;">
+                            <img v-if="selectedCalendarEvent.event_cover_photo" :src="selectedCalendarEvent.event_cover_photo" class="w-full h-full object-cover opacity-90" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9;">
+                            <div v-else class="w-full h-full flex items-center justify-center bg-gray-800" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #1f2937;">
+                                <i class="ph-fill ph-image text-4xl text-gray-600" style="font-size: 2.25rem; color: #4b5563;"></i>
+                            </div>
+                            <div class="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-[#151515] to-transparent" style="position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background: linear-gradient(to top, var(--card-bg), transparent);"></div>
+                        </div>
+
+                        <!-- Details Content -->
+                        <div class="px-8 pb-8 pt-4 -mt-10 relative z-10 text-center" style="padding: 1rem 2rem 2rem; margin-top: -2.5rem; position: relative; z-index: 10; text-align: center;">
+                            <span class="inline-block px-4 py-1 rounded-full bg-pup-maroon/20 text-pup-maroon dark:bg-pup-gold/20 dark:text-pup-gold text-xs font-black uppercase tracking-widest border border-pup-maroon/30 dark:border-pup-gold/30 mb-4 shadow-sm" style="display: inline-block; padding: 0.25rem 1rem; border-radius: 9999px; background: rgba(128,0,0,0.2); color: var(--pup-maroon); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid rgba(128,0,0,0.3); margin-bottom: 1rem;">
+                                [[ selectedCalendarEvent.org ]]
+                            </span>
+                            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-6 leading-tight" style="font-size: 1.5rem; font-weight: 900; color: var(--text-main); margin-bottom: 1.5rem; line-height: 1.25;">[[ selectedCalendarEvent.title ]]</h2>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; text-align: left;">
+                                <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex items-center gap-4 transition hover:bg-gray-100 dark:hover:bg-[#222]" style="background: var(--input-bg); padding: 1rem; border-radius: 1rem; border: 1px solid var(--border); display: flex; align-items: center; gap: 1rem;">
+                                    <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0" style="width: 3rem; height: 3rem; border-radius: 0.75rem; background: rgba(59,130,246,0.2); color: #3b82f6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="ph-bold ph-calendar-blank text-2xl" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5" style="font-size: 10px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 2px;">Date & Time</span>
+                                        <strong class="text-gray-900 dark:text-white block text-sm" style="color: var(--text-main); display: block; font-size: 0.875rem;">[[ selectedCalendarEvent.date ]]</strong>
+                                        <span class="text-gray-500 dark:text-gray-400 text-xs font-medium" style="color: var(--text-muted); font-size: 0.75rem; font-weight: 500;">[[ selectedCalendarEvent.time ]]</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex items-center gap-4 transition hover:bg-gray-100 dark:hover:bg-[#222]" style="background: var(--input-bg); padding: 1rem; border-radius: 1rem; border: 1px solid var(--border); display: flex; align-items: center; gap: 1rem;">
+                                    <div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0" style="width: 3rem; height: 3rem; border-radius: 0.75rem; background: rgba(239,68,68,0.2); color: #ef4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i class="ph-bold ph-map-pin text-2xl" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div style="min-width: 0;">
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5" style="font-size: 10px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 2px;">Venue</span>
+                                        <strong class="text-gray-900 dark:text-white block text-sm truncate w-full" :title="selectedCalendarEvent.venue" style="color: var(--text-main); display: block; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">[[ selectedCalendarEvent.venue || 'TBA' ]]</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 </div>
 
 {{ events_json|json_script:"events-data" }}
@@ -980,6 +1087,8 @@
         setup() {
             const isLoading = ref(true);
             const isModalOpen = ref(false);
+            const isCalendarOpen = ref(false);
+            const selectedCalendarEvent = ref(null);
             const isHistoryMode = ref(false);
             const selectedEvent = ref(null);
             const actionLoading = ref(false);
@@ -1025,6 +1134,44 @@
             
             const pendingEvents = ref(pendingArr);
             const historyEvents = ref(historyArr);
+
+            // Calendar Logic
+            const currentMonth = ref(new Date().getMonth());
+            const currentYear = ref(new Date().getFullYear());
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            const calendarDays = computed(() => {
+                const year = currentYear.value;
+                const month = currentMonth.value;
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                
+                const days = [];
+                for (let i = 0; i < firstDay; i++) {
+                    days.push({ day: null, events: [] });
+                }
+                
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const currentCellDate = new Date(year, month, i).toDateString();
+                    const dayEvents = historyEvents.value.filter(e => {
+                        if (e.status === 'REJECTED') return false;
+                        const eventDate = new Date(e.date).toDateString();
+                        return eventDate === currentCellDate;
+                    });
+                    days.push({ day: i, events: dayEvents, isToday: new Date().toDateString() === currentCellDate });
+                }
+                return days;
+            });
+
+            const prevMonth = () => {
+                if (currentMonth.value === 0) { currentMonth.value = 11; currentYear.value--; }
+                else { currentMonth.value--; }
+            };
+
+            const nextMonth = () => {
+                if (currentMonth.value === 11) { currentMonth.value = 0; currentYear.value++; }
+                else { currentMonth.value++; }
+            };
 
             onMounted(() => {
                 setTimeout(() => { isLoading.value = false; }, 800);
@@ -1267,7 +1414,8 @@
                 openModal, closeModal, approveEvent,
                 currentDocCount, activeDocs,
                 showSuccessMsg, statusMessage,
-                loadingStep, activeTab, parsedDescription
+                loadingStep, activeTab, parsedDescription,
+                currentMonth, currentYear, monthNames, calendarDays, prevMonth, nextMonth, isCalendarOpen, selectedCalendarEvent
             }
         }
     }).mount('#vue-admin-app');

@@ -780,8 +780,8 @@ def student_homepage(request):
                 'is_logo': True
             })
         
-        # 2. Add other images from folder (and only from folder)
-        other_files = [f for f in files if f != logo_file and f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        # 2. Add other images from folder (must contain 'slide' in filename to avoid picking up officer photos)
+        other_files = [f for f in files if f != logo_file and f.lower().endswith(('.png', '.jpg', '.jpeg')) and 'slide' in f.lower()]
         for f in other_files:
             slideshow_images.append({
                 'url': f'/static/images/orgImage/{org_acronym}/{f}',
@@ -889,11 +889,87 @@ def student_homepage(request):
             'image': get_img(e)
         })
 
+    # 🟢 Fetch Officers (Exact 8 for Pyramid Layout)
+    expected_roles = [
+        'President', 
+        'Internal Vice President', 
+        'External Vice President', 
+        'Secretary', 
+        'Treasurer', 
+        'Auditor', 
+        'Public Information Officer', 
+        'Public Information Officer'
+    ]
+
+    ito_images = {
+        'President': 'president.jpg',
+        'Internal Vice President': 'ivp.jpg',
+        'External Vice President': 'evp.jpg',
+        'Secretary': 'secretary.jpg',
+        'Treasurer': 'treasurer.jpg',
+        'Auditor': 'auditor.jpg',
+    }
+    # Pre-defined mock data for ITO
+    ito_officers_data = [
+        {"name": "Justin B. Largado", "year_level": "3rd Year"},
+        {"name": "Eddieson Jaeve U. San Bueno", "year_level": "2nd Year"},
+        {"name": "Aicelle L. Arrogancia", "year_level": "3rd Year"},
+        {"name": "Kate Norsha A. Abid", "year_level": "3rd Year"},
+        {"name": "Cherish Ann M. Parco", "year_level": "4th Year"},
+        {"name": "Jeycel R. Pareja", "year_level": "3rd Year"},
+        {"name": "Aizell Rose B. Arandia", "year_level": "2nd Year"},
+        {"name": "Marco Antonio B. Marquez", "year_level": "2nd Year"}
+    ]
+    pio_count = 1
+
+    officers = list(Student.objects.filter(organization=org_acronym, role__in=expected_roles))
+    
+    officers_data = []
+    # Fill exactly 8 slots based on expected roles
+    for i, role in enumerate(expected_roles):
+        # Try to find a matching officer
+        match = next((o for o in officers if o.role == role), None)
+        if match:
+            officers.remove(match) # Don't reuse
+            officers_data.append({
+                'id': match.id,
+                'name': match.full_name,
+                'position': role,
+                'program': match.program,
+                'year_level': match.year_level,
+                'image': match.profile_picture.url if match.profile_picture else '/static/images/student.jpg'
+            })
+        else:
+            image_path = '/static/images/student.jpg'
+            mock_name = f"TBA ({role})"
+            mock_year = "N/A"
+            
+            if org_acronym == 'ITO':
+                if role == 'Public Information Officer':
+                    image_path = f'/static/images/orgImage/ITO/pio{pio_count}.jpg'
+                    pio_count += 1
+                elif role in ito_images:
+                    image_path = f'/static/images/orgImage/ITO/{ito_images[role]}'
+                
+                if i < len(ito_officers_data):
+                    mock_name = ito_officers_data[i]["name"]
+                    mock_year = ito_officers_data[i]["year_level"]
+
+            officers_data.append({
+                'id': f"mock_{i}",
+                'name': mock_name,
+                'position': role,
+                'program': "BSIT",
+                'year_level': mock_year,
+                'image': image_path
+            })
+
     context = {
         'student': student,
         'latest_news_json': json.dumps(news_data),
         'calendar_events_json': json.dumps(calendar_data),
         'action_required_json': json.dumps(action_required),
+        'org_officers_json': json.dumps(officers_data),
         'org_acronym': org_acronym,
         'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
         'org_about': ORG_ABOUT_US.get(org_acronym, "Advancing university excellence."),
@@ -3526,8 +3602,24 @@ def adviser_dashboard(request):
             'requirement_mode': e.requirement_mode
         })
     
+    # Fetch all events across all orgs for the global calendar (excluding Rejected)
+    all_events_for_calendar = Event.objects.exclude(is_flag_raising=True).exclude(event_status__iexact='Rejected')
+    calendar_events_data = []
+    for e in all_events_for_calendar:
+        calendar_events_data.append({
+            'id': e.id,
+            'org': e.org_id,
+            'title': e.event_title or '',
+            'date': e.event_date.strftime('%Y-%m-%d') if e.event_date else '',
+            'time': e.start_time.strftime('%I:%M %p') if e.start_time else '',
+            'status': e.event_status.upper() if e.event_status else '',
+            'venue': e.venue or '',
+            'cover_photo': e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) else (e.cover_photo.url if getattr(e, 'cover_photo', None) else '')
+        })
+    
     context = {
         'events_json': json.dumps(events_data),
+        'calendar_events_json': json.dumps(calendar_events_data),
         'monthly_approved_count': monthly_approved,
         'pending_admin_count': pending_admin,
         'assigned_org': assigned_org or "All Organizations"
