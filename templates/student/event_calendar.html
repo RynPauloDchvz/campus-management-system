@@ -24,6 +24,25 @@
         .modal-scroll-area {
             padding-bottom: 9rem !important;
         }
+        
+        /* Mobile FullCalendar Optimization */
+        .fc .fc-toolbar {
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        .fc .fc-toolbar-chunk:nth-child(2) {
+            order: -1;
+            width: 100%;
+            text-align: center;
+        }
+        .fc .fc-toolbar-title {
+            font-size: 1.2rem !important;
+        }
+        .fc .fc-button {
+            padding: 6px 10px !important;
+            font-size: 0.75rem !important;
+        }
     }
 </style>
 {% endblock extra_head %}
@@ -32,13 +51,20 @@
 <div v-pre>
 <div class="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen">
     <div class="text-center mb-8">
-        <h1 class="font-bold text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">University Calendar</h1>
+        <h1 class="font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">University Calendar</h1>
         <p class="text-gray-500 dark:text-gray-400 mt-2">Track university-wide schedules and your organization's events.</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Calendar (Left Side) -->
-        <div class="lg:col-span-2 bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-8 overflow-hidden transition-colors flex flex-col">
+        <div id="calendar-wrapper" class="hidden lg:flex lg:col-span-2 bg-white dark:bg-pup-darkcard rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-8 overflow-hidden transition-colors flex-col">
+            <!-- Mobile Close Button -->
+            <div class="flex justify-between items-center mb-4 lg:hidden">
+                <h2 class="font-black text-xl text-gray-900 dark:text-white uppercase tracking-wide flex items-center gap-2"><i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold"></i> Calendar</h2>
+                <button onclick="toggleMobileCalendar()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <i class="ph-bold ph-x"></i>
+                </button>
+            </div>
             <div id="calendar" class="min-h-[500px] sm:min-h-[700px] flex-grow w-full"></div>
         </div>
 
@@ -56,57 +82,84 @@
             <!-- Masterlist Header & Browse Button -->
             <div class="flex flex-col gap-3">
                 <div class="flex items-center justify-between mt-2">
-                    <h2 class="font-black text-xl text-gray-900 dark:text-white uppercase tracking-wide">Event Masterlist</h2>
+                    <h2 class="font-black text-xl text-gray-900 dark:text-white uppercase tracking-wide">Upcoming Events</h2>
+                    <button onclick="toggleMobileCalendar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 shadow-sm text-pup-maroon dark:text-pup-gold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" title="Open Calendar">
+                        <i class="ph-fill ph-calendar text-xl"></i>
+                    </button>
                 </div>
                 <a href="{% url 'student_school_events' %}" class="flex items-center justify-center gap-2 w-full py-3 bg-gray-50 dark:bg-black/20 text-xs font-bold text-gray-600 dark:text-gray-400 hover:text-pup-maroon dark:hover:text-pup-gold hover:bg-red-50 dark:hover:bg-yellow-900/10 transition-all border border-gray-200 dark:border-gray-800 rounded-xl uppercase tracking-widest shadow-sm">
                     <i class="ph-bold ph-magnifying-glass"></i> Browse All Events
                 </a>
             </div>
             
-            <!-- Event List -->
-            <div class="flex flex-col gap-4 overflow-y-auto max-h-[600px] pr-2 hide-scrollbar pb-4" id="masterlistContainer">
-                
-                {% for event in masterlist_events %}
-                <div class="js-masterlist-card bg-white dark:bg-pup-darkcard rounded-2xl p-4 border border-gray-100 dark:border-gray-800 flex gap-4 cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold transition-all shadow-sm group" 
-                     data-title="{{ event.event_title }}" 
-                     data-category="{{ event.org_id }}" 
-                     data-date="{{ event.event_date|date:'M d, Y'|upper }}" 
-                     data-full-date="{{ event.event_date|date:'Y-m-d' }}" 
-                     data-time="{{ event.start_time|time:'h:i A' }}" 
-                     data-venue="{{ event.venue }}" 
-                     data-desc="{{ event.cleaned_description }}" 
-                     data-img="{% if event.thumbnail %}{{ event.thumbnail.url }}{% elif event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% else %}{% static 'images/PUPLogo.png' %}{% endif %}">
-                    <div class="w-24 h-24 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] shrink-0 overflow-hidden">
-                        <img src="{% if event.thumbnail %}{{ event.thumbnail.url }}{% elif event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% else %}{% static 'images/PUPLogo.png' %}{% endif %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+            <!-- Pin Paper Event List -->
+            <div class="relative bg-[#fffae6] dark:bg-[#2a2a2a] rounded-sm p-6 sm:p-8 shadow-md transform rotate-1 border border-[#e8dfb8] dark:border-gray-700 transition-transform hover:rotate-0 mt-2">
+                <!-- Push pin -->
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2 flex flex-col items-center z-10">
+                    <div class="w-7 h-7 rounded-full bg-red-600 shadow-md border-[3px] border-red-700 relative">
+                        <div class="w-2 h-2 rounded-full bg-white/50 absolute top-1 left-1"></div>
                     </div>
-                    <div class="flex flex-col justify-center min-w-0 flex-grow">
-                        <div class="text-[10px] font-bold text-pup-maroon dark:text-pup-gold mb-1 truncate">{{ event.event_date|date:'M d, Y'|upper }} • {{ event.start_time|time:'h:i A' }}</div>
-                        <h4 class="font-bold text-gray-900 dark:text-white leading-tight mb-1 truncate text-sm">{{ event.event_title }}</h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin"></i> {{ event.venue }}</p>
-                    </div>
-                    <div class="flex items-center text-gray-300 dark:text-gray-700 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">
-                        <i class="ph-bold ph-caret-right text-xl"></i>
-                    </div>
+                    <div class="w-1 h-3 bg-black/20 -mt-1 -rotate-[15deg]"></div>
                 </div>
-                {% empty %}
-                <div class="text-center py-10 opacity-50">
-                    <i class="ph-bold ph-calendar-x text-4xl mb-2"></i>
-                    <p class="text-sm">No upcoming events found.</p>
-                </div>
-                {% endfor %}
 
+                <div class="space-y-4 max-h-[600px] overflow-y-auto hide-scrollbar pr-1 pb-4" id="masterlistContainer">
+                    
+                    {% for event in masterlist_events %}
+                    <div class="js-masterlist-card flex flex-col gap-2 p-3 rounded-xl bg-white dark:bg-pup-darkcard hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md group relative overflow-hidden" 
+                         data-id="{{ event.id }}" 
+                         data-title="{{ event.event_title }}" 
+                         data-category="{{ event.org_id }}" 
+                         data-date="{{ event.event_date|date:'M d, Y'|upper }}" 
+                         data-full-date="{{ event.event_date|date:'Y-m-d' }}" 
+                         data-time="{{ event.start_time|time:'h:i A' }}" 
+                         data-venue="{{ event.venue }}" 
+                         data-desc="{{ event.cleaned_description }}" 
+                         data-img="{% if event.thumbnail %}{{ event.thumbnail.url }}{% elif event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% else %}{% static 'images/PUPLogo.png' %}{% endif %}">
+                        
+                        <!-- Thumbnail Image -->
+                        <div class="w-full h-32 sm:h-40 rounded-lg overflow-hidden relative border border-gray-100 dark:border-gray-800">
+                            <img src="{% if event.thumbnail %}{{ event.thumbnail.url }}{% elif event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% else %}{% static 'images/PUPLogo.png' %}{% endif %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
+                            <!-- Overlay Date Badge -->
+                            <div class="absolute top-2 left-2 bg-white/95 dark:bg-black/95 backdrop-blur-md rounded-lg px-2 py-1 text-center shadow-md border border-gray-100 dark:border-gray-800">
+                                <span class="block text-[9px] font-black text-red-600 dark:text-red-500 uppercase leading-none mb-0.5">{{ event.event_date|date:'M' }}</span>
+                                <span class="block text-sm font-black text-gray-900 dark:text-white leading-none">{{ event.event_date|date:'d' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Event Info -->
+                        <div class="min-w-0 w-full mt-1 px-1">
+                            <h4 class="font-black text-gray-900 dark:text-white text-[12px] truncate uppercase tracking-tight group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors">{{ event.event_title }}</h4>
+                            <div class="flex items-center gap-2 mt-1.5">
+                                <span class="text-[9px] text-gray-500 font-bold uppercase flex items-center gap-1">
+                                    <i class="ph-bold ph-clock"></i> {{ event.start_time|time:'h:i A' }}
+                                </span>
+                                <span class="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
+                                <span class="text-[9px] text-gray-500 font-bold uppercase truncate flex items-center gap-1">
+                                    <i class="ph-bold ph-map-pin"></i> {{ event.venue|default:'Campus' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-10 opacity-50">
+                        <i class="ph-bold ph-calendar-x text-4xl mb-2"></i>
+                        <p class="text-sm">No upcoming events found.</p>
+                    </div>
+                    {% endfor %}
+
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Event Details Modal (Similar to Participation Hub Modal) -->
-<div id="masterlistModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center overflow-hidden p-0 sm:p-6">
+<div id="masterlistModal" class="hidden fixed inset-0 z-[6000] flex items-center justify-center overflow-hidden p-0 sm:p-6">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose"></div>
     
     <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-3xl shadow-2xl w-full max-w-3xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700">
         
-        <button id="btnTopClose" class="absolute top-6 right-6 z-[2010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
+        <button id="btnTopClose" class="absolute top-6 right-6 z-[6010] w-10 h-10 flex items-center justify-center bg-black/50 text-white rounded-full text-2xl backdrop-blur-sm hover:bg-black/70 transition-colors">
             <i class="ph-bold ph-x"></i>
         </button>
 
@@ -135,18 +188,19 @@
                 <h3 class="font-black text-[9px] text-gray-400 uppercase tracking-[0.4em] mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">Activity Description</h3>
                 <p id="modalDesc" class="text-gray-500 dark:text-gray-400 text-xs leading-relaxed text-justify mb-10 font-medium">Description</p>
                 
-                <!-- Desktop Button -->
-                <div class="hidden sm:block mt-10">
-                    <a href="{% url 'student_school_events' %}" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 px-6 rounded-2xl text-[10px] flex items-center justify-center gap-3 transition-all shadow-2xl hover:opacity-90 active:scale-95 uppercase tracking-[0.4em]">
-                        <i class="ph-bold ph-scan text-xl"></i> Initialize Participation Hub
-                    </a>
-                </div>
             </div>
+        </div>
+
+        <!-- Desktop Fixed Footer -->
+        <div class="hidden sm:block p-6 sm:px-10 sm:py-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-pup-darkcard rounded-b-none sm:rounded-b-3xl shrink-0">
+            <a id="modalActionBtnDesktop" href="{% url 'student_school_events' %}" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-4 px-6 rounded-2xl text-[10px] flex items-center justify-center gap-3 transition-all shadow-lg hover:opacity-90 active:scale-95 uppercase tracking-[0.4em]">
+                <i class="ph-bold ph-scan text-xl"></i> Initialize Participation Hub
+            </a>
         </div>
 
         <!-- Mobile Fixed Footer -->
         <div class="fixed-modal-footer sm:hidden">
-            <a href="{% url 'student_school_events' %}" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 px-6 rounded-2xl text-[10px] flex items-center justify-center gap-3 transition-all shadow-2xl hover:opacity-90 active:scale-95 uppercase tracking-[0.4em]">
+            <a id="modalActionBtnMobile" href="{% url 'student_school_events' %}" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black py-5 px-6 rounded-2xl text-[10px] flex items-center justify-center gap-3 transition-all shadow-2xl hover:opacity-90 active:scale-95 uppercase tracking-[0.4em]">
                 <i class="ph-bold ph-scan text-xl"></i> Initialize Hub
             </a>
         </div>
@@ -157,13 +211,29 @@
 
 {% block extra_js %}
 <script>
+let calendar; // global
+
+function toggleMobileCalendar() {
+    const wrapper = document.getElementById('calendar-wrapper');
+    if (wrapper.classList.contains('hidden')) {
+        wrapper.classList.remove('hidden', 'lg:flex', 'rounded-3xl');
+        wrapper.classList.add('flex', 'fixed', 'inset-0', 'z-[5000]', 'shadow-2xl', '!rounded-none');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => { if (calendar) calendar.render(); }, 50);
+    } else {
+        wrapper.classList.add('hidden', 'lg:flex', 'rounded-3xl');
+        wrapper.classList.remove('flex', 'fixed', 'inset-0', 'z-[5000]', 'shadow-2xl', '!rounded-none');
+        document.body.style.overflow = '';
+    }
+}
+
 function initCalendarLogic() {
     const calendarEl = document.getElementById('calendar');
     if (!calendarEl) return;
 
     const allEvents = {{ events_json|safe }};
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+    calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: {
             left: 'prev,next today',
@@ -247,7 +317,8 @@ function initCalendarLogic() {
                 props.time, 
                 props.venue, 
                 props.description, 
-                props.image
+                props.image,
+                props.id
             );
         },
         height: '100%'
@@ -265,12 +336,13 @@ function initCalendarLogic() {
                 card.dataset.time,
                 card.dataset.venue,
                 card.dataset.desc,
-                card.dataset.img
+                card.dataset.img,
+                card.dataset.id
             );
         });
     });
 
-    function openModal(title, category, date, time, venue, desc, imgSrc) {
+    function openModal(title, category, date, time, venue, desc, imgSrc, eventId) {
         document.getElementById('modalTitle').innerText = title;
         document.getElementById('modalCategory').innerText = category;
         document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${date} • ${time}`;
@@ -284,6 +356,15 @@ function initCalendarLogic() {
             this.classList.remove('object-cover');
             this.classList.add('object-contain', 'p-4');
         };
+
+        const baseUrl = "{% url 'student_school_events' %}";
+        const targetUrl = eventId ? `${baseUrl}?event_id=${eventId}` : baseUrl;
+        
+        const desktopBtn = document.getElementById('modalActionBtnDesktop');
+        if(desktopBtn) desktopBtn.href = targetUrl;
+        
+        const mobileBtn = document.getElementById('modalActionBtnMobile');
+        if(mobileBtn) mobileBtn.href = targetUrl;
 
         const modal = document.getElementById('masterlistModal');
         modal.classList.remove('hidden');

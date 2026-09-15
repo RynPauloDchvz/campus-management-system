@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Adviser Panel | PUPUni-CAMS{% endblock %}</title>
+    <title>{% block title %}Adviser Panel | PUP-UQ-CAMS{% endblock %}</title>
     
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="{% static 'css/adviser.css' %}">
@@ -85,12 +85,13 @@
         <nav class="sidebar hidden md:flex flex-col shrink-0" id="sidebar-app" v-cloak>
             <i class="ph-bold ph-list toggle-btn" @click="toggleSidebar"></i>
             <div class="brand">
-                <img src="{% static 'images/PUPLogo.png' %}" class="logo-img" alt="PUP Logo">
-                <div class="brand-text-wrapper">
-                    <span class="logo-text">ADVISER PANEL</span>
-                    <span class="brand-subtitle">PUPUni-CAMS</span>
-                </div>
+            <img src="{% static 'images/PUPLogo.png' %}" class="logo-img" alt="PUP Logo">
+            <div class="brand-text-wrapper">
+                <span style="font-size: 0.6rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; line-height: 1; margin-bottom: 2px;">Adviser Panel</span>
+                <span class="logo-text" style="font-size: 1rem;">PUP Unisan</span>
+                <span class="brand-subtitle" style="letter-spacing: 0.15em;">CAMS</span>
             </div>
+        </div>
             <div class="menu-label">Main Menu</div>
             <a href="{% url 'adviser_dashboard' %}" data-title="Event Approvals" class="nav-link {% if request.path == '/adviser/dashboard/' %}active{% endif %}" :class="{ 'active': currentUrl === 'adviser_dashboard' }">
                 <i class="ph-bold ph-check-circle"></i>
@@ -124,7 +125,10 @@
             <header id="header-app" class="bg-bglight dark:bg-pup-dark px-4 md:px-8 py-4 md:py-6 flex justify-between items-center shrink-0 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-[100]" v-cloak>
                 <div class="md:hidden flex items-center gap-2">
                     <img src="{% static 'images/PUPLogo.png' %}" class="h-8 w-8 object-contain" alt="PUP Logo">
-                    <span class="font-black text-pup-maroon dark:text-pup-gold tracking-tighter uppercase text-sm">PUPUni-CAMS</span>
+                    <div class="flex flex-col uppercase justify-center">
+                        <span class="font-black text-sm text-pup-maroon dark:text-pup-gold leading-none">PUP Unisan</span>
+                        <span class="font-bold text-[9px] text-gray-500 dark:text-gray-400 tracking-[0.15em] leading-none mt-0.5">CAMS</span>
+                    </div>
                 </div>
                 <div class="hidden md:block">
                     <h2 class="text-3xl font-extrabold text-pup-maroon dark:text-pup-gold tracking-tight mb-1">{% block page_title %}Event Approvals{% endblock %}</h2>

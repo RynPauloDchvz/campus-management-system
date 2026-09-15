@@ -1082,6 +1082,7 @@ def student_event_calendar(request):
             'backgroundColor': '#800000',
             'borderColor': '#800000',
             'extendedProps': {
+                'id': event.id,
                 'description': clean_desc(event.description),
                 'venue': event.venue,
                 'time': event.start_time.strftime('%I:%M %p'),

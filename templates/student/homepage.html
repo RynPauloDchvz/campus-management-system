@@ -321,7 +321,7 @@
         <div class="lg:col-span-1">
             <div class="flex items-center justify-between mb-8">
                 <h2 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-                    <i class="ph-bold ph-push-pin text-pup-maroon dark:text-pup-gold"></i> Pinned Events
+                    <i class="ph-bold ph-push-pin text-pup-maroon dark:text-pup-gold"></i> Upcoming Events
                 </h2>
                 <div class="flex items-center gap-2">
                     <button v-if="calendarFilterDate" @click="resetCalendarFilter" class="text-[10px] font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest hover:underline mr-2">
@@ -455,12 +455,17 @@
 <!-- News Modal -->
 <div v-if="isEventModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center px-0 sm:px-4 py-0 sm:py-6" v-cloak>
     <div class="absolute inset-0 bg-black/70 backdrop-blur-md" @click="closeModal"></div>
-    <button @click="closeModal" class="fixed top-6 right-6 z-[5010] text-white/70 hover:text-white text-3xl transition-all drop-shadow-lg">
+    <button @click="closeModal" class="fixed sm:hidden top-6 right-6 z-[5010] text-white/70 hover:text-white text-3xl transition-all drop-shadow-lg">
         <i class="ph-bold ph-x"></i>
     </button>
 
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up mobile-fullscreen-modal">
-        <div class="h-56 w-full relative modal-header-img">
+    <div class="relative bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up mobile-fullscreen-modal flex flex-col max-h-[90vh]">
+        <!-- Desktop close button -->
+        <button @click="closeModal" class="hidden sm:flex absolute top-4 right-4 z-[5010] w-8 h-8 bg-black/40 hover:bg-black/60 rounded-full items-center justify-center text-white/90 hover:text-white text-xl transition-all drop-shadow-lg backdrop-blur-sm border border-white/10">
+            <i class="ph-bold ph-x"></i>
+        </button>
+
+        <div class="h-56 w-full relative modal-header-img shrink-0">
             <img :src="getStaticImageUrl(selectedEvent.image)" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
             <div class="absolute bottom-6 left-6 right-6">
@@ -468,7 +473,7 @@
                 <h2 class="text-2xl font-black text-white uppercase leading-tight">[[ selectedEvent.title ]]</h2>
             </div>
         </div>
-        <div class="p-8 modal-scroll-area">
+        <div class="p-8 modal-scroll-area overflow-y-auto">
             <div class="flex items-center gap-3 text-gray-600 dark:text-gray-300 mb-6 bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
                 <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold"></i>
                 <div class="text-xs font-bold uppercase">[[ selectedEvent.location || 'PUP Unisan' ]]</div>
@@ -492,8 +497,13 @@
         <i class="ph-bold ph-x"></i>
     </button>
 
-    <div class="relative bg-white dark:bg-pup-darkcard w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up mobile-fullscreen-modal">
-        <div class="h-48 w-full relative modal-header-img">
+    <div class="relative bg-white dark:bg-pup-darkcard w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up mobile-fullscreen-modal flex flex-col max-h-[90vh]">
+        <!-- Desktop close button -->
+        <button onclick="closeCalendarModal()" class="hidden sm:flex absolute top-4 right-4 z-[5010] w-8 h-8 bg-black/40 hover:bg-black/60 rounded-full items-center justify-center text-white/90 hover:text-white text-xl transition-all drop-shadow-lg backdrop-blur-sm border border-white/10">
+            <i class="ph-bold ph-x"></i>
+        </button>
+
+        <div class="h-48 w-full relative modal-header-img shrink-0">
             <img id="calModalImg" src="" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
             <div class="absolute bottom-4 left-6 right-6">
@@ -501,7 +511,7 @@
                 <h2 id="calModalTitle" class="text-xl font-black text-white uppercase truncate">Title</h2>
             </div>
         </div>
-        <div class="p-6 modal-scroll-area">
+        <div class="p-6 modal-scroll-area overflow-y-auto">
             <div class="grid grid-cols-2 gap-3 mb-6">
                 <div class="bg-gray-50 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
                     <div class="text-[8px] font-black uppercase text-gray-400 mb-1">Schedule</div>
