@@ -2,6 +2,12 @@
 <!DOCTYPE html>
 <html lang="en" class="light">
 <head>
+<script>
+    if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organizer Dashboard | PUP-UQ-CAMS</title>
@@ -100,8 +106,51 @@
         };
     </script>
     {% block extra_head %}{% endblock extra_head %}
+
+<style>
+  @keyframes logoPop {
+      0% { transform: scale(0.4); opacity: 0; }
+      50% { transform: scale(1.1); opacity: 1; }
+      70% { transform: scale(0.95); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes textBounce {
+      0% { transform: translateY(30px); opacity: 0; }
+      50% { transform: translateY(-10px); opacity: 1; }
+      70% { transform: translateY(5px); opacity: 1; }
+      100% { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes pulseContinuous {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.95); opacity: 0.8; }
+  }
+  .animate-logo-pop-pulse {
+      animation: 
+          logoPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+          pulseContinuous 2s ease-in-out 0.6s infinite;
+  }
+  .animate-text-bounce-pulse {
+      animation: 
+          textBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+          pulseContinuous 2s ease-in-out 0.6s infinite;
+  }
+</style>
+
 </head>
 <body class="bg-[#f4f4f4] dark:bg-pup-darkbg text-gray-800 dark:text-gray-200 transition-colors duration-300 antialiased overflow-x-hidden max-w-[100vw]">
+<!-- Global Shatter Loader -->
+<div id="global-shatter-loader" class="fixed inset-0 z-[99999] bg-[#f4f4f4] dark:bg-pup-darkbg flex flex-col items-center justify-center transition-opacity duration-500" style="opacity: 1; pointer-events: auto;">
+    <img src="{% static 'images/loading_icon.png' %}" class="w-24 h-24 sm:w-32 sm:h-32 object-contain animate-logo-pop-pulse">
+    <div class="mt-4 flex flex-col items-center justify-center font-black uppercase tracking-widest text-center animate-text-bounce-pulse">
+        <div class="text-sm text-black dark:text-white leading-tight">PUP Unisan</div>
+        <div class="text-xl sm:text-2xl text-pup-maroon dark:text-pup-gold leading-none mt-1">CAMS</div>
+    </div>
+</div>
+
+
+
+
+
 
     <div id="app" v-cloak class="min-h-screen flex flex-col relative z-10 w-full overflow-x-hidden">
 
@@ -481,5 +530,32 @@
     </script>
     <script src="{% static 'js/organizer.js' %}?v={% now 'U' %}"></script>
     {% block extra_js %}{% endblock extra_js %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+      const shatterLoader = document.getElementById("global-shatter-loader");
+      if (shatterLoader) {
+          setTimeout(() => {
+              shatterLoader.style.opacity = '0';
+              shatterLoader.style.pointerEvents = 'none';
+          }, 400); 
+      }
+
+      document.querySelectorAll('a').forEach(link => {
+          link.addEventListener('click', function(e) {
+              if (this.target === '_blank' || this.hasAttribute('download')) return;
+              const href = this.getAttribute('href');
+              if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+              if (href.startsWith('http') && !this.href.includes(window.location.host)) return;
+              
+              if (shatterLoader) {
+                  shatterLoader.style.opacity = '1';
+                  shatterLoader.style.pointerEvents = 'auto';
+              }
+          });
+      });
+  });
+</script>
+
 </body>
 </html>
