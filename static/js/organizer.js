@@ -53,7 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 filteredCalendarEvents: [],
                 calendarFilterDate: window.VUE_APP_DATA?.calendarFilterDate || null,
                 calendarCurrentMonth: window.VUE_APP_DATA?.calendarCurrentMonth || new Date(),
-                actionRequired: window.VUE_APP_DATA?.actionRequired || null
+                actionRequired: window.VUE_APP_DATA?.actionRequired || null,
+                activeDrawer: null,
+                orgOfficers: window.VUE_APP_DATA?.orgOfficers || []
             }
         },
         created() {

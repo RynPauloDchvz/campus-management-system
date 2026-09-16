@@ -1353,14 +1353,13 @@ def organizer_homepage(request):
             slideshow_images.append({'url': f'/static/images/orgImage/{org_acronym}/{logo_file}', 'is_logo': True})
         
         # Add other background images from the same folder
-        other_files = [f for f in files if f != logo_file and f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        other_files = [f for f in files if f != logo_file and f.lower().endswith(('.png', '.jpg', '.jpeg')) and 'slide' in f.lower()]
         for f in other_files:
             slideshow_images.append({'url': f'/static/images/orgImage/{org_acronym}/{f}', 'is_logo': False})
 
     # Final Fallback if folder is empty or doesn't exist
     if not slideshow_images:
         slideshow_images = [
-            {'url': '/static/images/org1.jpg', 'is_logo': False},
             {'url': '/static/images/PUPLogo.png', 'is_logo': True}
         ]
 
@@ -1415,12 +1414,86 @@ def organizer_homepage(request):
             'image': get_img(e) or '/static/images/PUPLogo.png'
         })
 
+    # 🟢 Fetch Officers (Exact 8 for Pyramid Layout)
+    expected_roles = [
+        'President', 
+        'Internal Vice President', 
+        'External Vice President', 
+        'Secretary', 
+        'Treasurer', 
+        'Auditor', 
+        'Public Information Officer', 
+        'Public Information Officer'
+    ]
+
+    ito_images = {
+        'President': 'president.jpg',
+        'Internal Vice President': 'ivp.jpg',
+        'External Vice President': 'evp.jpg',
+        'Secretary': 'secretary.jpg',
+        'Treasurer': 'treasurer.jpg',
+        'Auditor': 'auditor.jpg',
+    }
+    ito_officers_data = [
+        {"name": "Justin B. Largado", "year_level": "3rd Year"},
+        {"name": "Eddieson Jaeve U. San Bueno", "year_level": "2nd Year"},
+        {"name": "Aicelle L. Arrogancia", "year_level": "3rd Year"},
+        {"name": "Kate Norsha A. Abid", "year_level": "3rd Year"},
+        {"name": "Cherish Ann M. Parco", "year_level": "4th Year"},
+        {"name": "Jeycel R. Pareja", "year_level": "3rd Year"},
+        {"name": "Aizell Rose B. Arandia", "year_level": "2nd Year"},
+        {"name": "Marco Antonio B. Marquez", "year_level": "2nd Year"}
+    ]
+    pio_count = 1
+
+    officers = list(Student.objects.filter(organization=org_acronym, role__in=expected_roles))
+    
+    officers_data = []
+    # Fill exactly 8 slots based on expected roles
+    for i, role in enumerate(expected_roles):
+        match = next((o for o in officers if o.role == role), None)
+        if match:
+            officers.remove(match)
+            officers_data.append({
+                'id': match.id,
+                'name': match.full_name,
+                'position': role,
+                'program': match.program,
+                'year_level': match.year_level,
+                'image': match.profile_picture.url if match.profile_picture else '/static/images/student.jpg'
+            })
+        else:
+            image_path = '/static/images/student.jpg'
+            mock_name = f"TBA ({role})"
+            mock_year = "N/A"
+            
+            if org_acronym == 'ITO':
+                if role == 'Public Information Officer':
+                    image_path = f'/static/images/orgImage/ITO/pio{pio_count}.jpg'
+                    pio_count += 1
+                elif role in ito_images:
+                    image_path = f'/static/images/orgImage/ITO/{ito_images[role]}'
+                
+                if i < len(ito_officers_data):
+                    mock_name = ito_officers_data[i]["name"]
+                    mock_year = ito_officers_data[i]["year_level"]
+
+            officers_data.append({
+                'id': f"mock_{i}",
+                'name': mock_name,
+                'position': role,
+                'program': "BSIT",
+                'year_level': mock_year,
+                'image': image_path
+            })
+
     context = {
         'org_acronym': org_acronym, 
         'full_org_name': ORG_FULL_NAMES.get(org_acronym, org_acronym),
         'about_us_text': ORG_ABOUT_US.get(org_acronym, "Welcome to our organization! We are dedicated to serving the student body."),
         'latest_news_json': json.dumps(news_data),
         'calendar_events_json': json.dumps(calendar_data),
+        'org_officers_json': json.dumps(officers_data),
         'active_members_count': active_members_count,
         'upcoming_events_count': upcoming_events_count,
         'pending_proposals_count': pending_proposals_count,
