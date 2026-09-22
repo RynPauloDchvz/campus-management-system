@@ -8,6 +8,26 @@
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
     .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #334155; }
+
+    /* iOS Pop Origin Animation */
+    .ios-pop-wrapper {
+        transform-origin: var(--click-x, 50%) var(--click-y, 50%);
+        animation: iosPopOpen 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+    }
+    
+    .ios-pop-wrapper-close {
+        animation: iosPopClose 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+    }
+    
+    @keyframes iosPopOpen {
+        0% { opacity: 0; transform: scale(0.3); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes iosPopClose {
+        0% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.3); }
+    }
 </style>
 {% endblock extra_head %}
 
@@ -26,19 +46,52 @@
         </div>
     </div>
 
-    <div class="bg-white dark:bg-[#151515] rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 sm:p-8 transition-colors">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b border-gray-100 dark:border-gray-800 pb-4 gap-4">
-            <div>
-                <h2 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2 tracking-tight">
-                    Event Attendance List
-                </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">Click on any event below to open its specific attendance view.</p>
-            </div>
+    <div class="bg-transparent p-0 transition-colors">
+        <div class="flex flex-col md:flex-row md:items-center justify-end mb-6 border-b border-gray-100 dark:border-gray-800 pb-4 gap-4">
+
             
-            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                <div class="relative flex-grow sm:w-64">
-                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg"></i>
-                    <input type="text" id="searchEvent" placeholder="Search event title..." class="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 text-gray-900 dark:text-white transition-colors" onkeyup="filterEvents()">
+            <div class="relative flex items-center gap-2 w-full md:w-auto">
+                <!-- Calendar Button -->
+                <button type="button" id="calendarFilterBtn" onclick="toggleCalendarPopover()" class="w-12 h-12 shrink-0 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors focus:outline-none shadow-sm">
+                    <i class="ph-bold ph-calendar-blank text-xl pointer-events-none"></i>
+                </button>
+
+                <!-- Search Bar -->
+                <div class="relative flex-grow">
+                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg pointer-events-none"></i>
+                    <input type="text" id="searchEvent" placeholder="Search event title..." class="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-colors shadow-sm" onkeyup="filterEvents()">
+                </div>
+
+                <!-- Chat Bubble Popover (Calendar) -->
+                <div id="calendarPopover" class="hidden absolute top-14 left-0 sm:right-0 sm:left-auto z-[6000] w-[280px] bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 origin-top-left sm:origin-top-right transition-all duration-300 scale-95 opacity-0">
+                    
+                    <!-- Header: Month/Year -->
+                    <div class="flex items-center justify-between mb-3">
+                        <button type="button" onclick="changeMonth(-1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-pup-maroon transition-colors"><i class="ph-bold ph-caret-left"></i></button>
+                        <h4 id="calendarMonthYear" class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-widest">Sep 2026</h4>
+                        <button type="button" onclick="changeMonth(1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-pup-maroon transition-colors"><i class="ph-bold ph-caret-right"></i></button>
+                    </div>
+
+                    <!-- Days Header -->
+                    <div class="grid grid-cols-7 gap-1 mb-2 border-b border-gray-100 dark:border-gray-800 pb-2">
+                        <span class="text-center text-[10px] font-bold text-gray-400">Su</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Mo</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Tu</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">We</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Th</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Fr</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Sa</span>
+                    </div>
+
+                    <!-- Days Grid -->
+                    <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Clear Filter -->
+                    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <button type="button" onclick="clearDateFilter()" class="w-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 font-bold py-2 rounded-xl text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-600 transition-colors">Clear Filter</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -48,6 +101,39 @@
         </div>
     </div>
 
+</div>
+
+<!-- Event Tracking Modal -->
+<div id="eventModalOverlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[5000]" onclick="closeEventModal()"></div>
+<div id="eventModalContainer" class="hidden fixed inset-0 z-[5010] p-4 flex items-center justify-center pointer-events-none">
+    <div id="eventIosWrapper" class="ios-pop-wrapper pointer-events-auto w-full max-w-sm mx-auto flex flex-col max-h-[90vh] h-fit">
+        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+            <div class="p-6 relative">
+                <button onclick="closeEventModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-600 transition-colors">
+                    <i class="ph-bold ph-x text-sm"></i>
+                </button>
+                <div class="mb-5 pr-8 text-left">
+                    <span class="inline-block bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-3">Real-time Status</span>
+                    <h3 id="modalEventTitle" class="text-xl font-black text-gray-900 dark:text-white leading-tight">Event Title</h3>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
+                        <span class="block text-4xl font-black text-green-500 mb-1" id="modalTimeInCount">0</span>
+                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Time In</span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-100 dark:border-gray-800 rounded-2xl p-4 text-center">
+                        <span class="block text-4xl font-black text-blue-500 mb-1" id="modalTimeOutCount">0</span>
+                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Time Out</span>
+                    </div>
+                </div>
+
+                <a id="modalManageBtn" href="#" class="w-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-bold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-transform hover:scale-[1.02] shadow-md">
+                    View all student attendance <i class="ph-bold ph-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock content %}
 
@@ -72,8 +158,8 @@
 
         dataToRender.forEach(event => {
             const card = `
-                <a href="/organizer/manage-attendance?event_id=${event.id}" class="block group bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 sm:p-6 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all cursor-pointer">
-                    <div class="flex items-center justify-between">
+                <div onclick="openEventModal(${event.id}, event)" class="block group bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 sm:p-6 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all cursor-pointer">
+                    <div class="flex items-center justify-between pointer-events-none">
                         <div class="flex items-start gap-4">
                             <div class="w-2.5 h-2.5 rounded-full bg-blue-500 dark:bg-blue-400 mt-2.5 shadow-sm shrink-0"></div>
                             <div>
@@ -83,16 +169,137 @@
                         </div>
                         <i class="ph-bold ph-caret-right text-gray-400 dark:text-gray-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all text-xl"></i>
                     </div>
-                </a>
+                </div>
             `;
             container.innerHTML += card;
         });
     }
 
+    let currentCalDate = new Date();
+    let selectedCalDate = null;
+
+    function toggleCalendarPopover() {
+        const popover = document.getElementById('calendarPopover');
+        if (popover.classList.contains('hidden')) {
+            popover.classList.remove('hidden');
+            renderCalendar();
+            setTimeout(() => {
+                popover.classList.remove('scale-95', 'opacity-0');
+                popover.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        } else {
+            closeCalendarPopover();
+        }
+    }
+
+    function closeCalendarPopover() {
+        const popover = document.getElementById('calendarPopover');
+        if (popover && !popover.classList.contains('hidden')) {
+            popover.classList.remove('scale-100', 'opacity-100');
+            popover.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => popover.classList.add('hidden'), 300);
+        }
+    }
+
+    function changeMonth(dir) {
+        currentCalDate.setMonth(currentCalDate.getMonth() + dir);
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendarDaysGrid');
+        const title = document.getElementById('calendarMonthYear');
+        grid.innerHTML = '';
+        
+        const year = currentCalDate.getFullYear();
+        const month = currentCalDate.getMonth();
+        
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        title.innerText = `${monthNames[month]} ${year}`;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+            grid.innerHTML += `<div class="p-2"></div>`;
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${monthNames[month]} ${String(day).padStart(2, '0')}, ${year}`;
+            const isSelected = selectedCalDate === dateStr;
+            const bgClass = isSelected ? 'bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 font-bold';
+            
+            grid.innerHTML += `
+                <button type="button" onclick="selectDateFilter('${dateStr}')" class="w-8 h-8 mx-auto flex items-center justify-center rounded-lg text-[11px] transition-all ${bgClass}">
+                    ${day}
+                </button>
+            `;
+        }
+    }
+
+    function selectDateFilter(dateStr) {
+        selectedCalDate = dateStr;
+        filterEvents();
+        closeCalendarPopover();
+    }
+
+    function clearDateFilter() {
+        selectedCalDate = null;
+        filterEvents();
+        closeCalendarPopover();
+    }
+
     function filterEvents() {
         const searchTerm = document.getElementById('searchEvent').value.toLowerCase();
-        const filtered = eventsData.filter(event => event.title.toLowerCase().includes(searchTerm));
+        
+        const filtered = eventsData.filter(event => {
+            const matchesSearch = event.title.toLowerCase().includes(searchTerm);
+            let matchesDate = true;
+            if (selectedCalDate && event.date !== "TBA") {
+                matchesDate = event.date.includes(selectedCalDate);
+            }
+            return matchesSearch && matchesDate;
+        });
         renderEventList(filtered);
+    }
+    
+    function openEventModal(eventId, clickEvent) {
+        if(clickEvent) {
+            document.documentElement.style.setProperty('--click-x', clickEvent.clientX + 'px');
+            document.documentElement.style.setProperty('--click-y', clickEvent.clientY + 'px');
+        }
+
+        const ev = eventsData.find(e => e.id === eventId);
+        if(!ev) return;
+
+        document.getElementById('modalEventTitle').innerText = ev.title;
+        document.getElementById('modalTimeInCount').innerText = ev.time_in_count || ev.respondents || 0;
+        document.getElementById('modalTimeOutCount').innerText = ev.time_out_count || 0;
+        document.getElementById('modalManageBtn').href = `/organizer/manage-attendance?event_id=${ev.id}`;
+
+        const overlay = document.getElementById('eventModalOverlay');
+        const container = document.getElementById('eventModalContainer');
+        const iosWrapper = document.getElementById('eventIosWrapper');
+
+        overlay.classList.remove('hidden');
+        container.classList.remove('hidden');
+        iosWrapper.classList.remove('ios-pop-wrapper-close');
+        
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEventModal() {
+        const overlay = document.getElementById('eventModalOverlay');
+        const container = document.getElementById('eventModalContainer');
+        const iosWrapper = document.getElementById('eventIosWrapper');
+
+        iosWrapper.classList.add('ios-pop-wrapper-close');
+        
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            container.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
     }
 
     window.addEventListener('load', () => {

@@ -119,82 +119,49 @@
         </div>
     </div>
 
-    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between font-sans">
-        <div class="relative w-full sm:w-96 shrink-0">
+    <div class="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:justify-end font-sans relative z-30">
+        <div class="relative w-full sm:w-96 shrink-0 mt-0">
             <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search student name or number..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-colors">
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search student name or number..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-800 shadow-sm text-sm rounded-xl h-[46px] pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-colors">
         </div>
         
-        <div class="relative w-full sm:w-auto shrink-0">
-            <select id="yearFilter" onchange="filterTable()" class="w-full sm:w-auto bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3 font-bold text-sm cursor-pointer appearance-none pr-10 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors">
-                <option value="All">All Year Levels</option>
-                <option value="1st Year">1st Year</option>
-                <option value="2nd Year">2nd Year</option>
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-            </select>
-            <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500"></i>
-        </div>
-    </div>
+        <div class="flex flex-row items-start w-full sm:w-auto gap-3 sm:gap-4 shrink-0 z-40">
+            <!-- Pending Approvals Button -->
+            <button type="button" onclick="openPendingModal()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-pup-maroon text-white dark:bg-pup-gold dark:text-black hover:opacity-90 px-4 h-[46px] rounded-xl font-bold text-sm transition-opacity shadow-sm relative border border-transparent">
+                <i class="ph-bold ph-users text-lg"></i>
+                <span class="hidden sm:inline">Pending Approvals</span>
+                <span class="sm:hidden">Pending</span>
+                {% if pending_students|length > 0 %}
+                <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">{{ pending_students|length }}</span>
+                {% endif %}
+            </button>
 
-    <h2 class="text-xl font-black text-gray-900 dark:text-white mb-3 uppercase tracking-wide">Pending Approvals</h2>
-    <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden font-sans mb-10">
-        <div class="hidden sm:grid grid-cols-12 gap-4 p-4 bg-gray-50 dark:bg-[#111] border-b border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-500 uppercase tracking-wider">
-            <div class="col-span-5">Student Information</div>
-            <div class="col-span-3">Student Number</div>
-            <div class="col-span-2 text-center">Year Level</div>
-            <div class="col-span-2 text-center">Action</div>
-        </div>
-
-        <div class="divide-y divide-gray-100 dark:divide-gray-800">
-            {% for student in pending_students %}
-            <div class="student-item flex flex-row items-start sm:items-center sm:grid sm:grid-cols-12 gap-3 sm:gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
-                 data-id="{{ student.id }}"
-                 data-name="{{ student.full_name }}"
-                 data-search="{{ student.full_name|lower }} {{ student.student_number|lower }}"
-                 data-number="{{ student.student_number }}"
-                 data-year="{{ student.year_level }}"
-                 data-birth="{% if student.birthdate %}{{ student.birthdate|date:'M d, Y' }}{% else %}Not Set{% endif %}"
-                 data-avatar="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}"
-                 data-cover="{% if student.cover_photo %}{{ student.cover_photo.url }}{% else %}{% static 'images/background.jpg' %}{% endif %}"
-                 data-org="{{ student.organization }}"
-                 data-status="pending"
-                 onclick="handleRowClick(this)">
+            <input type="hidden" id="yearFilter" value="All">
+            
+            <div class="relative flex-1 sm:flex-none w-1/2 sm:w-auto bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm transition-colors overflow-visible flex flex-col min-w-[140px] sm:min-w-[200px]">
+                <button type="button" id="yearSelectBtn" class="w-full px-4 h-[46px] text-sm font-bold text-gray-900 dark:text-white text-left outline-none cursor-pointer flex justify-between items-center z-20 relative bg-transparent">
+                    <span id="yearSelectLabel" class="truncate pr-2">All Year Levels</span>
+                    <i id="yearSelectIcon" class="ph-bold ph-caret-down text-gray-500 transition-transform duration-300 shrink-0"></i>
+                </button>
                 
-                <!-- IDENTITY: Avatar + Name + Email -->
-                <div class="flex items-center gap-3 flex-1 sm:col-span-5 min-w-0">
-                    <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover shrink-0">
-                    <div class="min-w-0">
-                        <p class="font-bold text-gray-900 dark:text-white leading-tight truncate text-sm sm:text-base">{{ student.full_name }}</p>
-                        <p class="text-[10px] sm:text-xs text-gray-500 truncate mt-0.5">{{ student.email_address }}</p>
+                <div id="yearSelectMenuWrapper" class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0 relative z-10 w-full sm:absolute sm:top-full sm:left-0 sm:right-0 sm:mt-1 sm:rounded-xl sm:shadow-lg sm:border sm:border-gray-200 sm:dark:border-gray-800 sm:bg-white sm:dark:bg-[#111]">
+                    <div class="overflow-hidden">
+                        <div class="bg-gray-50 dark:bg-[#111] flex flex-col border-t border-gray-100 dark:border-gray-800 sm:border-none">
+                            <button type="button" onclick="selectYearFilter('All', 'All Year Levels')" class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors border-b border-gray-100 dark:border-gray-800">All Year Levels</button>
+                            <button type="button" onclick="selectYearFilter('1st Year', '1st Year')" class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors border-b border-gray-100 dark:border-gray-800">1st Year</button>
+                            <button type="button" onclick="selectYearFilter('2nd Year', '2nd Year')" class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors border-b border-gray-100 dark:border-gray-800">2nd Year</button>
+                            <button type="button" onclick="selectYearFilter('3rd Year', '3rd Year')" class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors border-b border-gray-100 dark:border-gray-800">3rd Year</button>
+                            <button type="button" onclick="selectYearFilter('4th Year', '4th Year')" class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">4th Year</button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- DESKTOP ONLY: Grid Columns -->
-                <div class="hidden sm:block sm:col-span-3 text-sm font-bold text-pup-maroon dark:text-pup-gold">{{ student.student_number }}</div>
-                <div class="hidden sm:block sm:col-span-2 text-center text-sm text-gray-600 dark:text-gray-400">{{ student.year_level }}</div>
-                <div class="hidden sm:block sm:col-span-2 text-center">
-                    <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold shadow-sm">Review</span>
-                </div>
-
-                <!-- MOBILE ONLY: Vertical Stack (Badge, Number, Year) -->
-                <div class="flex flex-col items-end gap-1 sm:hidden shrink-0 mt-0.5">
-                    <span class="inline-block px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-[9px] font-black uppercase tracking-tighter">Review</span>
-                    <div class="text-[10px] font-black text-pup-maroon dark:text-pup-gold leading-none mt-1">{{ student.student_number }}</div>
-                    <div class="text-[9px] font-bold text-gray-500 uppercase leading-none mt-0.5">{{ student.year_level }}</div>
-                </div>
             </div>
-            {% empty %}
-                <div class="text-center py-12">
-                    <i class="ph-bold ph-users text-5xl text-gray-300 dark:text-gray-700 mb-3"></i>
-                    <h3 class="font-bold text-lg text-gray-900 dark:text-white">No pending requests</h3>
-                    <p class="text-sm text-gray-500">There are no new registrations for {{ org_acronym }}.</p>
-                </div>
-            {% endfor %}
         </div>
     </div>
 
-    <h2 class="text-xl font-black text-gray-900 dark:text-white mb-3 uppercase tracking-wide">Verified Members</h2>
+
+
+    <h2 class="text-xl font-black text-gray-900 dark:text-white mb-3 uppercase tracking-wide">Verified Students</h2>
     <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden font-sans">
         <div class="hidden sm:grid grid-cols-12 gap-4 p-4 bg-gray-50 dark:bg-[#111] border-b border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <div class="col-span-5">Student Information</div>
@@ -242,11 +209,97 @@
                 </div>
             </div>
             {% empty %}
-                <div class="text-center py-12">
+                <div id="emptyState" class="text-center py-12">
                     <i class="ph-bold ph-user-check text-5xl text-gray-300 dark:text-gray-700 mb-3"></i>
-                    <h3 class="font-bold text-lg text-gray-900 dark:text-white">No verified members yet</h3>
+                    <h3 class="font-bold text-lg text-gray-900 dark:text-white">No verified students yet</h3>
                 </div>
             {% endfor %}
+            
+            <div id="noResultsState" class="hidden text-center py-12">
+                <i class="ph-bold ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-700 mb-3"></i>
+                <h3 class="font-bold text-lg text-gray-900 dark:text-white">No students found</h3>
+                <p class="text-sm text-gray-500">No verified students match your search.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- PENDING APPROVALS MODAL -->
+<!-- ========================================== -->
+<div id="pendingModal" class="hidden fixed inset-0 z-[4500] flex items-center justify-center p-4 font-sans">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closePendingModal()"></div>
+    
+    <div class="relative bg-white dark:bg-[#151515] rounded-[2.5rem] shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[90vh] border border-gray-200 dark:border-gray-800 z-10 overflow-hidden">
+        
+        <!-- Header -->
+        <div class="bg-gray-50 dark:bg-[#111] p-5 sm:p-6 flex justify-between items-center border-b border-gray-200 dark:border-gray-800 shrink-0">
+            <h3 class="font-black text-gray-900 dark:text-white uppercase tracking-wide flex items-center gap-2 text-lg sm:text-xl">
+                <i class="ph-bold ph-users text-2xl text-yellow-500"></i> Pending Approvals
+            </h3>
+            <button type="button" onclick="closePendingModal()" class="text-gray-500 hover:text-red-500 transition-colors w-10 h-10 flex items-center justify-center bg-gray-200 dark:bg-gray-800 rounded-full">
+                <i class="ph-bold ph-x text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Table Content (Scrollable) -->
+        <div class="overflow-y-auto hide-scrollbar flex-grow bg-white dark:bg-[#151515]">
+            <!-- Desktop Header -->
+            <div class="hidden sm:grid grid-cols-12 gap-4 p-4 bg-gray-50 dark:bg-[#111] border-b border-gray-200 dark:border-gray-800 text-xs font-bold text-gray-500 uppercase tracking-wider sticky top-0 z-20 shadow-sm">
+                <div class="col-span-5">Student Information</div>
+                <div class="col-span-3">Student Number</div>
+                <div class="col-span-2 text-center">Year Level</div>
+                <div class="col-span-2 text-center">Action</div>
+            </div>
+
+            <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                {% for student in pending_students %}
+                <div class="pending-student-item flex flex-row items-start sm:items-center sm:grid sm:grid-cols-12 gap-3 sm:gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+                     data-id="{{ student.id }}"
+                     data-name="{{ student.full_name }}"
+                     data-search="{{ student.full_name|lower }} {{ student.student_number|lower }}"
+                     data-number="{{ student.student_number }}"
+                     data-year="{{ student.year_level }}"
+                     data-birth="{% if student.birthdate %}{{ student.birthdate|date:'M d, Y' }}{% else %}Not Set{% endif %}"
+                     data-avatar="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}"
+                     data-cover="{% if student.cover_photo %}{{ student.cover_photo.url }}{% else %}{% static 'images/background.jpg' %}{% endif %}"
+                     data-org="{{ student.organization }}"
+                     data-status="pending"
+                     onclick="handleRowClick(this)">
+                    
+                    <!-- IDENTITY: Avatar + Name + Email -->
+                    <div class="flex items-center gap-3 flex-1 sm:col-span-5 min-w-0">
+                        <img src="{% if student.profile_picture %}{{ student.profile_picture.url }}{% else %}{% static 'images/student.jpg' %}{% endif %}" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover shrink-0 border border-gray-200 dark:border-gray-700">
+                        <div class="min-w-0">
+                            <p class="font-bold text-gray-900 dark:text-white leading-tight truncate text-sm sm:text-base">{{ student.full_name }}</p>
+                            <p class="text-[10px] sm:text-xs text-gray-500 truncate mt-0.5">{{ student.email_address }}</p>
+                        </div>
+                    </div>
+
+                    <!-- DESKTOP ONLY: Grid Columns -->
+                    <div class="hidden sm:block sm:col-span-3 text-sm font-bold text-pup-maroon dark:text-pup-gold">{{ student.student_number }}</div>
+                    <div class="hidden sm:block sm:col-span-2 text-center text-sm text-gray-600 dark:text-gray-400">{{ student.year_level }}</div>
+                    <div class="hidden sm:block sm:col-span-2 text-center">
+                        <span class="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold shadow-sm">Review</span>
+                    </div>
+
+                    <!-- MOBILE ONLY: Vertical Stack (Badge, Number, Year) -->
+                    <div class="flex flex-col items-end gap-1 sm:hidden shrink-0 mt-0.5">
+                        <span class="inline-block px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-[9px] font-black uppercase tracking-tighter">Review</span>
+                        <div class="text-[10px] font-black text-pup-maroon dark:text-pup-gold leading-none mt-1">{{ student.student_number }}</div>
+                        <div class="text-[9px] font-bold text-gray-500 uppercase leading-none mt-0.5">{{ student.year_level }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                    <div class="text-center py-16">
+                        <div class="w-20 h-20 bg-gray-50 dark:bg-[#111] rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                            <i class="ph-bold ph-users text-4xl text-gray-300 dark:text-gray-700"></i>
+                        </div>
+                        <h3 class="font-black text-xl text-gray-900 dark:text-white uppercase tracking-tight">No pending requests</h3>
+                        <p class="text-sm text-gray-500 mt-2">There are no new registrations for {{ org_acronym }}.</p>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
@@ -385,6 +438,57 @@
 <script>
     let currentId = null;
 
+    document.addEventListener("DOMContentLoaded", function() {
+        // Setup custom select dropdown for year filter
+        const selectBtn = document.getElementById('yearSelectBtn');
+        const menuWrapper = document.getElementById('yearSelectMenuWrapper');
+        
+        if(selectBtn && menuWrapper) {
+            selectBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = !menuWrapper.classList.contains('grid-rows-[0fr]');
+                if (isOpen) {
+                    closeYearSelect();
+                } else {
+                    openYearSelect();
+                }
+            });
+        }
+        
+        document.addEventListener('click', (e) => {
+            if (menuWrapper && !menuWrapper.contains(e.target) && selectBtn && !selectBtn.contains(e.target)) {
+                closeYearSelect();
+            }
+        });
+    });
+
+    function openYearSelect() {
+        const menuWrapper = document.getElementById('yearSelectMenuWrapper');
+        const selectIcon = document.getElementById('yearSelectIcon');
+        if(menuWrapper) {
+            menuWrapper.classList.remove('grid-rows-[0fr]', 'opacity-0');
+            menuWrapper.classList.add('grid-rows-[1fr]', 'opacity-100');
+            if(selectIcon) selectIcon.classList.add('rotate-180');
+        }
+    }
+
+    function closeYearSelect() {
+        const menuWrapper = document.getElementById('yearSelectMenuWrapper');
+        const selectIcon = document.getElementById('yearSelectIcon');
+        if(menuWrapper) {
+            menuWrapper.classList.add('grid-rows-[0fr]', 'opacity-0');
+            menuWrapper.classList.remove('grid-rows-[1fr]', 'opacity-100');
+            if(selectIcon) selectIcon.classList.remove('rotate-180');
+        }
+    }
+
+    function selectYearFilter(value, label) {
+        document.getElementById('yearFilter').value = value;
+        document.getElementById('yearSelectLabel').innerText = label;
+        closeYearSelect();
+        filterTable();
+    }
+
     function handleRowClick(element) {
         const id = element.dataset.id;
         const name = element.dataset.name;
@@ -444,8 +548,24 @@
         setTimeout(() => {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            document.body.style.overflow = '';
+            
+            const pendingModal = document.getElementById('pendingModal');
+            if(!pendingModal || pendingModal.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
         }, 300);
+    }
+
+    function openPendingModal() {
+        document.getElementById('pendingModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePendingModal() {
+        document.getElementById('pendingModal').classList.add('hidden');
+        if(document.getElementById('studentDetailModal').classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
     }
 
     function triggerApprove() {
@@ -470,6 +590,7 @@
         const query = document.getElementById('searchInput').value.toLowerCase();
         const yearFilter = document.getElementById('yearFilter').value;
         const items = document.querySelectorAll('.student-item');
+        let visibleCount = 0;
 
         items.forEach(item => {
             const textToSearch = item.dataset.search;
@@ -478,8 +599,22 @@
             const matchesQuery = textToSearch.includes(query);
             const matchesYear = (yearFilter === 'All' || itemYear === yearFilter);
 
-            item.style.display = (matchesQuery && matchesYear) ? '' : 'none';
+            if (matchesQuery && matchesYear) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
         });
+
+        const noResultsState = document.getElementById('noResultsState');
+        if (items.length > 0) {
+            if (visibleCount === 0) {
+                if (noResultsState) noResultsState.classList.remove('hidden');
+            } else {
+                if (noResultsState) noResultsState.classList.add('hidden');
+            }
+        }
     }
 </script>
 {% endblock extra_js %}

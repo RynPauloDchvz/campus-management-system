@@ -34,7 +34,25 @@
         100% { top: 100%; }
     }
     .scan-line { animation: scan 2s linear infinite; }
+
+    /* iOS Pop Origin Animation */
+    .ios-pop-wrapper {
+      animation: iosPopOrigin 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes iosPopOrigin {
+      0% { transform: scale(0.2); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .ios-pop-wrapper-close {
+      animation: iosPopClose 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+    @keyframes iosPopClose {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0.2); opacity: 0; }
+    }
 </style>
+
 {% endblock extra_head %}
 
 {% block content %}
@@ -393,7 +411,7 @@
                         </div>
                     </div>
                 `;
-                card.addEventListener('click', () => openModal(e));
+                card.addEventListener('click', (event) => openModal(e, event));
                 eventsGrid.appendChild(card);
             });
             updateAllCountdowns();
@@ -451,7 +469,13 @@
             return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
         }
 
-        function openModal(e) {
+        function openModal(e, clickEvent) {
+            const wrapper = document.getElementById('eventModal');
+            if (wrapper && clickEvent) {
+                wrapper.style.transformOrigin = `${clickEvent.clientX}px ${clickEvent.clientY}px`;
+                wrapper.classList.remove('ios-pop-wrapper-close');
+                wrapper.classList.add('ios-pop-wrapper');
+            }
             currentEvent = e;
             document.getElementById('modalImg').src = e.image;
             document.getElementById('modalTitle').innerText = e.title;
@@ -499,7 +523,19 @@
             }, 1000);
         }
 
-        function closeEventDetailsModal() { modalOverlay.style.display = 'none'; }
+        function closeEventDetailsModal() { 
+            const wrapper = document.getElementById('eventModal');
+            if (wrapper) {
+                wrapper.classList.add('ios-pop-wrapper-close');
+                setTimeout(() => {
+                    modalOverlay.style.display = 'none';
+                    wrapper.classList.remove('ios-pop-wrapper');
+                    wrapper.classList.remove('ios-pop-wrapper-close');
+                }, 350);
+            } else {
+                modalOverlay.style.display = 'none'; 
+            }
+        }
         function resetCurrentEvent() { currentEvent = null; }
 
         if (btnParticipate) btnParticipate.addEventListener('click', () => { closeEventDetailsModal(); questionModal.style.display = 'flex'; });

@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/event_history.css' %}">
 <style>
     /* Modal Maximization on Mobile */
     @media (max-width: 640px) {
@@ -28,6 +27,29 @@
             justify-content: center !important;
             backdrop-filter: blur(4px) !important;
         }
+    }
+
+    /* iOS Pop Origin Animation */
+    .ios-pop-wrapper, .ios-pop-wrapper-close {
+        transform-origin: var(--click-x, 50%) var(--click-y, 50%);
+    }
+    
+    .ios-pop-wrapper {
+        animation: iosPopOpen 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+    }
+    
+    .ios-pop-wrapper-close {
+        animation: iosPopClose 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+    }
+    
+    @keyframes iosPopOpen {
+        0% { opacity: 0; transform: scale(0.3); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes iosPopClose {
+        0% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.3); }
     }
 </style>
 {% endblock extra_head %}
@@ -90,7 +112,7 @@
 <div id="historyModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-0 sm:p-4 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose" onclick="closeHistoryModal()"></div>
     
-    <div id="modalContentBlock" class="mobile-fullscreen relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700 z-10 transition-colors transform transition-transform scale-95 opacity-0 duration-300">
+    <div id="modalContentBlock" class="mobile-fullscreen relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700 z-10">
         
         <button id="btnTopClose" onclick="closeHistoryModal()" class="fixed-close-btn absolute top-6 right-6 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-20">
             <i class="ph-bold ph-x"></i>
@@ -174,11 +196,11 @@ function initHistoryLogic() {
             const statusText = isVerified ? 'Verified' : 'Unmatched';
             
             const html = `
-                <div class="bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" onclick="openHistoryModal('${item.id}')">
+                <div class="bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" onclick="openHistoryModal('${item.id}', event)">
                     <div class="w-24 sm:w-full h-24 sm:h-32 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] border-r sm:border-r-0 sm:border-b border-gray-200 dark:border-gray-800">
                         <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-                        <div class="absolute top-2 right-2 hidden sm:block">
-                            <span class="text-[0.65rem] font-bold px-2 py-1 rounded-md uppercase ${badgeClass} shadow-sm"><i class="ph-fill ${icon}"></i> ${item.type}</span>
+                        <div class="absolute top-1 left-1 sm:top-2 sm:right-2 sm:left-auto">
+                            <span class="text-[0.55rem] sm:text-[0.65rem] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md uppercase whitespace-nowrap ${badgeClass} shadow-sm"><i class="ph-fill ${icon}"></i> ${item.type}</span>
                         </div>
                     </div>
                     <div class="p-3 sm:p-4 flex flex-col justify-center flex-grow min-w-0">
@@ -194,7 +216,7 @@ function initHistoryLogic() {
         });
     }
 
-    window.openHistoryModal = function(id) {
+    window.openHistoryModal = function(id, e) {
         const item = historyData.find(i => String(i.id) === String(id));
         if(!item) return;
 
@@ -254,23 +276,27 @@ function initHistoryLogic() {
 
         const modal = document.getElementById('historyModal');
         const modalContent = document.getElementById('modalContentBlock');
+        if (e && modalContent) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = e.clientX || (rect.left + rect.width / 2);
+            const clickY = e.clientY || (rect.top + rect.height / 2);
+            modalContent.style.setProperty('--click-x', clickX + 'px');
+            modalContent.style.setProperty('--click-y', clickY + 'px');
+            modalContent.classList.remove('ios-pop-wrapper-close');
+            modalContent.classList.add('ios-pop-wrapper');
+        }
+
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
-        setTimeout(() => {
-            if (modalContent) {
-                modalContent.classList.remove('scale-95', 'opacity-0');
-                modalContent.classList.add('scale-100', 'opacity-100');
-            }
-        }, 10);
     }
 
     window.closeHistoryModal = function() {
         const modal = document.getElementById('historyModal');
         const modalContent = document.getElementById('modalContentBlock');
         if (modalContent) {
-            modalContent.classList.remove('scale-100', 'opacity-100');
-            modalContent.classList.add('scale-95', 'opacity-0');
+            modalContent.classList.remove('ios-pop-wrapper');
+            modalContent.classList.add('ios-pop-wrapper-close');
         }
         setTimeout(() => {
             modal.classList.add('hidden');

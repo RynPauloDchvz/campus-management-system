@@ -2009,11 +2009,14 @@ def organizer_attendance_events(request):
     
     event_data = []
     for event in org_events:
+        total_att = Attendance.objects.filter(event=event)
         event_data.append({
             'id': event.id,
             'title': event.event_title,
             'date': event.event_date.strftime("%b %d, %Y") if event.event_date else "TBA",
-            'respondents': Attendance.objects.filter(event=event).count(),
+            'respondents': total_att.count(),
+            'time_in_count': total_att.count(),
+            'time_out_count': total_att.filter(time_out__isnull=False).count(),
         })
 
     return render(request, 'organizer/attendance_events.html', {

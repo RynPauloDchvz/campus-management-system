@@ -249,12 +249,22 @@
     0% { transform: scale(0.2); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
   }
+
+  .ios-pop-wrapper-close {
+    animation: iosPopClose 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+  @keyframes iosPopClose {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.2); opacity: 0; }
+  }
 </style>
+
 
 
 
 <script>
   document.addEventListener('mousedown', function(e) {
+    if (document.body.style.overflow === 'hidden' || e.target.closest('.ios-pop-wrapper')) return;
     document.documentElement.style.setProperty('--click-x', e.clientX + 'px');
     document.documentElement.style.setProperty('--click-y', e.clientY + 'px');
   }, true);
@@ -462,7 +472,7 @@
       </h2>
 
       <div class="news-carousel hide-scrollbar">
-        <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news)" class="news-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 transition-all cursor-pointer group">
+        <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news, $event)" class="news-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 transition-all cursor-pointer group">
           <div class="h-40 overflow-hidden relative">
             <img :src="getStaticImageUrl(news.image)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
           </div>
@@ -483,7 +493,7 @@
           <button v-if="calendarFilterDate" @click="resetCalendarFilter" class="text-[10px] font-black text-pup-maroon dark:text-pup-gold uppercase hover:underline mr-2">
             View Month
           </button>
-          <button onclick="openFullCalendarModal()" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Open Calendar">
+          <button onclick="openFullCalendarModal(event)" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Open Calendar">
             <i class="ph-bold ph-calendar text-lg"></i>
           </button>
         </div>
@@ -508,7 +518,7 @@
         </div>
 
         <div class="space-y-4 max-h-[350px] overflow-y-auto hide-scrollbar pr-1 pb-4">
-          <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="handleCalendarEventClick(evt)" 
+          <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="handleCalendarEventClick(evt, $event)" 
             class="flex flex-col gap-2 p-3 rounded-xl bg-white dark:bg-pup-darkcard hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md group relative overflow-hidden">
             
             <!-- Thumbnail Image -->
@@ -825,45 +835,76 @@
         document.querySelectorAll('.fc-daygrid-day').forEach(el => el.classList.remove('selected-day'));
         info.dayEl.classList.add('selected-day');
       },
-      eventClick: (info) => handleCalendarEventClick(info.event.extendedProps)
+      eventClick: (info) => handleCalendarEventClick(info.event.extendedProps, info.jsEvent)
     });
     calendar.render();
   });
 
-  function handleCalendarEventClick(evt) {
+  function handleCalendarEventClick(evt, jsEvent) {
+    const modal = document.getElementById('calendarEventModal');
+    const wrapper = modal.querySelector('.ios-pop-wrapper');
+    if (wrapper && jsEvent) {
+        wrapper.style.transformOrigin = `${jsEvent.clientX}px ${jsEvent.clientY}px`;
+    }
     document.getElementById('calModalTitle').innerText = evt.title;
     document.getElementById('calModalStatus').innerText = evt.status;
     document.getElementById('calModalDateTime').innerText = `${evt.date} • ${evt.start_time}`;
     document.getElementById('calModalVenue').innerText = evt.venue || 'TBD';
     document.getElementById('calModalDesc').innerText = evt.description || 'No description provided.';
     document.getElementById('calModalImg').src = evt.image || '{% static "images/background.jpg" %}';
-    const modal = document.getElementById('calendarEventModal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     document.body.style.overflow = 'hidden';
   }
   
-  function openFullCalendarModal() {
+  function openFullCalendarModal(e) {
     const modal = document.getElementById('fullCalendarModal');
+    const wrapper = modal.querySelector('.ios-pop-wrapper');
+    if (wrapper && e) {
+        wrapper.style.transformOrigin = `${e.clientX}px ${e.clientY}px`;
+    }
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     document.body.style.overflow = 'hidden';
     if (calendar) {
       setTimeout(() => { calendar.render(); }, 100);
+      setTimeout(() => { calendar.render(); calendar.updateSize(); }, 450);
     }
   }
   function closeFullCalendarModal() {
     const modal = document.getElementById('fullCalendarModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    document.body.style.overflow = '';
+    const wrapper = modal.querySelector('.ios-pop-wrapper');
+    if (wrapper) {
+        wrapper.classList.add('ios-pop-wrapper-close');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+            wrapper.classList.remove('ios-pop-wrapper-close');
+        }, 350);
+    } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
   }
 
   function closeCalendarModal() {
     const modal = document.getElementById('calendarEventModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    document.body.style.overflow = '';
+    const wrapper = modal.querySelector('.ios-pop-wrapper');
+    if (wrapper) {
+        wrapper.classList.add('ios-pop-wrapper-close');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+            wrapper.classList.remove('ios-pop-wrapper-close');
+        }, 350);
+    } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
   }
 
   (function() {
@@ -877,7 +918,7 @@
       formatDateShort(dateStr) {
         return new Date(dateStr.split('-').join('/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       },
-      handleCalendarEventClick(evt) { handleCalendarEventClick(evt); },
+      handleCalendarEventClick(evt, jsEvent) { handleCalendarEventClick(evt, jsEvent); },
       resetCalendarFilter() {
         this.calendarFilterDate = null;
         document.querySelectorAll('.fc-daygrid-day').forEach(el => el.classList.remove('selected-day'));

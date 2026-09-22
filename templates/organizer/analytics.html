@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/organizer_analytics.css' %}">
 <style>
     /* Custom Scrollbar for Event List */
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -21,6 +20,29 @@
     }
     .dark .skeleton-shimmer {
         background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+    }
+
+    /* iOS Pop Origin Animation */
+    .ios-pop-wrapper, .ios-pop-wrapper-close {
+        transform-origin: var(--click-x, 50%) var(--click-y, 50%);
+    }
+    
+    .ios-pop-wrapper {
+        animation: iosPopOpen 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+    }
+    
+    .ios-pop-wrapper-close {
+        animation: iosPopClose 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+    }
+    
+    @keyframes iosPopOpen {
+        0% { opacity: 0; transform: scale(0.3); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes iosPopClose {
+        0% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.3); }
     }
 </style>
 {% endblock extra_head %}
@@ -77,64 +99,121 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center transition-colors">
-            <i class="ph-fill ph-users-three text-3xl text-blue-600 dark:text-blue-500 mb-2"></i>
-            <h4 class="text-2xl font-black text-gray-900 dark:text-white" id="statTotalEval">{{ total_evals|default:0 }}</h4>
-            <span class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Total Evaluations</span>
-        </div>
-        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center transition-colors">
-            <i class="ph-fill ph-star text-3xl text-yellow-500 dark:text-yellow-400 mb-2"></i>
-            <h4 class="text-2xl font-black text-gray-900 dark:text-white" id="statAvgStar">{{ avg_rating|default:0 }}</h4>
-            <span class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Average Rating</span>
-        </div>
-        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center transition-colors">
-            <i class="ph-fill ph-smiley text-3xl text-green-600 dark:text-green-500 mb-2"></i>
-            <h4 class="text-2xl font-black text-gray-900 dark:text-white" id="statPosSentiment">{{ pos_sentiment|default:0 }}%</h4>
-            <span class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Positive Sentiment</span>
-        </div>
-        <div class="bg-white dark:bg-[#151515] p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col items-center text-center transition-colors">
-            <i class="ph-fill ph-check-circle text-3xl text-pup-maroon dark:text-pup-gold mb-2"></i>
-            <h4 class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ events_managed|default:0 }}</h4>
-            <span class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">Events Managed</span>
-        </div>
-    </div>
-
-    <div class="bg-white dark:bg-[#151515] rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 sm:p-8 transition-colors">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 border-b border-gray-100 dark:border-gray-800 pb-4 gap-4">
-            <div>
-                <h2 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2 tracking-tight">
-                    History Analytics
-                </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">Select a record to analyze performance</p>
+    <div class="bg-transparent p-0 transition-colors mb-10 font-sans relative z-30">
+        
+        <!-- Controls Container -->
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:justify-end w-full mb-6 relative z-30">
+            
+            <!-- Search Bar -->
+            <div class="relative w-full sm:w-64 shrink-0">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg pointer-events-none"></i>
+                <input type="text" id="searchEvent" placeholder="Search event title..." class="w-full h-[46px] pl-11 pr-4 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-colors shadow-sm" onkeyup="filterEvents()">
             </div>
             
-            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                <div class="relative flex-grow sm:w-64">
-                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg"></i>
-                    <input type="text" id="searchEvent" placeholder="Search event title..." class="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 text-gray-900 dark:text-white transition-colors" onkeyup="filterEvents()">
-                </div>
-                <div class="relative shrink-0 w-full sm:w-auto">
-                    <i class="ph-bold ph-calendar-blank absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-lg"></i>
-                    <input type="month" id="filterMonth" class="w-full sm:w-48 pl-11 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm font-semibold focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 text-gray-900 dark:text-white transition-colors cursor-pointer appearance-none" onchange="filterEvents()">
+            <!-- 2nd line on mobile: Button & Calendar -->
+            <div class="flex flex-row items-start w-full sm:w-auto gap-3 sm:gap-4 shrink-0 z-40">
+                    
+                    <!-- Overall Status Button -->
+                    <button type="button" onclick="openOverallStatsModal(event)" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-pup-maroon text-white dark:bg-pup-gold dark:text-black hover:opacity-90 px-4 h-[46px] rounded-xl font-bold text-sm transition-opacity shadow-sm relative border border-transparent">
+                        <i class="ph-bold ph-chart-pie-slice text-lg"></i>
+                        <span class="hidden sm:inline">Overall Status</span>
+                        <span class="sm:hidden">Status</span>
+                    </button>
+
+                    <!-- Calendar Filter Container -->
+                    <div class="relative shrink-0">
+                        <button type="button" id="calendarFilterBtn" onclick="toggleCalendarPopover()" class="w-[46px] h-[46px] shrink-0 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors focus:outline-none shadow-sm">
+                            <i class="ph-bold ph-calendar-blank text-xl pointer-events-none"></i>
+                        </button>
+
+                        <!-- Chat Bubble Popover (Calendar) -->
+                        <div id="calendarPopover" class="hidden absolute top-[52px] left-auto right-0 z-[6000] w-[280px] bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 origin-top-right transition-all duration-300 scale-95 opacity-0">
+                            
+                            <!-- Header: Month/Year -->
+                            <div class="flex items-center justify-between mb-3">
+                                <button type="button" onclick="changeMonth(-1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-pup-maroon transition-colors"><i class="ph-bold ph-caret-left"></i></button>
+                                <h4 id="calendarMonthYear" class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-widest">--</h4>
+                        <button type="button" onclick="changeMonth(1)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-pup-maroon transition-colors"><i class="ph-bold ph-caret-right"></i></button>
+                    </div>
+
+                    <!-- Days Header -->
+                    <div class="grid grid-cols-7 gap-1 mb-2 border-b border-gray-100 dark:border-gray-800 pb-2">
+                        <span class="text-center text-[10px] font-bold text-gray-400">Su</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Mo</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Tu</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">We</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Th</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Fr</span>
+                        <span class="text-center text-[10px] font-bold text-gray-400">Sa</span>
+                    </div>
+
+                    <!-- Days Grid -->
+                    <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Clear Filter -->
+                    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
+                        <button type="button" onclick="clearDateFilter()" class="w-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 font-bold py-2 rounded-xl text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-600 transition-colors">Clear Filter</button>
+                    </div>
+                    </div>
                 </div>
             </div>
         </div>
-
+        
         <div class="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar" id="eventListContainer">
             </div>
     </div>
 
 </div>
 
-<div id="performanceModal" class="fixed inset-0 z-[2000] hidden items-end sm:items-center justify-center p-0 sm:p-4">
+<div id="overallStatsOverlay" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[5000]" onclick="closeOverallStatsModal()"></div>
+<div id="overallStatsContainer" class="hidden fixed inset-0 z-[5010] p-4 flex items-center justify-center pointer-events-none">
+    <div id="overallStatsWrapper" class="ios-pop-wrapper pointer-events-auto w-full max-w-lg mx-auto flex flex-col max-h-[90vh] h-fit">
+        <div class="bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl w-full border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+            <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-[#111]">
+                <h3 class="font-black text-gray-900 dark:text-white uppercase tracking-wide flex items-center gap-2 text-sm sm:text-base">
+                    <i class="ph-fill ph-chart-pie-slice text-xl text-pup-maroon dark:text-pup-gold"></i> Overall Event Status
+                </h3>
+                <button onclick="closeOverallStatsModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800 text-gray-500 hover:text-red-600 transition-colors">
+                    <i class="ph-bold ph-x text-sm"></i>
+                </button>
+            </div>
+            <div class="p-5 sm:p-6 bg-white dark:bg-[#151515]">
+                <!-- 2x2 Grid -->
+                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div class="bg-gray-50 dark:bg-[#111] p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center shadow-sm">
+                        <i class="ph-fill ph-users-three text-3xl text-blue-600 dark:text-blue-500 mb-2"></i>
+                        <h4 class="text-2xl font-black text-gray-900 dark:text-white mt-1" id="statTotalEval">{{ total_evals|default:0 }}</h4>
+                        <span class="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Total Evaluations</span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-[#111] p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center shadow-sm">
+                        <i class="ph-fill ph-star text-3xl text-yellow-500 dark:text-yellow-400 mb-2"></i>
+                        <h4 class="text-2xl font-black text-gray-900 dark:text-white mt-1" id="statAvgStar">{{ avg_rating|default:0 }}</h4>
+                        <span class="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Total Avg Rating</span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-[#111] p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center shadow-sm">
+                        <i class="ph-fill ph-smiley text-3xl text-green-600 dark:text-green-500 mb-2"></i>
+                        <h4 class="text-2xl font-black text-gray-900 dark:text-white mt-1" id="statPosSentiment">{{ pos_sentiment|default:0 }}%</h4>
+                        <span class="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Total Positive Sentiment</span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-[#111] p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center shadow-sm">
+                        <i class="ph-fill ph-check-circle text-3xl text-pup-maroon dark:text-pup-gold mb-2"></i>
+                        <h4 class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ events_managed|default:0 }}</h4>
+                        <span class="text-[9px] sm:text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Total Events Managed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="performanceModal" class="fixed inset-0 z-[2000] hidden items-center justify-center p-0 sm:p-4">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closePerformanceModal()"></div>
     
-    <div class="relative bg-[#ffffff] dark:bg-[#151515] w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl z-10 flex flex-col transform translate-y-full transition-transform duration-300 ease-out border border-transparent dark:border-gray-800" id="performanceModalBox">
-        
-        <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-4 sm:hidden"></div>
+    <div class="relative bg-[#ffffff] dark:bg-[#151515] w-full h-[100dvh] sm:h-auto sm:max-h-[85vh] overflow-y-auto max-w-lg rounded-none sm:rounded-3xl shadow-2xl z-10 flex flex-col border border-transparent dark:border-gray-800" id="performanceModalBox">
 
-        <div class="p-6 sm:p-8">
+        <div class="p-6 sm:p-8 flex flex-col flex-1">
             <div class="flex justify-between items-start mb-8">
                 <div>
                     <span class="text-[10px] font-black tracking-[0.2em] text-blue-600 dark:text-blue-400 uppercase">Performance Report</span>
@@ -206,16 +285,16 @@
             return;
         }
 
-        dataToRender.forEach(event => {
-            let dotColor = event.score >= 4.0 ? 'bg-green-500 dark:bg-green-400' : 'bg-orange-500 dark:bg-orange-400';
+        dataToRender.forEach(eventItem => {
+            let dotColor = eventItem.score >= 4.0 ? 'bg-green-500 dark:bg-green-400' : 'bg-orange-500 dark:bg-orange-400';
 
             const card = `
-                <div onclick="openPerformanceModal(${event.id})" class="cursor-pointer group bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 sm:p-6 flex items-center justify-between hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all">
+                <div onclick="openPerformanceModal(${eventItem.id}, event)" class="cursor-pointer group bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 sm:p-6 flex items-center justify-between hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all">
                     <div class="flex items-start gap-4">
                         <div class="w-2.5 h-2.5 rounded-full ${dotColor} mt-2.5 shadow-sm shrink-0"></div>
                         <div>
-                            <h3 class="font-black text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">${event.title}</h3>
-                            <p class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 mt-1"><i class="ph-bold ph-calendar-blank"></i> ${event.date} &nbsp;•&nbsp; <i class="ph-bold ph-users"></i> ${event.respondents} Respondents</p>
+                            <h3 class="font-black text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">${eventItem.title}</h3>
+                            <p class="text-xs sm:text-sm font-bold text-gray-500 dark:text-gray-400 mt-1"><i class="ph-bold ph-calendar-blank"></i> ${eventItem.date} &nbsp;•&nbsp; <i class="ph-bold ph-users"></i> ${eventItem.respondents} Respondents</p>
                         </div>
                     </div>
                     <i class="ph-bold ph-caret-right text-gray-400 dark:text-gray-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all text-xl"></i>
@@ -225,24 +304,138 @@
         });
     }
 
+    // 🟢 OVERALL STATS MODAL LOGIC 🟢
+    function openOverallStatsModal(e) {
+        const overlay = document.getElementById('overallStatsOverlay');
+        const container = document.getElementById('overallStatsContainer');
+        const wrapper = document.getElementById('overallStatsWrapper');
+        
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX || (rect.left + rect.width / 2);
+        const clickY = e.clientY || (rect.top + rect.height / 2);
+        
+        wrapper.style.setProperty('--click-x', clickX + 'px');
+        wrapper.style.setProperty('--click-y', clickY + 'px');
+
+        wrapper.classList.remove('ios-pop-wrapper-close');
+        wrapper.classList.add('ios-pop-wrapper');
+        
+        overlay.classList.remove('hidden');
+        container.classList.remove('hidden');
+        
+        setTimeout(() => {
+            document.body.style.overflow = 'hidden';
+        }, 10);
+    }
+
+    function closeOverallStatsModal() {
+        const overlay = document.getElementById('overallStatsOverlay');
+        const wrapper = document.getElementById('overallStatsWrapper');
+        
+        wrapper.classList.remove('ios-pop-wrapper');
+        wrapper.classList.add('ios-pop-wrapper-close');
+        
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            document.getElementById('overallStatsContainer').classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    }
+
     // 🟢 SEARCH & CALENDAR FILTER LOGIC 🟢
+    let currentCalDate = new Date();
+    let selectedCalDate = null;
+
+    function toggleCalendarPopover() {
+        const popover = document.getElementById('calendarPopover');
+        if (popover.classList.contains('hidden')) {
+            popover.classList.remove('hidden');
+            renderCalendar();
+            setTimeout(() => {
+                popover.classList.remove('scale-95', 'opacity-0');
+                popover.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        } else {
+            closeCalendarPopover();
+        }
+    }
+
+    function closeCalendarPopover() {
+        const popover = document.getElementById('calendarPopover');
+        if (popover && !popover.classList.contains('hidden')) {
+            popover.classList.remove('scale-100', 'opacity-100');
+            popover.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => popover.classList.add('hidden'), 300);
+        }
+    }
+
+    document.addEventListener('click', (event) => {
+        const popover = document.getElementById('calendarPopover');
+        const btn = document.getElementById('calendarFilterBtn');
+        if (popover && !popover.classList.contains('hidden')) {
+            if (!popover.contains(event.target) && !btn.contains(event.target)) {
+                closeCalendarPopover();
+            }
+        }
+    });
+
+    function changeMonth(dir) {
+        currentCalDate.setMonth(currentCalDate.getMonth() + dir);
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendarDaysGrid');
+        const title = document.getElementById('calendarMonthYear');
+        grid.innerHTML = '';
+        
+        const year = currentCalDate.getFullYear();
+        const month = currentCalDate.getMonth();
+        
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        title.innerText = `${monthNames[month]} ${year}`;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+            grid.innerHTML += `<div class="p-2"></div>`;
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${monthNames[month]} ${String(day).padStart(2, '0')}, ${year}`;
+            const isSelected = selectedCalDate === dateStr;
+            const bgClass = isSelected ? 'bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-black shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 font-bold';
+            
+            grid.innerHTML += `
+                <button type="button" onclick="selectDateFilter('${dateStr}')" class="w-8 h-8 mx-auto flex items-center justify-center rounded-lg text-[11px] transition-all ${bgClass}">
+                    ${day}
+                </button>
+            `;
+        }
+    }
+
+    function selectDateFilter(dateStr) {
+        selectedCalDate = dateStr;
+        filterEvents();
+        closeCalendarPopover();
+    }
+
+    function clearDateFilter() {
+        selectedCalDate = null;
+        filterEvents();
+        closeCalendarPopover();
+    }
+
     function filterEvents() {
         const searchTerm = document.getElementById('searchEvent').value.toLowerCase();
-        const monthFilter = document.getElementById('filterMonth').value; // Format: "YYYY-MM"
 
         const filtered = eventHistoryData.filter(event => {
             const matchSearch = event.title.toLowerCase().includes(searchTerm);
             
             let matchDate = true;
-            if (monthFilter) {
-                // Convert text date "May 12, 2026" to Date object, then to "YYYY-MM" string for exact match
-                const d = new Date(event.date);
-                if (!isNaN(d)) {
-                    const yyyy = d.getFullYear();
-                    const mm = String(d.getMonth() + 1).padStart(2, '0');
-                    const eventMonthStr = `${yyyy}-${mm}`;
-                    matchDate = (eventMonthStr === monthFilter);
-                }
+            if (selectedCalDate) {
+                matchDate = (event.date === selectedCalDate);
             }
 
             return matchSearch && matchDate;
@@ -252,14 +445,14 @@
     }
 
     // 🟢 OPEN MODAL & RENDER CHART 🟢
-    function openPerformanceModal(id) {
-        const event = eventHistoryData.find(e => e.id == id);
-        if (!event) return;
+    function openPerformanceModal(id, e) {
+        const eventData = eventHistoryData.find(evt => evt.id == id);
+        if (!eventData) return;
 
-        document.getElementById('modalEventTitle').innerText = event.title;
-        document.getElementById('modalAvgScore').innerText = event.score.toFixed(1);
+        document.getElementById('modalEventTitle').innerText = eventData.title;
+        document.getElementById('modalAvgScore').innerText = eventData.score.toFixed(1);
         
-        const percent = event.sentiment;
+        const percent = eventData.sentiment;
         const emojiEl = document.getElementById('modalEvalEmoji');
         const gradeEl = document.getElementById('modalEvalGrade');
         const sentimentEl = document.getElementById('modalSentiment');
@@ -274,18 +467,29 @@
         // 🟢 SET FEEDBACK LINK 🟢
         const fbBtn = document.getElementById('modalFeedbackBtn');
         fbBtn.onclick = () => {
-            window.location.href = `/organizer/feedback/detail?event_id=${event.id}`;
+            window.location.href = `/organizer/feedback/detail?event_id=${eventData.id}`;
         };
 
         const modal = document.getElementById('performanceModal');
         const box = document.getElementById('performanceModalBox');
+        
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX || (rect.left + rect.width / 2);
+        const clickY = e.clientY || (rect.top + rect.height / 2);
+        
+        box.style.setProperty('--click-x', clickX + 'px');
+        box.style.setProperty('--click-y', clickY + 'px');
+
+        box.classList.remove('ios-pop-wrapper-close');
+        box.classList.add('ios-pop-wrapper');
+
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         
+        document.body.style.overflow = 'hidden';
+        
         setTimeout(() => {
-            box.classList.remove('translate-y-full');
-            box.classList.add('translate-y-0');
-            renderSmoothChart(event.dist);
+            renderSmoothChart(eventData.dist);
         }, 10);
     }
 
@@ -294,12 +498,13 @@
         const modal = document.getElementById('performanceModal');
         const box = document.getElementById('performanceModalBox');
         
-        box.classList.remove('translate-y-0');
-        box.classList.add('translate-y-full');
+        box.classList.remove('ios-pop-wrapper');
+        box.classList.add('ios-pop-wrapper-close');
         
         setTimeout(() => {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            document.body.style.overflow = '';
         }, 300);
     }
 

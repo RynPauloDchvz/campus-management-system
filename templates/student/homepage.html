@@ -645,6 +645,12 @@
         setTimeout(() => {
             if (calendar) calendar.render();
         }, 50);
+        setTimeout(() => { 
+            if (calendar) {
+                calendar.render(); 
+                calendar.updateSize(); 
+            }
+        }, 450);
     }
     function closeFullCalendarModal() {
         const modal = document.getElementById('fullCalendarModal');

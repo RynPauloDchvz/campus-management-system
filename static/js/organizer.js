@@ -269,15 +269,24 @@ document.addEventListener('DOMContentLoaded', () => {
             handleImageError(event) {
                 event.target.src = window.DEFAULT_LOGO;
             },
-            openEventModal(eventData) {
+            openEventModal(eventData, event) {
                 this.selectedEvent = eventData;
                 this.isEventModalOpen = true;
                 document.body.style.overflow = 'hidden'; 
+                if (event) {
+                    this.$nextTick(() => {
+                        const contentContainer = document.querySelector('.modal-content-container');
+                        const wrapper = contentContainer ? contentContainer.closest('.ios-pop-wrapper') : null;
+                        if (wrapper) {
+                            wrapper.style.transformOrigin = `${event.clientX}px ${event.clientY}px`;
+                        }
+                    });
+                }
             },
-            handleCalendarEventClick(evt) {
+            handleCalendarEventClick(evt, event) {
                 // Call the global function defined in homepage.html
                 if (window.handleCalendarEventClick) {
-                    window.handleCalendarEventClick(evt);
+                    window.handleCalendarEventClick(evt, event);
                 }
             },
             getMonth(dateStr) {
@@ -311,8 +320,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }).sort((a, b) => new Date(a.date.split('-').join('/')) - new Date(b.date.split('-').join('/')));
             },
             closeModal() {
-                this.isEventModalOpen = false;
-                document.body.style.overflow = ''; 
+                const contentContainer = document.querySelector('.modal-content-container');
+                const wrapper = contentContainer ? contentContainer.closest('.ios-pop-wrapper') : document.querySelector('.ios-pop-wrapper');
+                
+                if (wrapper && this.isEventModalOpen) {
+                    wrapper.classList.add('ios-pop-wrapper-close');
+                    setTimeout(() => {
+                        this.isEventModalOpen = false;
+                        document.body.style.overflow = ''; 
+                    }, 350);
+                } else {
+                    this.isEventModalOpen = false;
+                    document.body.style.overflow = ''; 
+                }
             }
         }
     });

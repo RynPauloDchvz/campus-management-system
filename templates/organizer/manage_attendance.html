@@ -16,6 +16,42 @@
             margin: 0 !important;
         }
     }
+
+    /* iOS Pop Origin Animation */
+    .ios-pop-wrapper, .ios-pop-wrapper-close {
+        transform-origin: var(--click-x, 50%) var(--click-y, 50%);
+    }
+    
+    .ios-pop-wrapper {
+        animation: iosPopOpen 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+    }
+    
+    .ios-pop-wrapper-close {
+        animation: iosPopClose 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+    }
+    
+    @keyframes iosPopOpen {
+        0% { opacity: 0; transform: scale(0.3); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes iosPopClose {
+        0% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.3); }
+    }
+
+    /* Dropdown Accordion */
+    .dropdown-content {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.3s ease-out;
+    }
+    .dropdown-content.open {
+        grid-template-rows: 1fr;
+    }
+    .dropdown-inner {
+        overflow: hidden;
+    }
 </style>
 {% endblock extra_head %}
 
@@ -33,14 +69,16 @@
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full min-h-screen font-sans">
     
-    <div class="mb-8 border-b border-gray-200 dark:border-gray-800 pb-6 flex flex-col-reverse sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div class="text-left">
+    <div class="mb-8 border-b border-gray-200 dark:border-gray-800 pb-6 flex flex-col gap-4">
+        <div class="flex items-start justify-start w-full">
+            <a href="{% url 'organizer_attendance_events' %}" class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2">
+                <i class="ph-bold ph-arrow-left text-lg"></i> Back to Hub
+            </a>
+        </div>
+        <div class="text-center sm:text-left w-full">
             <h1 class="font-black text-2xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Event Attendance</h1>
             <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base">Managing attendance for <span class="font-bold text-gray-800 dark:text-gray-200">{{ event.event_title }}</span>.</p>
         </div>
-        <a href="{% url 'organizer_attendance_events' %}" class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 self-start sm:self-auto shrink-0">
-            <i class="ph-bold ph-arrow-left text-lg"></i> Back to Hub
-        </a>
     </div>
 
     <div class="w-full text-center mb-6 flex flex-col items-center justify-center">
@@ -50,60 +88,67 @@
         <input type="hidden" id="currentOrgAcronym" value="{{ org_acronym }}">
     </div>
 
-    <div class="bg-white dark:bg-pup-darkcard p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 mb-6 flex flex-col lg:flex-row gap-4 items-center justify-between">
-        <div class="flex flex-col lg:flex-row gap-4 items-center w-full lg:w-auto">
-            <div class="relative w-full lg:w-72 shrink-0">
-                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                <input type="text" id="searchInput" onkeyup="searchStudent()" placeholder="Search student or activity..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-all">
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                <!-- Status Filter -->
-                <div class="relative w-full sm:w-40">
-                    <select id="typeFilter" onchange="searchStudent()" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white appearance-none cursor-pointer transition-all">
-                        <option value="ALL">All Status</option>
-                        <option value="TIME_IN">Time In Only</option>
-                        <option value="TIME_OUT">Time Out Only</option>
-                    </select>
-                    <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-                </div>
-
-                <!-- Year Filter -->
-                <div class="relative w-full sm:w-40">
-                    <select id="yearFilter" onchange="searchStudent()" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-[10px] font-black uppercase tracking-widest rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white appearance-none cursor-pointer transition-all">
-                        <option value="ALL">All Years</option>
-                        <option value="1st Year">1st Year</option>
-                        <option value="2nd Year">2nd Year</option>
-                        <option value="3rd Year">3rd Year</option>
-                        <option id="year4Option" value="4th Year">4th Year</option>
-                    </select>
-                    <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-                </div>
-            </div>
+    <div class="mb-6 flex flex-col lg:flex-row-reverse gap-5 justify-between w-full">
+        <div class="flex items-center justify-center lg:justify-end gap-3 shrink-0 pb-4 border-b border-gray-100 dark:border-gray-800 lg:border-none lg:pb-0">
+            <span class="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest">Live Count:</span>
+            <span class="text-3xl font-black text-pup-maroon dark:text-pup-gold leading-none" id="studentCount">0</span>
         </div>
 
-        <div class="flex items-center gap-3">
-            <span class="text-xs font-black text-gray-400 uppercase tracking-widest">Live Count:</span>
-            <span class="text-xl font-black text-pup-maroon dark:text-pup-gold" id="studentCount">0</span>
+        <div class="flex flex-col lg:flex-row gap-4 w-full lg:w-auto items-start lg:items-center">
+            <div class="relative w-full lg:w-72 shrink-0">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" id="searchInput" onkeyup="searchStudent()" placeholder="Search student or activity..." class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition-all shadow-sm">
+            </div>
+
+            <div class="flex flex-row items-start gap-3 w-full sm:w-auto">
+                <!-- Status Filter Custom Dropdown -->
+                <div id="typeDropdownContainer" class="relative w-1/2 sm:w-44 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl transition-all duration-300 shadow-sm">
+                    <div class="relative py-3 pl-4 pr-10 cursor-pointer flex items-center justify-between" onclick="toggleDropdown('typeFilterOptions', 'typeFilterIcon')">
+                        <span id="typeFilterLabel" class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white truncate">All Status</span>
+                        <i id="typeFilterIcon" class="ph-bold ph-caret-down text-gray-400 absolute right-4 transition-transform duration-300"></i>
+                    </div>
+                    <div id="typeFilterOptions" class="dropdown-content z-50">
+                        <div class="dropdown-inner flex flex-col">
+                            <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800" onclick="selectTypeFilter('ALL', 'All Status')">All Status</div>
+                            <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800" onclick="selectTypeFilter('TIME_IN', 'Time In Only')">Time In Only</div>
+                            <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800" onclick="selectTypeFilter('TIME_OUT', 'Time Out Only')">Time Out Only</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="typeFilter" value="ALL">
+                </div>
+
+                <!-- Year Filter Custom Dropdown -->
+                <div id="yearDropdownContainer" class="relative w-1/2 sm:w-44 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl transition-all duration-300 shadow-sm">
+                    <div class="relative py-3 pl-4 pr-10 cursor-pointer flex items-center justify-between" onclick="toggleDropdown('yearFilterOptions', 'yearFilterIcon')">
+                        <span id="yearFilterLabel" class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white truncate">All Years</span>
+                        <i id="yearFilterIcon" class="ph-bold ph-caret-down text-gray-400 absolute right-4 transition-transform duration-300"></i>
+                    </div>
+                    <div id="yearFilterOptions" class="dropdown-content z-50">
+                        <div class="dropdown-inner flex flex-col">
+                            <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800" onclick="selectYearFilter('ALL', 'All Years')">All Years</div>
+                            <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800" onclick="selectYearFilter('1st Year', '1st Year')">1st Year</div>
+                            <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800" onclick="selectYearFilter('2nd Year', '2nd Year')">2nd Year</div>
+                            <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800" onclick="selectYearFilter('3rd Year', '3rd Year')">3rd Year</div>
+                            <div id="year4OptionItem" class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800" onclick="selectYearFilter('4th Year', '4th Year')">4th Year</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="yearFilter" value="ALL">
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-pup-darkcard rounded-[2rem] shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
-        <div class="overflow-x-auto hide-scrollbar w-full">
-            <table class="w-full text-left border-collapse min-w-[900px]">
-                <thead>
-                    <tr class="bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 text-[10px] uppercase tracking-widest text-gray-500 font-black">
-                        <th class="p-5 pl-8">Student Identity</th>
-                        <th class="p-5">Program & Year</th>
-                        <th class="p-5">Activity Title</th>
-                        <th class="p-5">Synchronization Time</th>
-                        <th class="p-5 pr-8">Security Status</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody" class="divide-y divide-gray-100 dark:divide-gray-800">
-                    <!-- Data injected here -->
-                </tbody>
-            </table>
+    <h2 class="text-xl font-black text-gray-900 dark:text-white mb-3 uppercase tracking-wide hidden lg:block">Synchronization List</h2>
+    <div class="bg-white dark:bg-pup-darkcard rounded-[2rem] shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden font-sans">
+        <div class="hidden lg:grid grid-cols-12 gap-4 p-4 bg-gray-50 dark:bg-[#111] border-b border-gray-200 dark:border-gray-800 text-[10px] uppercase tracking-widest text-gray-500 font-black">
+            <div class="col-span-4 pl-4">Student Identity</div>
+            <div class="col-span-2">Program & Year</div>
+            <div class="col-span-2">Activity Title</div>
+            <div class="col-span-2">Synchronization Time</div>
+            <div class="col-span-2 pr-4 text-right">Security Status</div>
+        </div>
+        <div id="tableBody" class="divide-y divide-gray-100 dark:divide-gray-800">
+            <!-- Data injected here -->
         </div>
     </div>
 </div>
@@ -111,11 +156,13 @@
 <!-- PROOF MODAL -->
 <div id="proofModal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-0 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/90 backdrop-blur-sm" onclick="closeProofModal()"></div>
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-[2.5rem] shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[100vh] sm:max-h-[95vh] overflow-hidden border border-gray-200 dark:border-gray-800 z-10 mobile-fullscreen-modal">
-        <div class="p-6 sm:p-10 overflow-y-auto hide-scrollbar">
-            <button onclick="closeProofModal()" class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-600 transition-colors">
-                <i class="ph-bold ph-x text-xl"></i>
-            </button>
+    <div id="proofModalBox" class="relative bg-white dark:bg-pup-darkcard rounded-[2.5rem] shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[100vh] sm:max-h-[95vh] overflow-hidden border border-gray-200 dark:border-gray-800 z-10 mobile-fullscreen-modal">
+        
+        <button onclick="closeProofModal()" class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-red-600 transition-colors shadow-sm z-[100]">
+            <i class="ph-bold ph-x text-xl"></i>
+        </button>
+
+        <div class="p-6 sm:p-10 overflow-y-auto hide-scrollbar pt-16 sm:pt-10">
 
             <div class="mb-10">
                 <span class="inline-block bg-pup-maroon/10 text-pup-maroon dark:bg-pup-gold/10 dark:text-pup-gold text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em] mb-4">Security Verification Record</span>
@@ -134,9 +181,22 @@
                 <div id="modalStatusBadge" class="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">STATUS</div>
             </div>
 
-            <div class="flex flex-col gap-6">
+            <!-- Tabs -->
+            <div class="flex items-center bg-gray-100 dark:bg-gray-800 p-1.5 rounded-2xl w-full max-w-sm mx-auto mb-6 shrink-0 relative">
+                <!-- Sliding Background -->
+                <div id="tabIndicator" class="absolute left-1.5 top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm transition-transform duration-300 transform translate-x-0"></div>
+                
+                <button type="button" id="tabTimeIn" onclick="switchTab('IN')" class="flex-1 relative z-10 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white transition-colors">
+                    Time In
+                </button>
+                <button type="button" id="tabTimeOut" onclick="switchTab('OUT')" class="flex-1 relative z-10 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest text-gray-400 transition-colors cursor-not-allowed">
+                    Time Out
+                </button>
+            </div>
+
+            <div class="flex flex-col relative w-full">
                 <!-- Time In Section -->
-                <div class="bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col md:flex-row">
+                <div id="mapInContainer" class="w-full bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col md:flex-row transition-opacity duration-300">
                     <!-- Face Scan & Time (Left) -->
                     <div class="md:w-1/3 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-black/20">
                         <div class="text-[9px] font-black text-green-500 uppercase tracking-[0.2em] mb-4 text-center">Time In Identity</div>
@@ -155,7 +215,7 @@
                             <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Location Signature (Time In)</span>
                             <i class="ph-bold ph-map-pin text-green-500 text-lg"></i>
                         </div>
-                        <div id="realMap" class="w-full h-40 sm:h-48 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-4 z-0 transition-all"></div>
+                        <div id="realMap" class="w-full h-40 sm:h-48 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-4 z-0 transition-all relative"></div>
                         <p id="modalGeoContext" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2 leading-tight">
                             <i class="ph-fill ph-info text-pup-maroon dark:text-pup-gold text-sm shrink-0"></i>
                             <span>Fetching geofence details...</span>
@@ -164,7 +224,7 @@
                 </div>
 
                 <!-- Time Out Section -->
-                <div id="mapOutContainer" class="bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col md:flex-row hidden">
+                <div id="mapOutContainer" class="w-full bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-gray-100 dark:border-gray-800 overflow-hidden flex-col md:flex-row transition-opacity duration-300 hidden">
                     <!-- Face Scan & Time (Left) -->
                     <div class="md:w-1/3 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-black/20">
                         <div class="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] mb-4 text-center">Time Out Identity</div>
@@ -183,7 +243,7 @@
                             <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Location Signature (Time Out)</span>
                             <i class="ph-bold ph-map-pin text-blue-500 text-lg"></i>
                         </div>
-                        <div id="realMapOut" class="w-full h-40 sm:h-48 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-4 z-0 transition-all"></div>
+                        <div id="realMapOut" class="w-full h-40 sm:h-48 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-4 z-0 transition-all relative"></div>
                         <p id="modalGeoContextOut" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2 leading-tight">
                             <i class="ph-fill ph-info text-pup-maroon dark:text-pup-gold text-sm shrink-0"></i>
                             <span>Fetching geofence details...</span>
@@ -208,7 +268,7 @@
         tbody.innerHTML = '';
         
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-20 text-center text-gray-400 font-black uppercase tracking-widest">No synchronization records found.</td></tr>';
+            tbody.innerHTML = '<div class="p-16 text-center text-gray-400"><i class="ph-bold ph-fingerprint text-5xl mb-3 text-gray-300 dark:text-gray-700"></i><p class="font-black uppercase tracking-widest text-sm text-gray-900 dark:text-white mb-1">No Attendance Record</p><p class="text-[10px] uppercase font-bold tracking-wider">There are no matching students for this view yet.</p></div>';
             document.getElementById('studentCount').innerText = "0";
             return;
         }
@@ -220,35 +280,42 @@
             const isOrganizer = item.role === 'ORGANIZER';
             const rowStyle = isOrganizer ? 'bg-pup-maroon/5 dark:bg-pup-gold/5 border-l-4 border-pup-maroon dark:border-pup-gold' : '';
             const roleBadge = isOrganizer ? '<span class="ml-2 px-2 py-0.5 rounded-md bg-pup-maroon dark:bg-pup-gold text-white dark:text-black text-[8px] font-black uppercase tracking-widest animate-pulse">ORGANIZER</span>' : '';
-            const yearDisplay = isOrganizer ? 'OFFICIAL MEMBER' : `${item.program} • YEAR ${item.year}`;
+            const yearDisplay = isOrganizer ? 'OFFICIAL MEMBER' : `${item.program} • YR ${item.year.replace(' Year', '')}`;
             
             const timeDisplay = item.has_timed_out ? 
-                `<div class="flex flex-col"><span class="text-green-600 dark:text-green-400">IN: ${item.time}</span><span class="text-blue-600 dark:text-blue-400">OUT: ${item.time_out}</span></div>` : 
-                `IN: ${item.time}`;
+                `<div class="flex flex-col leading-tight"><span class="text-green-600 dark:text-green-400">IN: ${item.time}</span><span class="text-blue-600 dark:text-blue-400">OUT: ${item.time_out}</span></div>` : 
+                `<span class="text-green-600 dark:text-green-400">IN: ${item.time}</span>`;
 
             tbody.insertAdjacentHTML('beforeend', `
-                <tr class="hover:bg-gray-50/50 dark:hover:bg-[#111]/50 transition-colors cursor-pointer group ${rowStyle}" onclick="openProofModal(${item.id})">
-                    <td class="p-5 pl-8">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 border-2 ${isOrganizer ? 'border-pup-maroon dark:border-pup-gold shadow-md' : 'border-gray-100 dark:border-gray-800'}">
-                                <img src="${item.img}" class="w-full h-full object-cover">
-                            </div>
-                            <div>
-                                <h4 class="font-black text-gray-900 dark:text-white uppercase tracking-tight text-sm leading-none mb-1 flex items-center">
-                                    ${item.name}
-                                    ${roleBadge}
-                                </h4>
-                                <p class="text-[10px] text-pup-maroon dark:text-pup-gold font-black uppercase tracking-widest">${item.number}</p>
-                            </div>
+                <div class="flex flex-row items-start lg:items-center lg:grid lg:grid-cols-12 gap-3 lg:gap-4 p-4 sm:p-5 hover:bg-gray-50 dark:hover:bg-[#111]/50 transition-colors cursor-pointer group ${rowStyle}" onclick="openProofModal(${item.id}, event)">
+                    <!-- Identity: Mobile & Desktop -->
+                    <div class="flex items-center gap-3 flex-1 lg:col-span-4 lg:pl-4 min-w-0">
+                        <div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 border-2 ${isOrganizer ? 'border-pup-maroon dark:border-pup-gold shadow-md' : 'border-gray-100 dark:border-gray-800'}">
+                            <img src="${item.img}" class="w-full h-full object-cover">
                         </div>
-                    </td>
-                    <td class="p-5 text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight">${yearDisplay}</td>
-                    <td class="p-5 text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate max-w-[200px]">${item.event}</td>
-                    <td class="p-5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">${timeDisplay}</td>
-                    <td class="p-5 pr-8">
+                        <div class="min-w-0">
+                            <h4 class="font-bold text-gray-900 dark:text-white leading-tight truncate text-sm sm:text-base flex items-center mb-1">
+                                ${item.name}
+                                ${roleBadge}
+                            </h4>
+                            <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest truncate">${item.number}</p>
+                        </div>
+                    </div>
+
+                    <!-- DESKTOP ONLY COLUMNS -->
+                    <div class="hidden lg:block lg:col-span-2 text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight">${yearDisplay}</div>
+                    <div class="hidden lg:block lg:col-span-2 text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate">${item.event}</div>
+                    <div class="hidden lg:block lg:col-span-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">${timeDisplay}</div>
+                    <div class="hidden lg:flex lg:col-span-2 lg:pr-4 justify-end items-center">
                         <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-current opacity-80 ${statusClass}">${item.status}</span>
-                    </td>
-                </tr>
+                    </div>
+
+                    <!-- MOBILE ONLY COLUMNS (Right Side) -->
+                    <div class="flex flex-col items-end gap-1 lg:hidden shrink-0 mt-0.5">
+                        <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border border-current ${statusClass}">${item.status}</span>
+                        <div class="text-[10px] font-black text-gray-600 dark:text-gray-400 leading-none mt-1 uppercase">${isOrganizer ? 'MEMBER' : item.year}</div>
+                    </div>
+                </div>
             `);
         });
         document.getElementById('studentCount').innerText = data.length;
@@ -282,7 +349,7 @@
         renderTable(filtered);
     }
 
-    function openProofModal(id) {
+    function openProofModal(id, e) {
         const item = attendanceData.find(i => i.id === id);
         if (!item) return;
 
@@ -337,7 +404,7 @@
                 const prefix = item.is_global ? "Global Event" : "Geofence Event";
                 geoContext.innerHTML = `${prefix} - Scanned from precise coordinates:<br><span class="text-gray-900 dark:text-white font-black">${address}</span><br><span class="text-gray-400 text-[8px] tracking-tighter">GPS: ${item.lat.toFixed(5)}, ${item.lng.toFixed(5)}</span>`;
             })
-            .catch(e => {
+            .catch(err => {
                 geoContext.innerHTML = `Event - Verified synchronization.<br><span class="text-gray-900 dark:text-white">${item.lat.toFixed(5)}, ${item.lng.toFixed(5)}</span>`;
             });
 
@@ -358,14 +425,39 @@
                     const prefix = item.is_global ? "Global Event" : "Geofence Event";
                     geoContextOut.innerHTML = `${prefix} - Scanned from precise coordinates:<br><span class="text-gray-900 dark:text-white font-black">${address}</span><br><span class="text-gray-400 text-[8px] tracking-tighter">GPS: ${item.lat_out.toFixed(5)}, ${item.lng_out.toFixed(5)}</span>`;
                 })
-                .catch(e => {
+                .catch(err => {
                     geoContextOut.innerHTML = `Event - Verified synchronization.<br><span class="text-gray-900 dark:text-white">${item.lat_out.toFixed(5)}, ${item.lng_out.toFixed(5)}</span>`;
                 });
+        }
+        
+        // Always start with Time In tab when opening modal
+        switchTab('IN');
+        
+        // Tab UI logic (Disable Time Out if no time out recorded)
+        const tabTimeOut = document.getElementById('tabTimeOut');
+        if (item.has_timed_out) {
+            tabTimeOut.disabled = false;
+            tabTimeOut.classList.remove('cursor-not-allowed', 'opacity-50');
+            tabTimeOut.classList.add('cursor-pointer');
         } else {
-            mapOutContainer.classList.add('hidden');
+            tabTimeOut.disabled = true;
+            tabTimeOut.classList.add('cursor-not-allowed', 'opacity-50');
+            tabTimeOut.classList.remove('cursor-pointer');
         }
 
-        document.getElementById('proofModal').classList.remove('hidden');
+        const modal = document.getElementById('proofModal');
+        const box = document.getElementById('proofModalBox');
+        if (e && box) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = e.clientX || (rect.left + rect.width / 2);
+            const clickY = e.clientY || (rect.top + rect.height / 2);
+            box.style.setProperty('--click-x', clickX + 'px');
+            box.style.setProperty('--click-y', clickY + 'px');
+            box.classList.remove('ios-pop-wrapper-close');
+            box.classList.add('ios-pop-wrapper');
+        }
+
+        modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
 
         setTimeout(() => {
@@ -387,17 +479,122 @@
         }, 300);
     }
 
+    function switchTab(tab) {
+        const mapInContainer = document.getElementById('mapInContainer');
+        const mapOutContainer = document.getElementById('mapOutContainer');
+        const tabIndicator = document.getElementById('tabIndicator');
+        const tabTimeIn = document.getElementById('tabTimeIn');
+        const tabTimeOut = document.getElementById('tabTimeOut');
+
+        if (tab === 'IN') {
+            mapInContainer.classList.remove('hidden');
+            mapInContainer.classList.add('flex');
+            mapOutContainer.classList.add('hidden');
+            mapOutContainer.classList.remove('flex');
+            
+            tabIndicator.classList.remove('translate-x-full');
+            tabIndicator.classList.add('translate-x-0');
+            
+            tabTimeIn.classList.add('text-gray-900', 'dark:text-white');
+            tabTimeIn.classList.remove('text-gray-400', 'dark:text-gray-500');
+            
+            if(!tabTimeOut.disabled) {
+                tabTimeOut.classList.remove('text-gray-900', 'dark:text-white');
+                tabTimeOut.classList.add('text-gray-400', 'dark:text-gray-500');
+            }
+            
+            // Invalidate map size so it renders properly if it was hidden
+            if (attendanceMap) {
+                setTimeout(() => { attendanceMap.invalidateSize(); }, 50);
+            }
+        } else {
+            mapOutContainer.classList.remove('hidden');
+            mapOutContainer.classList.add('flex');
+            mapInContainer.classList.add('hidden');
+            mapInContainer.classList.remove('flex');
+            
+            tabIndicator.classList.remove('translate-x-0');
+            tabIndicator.classList.add('translate-x-full');
+            
+            tabTimeOut.classList.add('text-gray-900', 'dark:text-white');
+            tabTimeOut.classList.remove('text-gray-400', 'dark:text-gray-500');
+            
+            tabTimeIn.classList.remove('text-gray-900', 'dark:text-white');
+            tabTimeIn.classList.add('text-gray-400', 'dark:text-gray-500');
+            
+            // Invalidate map size so it renders properly if it was hidden
+            if (window.attendanceMapOut) {
+                setTimeout(() => { window.attendanceMapOut.invalidateSize(); }, 50);
+            }
+        }
+    }
+
     function closeProofModal() {
-        document.getElementById('proofModal').classList.add('hidden');
-        document.body.style.overflow = '';
+        const modal = document.getElementById('proofModal');
+        const box = document.getElementById('proofModalBox');
+        if (box) {
+            box.classList.remove('ios-pop-wrapper');
+            box.classList.add('ios-pop-wrapper-close');
+        }
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    }
+
+    function toggleDropdown(optionsId, iconId) {
+        // Close other dropdown if open
+        if (optionsId === 'typeFilterOptions') {
+            document.getElementById('yearFilterOptions').classList.remove('open');
+            document.getElementById('yearFilterIcon').classList.remove('rotate-180');
+        } else {
+            document.getElementById('typeFilterOptions').classList.remove('open');
+            document.getElementById('typeFilterIcon').classList.remove('rotate-180');
+        }
+        
+        const options = document.getElementById(optionsId);
+        const icon = document.getElementById(iconId);
+        if (options.classList.contains('open')) {
+            options.classList.remove('open');
+            icon.classList.remove('rotate-180');
+        } else {
+            options.classList.add('open');
+            icon.classList.add('rotate-180');
+        }
+    }
+
+    function selectTypeFilter(val, label) {
+        document.getElementById('typeFilter').value = val;
+        document.getElementById('typeFilterLabel').innerText = label;
+        toggleDropdown('typeFilterOptions', 'typeFilterIcon');
+        searchStudent();
+    }
+
+    function selectYearFilter(val, label) {
+        document.getElementById('yearFilter').value = val;
+        document.getElementById('yearFilterLabel').innerText = label;
+        toggleDropdown('yearFilterOptions', 'yearFilterIcon');
+        searchStudent();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         const orgAcr = document.getElementById('currentOrgAcronym').value;
         if (orgAcr === 'ITS') {
-            const year4 = document.getElementById('year4Option');
+            const year4 = document.getElementById('year4OptionItem');
             if (year4) year4.remove();
         }
+        
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#typeDropdownContainer')) {
+                document.getElementById('typeFilterOptions').classList.remove('open');
+                document.getElementById('typeFilterIcon').classList.remove('rotate-180');
+            }
+            if (!e.target.closest('#yearDropdownContainer')) {
+                document.getElementById('yearFilterOptions').classList.remove('open');
+                document.getElementById('yearFilterIcon').classList.remove('rotate-180');
+            }
+        });
+        
         renderTable(attendanceData);
     });
 </script>
