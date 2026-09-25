@@ -24,6 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 readNotifs: JSON.parse(localStorage.getItem('organizer_read_notifs') || '[]'),
                 popupBanners: [],
                 shownBannerIds: JSON.parse(sessionStorage.getItem('organizer_shown_banners') || '[]'),
+                
+                // --- ?? Notification Dropdown & Modal ?? ---
+                showNotifDropdown: false,
+                isNotifModalOpen: false,
+                selectedNotif: null,
+                notifModalAnimationClass: '',
+                
                 isMsgModalOpen: false,
                 currentMsg: {},
 
@@ -174,9 +181,123 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 this.closeBanner(banner.id);
             },
-            openNotifications() {
-                this.markAllAsRead();
-                window.location.href = window.VUE_APP_DATA?.urls?.messages || '/organizer/messages/';
+            toggleNotifDropdown() {
+                this.showNotifDropdown = !this.showNotifDropdown;
+            },
+            handleNotifClick(notif, event) {
+                // Mark as read
+                if (!this.readNotifs.includes(notif.id)) {
+                    this.readNotifs.push(notif.id);
+                    localStorage.setItem('organizer_read_notifs', JSON.stringify(this.readNotifs));
+                    this.unreadNotifCount = this.allNotifs.filter(n => !this.readNotifs.includes(n.id)).length;
+                }
+
+                if (notif.type === 'student') {
+                    window.location.href = window.VUE_APP_DATA?.urls?.manage_students || '/organizer/manage-students';
+                    return;
+                }
+                
+                if (notif.url && notif.type !== 'event') {
+                    window.location.href = notif.url;
+                    return;
+                }
+
+                // Close dropdown
+                this.showNotifDropdown = false;
+                
+                // Open modal
+                this.selectedNotif = notif;
+                this.isNotifModalOpen = true;
+                this.notifModalAnimationClass = 'ios-pop-wrapper';
+                document.body.style.overflow = 'hidden';
+                
+                if (event) {
+                    this.$nextTick(() => {
+                        const box = document.getElementById('globalEventMessageModalBox');
+                        if (box) {
+                            const rect = event.currentTarget.getBoundingClientRect();
+                            const boxRect = box.getBoundingClientRect();
+                            const clickX = rect.left + rect.width / 2 - boxRect.left;
+                            const clickY = rect.top + rect.height / 2 - boxRect.top;
+                            box.style.setProperty('--click-x', clickX + 'px');
+                            box.style.setProperty('--click-y', clickY + 'px');
+                        }
+                    });
+                }
+            },
+            closeNotifModal() {
+                this.notifModalAnimationClass = 'ios-pop-wrapper-close';
+                setTimeout(() => {
+                    this.isNotifModalOpen = false;
+                    document.body.style.overflow = '';
+                }, 350);
+            },
+            getNotifTextClass(type, status) {
+                if (type === 'student') return 'text-blue-600 dark:text-blue-500';
+                if (type === 'alert') return 'text-red-600 dark:text-red-500';
+                if (type === 'event') {
+                    if (status === 'Approved') return 'text-green-600 dark:text-green-500';
+                    if (status === 'Admin Approved') return 'text-blue-600 dark:text-blue-500';
+                    if (status === 'Rejected') return 'text-red-600 dark:text-red-500';
+                    return 'text-yellow-600 dark:text-yellow-500';
+                }
+                if (type === 'message') return 'text-[#800000] dark:text-[#D4AF37]';
+                return 'text-gray-500';
+            },
+            getModalIconClass(type, status) {
+                if (type === 'event') {
+                    if (status === 'Approved') return 'ph-fill ph-check-circle text-green-500';
+                    if (status === 'Admin Approved') return 'ph-fill ph-file-signature text-blue-500';
+                    if (status === 'Rejected') return 'ph-fill ph-x-circle text-red-500';
+                    return 'ph-fill ph-clock text-yellow-500';
+                }
+                return 'ph-fill ph-bell text-gray-500';
+            },
+            getModalIconBgClass(type, status) {
+                if (type === 'event') {
+                    if (status === 'Approved') return 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30';
+                    if (status === 'Admin Approved') return 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30';
+                    if (status === 'Rejected') return 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30';
+                    return 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30';
+                }
+                return 'border-gray-200 bg-gray-50';
+            },
+            getModalTitleClass(type, status) {
+                if (type === 'event') {
+                    if (status === 'Approved') return 'text-green-600 dark:text-green-500';
+                    if (status === 'Admin Approved') return 'text-blue-600 dark:text-blue-500';
+                    if (status === 'Rejected') return 'text-red-600 dark:text-red-500';
+                    return 'text-yellow-600 dark:text-yellow-500';
+                }
+                return 'text-gray-900 dark:text-white';
+            },
+            getModalTitle(notif) {
+                if (notif.type === 'event') {
+                    if (notif.status === 'Approved') return "Event Officially Published!";
+                    if (notif.status === 'Admin Approved') return "Initial Approval Granted!";
+                    if (notif.status === 'Rejected') return "Event Rejected";
+                    return "Event Pending";
+                }
+                return notif.title;
+            },
+            getModalBody(notif) {
+                if (notif.type === 'event') {
+                    if (notif.status === 'Approved') {
+                        if (notif.title.toLowerCase().includes('flag raising')) {
+                            return `This Global Event was published directly! Your event <strong>"${notif.title}"</strong> is now live and attendance/evaluation is open for students globally.`;
+                        } else {
+                            return `Congratulations! The Administration has verified your signed documents. Your event <strong>"${notif.title}"</strong> is now fully approved and published in the system. The countdown timer is now active for the students!`;
+                        }
+                    }
+                    if (notif.status === 'Admin Approved') {
+                        return `Great news! Your event proposal for <strong>"${notif.title}"</strong> has received initial approval.<br><br><span class="text-pup-maroon dark:text-pup-gold font-bold">ACTION REQUIRED:</span> Please print the documents, secure all necessary manual signatures, and upload both the <strong class="text-gray-900 dark:text-white">Signed Request Letter</strong> and <strong class="text-gray-900 dark:text-white">Permit to Conduct Activity</strong> in your Document Vault to finalize the publication.`;
+                    }
+                    if (notif.status === 'Rejected') {
+                        return `Unfortunately, your event proposal for <strong>"${notif.title}"</strong> was rejected. Please review the reason below.`;
+                    }
+                    return `Your event proposal for <strong>"${notif.title}"</strong> is currently being reviewed. Please wait for further updates.`;
+                }
+                return notif.message;
             },
             getNotifBorderClass(type, status) {
                 if (type === 'student') return 'border-l-blue-500';
