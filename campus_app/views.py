@@ -2206,6 +2206,7 @@ def organizer_profile(request):
         total_rating = 0
         total_raw_score_sum = 0
         count = 0
+        e_dist = [0, 0, 0, 0, 0]
         
         for log in logs:
             if log.changes:
@@ -2216,6 +2217,10 @@ def organizer_profile(request):
                     total_rating += rating
                     total_raw_score_sum += raw_score
                     count += 1
+                    
+                    idx = int(round(rating)) - 1
+                    if 0 <= idx <= 4:
+                        e_dist[idx] += 1
                 except: pass
                 
         if count > 0:
@@ -2229,6 +2234,7 @@ def organizer_profile(request):
             
         evt.average_rating = avg_rating
         evt.sentiment_percentage = sentiment_percent
+        evt.dist = json.dumps(e_dist)
         completed_events.append(evt)
         
     pending_students = Student.objects.filter(organization__iexact=org_acronym, is_verified=False).order_by('-created_at')
@@ -2816,10 +2822,21 @@ def organizer_feedback_detail(request):
         # 2. ATTENDANCE DATA (For matching)
         att_count = Attendance.objects.filter(event=event).count()
 
-        # Find highest rated area
+        # Find highest rated criteria (handle ties)
         labels = ['Organization', 'Objectives', 'Materials', 'Management Team', 'Venue/Logistics']
-        max_idx = criteria_scores.index(max(criteria_scores)) if total_evals > 0 else 0
-        highest_area = labels[max_idx]
+        if total_evals > 0:
+            max_score = max(criteria_scores)
+            highest_labels = [labels[i] for i, score in enumerate(criteria_scores) if score == max_score]
+            if len(highest_labels) == 5:
+                highest_area = "All Criteria"
+            elif len(highest_labels) > 2:
+                highest_area = ", ".join(highest_labels[:-1]) + " and " + highest_labels[-1]
+            elif len(highest_labels) == 2:
+                highest_area = " and ".join(highest_labels)
+            else:
+                highest_area = highest_labels[0]
+        else:
+            highest_area = "No Evaluations Yet"
 
         context = {
             'event': event,
@@ -3603,10 +3620,21 @@ def admin_feedback_detail(request):
         # 2. ATTENDANCE DATA (For matching)
         att_count = Attendance.objects.filter(event=event).count()
 
-        # Find highest rated area
+        # Find highest rated criteria (handle ties)
         labels = ['Organization', 'Objectives', 'Materials', 'Management Team', 'Venue/Logistics']
-        max_idx = criteria_scores.index(max(criteria_scores)) if total_evals > 0 else 0
-        highest_area = labels[max_idx]
+        if total_evals > 0:
+            max_score = max(criteria_scores)
+            highest_labels = [labels[i] for i, score in enumerate(criteria_scores) if score == max_score]
+            if len(highest_labels) == 5:
+                highest_area = "All Criteria"
+            elif len(highest_labels) > 2:
+                highest_area = ", ".join(highest_labels[:-1]) + " and " + highest_labels[-1]
+            elif len(highest_labels) == 2:
+                highest_area = " and ".join(highest_labels)
+            else:
+                highest_area = highest_labels[0]
+        else:
+            highest_area = "No Evaluations Yet"
 
         context = {
             'event': event,

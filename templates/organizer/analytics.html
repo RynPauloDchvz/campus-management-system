@@ -208,53 +208,64 @@
     </div>
 </div>
 
-<div id="performanceModal" class="fixed inset-0 z-[2000] hidden items-center justify-center p-0 sm:p-4">
+<div id="performanceModal" class="fixed inset-0 z-[2000] hidden items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closePerformanceModal()"></div>
     
-    <div class="relative bg-[#ffffff] dark:bg-[#151515] w-full h-[100dvh] sm:h-auto sm:max-h-[85vh] overflow-y-auto max-w-lg rounded-none sm:rounded-3xl shadow-2xl z-10 flex flex-col border border-transparent dark:border-gray-800" id="performanceModalBox">
+    <div class="relative bg-[#ffffff] dark:bg-[#151515] w-full max-h-[95vh] overflow-hidden max-w-lg sm:max-w-4xl rounded-3xl shadow-2xl z-10 flex flex-col border border-transparent dark:border-gray-800" id="performanceModalBox">
 
-        <div class="p-6 sm:p-8 flex flex-col flex-1">
-            <div class="flex justify-between items-start mb-8">
+        <div class="p-5 sm:p-8 pb-2 sm:pb-6 flex flex-col overflow-y-auto custom-scrollbar flex-1">
+            <div class="flex justify-between items-start mb-4 sm:mb-8">
                 <div>
                     <span class="text-[10px] font-black tracking-[0.2em] text-blue-600 dark:text-blue-400 uppercase">Performance Report</span>
                     <h2 class="text-2xl font-black text-gray-900 dark:text-white leading-tight mt-1" id="modalEventTitle">--</h2>
                 </div>
-                <button onclick="closePerformanceModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <button onclick="closePerformanceModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0">
                     <i class="ph-bold ph-x text-lg"></i>
                 </button>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm text-center transition-colors">
-                    <span class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Average Score</span>
-                    <div class="flex items-baseline justify-center gap-1">
-                        <span class="text-4xl font-black text-blue-600 dark:text-blue-500" id="modalAvgScore">--</span>
-                        <span class="text-sm font-bold text-gray-400 dark:text-gray-600">/ 5.0</span>
-                    </div>
-                </div>
-                <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm text-center transition-colors">
-                    <span class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Student Mood</span>
-                    <div class="flex flex-col items-center justify-center">
-                        <div class="flex items-baseline justify-center gap-2">
-                            <span class="text-4xl" id="modalEvalEmoji">--</span>
-                            <span class="text-3xl font-black text-green-600 dark:text-green-500" id="modalSentiment">--</span>
+            <!-- Content Side-by-Side Wrapper -->
+            <div class="flex flex-col sm:flex-row gap-5 sm:gap-8">
+                
+                <!-- Left Side: Stats -->
+                <div class="grid grid-cols-2 sm:flex sm:flex-col gap-3 sm:gap-4 w-full sm:w-1/3 shrink-0">
+                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 shadow-sm text-center transition-colors flex flex-col justify-center sm:flex-1">
+                        <span class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Average Score</span>
+                        <div class="flex items-baseline justify-center gap-1">
+                            <span class="text-4xl font-black text-blue-600 dark:text-blue-500" id="modalAvgScore">--</span>
+                            <span class="text-sm font-bold text-gray-400 dark:text-gray-600">/ 5.0</span>
                         </div>
-                        <span class="text-[0.65rem] font-black mt-1 uppercase tracking-tighter" id="modalEvalGrade">--</span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 shadow-sm text-center transition-colors flex flex-col justify-center sm:flex-1">
+                        <span class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">Student Mood</span>
+                        <div class="flex flex-col items-center justify-center">
+                            <div class="flex items-baseline justify-center gap-2">
+                                <span class="text-4xl" id="modalEvalEmoji">--</span>
+                                <span class="text-3xl font-black text-green-600 dark:text-green-500" id="modalSentiment">--</span>
+                            </div>
+                            <span class="text-[0.65rem] font-black mt-1 uppercase tracking-tighter" id="modalEvalGrade">--</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="mb-2">
-                <div class="flex justify-between items-end mb-4">
-                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Response Distribution</span>
-                    <span class="text-[10px] font-bold text-gray-500 uppercase">Frequency</span>
+                <!-- Right Side: Chart -->
+                <div class="w-full sm:w-2/3 flex flex-col">
+                    <div class="flex justify-between items-end mb-3 sm:mb-4">
+                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Response Distribution</span>
+                        <span class="text-[10px] font-bold text-gray-500 uppercase">Frequency</span>
+                    </div>
+                    <div class="h-32 sm:h-full sm:min-h-[16rem] w-full relative">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
                 </div>
-                <div class="h-48 w-full">
-                    <canvas id="distributionChart"></canvas>
-                </div>
+                
             </div>
-            
-            <button id="modalFeedbackBtn" class="w-full py-4 mt-6 rounded-2xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black text-sm uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-lg">View Detailed Feedback</button>
+        </div>
+        
+        <div class="px-5 pb-5 sm:px-8 sm:pb-8 pt-2 bg-[#ffffff] dark:bg-[#151515] shrink-0 border-t border-gray-100 dark:border-gray-800/50">
+            <button id="modalFeedbackBtn" class="w-full py-3 sm:py-4 rounded-2xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black text-sm uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2">
+                View Full Details <i class="ph-bold ph-arrow-right text-lg"></i>
+            </button>
         </div>
     </div>
 </div>

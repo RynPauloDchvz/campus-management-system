@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/organizer_profile.css' %}">
 <style>
     .editable-field-active {
         background-color: rgba(0, 0, 0, 0.04) !important;
@@ -35,6 +34,29 @@
         .dark .hide-scrollbar::-webkit-scrollbar-thumb { background: #374151; }
         .hide-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
         .dark .hide-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+    }
+
+    /* iOS Pop Origin Animation */
+    .ios-pop-wrapper, .ios-pop-wrapper-close {
+        transform-origin: var(--click-x, 50%) var(--click-y, 50%);
+    }
+    
+    .ios-pop-wrapper {
+        animation: iosPopOpen 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+    }
+    
+    .ios-pop-wrapper-close {
+        animation: iosPopClose 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+    }
+    
+    @keyframes iosPopOpen {
+        0% { opacity: 0; transform: scale(0.3); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes iosPopClose {
+        0% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.3); }
     }
 </style>
 {% endblock extra_head %}
@@ -155,8 +177,8 @@
                 <a href="{% url 'organizer_event_vault' %}" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-pup-maroon dark:text-pup-gold px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Document Vault">
                     <i class="ph-bold ph-folder-open text-base sm:text-lg transition-transform hover:scale-110"></i>
                 </a>
-                <button onclick="openSettingsModal()" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Notification Settings">
-                    <i id="notifBellIcon" class="ph-bold ph-bell-ringing text-base sm:text-lg transition-transform"></i>
+                <button onclick="openSettingsModal()" class="bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 sm:px-3 sm:py-2.5 rounded-lg shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-[#222] flex items-center justify-center" title="Settings">
+                    <i id="notifBellIcon" class="ph-bold ph-gear text-base sm:text-lg transition-transform"></i>
                 </button>
                 <button id="cancelEditBtn" onclick="toggleOrgProfileEdit(true)" class="hidden bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-[0.65rem] sm:text-sm shadow-sm transition-colors hover:opacity-90 items-center gap-1 sm:gap-2">
                     <i class="ph-bold ph-x text-sm sm:text-lg"></i> <span class="hidden sm:inline">Cancel</span>
@@ -191,8 +213,8 @@
                 <h2 class="text-lg sm:text-xl font-black text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-wide">
                     <i class="ph-fill ph-check-square-offset text-green-500"></i> Completed Events
                 </h2>
-                <a href="{% url 'organizer_analytics' %}" class="text-[10px] sm:text-xs font-bold text-[#800000] dark:text-[#D4AF37] hover:underline uppercase transition-colors flex items-center gap-1">
-                    <span class="hidden sm:inline">View Analytics</span><span class="sm:hidden">Analytics</span> <i class="ph-bold ph-chart-bar"></i>
+                <a href="{% url 'organizer_analytics' %}" class="text-[9px] sm:text-xs font-bold text-[#800000] dark:text-[#D4AF37] hover:underline uppercase transition-colors flex items-center gap-1 whitespace-nowrap">
+                    View Analytics Status <i class="ph-bold ph-arrow-right"></i>
                 </a>
             </div>
             
@@ -203,6 +225,7 @@
                              data-title="{{ evt.event_title }}"
                              data-rating="{{ evt.average_rating }}"
                              data-sentiment="{{ evt.sentiment_percentage }}"
+                             data-dist="{{ evt.dist }}"
                              class="shrink-0 w-64 sm:w-80 bg-white dark:bg-[#151515] p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col justify-between cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all snap-center sm:snap-align-none">
                             <div>
                                 <h4 class="font-black text-gray-900 dark:text-white text-base mb-1 truncate">{{ evt.event_title }}</h4>
@@ -233,16 +256,16 @@
             <div class="flex flex-row items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-800 pb-3 gap-2">
                 <h2 class="text-base sm:text-xl font-black text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-wide truncate">
                     <i class="ph-fill ph-bell text-gray-500 shrink-0"></i> 
-                    <span class="truncate">Alerts</span>
+                    <span class="truncate">Notifications</span>
                 </h2>
                 
-                <div class="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
-                    <button onclick="markAllAsRead()" class="text-[10px] sm:text-xs font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors uppercase flex items-center gap-1">
-                        <i class="ph-bold ph-checks"></i> <span class="hidden sm:inline">Mark all read</span><span class="sm:hidden">Read All</span>
+                <div class="flex items-center gap-1.5 sm:gap-3 shrink-0 ml-auto">
+                    <button onclick="markAllAsRead()" class="text-[8px] sm:text-xs font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors uppercase flex items-center gap-1 whitespace-nowrap">
+                        <i class="ph-bold ph-checks"></i> Mark as Read
                     </button>
                     <span class="text-gray-300 dark:text-gray-700 hidden sm:inline">|</span>
-                    <a href="{% url 'organizer_message_history' %}" class="text-[10px] sm:text-xs font-bold text-[#800000] dark:text-[#D4AF37] hover:underline uppercase transition-colors flex items-center gap-1">
-                        <span class="hidden sm:inline">View All</span><span class="sm:hidden">All</span> <i class="ph-bold ph-arrow-right"></i>
+                    <a href="{% url 'organizer_message_history' %}" class="text-[8px] sm:text-xs font-bold text-[#800000] dark:text-[#D4AF37] hover:underline uppercase transition-colors flex items-center gap-1 whitespace-nowrap">
+                        View All Messages <i class="ph-bold ph-arrow-right"></i>
                     </a>
                 </div>
             </div>
@@ -316,20 +339,19 @@
             {% endif %}
         </div>
 
-        <div class="text-center pb-8 mt-12">
-            <button onclick="openLogoutModal()" class="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-gray-800 text-red-600 dark:text-red-500 font-bold hover:bg-red-50 hover:border-red-200 dark:hover:bg-red-900/10 dark:hover:border-red-900/50 transition-colors text-sm shadow-sm mx-auto">
-                <i class="ph-bold ph-sign-out text-lg"></i> Sign Out Account
-            </button>
-        </div>
 
     </div>
 </div>
 
 <div id="eventMessageModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 font-sans">
     <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeEventMessage()"></div>
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-md p-8 text-center border border-gray-200 dark:border-gray-800 z-10 transition-colors">
+    <div id="eventMessageModalBox" class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-md p-8 text-center border border-gray-200 dark:border-gray-800 z-10 transition-colors">
         
-        <div id="evtMsgIcon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-5 border-2"></div>
+        <button onclick="closeEventMessage()" class="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+            <i class="ph-bold ph-x text-lg"></i>
+        </button>
+
+        <div id="evtMsgIcon" class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-5 border-2 mt-2"></div>
         <h3 id="evtMsgTitle" class="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide"></h3>
         <p id="evtMsgBody" class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-6"></p>
 
@@ -337,18 +359,14 @@
             <span class="block text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1">Reason for Rejection:</span>
             <p id="evtMsgReasonText" class="text-sm font-medium text-red-700 dark:text-red-400"></p>
         </div>
-        
-        <button onclick="closeEventMessage()" class="w-full py-3 rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors text-sm shadow-sm">
-            Close Message
-        </button>
     </div>
 </div>
 
 <div id="analyticsModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 font-sans">
     <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAnalyticsModal()"></div>
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 text-left transition-colors">
+    <div id="analyticsModalBox" class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-gray-200 dark:border-gray-800 z-10 text-left transition-colors">
         
-        <button onclick="closeAnalyticsModal()" class="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+        <button onclick="closeAnalyticsModal()" class="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors z-20">
             <i class="ph-bold ph-x text-lg"></i>
         </button>
         
@@ -368,19 +386,8 @@
 
         <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
             <p class="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-4">Response Distribution</p>
-            <div class="h-24 w-full flex items-end justify-between gap-2 relative">
-                <svg class="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-                    <path d="M 0,80 Q 25,80 50,60 T 100,10 L 100,100 L 0,100 Z" fill="rgba(37, 99, 235, 0.1)"></path>
-                    <path d="M 0,80 Q 25,80 50,60 T 100,10" fill="none" stroke="#2563eb" stroke-width="2"></path>
-                </svg>
-                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-2 z-10"></div>
-                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-3 z-10"></div>
-                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-6 z-10"></div>
-                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-10 z-10"></div>
-                <div class="relative w-2 h-2 rounded-full bg-white border-2 border-blue-600 mb-20 z-10"></div>
-            </div>
-            <div class="flex justify-between mt-2 text-xs font-bold text-gray-400">
-                <span>1★</span><span>2★</span><span>3★</span><span>4★</span><span>5★</span>
+            <div class="h-32 w-full relative">
+                <canvas id="profileDistChart"></canvas>
             </div>
         </div>
 
@@ -412,10 +419,14 @@
             </div>
         </div>
         
-        <div class="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl p-4 flex items-start gap-3">
+        <div class="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl p-4 flex items-start gap-3 mb-4">
             <i class="ph-fill ph-info text-blue-600 dark:text-blue-400 text-lg shrink-0 mt-0.5"></i>
             <p class="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">Account credentials (Passwords) are managed strictly by the System Administrator. Contact the admin office for password resets.</p>
         </div>
+        
+        <button onclick="openLogoutModal()" class="w-full py-3 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-500 font-bold hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors text-sm flex items-center justify-center gap-2 shadow-sm">
+            <i class="ph-bold ph-sign-out"></i> Log Out
+        </button>
     </div>
 </div>
 
@@ -425,14 +436,14 @@
         <div class="w-20 h-20 mx-auto bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4 border border-red-100 dark:border-red-900/30">
             <i class="ph-fill ph-sign-out text-4xl text-red-500"></i>
         </div>
-        <h3 class="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">Sign Out?</h3>
+        <h3 class="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">Log Out?</h3>
         <p class="text-gray-500 dark:text-gray-400 mb-8 text-sm">Are you sure you want to securely log out of your Organizer account?</p>
         
         <div class="flex gap-3">
             <button onclick="closeLogoutModal()" class="flex-1 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
             <form action="{% url 'portal_logout' %}" method="post" class="flex-1 m-0">
                 {% csrf_token %}
-                <button type="submit" class="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors text-sm shadow-md flex items-center justify-center">Yes, Sign Out</button>
+                <button type="submit" class="w-full py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors text-sm shadow-md flex items-center justify-center">Yes, Log Out</button>
             </form>
         </div>
     </div>
@@ -441,8 +452,10 @@
 {% endblock content %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     window.DEFAULT_LOGO = "{% static 'images/PUPLogo.png' %}";
+    let profileDistChartInstance = null;
 
     let readNotifs = JSON.parse("{{ read_notifications_json|escapejs }}" || "[]");
     let notifSettingEnabled = ("{{ email_notifications|yesno:'true,false' }}" === "true");
@@ -546,6 +559,16 @@
             reasonBox.classList.add('hidden');
         }
 
+        const rect = element.getBoundingClientRect();
+        const clickX = rect.left + rect.width / 2;
+        const clickY = rect.top + rect.height / 2;
+        
+        const box = document.getElementById('eventMessageModalBox');
+        box.style.setProperty('--click-x', clickX + 'px');
+        box.style.setProperty('--click-y', clickY + 'px');
+        box.classList.remove('ios-pop-wrapper-close');
+        box.classList.add('ios-pop-wrapper');
+
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -554,16 +577,79 @@
         const title = element.dataset.title;
         const rating = element.dataset.rating;
         const sentiment = element.dataset.sentiment;
+        const distStr = element.dataset.dist;
+        
         document.getElementById('analyticsModalTitle').innerText = title;
         document.getElementById('analyticsModalRating').innerText = rating;
         document.getElementById('analyticsModalSentiment').innerText = sentiment + '%';
+        
+        const rect = element.getBoundingClientRect();
+        const clickX = rect.left + rect.width / 2;
+        const clickY = rect.top + rect.height / 2;
+        
+        const box = document.getElementById('analyticsModalBox');
+        box.style.setProperty('--click-x', clickX + 'px');
+        box.style.setProperty('--click-y', clickY + 'px');
+        box.classList.remove('ios-pop-wrapper-close');
+        box.classList.add('ios-pop-wrapper');
+        
         document.getElementById('analyticsModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        
+        if (distStr) {
+            setTimeout(() => renderProfileSmoothChart(JSON.parse(distStr)), 10);
+        }
     }
     
     function closeAnalyticsModal() {
-        document.getElementById('analyticsModal').classList.add('hidden');
-        document.body.style.overflow = '';
+        const box = document.getElementById('analyticsModalBox');
+        box.classList.remove('ios-pop-wrapper');
+        box.classList.add('ios-pop-wrapper-close');
+        setTimeout(() => {
+            document.getElementById('analyticsModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    }
+
+    function renderProfileSmoothChart(dataArray) {
+        const canvas = document.getElementById('profileDistChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        let gradient = ctx.createLinearGradient(0, 0, 0, 150);
+        gradient.addColorStop(0, 'rgba(37, 99, 235, 0.5)'); 
+        gradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+
+        if (profileDistChartInstance) { profileDistChartInstance.destroy(); }
+
+        profileDistChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['1★', '2★', '3★', '4★', '5★'],
+                datasets: [{
+                    data: dataArray,
+                    borderColor: '#3b82f6', 
+                    borderWidth: 3,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.4, 
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#3b82f6',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { display: false, beginAtZero: true, max: Math.max(...dataArray) + 5 }, 
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { weight: 'bold', size: 10 } }, border: { display: false } }
+                }
+            }
+        });
     }
 
     function markAllAsRead() {
@@ -614,8 +700,13 @@
     }
 
     function closeEventMessage() {
-        document.getElementById('eventMessageModal').classList.add('hidden');
-        document.body.style.overflow = '';
+        const box = document.getElementById('eventMessageModalBox');
+        box.classList.remove('ios-pop-wrapper');
+        box.classList.add('ios-pop-wrapper-close');
+        setTimeout(() => {
+            document.getElementById('eventMessageModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
     }
 
     let isOrgEditMode = false;
