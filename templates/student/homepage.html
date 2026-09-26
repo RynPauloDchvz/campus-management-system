@@ -303,7 +303,7 @@
                 <i class="ph-bold ph-newspaper-clipping text-pup-maroon dark:text-pup-gold"></i> Activity Announcements
             </h2>
             <div class="news-carousel hide-scrollbar">
-                <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news)" 
+                <div v-for="news in latestNews" :key="news.id" @click="openEventModal(news, $event)" 
                     class="news-card bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 transition-all cursor-pointer group">
                     <div class="h-44 overflow-hidden relative">
                         <img :src="getStaticImageUrl(news.image)" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
@@ -327,7 +327,7 @@
                     <button v-if="calendarFilterDate" @click="resetCalendarFilter" class="text-[10px] font-black text-pup-maroon dark:text-pup-gold uppercase tracking-widest hover:underline mr-2">
                         View Month
                     </button>
-                    <button onclick="openFullCalendarModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 shadow-sm text-pup-maroon dark:text-pup-gold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" title="Open Full Calendar">
+                    <button onclick="openFullCalendarModal(event)" class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 shadow-sm text-pup-maroon dark:text-pup-gold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" title="Open Full Calendar">
                         <i class="ph-fill ph-calendar text-xl"></i>
                     </button>
                 </div>
@@ -352,7 +352,7 @@
                 </div>
 
                 <div class="space-y-4 max-h-[500px] overflow-y-auto hide-scrollbar pr-1 pb-4">
-                    <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="markEventViewedAndOpen(evt)" 
+                    <div v-for="evt in filteredCalendarEvents" :key="evt.id" @click="markEventViewedAndOpen(evt, $event)" 
                         class="flex flex-col gap-2 p-3 rounded-xl bg-white dark:bg-pup-darkcard hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-all border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md group relative overflow-hidden">
                         
                         <!-- Thumbnail Image -->
@@ -437,7 +437,7 @@
 <!-- Full Calendar Modal -->
 <div id="fullCalendarModal" class="hidden fixed inset-0 z-[5000] items-center justify-center px-4 sm:px-6 py-6">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeFullCalendarModal()"></div>
-    <div class="relative bg-white dark:bg-pup-darkcard w-full max-w-4xl h-full max-h-[800px] rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col animate-slide-up">
+    <div class="ios-pop-wrapper relative bg-white dark:bg-pup-darkcard w-full max-w-4xl h-full max-h-[800px] rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col">
         <div class="flex items-center justify-between p-5 sm:p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-white/5">
             <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
                 <i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold"></i> Event Calendar
@@ -459,7 +459,7 @@
         <i class="ph-bold ph-x"></i>
     </button>
 
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up mobile-fullscreen-modal flex flex-col max-h-[90vh]">
+    <div class="ios-pop-wrapper relative bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 dark:border-gray-800 mobile-fullscreen-modal flex flex-col max-h-[90vh]">
         <!-- Desktop close button -->
         <button @click="closeModal" class="hidden sm:flex absolute top-4 right-4 z-[5010] w-8 h-8 bg-black/40 hover:bg-black/60 rounded-full items-center justify-center text-white/90 hover:text-white text-xl transition-all drop-shadow-lg backdrop-blur-sm border border-white/10">
             <i class="ph-bold ph-x"></i>
@@ -491,13 +491,13 @@
 </div>
 
 <!-- Calendar Detail Modal -->
-<div id="calendarEventModal" class="hidden fixed inset-0 z-[5000] items-center justify-center px-0 sm:px-4 py-0 sm:py-6">
+<div id="calendarEventModal" class="hidden fixed inset-0 z-[5020] items-center justify-center px-0 sm:px-4 py-0 sm:py-6">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-md" onclick="closeCalendarModal()"></div>
-    <button onclick="closeCalendarModal()" class="fixed top-6 right-6 z-[5010] text-white/70 hover:text-white text-3xl transition-all drop-shadow-lg sm:hidden">
+    <button onclick="closeCalendarModal()" class="fixed top-6 right-6 z-[5030] text-white/70 hover:text-white text-3xl transition-all drop-shadow-lg sm:hidden">
         <i class="ph-bold ph-x"></i>
     </button>
 
-    <div class="relative bg-white dark:bg-pup-darkcard w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-slide-up mobile-fullscreen-modal flex flex-col max-h-[90vh]">
+    <div class="ios-pop-wrapper relative bg-white dark:bg-pup-darkcard w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 mobile-fullscreen-modal flex flex-col max-h-[90vh]">
         <!-- Desktop close button -->
         <button onclick="closeCalendarModal()" class="hidden sm:flex absolute top-4 right-4 z-[5010] w-8 h-8 bg-black/40 hover:bg-black/60 rounded-full items-center justify-center text-white/90 hover:text-white text-xl transition-all drop-shadow-lg backdrop-blur-sm border border-white/10">
             <i class="ph-bold ph-x"></i>
@@ -601,7 +601,7 @@
                 document.querySelectorAll('.fc-daygrid-day').forEach(el => el.classList.remove('selected-day'));
                 info.dayEl.classList.add('selected-day');
             },
-            eventClick: (info) => handleCalendarEventClick(info.event.extendedProps)
+            eventClick: (info) => handleCalendarEventClick(info.event.extendedProps, info.jsEvent)
         });
         calendar.render();
     }
@@ -614,7 +614,7 @@
         }, 50);
     });
 
-    function handleCalendarEventClick(evt) {
+    function handleCalendarEventClick(evt, jsEvent) {
         document.getElementById('calModalTitle').innerText = evt.title;
         document.getElementById('calModalStatus').innerText = evt.status;
         document.getElementById('calModalDateTime').innerText = `${evt.date} • ${evt.start_time}`;
@@ -622,26 +622,64 @@
         document.getElementById('calModalDesc').innerText = evt.description || 'No description provided.';
         document.getElementById('calModalImg').src = evt.image || '{% static "images/PUPLogo.png" %}';
         
-        // Ensure calendar modal is hidden before opening event detail
-        closeFullCalendarModal();
-        
         const modal = document.getElementById('calendarEventModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
+
+        const wrapper = modal.querySelector('.ios-pop-wrapper');
+        if (wrapper) {
+            wrapper.classList.remove('ios-pop-wrapper-close');
+            if (jsEvent && jsEvent.clientX) {
+                wrapper.style.setProperty('--click-x', jsEvent.clientX + 'px');
+                wrapper.style.setProperty('--click-y', jsEvent.clientY + 'px');
+            } else {
+                wrapper.style.setProperty('--click-x', '50%');
+                wrapper.style.setProperty('--click-y', '50%');
+            }
+        }
     }
     function closeCalendarModal() {
         const modal = document.getElementById('calendarEventModal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = '';
+        const wrapper = modal.querySelector('.ios-pop-wrapper');
+        
+        const finishClose = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            // Only re-enable scrolling if the main calendar modal is NOT open
+            const fullCal = document.getElementById('fullCalendarModal');
+            if (!fullCal || fullCal.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
+        };
+
+        if (wrapper) {
+            wrapper.classList.add('ios-pop-wrapper-close');
+            setTimeout(finishClose, 350);
+        } else {
+            finishClose();
+        }
     }
 
-    function openFullCalendarModal() {
+    function openFullCalendarModal(jsEvent) {
         const modal = document.getElementById('fullCalendarModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         document.body.style.overflow = 'hidden';
+
+        const wrapper = modal.querySelector('.ios-pop-wrapper');
+        if (wrapper) {
+            wrapper.classList.remove('ios-pop-wrapper-close');
+            if (jsEvent && jsEvent.clientX) {
+                wrapper.style.setProperty('--click-x', jsEvent.clientX + 'px');
+                wrapper.style.setProperty('--click-y', jsEvent.clientY + 'px');
+            } else {
+                wrapper.style.setProperty('--click-x', '50%');
+                wrapper.style.setProperty('--click-y', '50%');
+            }
+        }
+
         setTimeout(() => {
             if (calendar) calendar.render();
         }, 50);
@@ -654,9 +692,25 @@
     }
     function closeFullCalendarModal() {
         const modal = document.getElementById('fullCalendarModal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = '';
+        const wrapper = modal.querySelector('.ios-pop-wrapper');
+        
+        const finishClose = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            // Re-enable scrolling only if the other modal isn't open
+            const eventCal = document.getElementById('calendarEventModal');
+            if (!eventCal || eventCal.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
+        };
+
+        if (wrapper) {
+            wrapper.classList.add('ios-pop-wrapper-close');
+            setTimeout(finishClose, 350);
+        } else {
+            finishClose();
+        }
     }
 
     (function() {
@@ -670,14 +724,14 @@
             formatDateShort(dateStr) {
                 return new Date(dateStr.split('-').join('/')).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             },
-            markEventViewedAndOpen(evt) {
+            markEventViewedAndOpen(evt, event) {
                 if (!this.viewedEventIds.includes(evt.id)) {
                     this.viewedEventIds.push(evt.id);
                     this.updateFilteredEvents();
                 }
-                handleCalendarEventClick(evt);
+                handleCalendarEventClick(evt, event);
             },
-            handleCalendarEventClick(evt) { handleCalendarEventClick(evt); },
+            handleCalendarEventClick(evt, event) { handleCalendarEventClick(evt, event); },
             resetCalendarFilter() {
                 this.calendarFilterDate = null;
                 document.querySelectorAll('.fc-daygrid-day').forEach(el => el.classList.remove('selected-day'));

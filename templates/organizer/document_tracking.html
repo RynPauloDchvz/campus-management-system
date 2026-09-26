@@ -89,6 +89,31 @@
             backdrop-filter: blur(4px) !important;
         }
     }
+
+    /* iOS Pop Origin Animation */
+    :root {
+        --click-x: 50vw;
+        --click-y: 50vh;
+    }
+
+    .ios-pop-wrapper {
+        transform-origin: var(--click-x) var(--click-y);
+        animation: iosPopOrigin 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes iosPopOrigin {
+        0% { transform: scale(0.2); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .ios-pop-wrapper-close {
+        animation: iosPopClose 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    @keyframes iosPopClose {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(0.2); opacity: 0; }
+    }
 </style>
 {% endblock extra_head %}
 
@@ -141,8 +166,8 @@
 
         <div class="flex flex-col gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
             <div>
-                <a href="{% url 'organizer_profile' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Profile
+                <a href="{% url 'organizer_create_events' %}" class="inline-flex items-center gap-1 text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">
+                    <i class="ph-bold ph-arrow-left"></i> Back to Create Events
                 </a>
             </div>
 
@@ -152,20 +177,30 @@
                     <p class="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base max-w-md mx-auto md:mx-0">Monitor the real-time approval progress and physical location of your event proposals.</p>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 w-full md:w-auto shrink-0">
-                    <div class="relative w-full sm:w-64">
-                        <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="trackSearch" onkeyup="filterTrackingDocs()" placeholder="Search Event Name..." class="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors shadow-sm text-gray-900 dark:text-white">
+                <div class="flex flex-row items-start justify-between gap-2 w-full md:w-auto shrink-0 relative z-20">
+                    <div class="relative flex-grow min-w-0">
+                        <i class="ph-bold ph-magnifying-glass absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="trackSearch" onkeyup="filterTrackingDocs()" placeholder="Search Event Name..." class="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-9 sm:pl-11 pr-3 sm:pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold transition-colors shadow-sm text-gray-900 dark:text-white">
                     </div>
                     
-                    <div class="relative w-full sm:w-auto">
-                        <select id="trackStatusFilter" onchange="filterTrackingDocs()" class="w-full sm:w-auto bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-none rounded-xl px-5 py-3 font-bold text-sm cursor-pointer appearance-none pr-10 focus:outline-none shadow-sm">
-                            <option value="All">All Documents</option>
-                            <option value="Pending">Pending Approvals</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                        <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none"></i>
+                    <!-- Custom Dropdown -->
+                    <div class="relative bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm transition-colors overflow-hidden flex flex-col w-[130px] sm:w-[160px] shrink-0">
+                        <input type="hidden" id="trackStatusFilter" value="All">
+                        <button type="button" id="statusFilterBtn" class="w-full px-3 sm:px-4 py-3 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 text-left outline-none cursor-pointer flex justify-between items-center z-20 relative bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <span id="statusFilterLabel" class="truncate">All</span>
+                            <i id="statusFilterIcon" class="ph-bold ph-caret-down ml-1 sm:ml-2 transition-transform duration-300 shrink-0"></i>
+                        </button>
+                        
+                        <div id="statusFilterMenuWrapper" class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0 relative z-10 w-full">
+                            <div class="overflow-hidden">
+                                <div class="bg-gray-50 dark:bg-[#111] flex flex-col border-t border-gray-100 dark:border-gray-800">
+                                    <button type="button" onclick="selectStatusFilter('All', 'All')" class="text-left px-3 sm:px-4 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors border-b border-gray-100 dark:border-gray-800">All</button>
+                                    <button type="button" onclick="selectStatusFilter('Pending', 'Pending')" class="text-left px-3 sm:px-4 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-amber-500 transition-colors border-b border-gray-100 dark:border-gray-800">Pending</button>
+                                    <button type="button" onclick="selectStatusFilter('Approved', 'Approved')" class="text-left px-3 sm:px-4 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-green-500 transition-colors border-b border-gray-100 dark:border-gray-800">Approved</button>
+                                    <button type="button" onclick="selectStatusFilter('Rejected', 'Rejected')" class="text-left px-3 sm:px-4 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-800 hover:text-red-500 transition-colors">Rejected</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -184,27 +219,35 @@
     </div>
 
     <!-- Tracking Modal -->
-    <div id="trackingModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6 font-sans">
+    <div id="trackingModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-0 sm:p-6 font-sans">
         <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose" onclick="closeTrackingModal()"></div>
         
-        <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 z-10 transition-colors animate-in fade-in zoom-in duration-200">
+        <div id="trackingModalContent" class="ios-pop-wrapper mobile-fullscreen relative bg-white dark:bg-[#151515] sm:rounded-3xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700 z-10 transition-colors">
             
+            <!-- Close Button (Absolute) -->
+            <button type="button" onclick="closeTrackingModal()" class="fixed-close-btn sm:hidden">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
+            <button type="button" onclick="closeTrackingModal()" class="hidden sm:flex absolute top-6 right-6 w-10 h-10 items-center justify-center bg-gray-200 dark:bg-gray-800 rounded-full text-gray-500 hover:text-red-500 z-20 transition-colors">
+                <i class="ph-bold ph-x text-xl"></i>
+            </button>
+
             <!-- Modal Header -->
-            <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-800 shrink-0 bg-gray-50 dark:bg-[#0a0a0a]">
+            <div class="p-6 pt-12 sm:pt-8 sm:p-8 border-b border-gray-200 dark:border-gray-800 shrink-0 bg-gray-50 dark:bg-[#0a0a0a]">
                 <div class="flex items-center gap-2 mb-3">
                     <span id="modalOrgName" class="bg-gray-200 dark:bg-[#111] border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold text-[0.65rem] px-3 py-1 rounded-full uppercase tracking-widest">ORG</span>
                     <span id="modalStatusBadge" class="font-bold text-[0.65rem] px-3 py-1 rounded-full uppercase tracking-widest border">Status</span>
                 </div>
-                <h2 id="modalEventTitle" class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight mb-1">Event Title</h2>
+                <h2 id="modalEventTitle" class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight mb-1 pr-8 sm:pr-12">Event Title</h2>
                 <p id="modalDocType" class="text-sm font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1"><i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold"></i> Official Event Proposal Document</p>
             </div>
 
             <!-- Modal Body -->
             <div class="p-6 sm:p-8 overflow-y-auto flex-grow hide-scrollbar">
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-5 md:gap-0 gap-8">
                     
                     <!-- Left: Detailed Timeline -->
-                    <div class="md:col-span-2 flex flex-col">
+                    <div class="md:col-span-2 flex flex-col order-2 md:order-1 md:pr-8">
                         <h3 class="text-xs font-bold uppercase text-gray-400 mb-6 tracking-wider flex items-center gap-2">
                             <i class="ph-bold ph-list-checks"></i> Approval Progress
                         </h3>
@@ -214,38 +257,34 @@
                     </div>
 
                     <!-- Right: Legit Location Map -->
-                    <div class="md:col-span-3 flex flex-col">
+                    <div class="md:col-span-3 flex flex-col order-1 md:order-2 md:pl-8 md:border-l border-gray-200 dark:border-gray-800 mb-8 md:mb-0 pb-8 md:pb-0 border-b md:border-b-0">
                         <h3 class="text-xs font-bold uppercase text-gray-400 mb-6 tracking-wider flex items-center gap-2">
                             <i class="ph-bold ph-map-trifold"></i> Current Physical Location
                         </h3>
-                        <div class="bg-gray-50 dark:bg-[#111] p-4 rounded-3xl border border-gray-200 dark:border-gray-800 flex flex-col flex-grow">
-                            <div class="flex items-start gap-3 mb-4 bg-white dark:bg-[#151515] p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                                <div class="w-10 h-10 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center shrink-0">
-                                    <i class="ph-fill ph-map-pin text-xl text-pup-maroon dark:text-pup-gold animate-bounce"></i>
+                        <div class="flex flex-col flex-grow">
+                            <!-- Status Header without Box -->
+                            <div class="flex items-start gap-4 mb-6">
+                                <div class="w-12 h-12 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center shrink-0">
+                                    <i class="ph-fill ph-map-pin text-2xl text-pup-maroon dark:text-pup-gold animate-bounce"></i>
                                 </div>
-                                <div class="flex flex-col">
-                                    <span class="text-[0.65rem] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Current Office</span>
-                                    <strong id="modalCurrentLoc" class="text-gray-900 dark:text-white text-sm sm:text-base leading-tight">Office Name with Full Address</strong>
+                                <div class="flex flex-col pt-1">
+                                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-0.5">Current Office</span>
+                                    <strong id="modalCurrentLoc" class="text-gray-900 dark:text-white text-lg sm:text-xl leading-tight">Office Name with Full Address</strong>
                                 </div>
                             </div>
-                            <div id="docMap" class="w-full h-64 md:h-full min-h-[300px] rounded-2xl border border-gray-300 dark:border-gray-700 shadow-inner z-10 overflow-hidden relative"></div>
+                            <div id="docMap" class="w-full h-64 md:h-full min-h-[300px] rounded-3xl border border-gray-200 dark:border-gray-700 shadow-sm z-10 overflow-hidden relative"></div>
                         </div>
                     </div>
 
                 </div>
             </div>
 
-            <!-- Modal Footer -->
-            <div id="modalFooter" class="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0a0a0a] shrink-0">
-                <button onclick="closeTrackingModal()" class="w-full py-4 rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-sm flex items-center justify-center gap-2 shadow-sm">
-                    Close Tracker
-                </button>
-            </div>
-
         </div>
     </div>
 </div>
+{% endblock content %}
 
+{% block extra_js %}
 <script>
     let allDocuments = [];
     let map = null;
@@ -261,6 +300,51 @@
         } catch (e) {
             console.error("Error parsing documents data:", e);
         }
+    });
+
+    // Custom Dropdown Logic
+    function toggleStatusFilter() {
+        const menuWrapper = document.getElementById('statusFilterMenuWrapper');
+        const icon = document.getElementById('statusFilterIcon');
+        if (!menuWrapper) return;
+        
+        const isOpen = !menuWrapper.classList.contains('grid-rows-[0fr]');
+        if (isOpen) {
+            menuWrapper.classList.remove('grid-rows-[1fr]', 'opacity-100');
+            menuWrapper.classList.add('grid-rows-[0fr]', 'opacity-0');
+            if(icon) icon.classList.remove('rotate-180');
+        } else {
+            menuWrapper.classList.remove('grid-rows-[0fr]', 'opacity-0');
+            menuWrapper.classList.add('grid-rows-[1fr]', 'opacity-100');
+            if(icon) icon.classList.add('rotate-180');
+        }
+    }
+
+    function selectStatusFilter(value, label) {
+        document.getElementById('trackStatusFilter').value = value;
+        document.getElementById('statusFilterLabel').innerText = label;
+        toggleStatusFilter();
+        filterTrackingDocs();
+    }
+
+    // Close custom dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        const btn = document.getElementById('statusFilterBtn');
+        const menu = document.getElementById('statusFilterMenuWrapper');
+        if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+            menu.classList.remove('grid-rows-[1fr]', 'opacity-100');
+            menu.classList.add('grid-rows-[0fr]', 'opacity-0');
+            const icon = document.getElementById('statusFilterIcon');
+            if(icon) icon.classList.remove('rotate-180');
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('statusFilterBtn');
+        if(btn) btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleStatusFilter();
+        });
     });
 
     function renderTrackingDocs(docs) {
@@ -281,7 +365,14 @@
             const card = document.createElement('div');
             card.className = 'doc-card bg-white dark:bg-[#151515] p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer relative overflow-hidden group';
             card.setAttribute('data-id', doc.id);
-            card.onclick = () => openTrackingModal(doc); // Standard Click Handler (Fixes Bug)
+            card.onclick = (e) => {
+                const rect = card.getBoundingClientRect();
+                const clickX = e.clientX || (rect.left + rect.width / 2);
+                const clickY = e.clientY || (rect.top + rect.height / 2);
+                document.documentElement.style.setProperty('--click-x', `${clickX}px`);
+                document.documentElement.style.setProperty('--click-y', `${clickY}px`);
+                openTrackingModal(doc);
+            };
             
             card.innerHTML = `
                 <div class="flex items-center justify-between mb-4 relative z-10">
@@ -343,6 +434,8 @@
 
         renderTimeline(doc);
         
+        const modalContent = document.getElementById('trackingModalContent');
+        modalContent.classList.remove('ios-pop-wrapper-close');
         document.getElementById('trackingModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
 
@@ -350,12 +443,18 @@
     }
 
     function closeTrackingModal() {
-        document.getElementById('trackingModal').classList.add('hidden');
-        document.body.style.overflow = '';
-        if (map) {
-            map.remove();
-            map = null;
-        }
+        const modalContent = document.getElementById('trackingModalContent');
+        modalContent.classList.add('ios-pop-wrapper-close');
+        
+        setTimeout(() => {
+            document.getElementById('trackingModal').classList.add('hidden');
+            modalContent.classList.remove('ios-pop-wrapper-close');
+            document.body.style.overflow = '';
+            if (map) {
+                map.remove();
+                map = null;
+            }
+        }, 350); // wait for animation
     }
 
     function renderTimeline(doc) {
@@ -463,4 +562,4 @@
         setTimeout(() => map.invalidateSize(), 250);
     }
 </script>
-{% endblock content %}
+{% endblock extra_js %}

@@ -178,8 +178,8 @@
     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 p-4 md:p-8">
         
         <!-- LEFT PANEL: EVENT DOCUMENTS -->
-        <div class="flex flex-col bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-800">
-            <div class="sticky top-0 bg-white dark:bg-gray-900 z-10 pb-6">
+        <div class="flex flex-col w-full">
+            <div class="sticky top-0 bg-gray-50 dark:bg-gray-950 z-10 pb-6 pt-2">
                 <a href="{% url 'organizer_profile' %}" class="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#800000] dark:hover:text-[#D4AF37] transition uppercase tracking-widest mb-6">
                     <i class="ph-bold ph-arrow-left"></i> Back to Profile
                 </a>
@@ -189,49 +189,76 @@
                 <p class="text-gray-500 dark:text-gray-400 text-xs font-medium mb-6">
                     Manage and upload physical activity verification documents.
                 </p>
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="ph-bold ph-magnifying-glass text-gray-400 group-focus-within:text-[#800000] dark:group-focus-within:text-[#D4AF37] transition-colors"></i>
+                <div class="flex flex-row items-center gap-2 mb-2">
+                    <div class="relative group flex-grow min-w-0">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="ph-bold ph-magnifying-glass text-gray-400 group-focus-within:text-[#800000] dark:group-focus-within:text-[#D4AF37] transition-colors"></i>
+                        </div>
+                        <input id="search-pending" type="text" 
+                            class="block w-full pl-9 pr-3 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-black text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#800000] dark:focus:ring-[#D4AF37] transition text-sm font-semibold shadow-sm" 
+                            placeholder="Search pending events...">
                     </div>
-                    <input id="search-pending" type="text" 
-                        class="block w-full pl-11 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#800000] dark:focus:ring-[#D4AF37] transition text-sm font-semibold" 
-                        placeholder="Search pending events...">
+                    
+                    <!-- Mobile Toggle Button (Visible only on < lg) -->
+                    <button type="button" onclick="toggleVaultMobile()" class="lg:hidden shrink-0 px-4 py-3 bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 font-bold uppercase tracking-tight text-[11px] flex items-center justify-between shadow-sm w-[130px] transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <span class="truncate">Doc Vault</span>
+                        <i id="vaultMobileIcon" class="ph-bold ph-caret-down transition-transform duration-300 shrink-0"></i>
+                    </button>
+                </div>
+                
+                <!-- Full Width Vault Dropdown for Mobile -->
+                <div id="vaultMobileWrapper" class="lg:hidden grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0 relative w-full">
+                    <div class="overflow-hidden">
+                        <div id="mobile-vault-container" class="flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm mt-2">
+                             <!-- Shared content injected via JS -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div id="pending-events-list" class="flex-1 overflow-y-auto custom-scroll max-h-[70vh] pr-2 space-y-4">
                 <!-- Dynamically Injected Cards -->
             </div>
-            <div id="pending-empty-state" class="hidden text-center text-gray-500 py-12">
-                <i class="ph-bold ph-files text-4xl mb-3 block opacity-20"></i>
-                <p class="text-xs font-bold uppercase tracking-widest">No matching pending events.</p>
+            <div id="pending-empty-state" class="hidden text-center py-16 w-full bg-white dark:bg-black rounded-3xl border border-gray-200 border-dashed dark:border-gray-800 mt-4">
+                <i class="ph-fill ph-file-dashed text-5xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+                <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">No Actions Required</h3>
+                <p class="text-gray-500 text-sm mt-1">There are currently no event documents awaiting your upload.</p>
             </div>
         </div>
 
-        <!-- RIGHT PANEL: DOCUMENT VAULT -->
-        <div class="flex flex-col bg-gray-100 dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-inner">
+        <!-- RIGHT PANEL: DOCUMENT VAULT (Desktop Only) -->
+        <div class="hidden lg:flex flex-col w-full relative">
             <div class="mb-6">
+                <div class="h-[16px] mb-6"></div> <!-- Alignment Spacer -->
                 <div class="flex items-center gap-3 mb-2">
-                    <i class="ph-fill ph-archive-box text-[#800000] dark:text-[#D4AF37] text-2xl"></i>
                     <h2 class="text-2xl font-black text-[#800000] dark:text-[#D4AF37] uppercase tracking-tight">Document Vault</h2>
                 </div>
                 <p class="text-gray-500 dark:text-gray-400 text-xs font-medium mb-6">History of previously uploaded document softcopies.</p>
+            </div>
+            <div id="desktop-vault-container" class="flex-1 flex flex-col min-h-0">
+                 <!-- Shared content injected via JS -->
+            </div>
+        </div>
+
+        <!-- SHARED VAULT CONTENT (Hidden Template) -->
+        <div id="vault-shared-content" class="flex flex-col w-full h-full">
+            <div class="mb-6">
                 <div class="relative group">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="ph-bold ph-funnel text-gray-400 group-focus-within:text-[#800000] dark:group-focus-within:text-[#D4AF37] transition-colors"></i>
                     </div>
                     <input id="search-vault" type="text" 
-                        class="block w-full pl-11 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#800000] dark:focus:ring-[#D4AF37] transition text-sm font-semibold" 
-                        placeholder="Filter archived documents...">
+                        class="block w-full pl-11 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#800000] dark:focus:ring-[#D4AF37] transition text-sm font-semibold shadow-sm" 
+                        placeholder="Search event titles...">
                 </div>
             </div>
 
-            <div id="vault-events-list" class="flex-1 overflow-y-auto custom-scroll max-h-[70vh] pr-2 space-y-4">
+            <div id="vault-events-list" class="flex-1 overflow-y-auto custom-scroll lg:max-h-[70vh] pr-2 space-y-4">
                 <!-- Dynamically Injected Vault Records -->
             </div>
             <div id="vault-empty-state" class="hidden text-center text-gray-500 py-12">
                 <i class="ph-bold ph-magnifying-glass text-4xl mb-3 block opacity-20"></i>
-                <p class="text-xs font-bold uppercase tracking-widest italic">Event not found.</p>
+                <p class="text-xs font-bold uppercase tracking-widest">Event not found.</p>
             </div>
         </div>
     </div>
@@ -353,6 +380,22 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // Inject Vault Shared Content to appropriate container based on screen size
+    function adjustVaultLocation() {
+        const vaultContent = document.getElementById('vault-shared-content');
+        if (!vaultContent) return;
+        if (window.innerWidth < 1024) {
+            const mobileContainer = document.getElementById('mobile-vault-container');
+            if(mobileContainer && !mobileContainer.contains(vaultContent)) mobileContainer.appendChild(vaultContent);
+        } else {
+            const desktopContainer = document.getElementById('desktop-vault-container');
+            if(desktopContainer && !desktopContainer.contains(vaultContent)) desktopContainer.appendChild(vaultContent);
+        }
+    }
+    adjustVaultLocation();
+    window.addEventListener('resize', adjustVaultLocation);
+
     // 1. DATA INITIALIZATION
     let pendingEvents = [];
     let vaultRecords = [];
@@ -420,10 +463,33 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${hours}:${minutes} ${ampm}`;
     }
 
+    // Mobile Vault Toggle Logic
+    window.toggleVaultMobile = () => {
+        const wrapper = document.getElementById('vaultMobileWrapper');
+        const icon = document.getElementById('vaultMobileIcon');
+        const isOpen = !wrapper.classList.contains('grid-rows-[0fr]');
+        
+        if (isOpen) {
+            wrapper.classList.remove('grid-rows-[1fr]', 'opacity-100');
+            wrapper.classList.add('grid-rows-[0fr]', 'opacity-0');
+            if (icon) icon.classList.remove('rotate-180');
+        } else {
+            wrapper.classList.remove('grid-rows-[0fr]', 'opacity-0');
+            wrapper.classList.add('grid-rows-[1fr]', 'opacity-100');
+            if (icon) icon.classList.add('rotate-180');
+        }
+    };
+
     // 3. RENDER PENDING EVENTS
     function renderPending() {
         if (pendingEvents.length === 0) {
-            pendingList.innerHTML = `<div class="text-center py-20 text-gray-400 uppercase font-black text-[10px] italic">No pending items</div>`;
+            pendingList.innerHTML = `
+                <div class="text-center py-16 w-full bg-white dark:bg-black rounded-3xl border border-gray-200 border-dashed dark:border-gray-800">
+                    <i class="ph-fill ph-check-circle text-5xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+                    <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">You're All Caught Up</h3>
+                    <p class="text-gray-500 text-sm mt-1">All required documents have been uploaded successfully.</p>
+                </div>
+            `;
             return;
         }
         pendingList.innerHTML = pendingEvents.map(e => `
@@ -445,7 +511,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. RENDER DOCUMENT VAULT
     function renderVault() {
         if (vaultRecords.length === 0) {
-            vaultList.innerHTML = `<div class="text-center py-20 text-gray-400 uppercase font-black text-[10px] italic">Archive is empty</div>`;
+            vaultList.innerHTML = `
+                <div class="text-center py-16 w-full bg-gray-50 dark:bg-gray-900 rounded-3xl border border-gray-200 border-dashed dark:border-gray-800">
+                    <i class="ph-fill ph-archive-box text-5xl text-gray-300 dark:text-gray-600 mb-3 block"></i>
+                    <h3 class="font-bold text-xl text-gray-600 dark:text-gray-300">Vault is Empty</h3>
+                    <p class="text-gray-500 text-sm mt-1">You haven't uploaded any event documents yet.</p>
+                </div>
+            `;
             return;
         }
         vaultList.innerHTML = vaultRecords.map(r => `
@@ -454,14 +526,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="w-full sm:w-auto overflow-hidden">
                         <h3 class="truncate font-black text-lg text-gray-900 dark:text-gray-100 uppercase min-w-0 pr-2">${r.eventName || r.title}</h3>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-start sm:justify-end mt-2 sm:mt-0">
-                        <button class="border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors" 
+                    <div class="flex items-center justify-between gap-4 shrink-0 w-full sm:w-auto mt-3 sm:mt-0">
+                        <button class="whitespace-nowrap border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-400 dark:hover:text-black px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors flex-grow sm:flex-grow-0 justify-center" 
                             onclick="openPreviewModal(${r.id})">
-                            <i class="ph-bold ph-eye"></i> Preview Letter
+                            <i class="ph-bold ph-eye text-sm"></i> Preview Letter
                         </button>
-                        <button class="download-records-btn shrink-0 border border-[#800000] text-[#800000] hover:bg-[#800000] hover:text-white dark:border-[#D4AF37] dark:text-[#D4AF37] dark:hover:bg-[#D4AF37] dark:hover:text-black px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-colors" 
-                            onclick="handleVaultDownload(this)">
-                            <i class="ph-bold ph-download-simple"></i> Download Records
+                        <button class="download-records-btn shrink-0 flex items-center justify-center w-9 h-9 rounded-xl bg-[#800000] text-white hover:bg-red-900 dark:bg-[#D4AF37] dark:text-black dark:hover:bg-yellow-600 transition-colors shadow-md border-0" 
+                            onclick="handleVaultDownload(this)" title="Download Records">
+                            <i class="ph-bold ph-download-simple text-base"></i>
                         </button>
                     </div>
                 </div>

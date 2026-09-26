@@ -1,34 +1,59 @@
-{% extends 'organizer_base.html' %} 
+{% extends 'organizer_base.html' %}
 {% load static %}
 
 {% block extra_head %}
 <style>
     @media print {
-        .print-hide { display: none !important; }
+        .print-hide {
+            display: none !important;
+        }
     }
+
     /* Custom Select Arrow Hiding fallback */
-    select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
 
     /* iOS Pop Origin Animation */
     :root {
         --click-x: 50vw;
         --click-y: 50vh;
     }
+
     .ios-pop-wrapper {
         transform-origin: var(--click-x) var(--click-y);
         animation: iosPopOrigin 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         will-change: transform, opacity;
     }
+
     @keyframes iosPopOrigin {
-        0% { transform: scale(0.2); opacity: 0; }
-        100% { transform: scale(1); opacity: 1; }
+        0% {
+            transform: scale(0.2);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
     }
+
     .ios-pop-wrapper-close {
         animation: iosPopClose 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     }
+
     @keyframes iosPopClose {
-        0% { transform: scale(1); opacity: 1; }
-        100% { transform: scale(0.2); opacity: 0; }
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(0.2);
+            opacity: 0;
+        }
     }
 
     /* Reset animation for desktop */
@@ -48,6 +73,7 @@
             border-radius: 0 !important;
             margin: 0 !important;
         }
+
         .fixed-close-btn {
             position: fixed !important;
             top: 1rem !important;
@@ -75,8 +101,11 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div class="bg-white dark:bg-pup-darkcard rounded-3xl border border-gray-100 dark:border-gray-800 h-[600px] skeleton-shimmer"></div>
-        <div class="bg-white dark:bg-pup-darkcard rounded-3xl border border-gray-100 dark:border-gray-800 p-6 sm:p-8 h-[600px] flex flex-col gap-6">
+        <div
+            class="bg-white dark:bg-pup-darkcard rounded-3xl border border-gray-100 dark:border-gray-800 h-[600px] skeleton-shimmer">
+        </div>
+        <div
+            class="bg-white dark:bg-pup-darkcard rounded-3xl border border-gray-100 dark:border-gray-800 p-6 sm:p-8 h-[600px] flex flex-col gap-6">
             <div class="w-48 h-8 rounded-lg skeleton-shimmer"></div>
             <div class="space-y-4">
                 <div v-for="i in 4" :key="i" class="h-24 rounded-2xl skeleton-shimmer"></div>
@@ -89,58 +118,80 @@
 {% block content %}
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-10 w-full min-h-screen">
-    
-    <div class="mb-5 border-b border-gray-200 dark:border-gray-800 pb-5 text-center sm:text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+
+    <div
+        class="mb-5 border-b border-gray-200 dark:border-gray-800 pb-5 text-center sm:text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="font-sans font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Event Documents</h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-2 font-sans">Create activity proposals, usage/excuse letters, or reschedule an existing event.</p>
+            <h1
+                class="font-sans font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">
+                Event Documents</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-2 font-sans">Create activity proposals, usage/excuse letters,
+                or reschedule an existing event.</p>
         </div>
         <!-- Mobile Track Documents Button -->
-        <button type="button" onclick="openMobileTracking(event)" class="lg:hidden w-full sm:w-auto bg-gray-900 hover:bg-black dark:bg-gray-100 dark:hover:bg-white text-white dark:text-gray-900 font-bold py-3 px-5 rounded-xl text-sm shadow-md flex items-center justify-center gap-2 transition-colors">
+        <button type="button" onclick="openMobileTracking(event)"
+            class="lg:hidden w-full sm:w-auto bg-gray-900 hover:bg-black dark:bg-gray-100 dark:hover:bg-white text-white dark:text-gray-900 font-bold py-3 px-5 rounded-xl text-sm shadow-md flex items-center justify-center gap-2 transition-colors">
             <i class="ph-bold ph-file-search text-lg"></i> Track Documents
         </button>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        
-        <div class="bg-transparent sm:bg-white dark:bg-transparent dark:sm:bg-pup-darkcard sm:rounded-3xl shadow-none sm:shadow-xl border-none sm:border border-gray-200 dark:border-gray-800 overflow-hidden relative font-sans">
-            
+
+        <div
+            class="bg-transparent sm:bg-white dark:bg-transparent dark:sm:bg-pup-darkcard sm:rounded-3xl shadow-none sm:shadow-xl border-none sm:border border-gray-200 dark:border-gray-800 overflow-hidden relative font-sans">
+
             <form id="createEventForm" onsubmit="event.preventDefault(); generateLetter();" class="p-0 py-2 sm:p-8">
                 <input type="hidden" id="evtId" value="">
 
                 <div class="flex flex-col gap-5">
-                    <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3 flex justify-between items-center">
-                        <span id="formTitle">Document Form</span>
+                    <h3
+                        class="font-sans text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3 flex justify-between items-center">
+                        <span id="formTitle">DOCUMENT FORM</span>
                         <div class="flex items-center gap-3">
-                            <span id="editBadge" class="hidden bg-yellow-100 text-yellow-700 border border-yellow-300 text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-black shadow-sm animate-pulse">Edit Mode</span>
+                            <span id="editBadge"
+                                class="hidden bg-yellow-100 text-yellow-700 border border-yellow-300 text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-black shadow-sm animate-pulse">Edit
+                                Mode</span>
                         </div>
                     </h3>
 
                     <div>
-                        <label class="block text-[0.7rem] font-bold text-pup-maroon dark:text-pup-gold uppercase tracking-wider mb-1.5">Select Document Type</label>
-                        
+                        <label
+                            class="block text-[0.7rem] font-bold text-pup-maroon dark:text-pup-gold uppercase tracking-wider mb-1.5">Select
+                            Document Type</label>
+
                         <!-- Hidden input to keep logic working -->
                         <input type="hidden" id="letterType" value="new_event">
-                        
+
                         <!-- Custom Dropdown Wrapper -->
-                        <div class="relative bg-maroon-50 dark:bg-gray-800 border-2 border-pup-maroon dark:border-pup-gold rounded-xl shadow-sm transition-colors overflow-hidden flex flex-col">
+                        <div
+                            class="relative bg-maroon-50 dark:bg-gray-800 border-2 border-pup-maroon dark:border-pup-gold rounded-xl shadow-sm transition-colors overflow-hidden flex flex-col">
                             <!-- Custom Select Button -->
-                            <button type="button" id="customSelectBtn" class="w-full pl-4 pr-4 py-3 text-sm font-bold text-gray-900 dark:text-white text-left outline-none cursor-pointer flex justify-between items-center z-20 relative bg-transparent">
+                            <button type="button" id="customSelectBtn"
+                                class="w-full pl-4 pr-4 py-3 text-sm font-bold text-gray-900 dark:text-white text-left outline-none cursor-pointer flex justify-between items-center z-20 relative bg-transparent">
                                 <span id="customSelectLabel">New Event Proposal (Request Letter + Excuse/Usage)</span>
-                                <i id="customSelectIcon" class="ph-bold ph-caret-down text-gray-700 dark:text-gray-300 transition-transform duration-300"></i>
+                                <i id="customSelectIcon"
+                                    class="ph-bold ph-caret-down text-gray-700 dark:text-gray-300 transition-transform duration-300"></i>
                             </button>
-                            
+
                             <!-- Dropdown Menu (Animate Grid) -->
-                            <div id="customSelectMenuWrapper" class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0 relative z-10 w-full">
+                            <div id="customSelectMenuWrapper"
+                                class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0 relative z-10 w-full">
                                 <div class="overflow-hidden">
-                                    <div class="bg-white dark:bg-[#111] flex flex-col border-t border-pup-maroon/20 dark:border-pup-gold/20">
-                                        <button type="button" onclick="selectLetterType('new_event', 'New Event Proposal (Request Letter + Excuse/Usage)')" class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-maroon-50 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors border-b border-gray-100 dark:border-gray-800">
+                                    <div
+                                        class="bg-white dark:bg-[#111] flex flex-col border-t border-pup-maroon/20 dark:border-pup-gold/20">
+                                        <button type="button"
+                                            onclick="selectLetterType('new_event', 'New Event Proposal (Request Letter + Excuse/Usage)')"
+                                            class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-maroon-50 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors border-b border-gray-100 dark:border-gray-800">
                                             New Event Proposal (Request Letter + Excuse/Usage)
                                         </button>
-                                        <button type="button" onclick="selectLetterType('reschedule_event', 'Reschedule Event (Reschedule Letter Only)')" class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-maroon-50 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors border-b border-gray-100 dark:border-gray-800">
+                                        <button type="button"
+                                            onclick="selectLetterType('reschedule_event', 'Reschedule Event (Reschedule Letter Only)')"
+                                            class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-maroon-50 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors border-b border-gray-100 dark:border-gray-800">
                                             Reschedule Event (Reschedule Letter Only)
                                         </button>
-                                        <button type="button" onclick="selectLetterType('flag_raising', 'Flag Raising Ceremony (Fast-Track Post)')" class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-maroon-50 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">
+                                        <button type="button"
+                                            onclick="selectLetterType('flag_raising', 'Flag Raising Ceremony (Fast-Track Post)')"
+                                            class="text-left px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-maroon-50 dark:hover:bg-gray-800 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors">
                                             Flag Raising Ceremony (Fast-Track Post)
                                         </button>
                                     </div>
@@ -148,117 +199,186 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Requester Name</label>
-                            <input type="text" id="reqName" value="{{ request.user.first_name }}" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors" required>
+                            <label
+                                class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Requester
+                                Name</label>
+                            <input type="text" id="reqName" value="{{ request.user.first_name }}"
+                                class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors"
+                                required>
                         </div>
                         <div>
-                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Organization</label>
-                            <input type="text" id="reqOrg" value="{{ org_acronym }}" readonly class="w-full bg-gray-200 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-black text-gray-700 dark:text-gray-400 outline-none cursor-not-allowed uppercase tracking-widest" required>
+                            <label
+                                class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Organization</label>
+                            <input type="text" id="reqOrg" value="{{ org_acronym }}" readonly
+                                class="w-full bg-gray-200 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm font-black text-gray-700 dark:text-gray-400 outline-none cursor-not-allowed uppercase tracking-widest"
+                                required>
                         </div>
                     </div>
 
-                    <div id="advNameWrapper" class="grid transition-all duration-300 ease-in-out grid-rows-[1fr] opacity-100">
+                    <div id="advNameWrapper"
+                        class="grid transition-all duration-300 ease-in-out grid-rows-[1fr] opacity-100">
                         <div class="overflow-hidden">
                             <div class="pb-1">
-                                <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Adviser Full Name</label>
-                                <input type="text" id="advName" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors" placeholder="e.g., Prof. Maria Clara" required>
+                                <label
+                                    class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Adviser
+                                    Full Name</label>
+                                <input type="text" id="advName"
+                                    class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors"
+                                    placeholder="e.g., Prof. Maria Clara" required>
                             </div>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Event Title</label>
-                        <input type="text" id="evtTitle" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors" placeholder="e.g., IT Week Hackathon 2026" required>
+                        <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Event
+                            Title</label>
+                        <input type="text" id="evtTitle"
+                            class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors"
+                            placeholder="e.g., IT Week Hackathon 2026" required>
                     </div>
 
-                    <div id="rescheduleFields" class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0">
+                    <div id="rescheduleFields"
+                        class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0">
                         <div class="overflow-hidden">
-                            <div class="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 p-4 rounded-xl flex flex-col gap-4 mt-2">
+                            <div
+                                class="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 p-4 rounded-xl flex flex-col gap-4 mt-2">
                                 <div>
-                            <label class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Original Event (to be updated)</label>
-                            <select id="origEventId" onchange="autoPopulateOrigDate(this)" class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none font-bold">
-                                <option value="">-- Select Event to Reschedule --</option>
-                                <!-- Populated via JS -->
-                            </select>
-                        </div>
-                        <div class="hidden">
-                            <label class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Original Event Date</label>
-                            <input type="date" id="origDate" class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Reason for Rescheduling</label>
-                            <textarea id="reschedReason" rows="2" class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none resize-none" placeholder="e.g., due to the unavailability of the gymnasium..."></textarea>
-                        </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="excuseFields" class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0">
-                        <div class="overflow-hidden">
-                            <div class="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 p-4 rounded-xl flex flex-col gap-4 mt-2">
+                                    <label
+                                        class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Original
+                                        Event (to be updated)</label>
+                                    <select id="origEventId" onchange="autoPopulateOrigDate(this)"
+                                        class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none font-bold">
+                                        <option value="">-- Select Event to Reschedule --</option>
+                                        <!-- Populated via JS -->
+                                    </select>
+                                </div>
+                                <div class="hidden">
+                                    <label
+                                        class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Original
+                                        Event Date</label>
+                                    <input type="date" id="origDate"
+                                        class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none">
+                                </div>
                                 <div>
-                            <label class="block text-[0.7rem] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1.5">Target Participants to Excuse</label>
-                            <input type="text" id="excuseClasses" class="w-full bg-white dark:bg-[#151515] border border-blue-300 dark:border-blue-700 rounded-lg px-4 py-2.5 text-sm outline-none" placeholder="e.g., all students from BSIT 1-4">
-                        </div>
-                        <div>
-                            <label class="block text-[0.7rem] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1.5">Equipment to Request</label>
-                            <textarea id="reqEquipment" rows="2" class="w-full bg-white dark:bg-[#151515] border border-blue-300 dark:border-blue-700 rounded-lg px-4 py-2.5 text-sm outline-none resize-none" placeholder="e.g., sound system, two microphones, flags..."></textarea>
-                        </div>
+                                    <label
+                                        class="block text-[0.7rem] font-bold text-yellow-700 dark:text-yellow-500 uppercase tracking-wider mb-1.5">Reason
+                                        for Rescheduling</label>
+                                    <textarea id="reschedReason" rows="2"
+                                        class="w-full bg-white dark:bg-[#151515] border border-yellow-300 dark:border-yellow-700 rounded-lg px-4 py-2.5 text-sm outline-none resize-none"
+                                        placeholder="e.g., due to the unavailability of the gymnasium..."></textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div id="flagRaisingFields" class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0">
+                    <div id="excuseFields"
+                        class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0">
                         <div class="overflow-hidden">
-                            <div class="bg-pup-gold/10 border border-pup-gold/30 p-4 rounded-xl flex flex-col gap-4 mt-2">
-                                <label class="block text-[0.7rem] font-bold text-pup-gold dark:text-pup-gold uppercase tracking-wider mb-1.5">Event Cover Photo</label>
-                        <div class="relative w-full h-32 bg-gray-50 dark:bg-[#111] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl flex flex-col items-center justify-center overflow-hidden group">
-                            <input type="file" id="flagCoverPhoto" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="previewFlagImage(this)">
-                            <img id="flagPhotoPreview" class="absolute inset-0 w-full h-full object-cover hidden">
-                            <div id="flagPlaceholder" class="flex flex-col items-center gap-2">
-                                <i class="ph-bold ph-image text-3xl text-gray-400"></i>
-                                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Upload Banner</span>
+                            <div
+                                class="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 p-4 rounded-xl flex flex-col gap-4 mt-2">
+                                <div>
+                                    <label
+                                        class="block text-[0.7rem] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1.5">Target
+                                        Participants to Excuse</label>
+                                    <input type="text" id="excuseClasses"
+                                        class="w-full bg-white dark:bg-[#151515] border border-blue-300 dark:border-blue-700 rounded-lg px-4 py-2.5 text-sm outline-none"
+                                        placeholder="e.g., all students from BSIT 1-4">
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-[0.7rem] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1.5">Equipment
+                                        to Request</label>
+                                    <textarea id="reqEquipment" rows="2"
+                                        class="w-full bg-white dark:bg-[#151515] border border-blue-300 dark:border-blue-700 rounded-lg px-4 py-2.5 text-sm outline-none resize-none"
+                                        placeholder="e.g., sound system, two microphones, flags..."></textarea>
+                                </div>
                             </div>
                         </div>
+                    </div>
+
+                    <div id="flagRaisingFields"
+                        class="grid transition-all duration-300 ease-in-out grid-rows-[0fr] opacity-0">
+                        <div class="overflow-hidden">
+                            <div
+                                class="bg-pup-gold/10 border border-pup-gold/30 p-4 rounded-xl flex flex-col gap-4 mt-2">
+                                <label
+                                    class="block text-[0.7rem] font-bold text-pup-gold dark:text-pup-gold uppercase tracking-wider mb-1.5">Event
+                                    Cover Photo</label>
+                                <div
+                                    class="relative w-full h-32 bg-gray-50 dark:bg-[#111] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl flex flex-col items-center justify-center overflow-hidden group">
+                                    <input type="file" id="flagCoverPhoto" accept="image/*"
+                                        class="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        onchange="previewFlagImage(this)">
+                                    <img id="flagPhotoPreview"
+                                        class="absolute inset-0 w-full h-full object-cover hidden">
+                                    <div id="flagPlaceholder" class="flex flex-col items-center gap-2">
+                                        <i class="ph-bold ph-image text-3xl text-gray-400"></i>
+                                        <span
+                                            class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Upload
+                                            Banner</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Target Date</label>
-                            <input type="date" id="evtDate" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors cursor-pointer" required>
+                            <label
+                                class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Target
+                                Date</label>
+                            <input type="date" id="evtDate"
+                                class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors cursor-pointer"
+                                required>
                         </div>
                         <div>
-                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Start Time</label>
-                            <input type="time" id="evtStartTime" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors cursor-pointer" required>
+                            <label
+                                class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Start
+                                Time</label>
+                            <input type="time" id="evtStartTime"
+                                class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors cursor-pointer"
+                                required>
                         </div>
                         <div>
-                            <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">End Time</label>
-                            <input type="time" id="evtEndTime" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors cursor-pointer" required>
+                            <label
+                                class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">End
+                                Time</label>
+                            <input type="time" id="evtEndTime"
+                                class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors cursor-pointer"
+                                required>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Venue</label>
-                        <input type="text" id="evtVenue" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors" placeholder="e.g., PUP Main Campus Gym" required>
+                        <label
+                            class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Venue</label>
+                        <input type="text" id="evtVenue"
+                            class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors"
+                            placeholder="e.g., PUP Main Campus Gym" required>
                     </div>
 
-                    <div id="standardDescDiv" class="grid transition-all duration-300 ease-in-out grid-rows-[1fr] opacity-100">
+                    <div id="standardDescDiv"
+                        class="grid transition-all duration-300 ease-in-out grid-rows-[1fr] opacity-100">
                         <div class="overflow-hidden">
                             <div class="pb-1">
-                                <label class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Description / Objective</label>
-                                <textarea id="evtDesc" rows="3" class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors resize-none" placeholder="Briefly describe the purpose of the event..."></textarea>
+                                <label
+                                    class="block text-[0.7rem] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Description
+                                    / Objective</label>
+                                <textarea id="evtDesc" rows="3"
+                                    class="w-full bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-pup-maroon dark:focus:border-pup-gold outline-none transition-colors resize-none"
+                                    placeholder="Briefly describe the purpose of the event..."></textarea>
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-4 border-t border-gray-100 dark:border-gray-800 pt-5 flex gap-2">
-                        <button type="button" id="btnCancelEdit" onclick="cancelEdit()" class="hidden w-1/3 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 font-bold py-3 px-4 rounded-xl text-sm transition-all hover:bg-gray-300 dark:hover:bg-gray-700">Cancel</button>
-                        <button type="submit" class="flex-grow bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-3.5 px-6 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md">
+                        <button type="button" id="btnCancelEdit" onclick="cancelEdit()"
+                            class="hidden w-1/3 bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300 font-bold py-3 px-4 rounded-xl text-sm transition-all hover:bg-gray-300 dark:hover:bg-gray-700">Cancel</button>
+                        <button type="submit"
+                            class="flex-grow bg-pup-maroon text-white dark:bg-pup-gold dark:text-black font-bold py-3.5 px-6 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-red-950 dark:hover:bg-yellow-500 transition-all shadow-md">
                             <i class="ph-bold ph-file-text text-lg"></i> PREVIEW REQUEST LETTER
                         </button>
                     </div>
@@ -267,82 +387,102 @@
         </div>
 
         <!-- Document Tracking Right Panel -->
-        <div id="trackingOverlayMobile" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[5000] lg:!hidden" onclick="closeMobileTracking()"></div>
-        
-        <div id="trackingContainerMobile" class="hidden fixed inset-0 z-[5010] p-4 items-center justify-center pointer-events-none lg:!flex lg:static lg:p-0 lg:z-auto lg:pointer-events-auto">
-            <div id="trackingIosWrapper" class="ios-pop-wrapper pointer-events-auto w-full max-w-lg lg:max-w-none mx-auto lg:mx-0 lg-no-anim flex flex-col max-h-[90vh] lg:max-h-none h-fit">
-                <div id="trackingScrollWrapper" class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl lg:shadow-xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 font-sans flex flex-col h-full lg:h-fit overflow-hidden overflow-y-auto lg:overflow-visible">
-                    
-                    <button type="button" onclick="closeMobileTracking()" class="lg:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 hover:text-red-500 z-10 transition-colors">
+        <div id="trackingOverlayMobile" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[5000] lg:!hidden"
+            onclick="closeMobileTracking()"></div>
+
+        <div id="trackingContainerMobile"
+            class="hidden fixed inset-0 z-[5010] p-4 items-center justify-center pointer-events-none lg:!flex lg:static lg:p-0 lg:z-auto lg:pointer-events-auto">
+            <div id="trackingIosWrapper"
+                class="ios-pop-wrapper pointer-events-auto w-full max-w-lg lg:max-w-none mx-auto lg:mx-0 lg-no-anim flex flex-col max-h-[90vh] lg:max-h-none h-fit">
+                <div id="trackingScrollWrapper"
+                    class="relative bg-white dark:bg-pup-darkcard rounded-3xl shadow-2xl lg:shadow-xl border border-gray-200 dark:border-gray-800 p-6 sm:p-8 font-sans flex flex-col h-full lg:h-fit overflow-hidden overflow-y-auto lg:overflow-visible">
+
+                    <button type="button" onclick="closeMobileTracking()"
+                        class="lg:hidden absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 hover:text-red-500 z-10 transition-colors">
                         <i class="ph-bold ph-x text-lg"></i>
                     </button>
-                    
-                    <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-3 mb-6 mt-4 lg:mt-0">
+
+                    <div
+                        class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-3 mb-6 mt-4 lg:mt-0">
                         <h3 class="font-sans text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-                            <i class="ph-fill ph-file-search text-pup-maroon dark:text-pup-gold"></i> Proposal Status
+                            <i class="ph-fill text-pup-maroon dark:text-pup-gold"></i> PROPOSAL STATUS
                         </h3>
                     </div>
 
-            <!-- Current Location Box -->
-            <div id="currentLocBox" class="hidden flex items-start gap-3 mb-6 bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                <div class="w-10 h-10 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center shrink-0">
-                    <i class="ph-fill ph-map-pin text-xl text-pup-maroon dark:text-pup-gold animate-bounce"></i>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-[0.65rem] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Current Office Location</span>
-                    <strong id="infoCurrentLoc" class="text-gray-900 dark:text-white text-sm leading-tight">Office Name</strong>
-                </div>
-            </div>
+                    <!-- Current Location Box -->
+                    <div id="currentLocBox"
+                        class="hidden flex items-start gap-3 mb-6 bg-gray-50 dark:bg-[#111] p-4 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                        <div
+                            class="w-10 h-10 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center shrink-0">
+                            <i class="ph-fill ph-map-pin text-xl text-pup-maroon dark:text-pup-gold animate-bounce"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span
+                                class="text-[0.65rem] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Current
+                                Office Location</span>
+                            <strong id="infoCurrentLoc"
+                                class="text-gray-900 dark:text-white text-sm leading-tight">Office Name</strong>
+                        </div>
+                    </div>
 
-            <!-- Selected Document Info -->
-            <div id="docInfo" class="mb-6 hidden">
-                <h4 id="infoEventName" class="font-black text-lg text-gray-900 dark:text-white leading-tight">Select a Document</h4>
-                <div class="flex gap-2 mt-2 flex-wrap">
-                    <span id="infoStatus" class="bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">Status</span>
-                    <span id="infoType" class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">Type</span>
-                </div>
-                
-                <!-- Rejection Alert -->
-                <div id="rejectAlert" class="hidden mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
-                    <p class="text-xs font-bold text-red-800 mb-1 flex items-center gap-1.5"><i class="ph-bold ph-warning-circle"></i> Reason for Rejection:</p>
-                    <p id="rejectReasonText" class="text-xs text-red-600 leading-snug"></p>
-                </div>
-            </div>
+                    <!-- Selected Document Info -->
+                    <div id="docInfo" class="mb-6 hidden">
+                        <h4 id="infoEventName" class="font-black text-lg text-gray-900 dark:text-white leading-tight">
+                            Select a Document</h4>
+                        <div class="flex gap-2 mt-2 flex-wrap">
+                            <span id="infoStatus"
+                                class="bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">Status</span>
+                            <span id="infoType"
+                                class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider">Type</span>
+                        </div>
 
-            <!-- Timeline -->
-            <div class="relative flex-grow mb-8">
-                <!-- Vertical Line -->
-                <div class="absolute left-[11px] top-2 bottom-6 w-0.5 bg-gray-200 dark:bg-gray-800"></div>
+                        <!-- Rejection Alert -->
+                        <div id="rejectAlert" class="hidden mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
+                            <p class="text-xs font-bold text-red-800 mb-1 flex items-center gap-1.5"><i
+                                    class="ph-bold ph-warning-circle"></i> Reason for Rejection:</p>
+                            <p id="rejectReasonText" class="text-xs text-red-600 leading-snug"></p>
+                        </div>
+                    </div>
 
-                <div class="space-y-6 relative z-10" id="timelineContainer">
-                    <!-- Steps injected via JS -->
-                </div>
-            </div>
+                    <!-- Timeline -->
+                    <div class="relative flex-grow mb-8">
+                        <!-- Vertical Line -->
+                        <div class="absolute left-[11px] top-2 bottom-6 w-0.5 bg-gray-200 dark:bg-gray-800"></div>
 
-            <!-- Redirect Button -->
-            <div class="mt-auto border-t border-gray-100 dark:border-gray-800 pt-6">
-                <a href="{% url 'organizer_document_tracking' %}" class="w-full bg-gray-900 hover:bg-black dark:bg-gray-100 dark:hover:bg-white text-white dark:text-gray-900 font-bold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-all shadow-md text-center">
-                    <i class="ph-bold ph-map-trifold text-lg"></i> VIEW FULL TRACKING DETAILS
-                </a>
-            </div>
+                        <div class="space-y-6 relative z-10" id="timelineContainer">
+                            <!-- Steps injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Redirect Button -->
+                    <div class="mt-auto border-t border-gray-100 dark:border-gray-800 pt-6">
+                        <a href="{% url 'organizer_document_tracking' %}"
+                            class="w-full bg-gray-900 hover:bg-black dark:bg-gray-100 dark:hover:bg-white text-white dark:text-gray-900 font-bold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-all shadow-md text-center">
+                            <i class="ph-bold text-lg"></i> View Full Tracking Details ->
+                        </a>
+                    </div>
 
                 </div>
             </div>
         </div>
-        
+
     </div>
 
 </div>
 
 <!-- List of Trackable Documents Modal -->
 <div id="docsListModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-4 lg:p-0 font-sans">
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm lg:hidden" onclick="document.getElementById('docsListModal').classList.add('hidden')"></div>
-    <div class="relative bg-white dark:bg-[#151515] lg:bg-transparent lg:shadow-none lg:border-none rounded-3xl shadow-2xl w-full max-w-sm lg:max-w-none mx-auto p-6 lg:p-0 z-10 border border-gray-200 dark:border-gray-800 lg:static lg:block h-[80vh] lg:h-auto flex flex-col">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm lg:hidden"
+        onclick="document.getElementById('docsListModal').classList.add('hidden')"></div>
+    <div
+        class="relative bg-white dark:bg-[#151515] lg:bg-transparent lg:shadow-none lg:border-none rounded-3xl shadow-2xl w-full max-w-sm lg:max-w-none mx-auto p-6 lg:p-0 z-10 border border-gray-200 dark:border-gray-800 lg:static lg:block h-[80vh] lg:h-auto flex flex-col">
         <div class="flex justify-between items-center mb-4 lg:hidden">
             <h3 class="font-black text-lg text-gray-900 dark:text-white">Your Documents</h3>
-            <button onclick="document.getElementById('docsListModal').classList.add('hidden')" class="text-gray-500"><i class="ph-bold ph-x text-xl"></i></button>
+            <button onclick="document.getElementById('docsListModal').classList.add('hidden')" class="text-gray-500"><i
+                    class="ph-bold ph-x text-xl"></i></button>
         </div>
-        <div id="trackableList" class="flex flex-col gap-3 overflow-y-auto flex-grow" style="-ms-overflow-style: none; scrollbar-width: none;">
+        <div id="trackableList" class="flex flex-col gap-3 overflow-y-auto flex-grow"
+            style="-ms-overflow-style: none; scrollbar-width: none;">
             <!-- List injected via JS -->
         </div>
     </div>
@@ -351,44 +491,56 @@
 <!-- VIEW SUBMITTED PROPOSAL MODAL (DOCUMENT HUB STYLE) -->
 <div id="viewModal" class="hidden fixed inset-0 z-[4000] flex items-center justify-center p-0 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeViewModal()"></div>
-    <div class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
-        
+    <div
+        class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+
         <!-- Header -->
-        <div class="bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
+        <div
+            class="bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
             <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
                 <i class="ph-fill ph-eye text-pup-maroon dark:text-pup-gold text-xl"></i> View Submitted Proposal
             </h3>
-            <button type="button" onclick="closeViewModal()" class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors">
+            <button type="button" onclick="closeViewModal()"
+                class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors">
                 <i class="ph-bold ph-x text-xl"></i>
             </button>
         </div>
 
         <!-- Document Hub Tabs -->
-        <div class="p-4 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4">
-            <div id="view-tab-main" onclick="switchDocTab('main', 'view')" class="cursor-pointer p-4 rounded-2xl border-2 border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10 transition-all flex items-center gap-4 group">
-                <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg">
+        <div
+            class="p-4 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4">
+            <div id="view-tab-main" onclick="switchDocTab('main', 'view')"
+                class="cursor-pointer p-4 rounded-2xl border-2 border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10 transition-all flex items-center gap-4 group">
+                <div
+                    class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg">
                     <i class="ph-fill ph-seal-check"></i>
                 </div>
                 <div>
-                    <h4 id="view-tab-main-label" class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Request Letter</h4>
+                    <h4 id="view-tab-main-label"
+                        class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Request Letter
+                    </h4>
                     <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Main Event Proposal</p>
                 </div>
             </div>
 
-            <div id="view-tab-excuse" onclick="switchDocTab('excuse', 'view')" class="cursor-pointer p-4 rounded-2xl border-2 border-gray-200 dark:border-gray-800 hover:border-pup-maroon/50 transition-all flex items-center gap-4 group">
-                <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg">
+            <div id="view-tab-excuse" onclick="switchDocTab('excuse', 'view')"
+                class="cursor-pointer p-4 rounded-2xl border-2 border-gray-200 dark:border-gray-800 hover:border-pup-maroon/50 transition-all flex items-center gap-4 group">
+                <div
+                    class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg">
                     <i class="ph-fill ph-users-four"></i>
                 </div>
                 <div>
-                    <h4 class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Excuse & Equipment</h4>
+                    <h4 class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Excuse &
+                        Equipment</h4>
                     <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Participants & Logistics</p>
                 </div>
             </div>
         </div>
 
         <!-- Preview Paper -->
-        <div class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed font-serif" style="color: #000 !important; font-family: 'Times New Roman', serif !important;">
-            
+        <div class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed font-serif"
+            style="color: #000 !important; font-family: 'Times New Roman', serif !important;">
+
             <div id="view-content-main" class="document-preview">
                 <!-- Content injected via JS -->
             </div>
@@ -400,8 +552,10 @@
         </div>
 
         <!-- Footer -->
-        <div class="bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex justify-end font-sans">
-            <button type="button" onclick="closeViewModal()" class="px-8 py-2.5 rounded-lg bg-pup-maroon text-white font-bold hover:bg-red-900 transition-colors text-sm shadow-md">
+        <div
+            class="bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex justify-end font-sans">
+            <button type="button" onclick="closeViewModal()"
+                class="px-8 py-2.5 rounded-lg bg-pup-maroon text-white font-bold hover:bg-red-900 transition-colors text-sm shadow-md">
                 Close Viewer
             </button>
         </div>
@@ -411,8 +565,10 @@
 <!-- FLAG RAISING PREVIEW MODAL -->
 <div id="flagPreviewModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/90 backdrop-blur-md" onclick="closeFlagPreviewModal()"></div>
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-100 dark:border-gray-800">
-        <button onclick="closeFlagPreviewModal()" class="absolute top-8 right-8 z-[2010] w-12 h-12 flex items-center justify-center bg-black/50 text-white rounded-full text-xl hover:bg-black/70 transition-colors">
+    <div
+        class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-[3rem] shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-100 dark:border-gray-800">
+        <button onclick="closeFlagPreviewModal()"
+            class="absolute top-8 right-8 z-[2010] w-12 h-12 flex items-center justify-center bg-black/50 text-white rounded-full text-xl hover:bg-black/70 transition-colors">
             <i class="ph-bold ph-x"></i>
         </button>
         <div class="overflow-y-auto hide-scrollbar flex-grow">
@@ -420,44 +576,60 @@
                 <img id="flagModalImg" src="" class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
                 <div class="absolute bottom-6 left-6 sm:left-8 right-6 sm:right-8">
-                    <h2 id="flagModalTitle" class="text-2xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">Title</h2>
+                    <h2 id="flagModalTitle"
+                        class="text-2xl sm:text-4xl font-black text-white leading-tight uppercase tracking-tighter">
+                        Title</h2>
                 </div>
             </div>
             <div class="p-6 sm:p-10">
                 <div class="flex items-center justify-between mb-8 p-6 bg-pup-gold rounded-2xl shadow-xl">
                     <div>
-                        <span class="block text-[10px] font-black text-black/80 uppercase tracking-[0.3em] mb-1">Fast-Track Status</span>
-                        <span class="text-xl font-black text-black tabular-nums tracking-tighter">READY FOR DEPLOYMENT</span>
+                        <span
+                            class="block text-[10px] font-black text-black/80 uppercase tracking-[0.3em] mb-1">Fast-Track
+                            Status</span>
+                        <span class="text-xl font-black text-black tabular-nums tracking-tighter">READY FOR
+                            DEPLOYMENT</span>
                     </div>
-                    <div class="w-16 h-16 bg-black/10 rounded-2xl flex items-center justify-center text-black shadow-inner">
+                    <div
+                        class="w-16 h-16 bg-black/10 rounded-2xl flex items-center justify-center text-black shadow-inner">
                         <i class="ph-fill ph-rocket-launch text-4xl"></i>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-                    <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-800 h-[90px]">
-                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                    <div
+                        class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-800 h-[90px]">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
                             <i class="ph-fill ph-calendar text-xl"></i>
                         </div>
                         <div class="min-w-0 flex-grow text-left">
-                            <span class="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Schedule</span>
-                            <span id="flagModalDateTime" class="font-black text-gray-900 dark:text-white uppercase text-[10px] block break-words line-clamp-2 leading-tight">--</span>
+                            <span
+                                class="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Schedule</span>
+                            <span id="flagModalDateTime"
+                                class="font-black text-gray-900 dark:text-white uppercase text-[10px] block break-words line-clamp-2 leading-tight">--</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-800 h-[90px]">
-                        <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
+                    <div
+                        class="flex items-center gap-4 p-5 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl border border-gray-100 dark:border-gray-800 h-[90px]">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0 border border-red-100 dark:border-red-900/30">
                             <i class="ph-fill ph-map-pin text-xl"></i>
                         </div>
                         <div class="min-w-0 flex-grow text-left">
-                            <span class="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Venue</span>
-                            <span id="flagModalVenue" class="font-black text-gray-900 dark:text-white uppercase text-[10px] block break-words line-clamp-2 leading-tight">--</span>
+                            <span
+                                class="block text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Venue</span>
+                            <span id="flagModalVenue"
+                                class="font-black text-gray-900 dark:text-white uppercase text-[10px] block break-words line-clamp-2 leading-tight">--</span>
                         </div>
                     </div>
                 </div>
                 <div class="pt-8 border-t border-gray-100 dark:border-gray-800 text-center">
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">
-                        <i class="ph-bold ph-info"></i> This event will bypass the 6-step approval flow and will be immediately visible to all students.
+                        <i class="ph-bold ph-info"></i> This event will bypass the 6-step approval flow and will be
+                        immediately visible to all students.
                     </p>
-                    <button type="button" onclick="submitFlagRaising(this)" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-3 active:scale-95">
+                    <button type="button" onclick="submitFlagRaising(this)"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-3 active:scale-95">
                         <i class="ph-bold ph-paper-plane-tilt text-2xl"></i> Deploy to School Events
                     </button>
                 </div>
@@ -468,45 +640,58 @@
 
 <div id="letterModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-6 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm print-hide" onclick="closeLetterModal()"></div>
-    
-    <div class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
-        
+
+    <div
+        class="mobile-fullscreen relative bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[95vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden">
+
         <!-- Header -->
-        <div class="print-hide bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
+        <div
+            class="print-hide bg-gray-100 dark:bg-[#111] p-4 flex justify-between items-center border-b border-gray-300 dark:border-gray-800 shrink-0 font-sans">
             <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
                 <i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold text-xl"></i> Official Document Hub
             </h3>
-            <button type="button" onclick="closeLetterModal()" class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors">
+            <button type="button" onclick="closeLetterModal()"
+                class="fixed-close-btn text-gray-500 hover:text-red-500 transition-colors">
                 <i class="ph-bold ph-x text-xl"></i>
             </button>
         </div>
 
         <!-- Document Hub Tabs (The "Boxes") -->
-        <div class="print-hide p-4 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4">
-            <div id="tab-main" onclick="switchDocTab('main')" class="cursor-pointer p-4 rounded-2xl border-2 border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10 transition-all flex items-center gap-4 group">
-                <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg">
+        <div
+            class="print-hide p-4 bg-gray-50 dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-4">
+            <div id="tab-main" onclick="switchDocTab('main')"
+                class="cursor-pointer p-4 rounded-2xl border-2 border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10 transition-all flex items-center gap-4 group">
+                <div
+                    class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg">
                     <i class="ph-fill ph-seal-check"></i>
                 </div>
                 <div>
-                    <h4 id="tab-main-label" class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Request Letter</h4>
+                    <h4 id="tab-main-label"
+                        class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Request Letter
+                    </h4>
                     <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Main Event Proposal</p>
                 </div>
             </div>
 
-            <div id="tab-excuse" onclick="switchDocTab('excuse')" class="cursor-pointer p-4 rounded-2xl border-2 border-gray-200 dark:border-gray-800 hover:border-pup-maroon/50 transition-all flex items-center gap-4 group">
-                <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg">
+            <div id="tab-excuse" onclick="switchDocTab('excuse')"
+                class="cursor-pointer p-4 rounded-2xl border-2 border-gray-200 dark:border-gray-800 hover:border-pup-maroon/50 transition-all flex items-center gap-4 group">
+                <div
+                    class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg">
                     <i class="ph-fill ph-users-four"></i>
                 </div>
                 <div>
-                    <h4 class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Excuse & Equipment</h4>
+                    <h4 class="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Excuse &
+                        Equipment</h4>
                     <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400">Participants & Logistics</p>
                 </div>
             </div>
         </div>
 
         <!-- Preview Paper -->
-        <div id="printPaper" class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed font-serif" style="color: #000 !important; font-family: 'Times New Roman', serif !important;">
-            
+        <div id="printPaper"
+            class="p-8 sm:p-12 overflow-y-auto flex-grow bg-white text-black text-sm sm:text-base leading-relaxed font-serif"
+            style="color: #000 !important; font-family: 'Times New Roman', serif !important;">
+
             <div id="content-main" class="document-preview">
                 <!-- Content injected via JS -->
             </div>
@@ -518,14 +703,18 @@
         </div>
 
         <!-- Footer -->
-        <div class="print-hide bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
-            <button type="button" onclick="downloadWord(this)" id="btnDownloadDocs" class="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
+        <div
+            class="print-hide bg-gray-100 dark:bg-[#111] p-4 border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
+            <button type="button" onclick="downloadWord(this)" id="btnDownloadDocs"
+                class="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
                 <i class="ph-bold ph-file-zip"></i> Download Word Docs (ZIP)
             </button>
-            <button type="button" onclick="closeLetterModal()" class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">
+            <button type="button" onclick="closeLetterModal()"
+                class="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">
                 Edit Form
             </button>
-            <button type="button" onclick="submitToAdviser(this)" id="btnSubmitToAdviser" class="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
+            <button type="button" onclick="submitToAdviser(this)" id="btnSubmitToAdviser"
+                class="px-6 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold transition-colors text-sm flex items-center gap-2 shadow-md">
                 <i class="ph-bold ph-paper-plane-right"></i> Send to Adviser
             </button>
         </div>
@@ -534,11 +723,14 @@
 
 <div id="successModal" class="hidden fixed inset-0 z-[6000] flex items-center justify-center p-4 font-sans print-hide">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
-    <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm mx-auto text-center p-8 z-10 border border-gray-200 dark:border-gray-800">
+    <div
+        class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-2xl w-full max-w-sm mx-auto text-center p-8 z-10 border border-gray-200 dark:border-gray-800">
         <i class="ph-fill ph-check-circle text-6xl text-green-500 mb-4 inline-block"></i>
         <h2 class="text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2 font-sans">Proposal Sent!</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Your event documents (Main Letter + Excuse/Usage) have been successfully saved and sent.</p>
-        <button onclick="window.location.reload()" class="w-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-bold py-3 rounded-xl transition-colors shadow-md">Done</button>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Your event documents (Main Letter + Excuse/Usage) have
+            been successfully saved and sent.</p>
+        <button onclick="window.location.reload()"
+            class="w-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-bold py-3 rounded-xl transition-colors shadow-md">Done</button>
     </div>
 </div>
 
@@ -559,6 +751,7 @@
         transform: translateY(-10px);
         transition: opacity 0.8s ease, max-height 0.8s ease-in-out, transform 0.8s ease-out, padding 0.8s ease-in-out;
     }
+
     .document-preview-container.active {
         opacity: 1;
         max-height: 3000px;
@@ -567,6 +760,7 @@
         transform: translateY(0);
         overflow-y: auto;
     }
+
     @media (min-width: 640px) {
         .document-preview-container.active {
             padding-top: 3rem;
@@ -577,7 +771,7 @@
 
 <script>
     const CSRF_TOKEN = "{{ csrf_token }}";
-    
+
     const ORG_DETAILS = {
         "ITO": { program: "Bachelor of Science in Information Technology (BSIT) Program", fullname: "Information Technology Organization" },
         "YEO": { program: "Bachelor of Science in Entrepreneurship (BSEntrep) Program", fullname: "Young Entrepreneurship Organization" },
@@ -596,19 +790,19 @@
     let allDocuments = [];
     let approvedEvents = [];
 
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         try {
             const dataNode = document.getElementById('events-data');
-            if(dataNode) {
+            if (dataNode) {
                 const parsed = JSON.parse(dataNode.textContent);
                 allEvents = typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
             }
 
             const docsNode = document.getElementById('documents-data');
-            if(docsNode) {
+            if (docsNode) {
                 const parsedDocs = JSON.parse(docsNode.textContent);
                 allDocuments = typeof parsedDocs === 'string' ? JSON.parse(parsedDocs) : parsedDocs;
-                
+
                 // Show latest document in the panel
                 if (allDocuments.length > 0) {
                     showTrackingDetails(allDocuments[0].id);
@@ -616,10 +810,10 @@
             }
 
             const apprNode = document.getElementById('approved-events-data');
-            if(apprNode) {
+            if (apprNode) {
                 const parsedAppr = JSON.parse(apprNode.textContent);
                 approvedEvents = typeof parsedAppr === 'string' ? JSON.parse(parsedAppr) : parsedAppr;
-                
+
                 // Populate Dropdown
                 const dropdown = document.getElementById('origEventId');
                 if (dropdown) {
@@ -631,15 +825,15 @@
                     });
                 }
             }
-        } catch(e) { console.error("Error loading data", e); }
-        
-        toggleFormFields(); 
+        } catch (e) { console.error("Error loading data", e); }
+
+        toggleFormFields();
 
         // Setup custom select dropdown
         const selectBtn = document.getElementById('customSelectBtn');
         const menuWrapper = document.getElementById('customSelectMenuWrapper');
-        
-        if(selectBtn && menuWrapper) {
+
+        if (selectBtn && menuWrapper) {
             selectBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const isOpen = !menuWrapper.classList.contains('grid-rows-[0fr]');
@@ -650,7 +844,7 @@
                 }
             });
         }
-        
+
         document.addEventListener('click', (e) => {
             if (menuWrapper && !menuWrapper.contains(e.target) && !selectBtn.contains(e.target)) {
                 closeCustomSelect();
@@ -661,20 +855,20 @@
     function openCustomSelect() {
         const menuWrapper = document.getElementById('customSelectMenuWrapper');
         const selectIcon = document.getElementById('customSelectIcon');
-        if(menuWrapper) {
+        if (menuWrapper) {
             menuWrapper.classList.remove('grid-rows-[0fr]', 'opacity-0');
             menuWrapper.classList.add('grid-rows-[1fr]', 'opacity-100');
-            if(selectIcon) selectIcon.classList.add('rotate-180');
+            if (selectIcon) selectIcon.classList.add('rotate-180');
         }
     }
 
     function closeCustomSelect() {
         const menuWrapper = document.getElementById('customSelectMenuWrapper');
         const selectIcon = document.getElementById('customSelectIcon');
-        if(menuWrapper) {
+        if (menuWrapper) {
             menuWrapper.classList.remove('grid-rows-[1fr]', 'opacity-100');
             menuWrapper.classList.add('grid-rows-[0fr]', 'opacity-0');
-            if(selectIcon) selectIcon.classList.remove('rotate-180');
+            if (selectIcon) selectIcon.classList.remove('rotate-180');
         }
     }
 
@@ -715,9 +909,9 @@
         overlay.classList.remove('hidden');
         container.classList.remove('hidden');
         container.classList.add('flex');
-        
+
         iosWrapper.classList.remove('ios-pop-wrapper-close');
-        
+
         document.body.style.overflow = 'hidden';
     }
 
@@ -740,7 +934,7 @@
     let currentDocCoords = null;
     function showTrackingDetails(docId) {
         const doc = allDocuments.find(d => d.id === docId);
-        if(!doc) return;
+        if (!doc) return;
 
         currentDocCoords = doc.coords;
 
@@ -774,8 +968,8 @@
         const evtTitleInput = document.getElementById('evtTitle');
         const orgAcr = document.getElementById('reqOrg').value;
 
-        const show = (el) => { if(el) { el.classList.remove('grid-rows-[0fr]', 'opacity-0'); el.classList.add('grid-rows-[1fr]', 'opacity-100'); } };
-        const hide = (el) => { if(el) { el.classList.remove('grid-rows-[1fr]', 'opacity-100'); el.classList.add('grid-rows-[0fr]', 'opacity-0'); } };
+        const show = (el) => { if (el) { el.classList.remove('grid-rows-[0fr]', 'opacity-0'); el.classList.add('grid-rows-[1fr]', 'opacity-100'); } };
+        const hide = (el) => { if (el) { el.classList.remove('grid-rows-[1fr]', 'opacity-100'); el.classList.add('grid-rows-[0fr]', 'opacity-0'); } };
 
         if (type === 'flag_raising') {
             show(flagFields);
@@ -821,7 +1015,7 @@
     function previewFlagImage(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 document.getElementById('flagPhotoPreview').src = e.target.result;
                 document.getElementById('flagPhotoPreview').classList.remove('hidden');
                 document.getElementById('flagPlaceholder').classList.add('hidden');
@@ -848,7 +1042,7 @@
         formData.append('end_time', document.getElementById('evtEndTime').value);
         formData.append('venue', document.getElementById('evtVenue').value);
         formData.append('is_flag_raising', 'true');
-        
+
         const photoInput = document.getElementById('flagCoverPhoto');
         if (photoInput.files.length > 0) {
             formData.append('cover_photo', photoInput.files[0]);
@@ -907,7 +1101,7 @@
     }
 
     function formatTime(timeInput) {
-        if(!timeInput) return "";
+        if (!timeInput) return "";
         let [hours, minutes] = timeInput.split(':');
         hours = parseInt(hours, 10);
         const ampm = hours >= 12 ? 'PM' : 'AM';
@@ -922,8 +1116,8 @@
 
     function renderEvents(eventsToRender) {
         const container = document.getElementById('eventsList');
-        if(!container) return;
-        if(eventsToRender.length === 0) {
+        if (!container) return;
+        if (eventsToRender.length === 0) {
             container.innerHTML = `<div class="text-center py-16 opacity-50"><p>No events found</p></div>`;
             return;
         }
@@ -960,7 +1154,7 @@
             document.getElementById('flagModalTitle').innerText = title;
             document.getElementById('flagModalVenue').innerText = venue;
             document.getElementById('flagModalDateTime').innerText = `${dateRaw} @ ${sTime} - ${eTime}`;
-            
+
             const photoPreview = document.getElementById('flagPhotoPreview').src;
             document.getElementById('flagModalImg').src = photoPreview || DEFAULT_IMG;
 
@@ -972,9 +1166,9 @@
         const orgAcr = document.getElementById('reqOrg').value;
         const fullOrgText = getOrgFullName(orgAcr);
         const desc = document.getElementById('evtDesc').value;
-        
+
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        const today = new Date().toLocaleDateString('en-US', options); 
+        const today = new Date().toLocaleDateString('en-US', options);
         const formattedDate = new Date(dateRaw).toLocaleDateString('en-US', options);
 
         const commonHeader = `
@@ -997,12 +1191,12 @@
         `;
 
         let mainBody = "";
-        if(type === 'reschedule_event') {
+        if (type === 'reschedule_event') {
             const origDateRaw = document.getElementById('origDate').value;
             const formattedOrigDate = origDateRaw ? new Date(origDateRaw).toLocaleDateString('en-US', options) : "(Original Date)";
             const reason = document.getElementById('reschedReason').value || "unforeseen circumstances";
             document.getElementById('tab-main-label').innerText = "Reschedule Letter";
-            
+
             mainBody = `
                 <p class="mb-6">Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong></p>
                 <p class="mb-4 text-justify indent-8">We hope this letter finds you well. ${fullOrgText} respectfully requests a rescheduling of our upcoming event entitled <strong>"${title}"</strong>. The event was originally set for ${formattedOrigDate}.</p>
@@ -1037,7 +1231,7 @@
         mainTab.classList.add('border-gray-200', 'dark:border-gray-800');
         excuseTab.classList.remove('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
         excuseTab.classList.add('border-gray-200', 'dark:border-gray-800');
-        
+
         const paperContainer = document.getElementById('printPaper');
         paperContainer.classList.add('document-preview-container');
         paperContainer.classList.remove('active');
@@ -1046,7 +1240,7 @@
         document.getElementById('content-main').classList.add('hidden');
         document.getElementById('content-excuse').classList.add('hidden');
 
-        if(type === 'reschedule_event') {
+        if (type === 'reschedule_event') {
             excuseTab.classList.add('hidden'); // Hide Excuse tab for reschedules
             mainTab.classList.add('col-span-2'); // Make main tab span full width
         } else {
@@ -1056,7 +1250,7 @@
 
         document.getElementById('letterModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        
+
         // Auto-open the main letter tab
         switchDocTab('main', 'preview');
     }
@@ -1064,10 +1258,10 @@
     function closeLetterModal() { document.getElementById('letterModal').classList.add('hidden'); document.body.style.overflow = ''; }
 
     async function downloadWord(btn) {
-        if(!btn) btn = document.getElementById('btnDownloadDocs');
+        if (!btn) btn = document.getElementById('btnDownloadDocs');
         const originalText = btn.innerHTML;
         const type = document.getElementById('letterType').value;
-        
+
         if (type === 'reschedule_event') {
             btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
         } else {
@@ -1079,7 +1273,7 @@
         const fullOrgText = getOrgFullName(orgAcr);
         const sTime = formatTime(document.getElementById('evtStartTime').value);
         const eTime = formatTime(document.getElementById('evtEndTime').value);
-        
+
         const payload = {
             docType: type,
             fullOrgName: fullOrgText,
@@ -1116,9 +1310,9 @@
                     const a = document.createElement('a');
                     a.href = url;
                     if (type === 'reschedule_event') {
-                        a.download = `Reschedule_Letter_${payload.sigOrg}.docx`; 
+                        a.download = `Reschedule_Letter_${payload.sigOrg}.docx`;
                     } else {
-                        a.download = `Event_Documents_${payload.sigOrg}.zip`; 
+                        a.download = `Event_Documents_${payload.sigOrg}.zip`;
                     }
                     document.body.appendChild(a);
                     a.click();
@@ -1130,7 +1324,7 @@
     }
 
     async function submitToAdviser(btn) {
-        if(!btn || !btn.innerHTML) btn = document.getElementById('btnSubmitToAdviser');
+        if (!btn || !btn.innerHTML) btn = document.getElementById('btnSubmitToAdviser');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Sending...';
         btn.disabled = true;
@@ -1139,9 +1333,9 @@
         const descBase = document.getElementById('evtDesc').value || "No description provided.";
         const target = document.getElementById('excuseClasses').value || "None";
         const equip = document.getElementById('reqEquipment').value || "None";
-        
+
         let finalDesc = "";
-        if(type === 'reschedule_event') {
+        if (type === 'reschedule_event') {
             const reason = document.getElementById('reschedReason').value || "unforeseen circumstances";
             const orig = document.getElementById('origDate').value || "Unknown Date";
             const origId = document.getElementById('origEventId').value || "None";
@@ -1151,7 +1345,7 @@
         }
 
         let formData = new FormData();
-        formData.append('csrfmiddlewaretoken', CSRF_TOKEN); 
+        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
         formData.append('requester_name', document.getElementById('reqName').value);
         formData.append('adviser_name', document.getElementById('advName').value);
         formData.append('title', document.getElementById('evtTitle').value);
@@ -1166,7 +1360,7 @@
             const contentType = response.headers.get("content-type");
             if (contentType && contentType.indexOf("application/json") !== -1) {
                 const data = await response.json();
-                if(data.status === 'success') {
+                if (data.status === 'success') {
                     closeLetterModal();
                     document.getElementById('successModal').classList.remove('hidden');
                 } else { alert("Error: " + data.message); btn.innerHTML = originalText; btn.disabled = false; }
@@ -1175,20 +1369,20 @@
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
-        } catch (error) { 
-            alert("Connection error."); 
-            btn.innerHTML = originalText; 
-            btn.disabled = false; 
+        } catch (error) {
+            alert("Connection error.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     }
 
     function openViewModal(id) {
         const ev = allEvents.find(e => e.id === id);
-        if(!ev) return;
-        
+        if (!ev) return;
+
         const rawDesc = ev.description || "";
         const type = rawDesc.includes("[RESCHEDULE]") ? 'reschedule_event' : 'new_event';
-        
+
         const data = {};
         rawDesc.split(' | ').forEach(p => {
             const [k, ...v] = p.split(': ');
@@ -1236,7 +1430,7 @@
         mainTab.classList.add('border-gray-200', 'dark:border-gray-800');
         excuseTab.classList.remove('border-pup-maroon', 'bg-maroon-50', 'dark:bg-maroon-900/10');
         excuseTab.classList.add('border-gray-200', 'dark:border-gray-800');
-        
+
         const paperContainer = document.getElementById('view-content-main').parentElement;
         paperContainer.classList.add('document-preview-container');
         paperContainer.classList.remove('active');
@@ -1245,7 +1439,7 @@
         document.getElementById('view-content-main').classList.add('hidden');
         document.getElementById('view-content-excuse').classList.add('hidden');
 
-        if(type === 'reschedule_event') {
+        if (type === 'reschedule_event') {
             excuseTab.classList.add('hidden');
             mainTab.classList.add('col-span-2');
         } else {
@@ -1261,7 +1455,7 @@
     }
 
     function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); document.body.style.overflow = ''; }
-    
+
     function cancelEdit() { window.location.reload(); }
 </script>
 {% endblock extra_js %}

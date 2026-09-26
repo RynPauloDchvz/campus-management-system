@@ -86,6 +86,27 @@
             background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
             background-size: 1000px 100%;
         }
+
+        /* iOS Modal Animations */
+        @keyframes iosPop {
+            0% { transform: scale(0.7); opacity: 0; }
+            70% { transform: scale(1.02); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes iosPopClose {
+            0% { transform: scale(1); opacity: 1; }
+            30% { transform: scale(1.02); opacity: 1; }
+            100% { transform: scale(0.7); opacity: 0; }
+        }
+        .ios-pop-wrapper, .ios-pop-wrapper-close {
+            transform-origin: var(--click-x, 50%) var(--click-y, 50%);
+        }
+        .ios-pop-wrapper {
+            animation: iosPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .ios-pop-wrapper-close {
+            animation: iosPopClose 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
     </style>
     {% block extra_head %}{% endblock extra_head %}
 
@@ -287,12 +308,62 @@
 
             <div class="flex items-center gap-3 sm:gap-4">
                 <div class="relative flex items-center justify-center">
-                    <button @click="openNotifications" class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-pup-darkcard shadow-sm flex items-center justify-center transition-transform active:scale-90 hover:bg-gray-50 dark:hover:bg-gray-800" :class="{ 'notify-shake': unreadNotifCount > 0 }">
+                    <button @click="toggleNotifDropdown" class="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-pup-darkcard shadow-sm flex items-center justify-center transition-transform active:scale-90 hover:bg-gray-50 dark:hover:bg-gray-800" :class="{ 'notify-shake': unreadNotifCount > 0 }">
                         <i class="ph-fill ph-bell text-xl text-pup-maroon dark:text-pup-gold"></i>
                     </button>
-                    <span v-if="unreadNotifCount > 0" class="absolute -top-1 -right-1 w-4 h-4 bg-red-600 border-2 border-white dark:border-pup-darkcard rounded-full flex items-center justify-center shadow-sm text-[9px] font-black text-white leading-none">
+                    <span v-if="unreadNotifCount > 0" class="absolute -top-1 -right-1 w-4 h-4 bg-red-600 border-2 border-white dark:border-pup-darkcard rounded-full flex items-center justify-center shadow-sm text-[9px] font-black text-white leading-none z-[5010]">
                         [[ unreadNotifCount > 9 ? '9+' : unreadNotifCount ]]
                     </span>
+
+                    <!-- Notification Dropdown -->
+                    <transition enter-active-class="transition ease-out duration-200 origin-top-right" enter-from-class="opacity-0 scale-75" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-150 origin-top-right" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-75">
+                        <div v-if="showNotifDropdown" class="absolute right-0 sm:-right-4 top-full mt-3 w-[300px] sm:w-[350px] bg-white dark:bg-[#151515] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 z-[5000] overflow-hidden flex flex-col max-h-[70vh]">
+                            <!-- Header -->
+                            <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-[#111]">
+                                <h3 class="font-black text-gray-900 dark:text-white uppercase tracking-wide text-sm">Notifications</h3>
+                                <button @click="markAllAsRead" class="text-[10px] font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors uppercase flex items-center gap-1">
+                                    <i class="ph-bold ph-checks"></i> Mark as Read
+                                </button>
+                            </div>
+                            
+                            <!-- List -->
+                            <div class="overflow-y-auto flex-grow flex flex-col no-scrollbar">
+                                <template v-if="allNotifs.length > 0">
+                                    <div v-for="notif in allNotifs.slice(0, 5)" :key="notif.id" 
+                                         @click="handleNotifClick(notif, $event)"
+                                         class="px-4 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between"
+                                         :class="[isRead(notif.id) ? 'opacity-60 bg-transparent' : 'bg-transparent']">
+                                        <div class="flex items-center gap-3 overflow-hidden">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" :class="getIconBg(notif.type)">
+                                                <i class="text-lg" :class="getIconClass(notif.type)"></i>
+                                            </div>
+                                            <div class="min-w-0 flex flex-col items-start text-left">
+                                                <h4 class="font-bold text-gray-900 dark:text-white text-sm truncate w-full">[[ notif.title ]]</h4>
+                                                <p class="text-[10px] font-bold uppercase tracking-wide mt-0.5 truncate text-gray-500 w-full">
+                                                    [[ notif.message ]]
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <i class="ph-bold ph-caret-right text-gray-400 shrink-0 ml-2"></i>
+                                    </div>
+                                </template>
+                                <div v-else class="p-8 text-center text-gray-500 dark:text-gray-400">
+                                    <i class="ph-fill ph-bell-slash text-3xl mb-2"></i>
+                                    <p class="text-xs font-bold">No notifications yet.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Footer Button -->
+                            <div class="p-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#111]">
+                                <a href="{% url 'student_messages' %}" @click="showNotifDropdown = false" class="w-full py-2.5 rounded-xl bg-pup-maroon dark:bg-pup-gold text-white dark:text-black font-black text-xs uppercase tracking-widest flex items-center justify-center hover:opacity-90 transition-opacity shadow-sm">
+                                    View All Messages
+                                </a>
+                            </div>
+                        </div>
+                    </transition>
+                    
+                    <!-- Fullscreen Overlay to close dropdown -->
+                    <div v-if="showNotifDropdown" @click="showNotifDropdown = false" class="fixed inset-0 z-[4999]"></div>
                 </div>
 
                 <div class="relative">
@@ -563,7 +634,7 @@
         <div v-cloak v-if="isMsgModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center p-4">
             <div class="fixed inset-0 bg-black/70 backdrop-blur-sm" @click="closeModal"></div>
             
-            <div class="relative bg-white dark:bg-[#1a1a1a] rounded-3xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] border border-gray-100 dark:border-gray-800 z-10 animate-in fade-in zoom-in duration-200 overflow-hidden">
+            <div class="ios-pop-wrapper relative bg-white dark:bg-[#1a1a1a] rounded-3xl sm:rounded-[2.5rem] shadow-2xl w-full max-w-xl mx-auto flex flex-col max-h-[90vh] border border-gray-100 dark:border-gray-800 z-10 overflow-hidden">
                 
                 <button @click="closeModal" class="absolute top-4 right-4 sm:top-6 sm:right-6 z-[5010] w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-full text-base sm:text-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                     <i class="ph-bold ph-x"></i>
@@ -636,6 +707,7 @@
                     unreadNotifCount: 0,
                     popupBanners: [],
                     shownBannerIds: JSON.parse(sessionStorage.getItem('shown_banners') || '[]'),
+                    showNotifDropdown: false,
 
                     ...window.VUE_APP_DATA
                 }
@@ -728,8 +800,21 @@
                 closeBanner(id) {
                     this.popupBanners = this.popupBanners.filter(b => b.id !== id);
                 },
-                openNotifications() {
-                    window.location.href = "{% url 'student_messages' %}";
+                toggleNotifDropdown() {
+                    this.showNotifDropdown = !this.showNotifDropdown;
+                },
+                handleNotifClick(notif, event) {
+                    this.showNotifDropdown = false;
+                    this.openMessageModal(notif);
+                    if (event) {
+                        this.$nextTick(() => {
+                            const wrapper = document.querySelector('.ios-pop-wrapper');
+                            if (wrapper) {
+                                wrapper.style.setProperty('--click-x', event.clientX + 'px');
+                                wrapper.style.setProperty('--click-y', event.clientY + 'px');
+                            }
+                        });
+                    }
                 },
                 handleBannerClick(banner) {
                     let searchTitle = banner.title;
@@ -855,6 +940,7 @@
                     if (!this.readNotifs.includes(notif.id)) {
                         this.readNotifs.push(notif.id);
                         localStorage.setItem('student_read_notifs', JSON.stringify(this.readNotifs));
+                        this.updateNotificationState();
                     }
                     this.currentMsg = notif;
                     this.isMsgModalOpen = true;
@@ -864,6 +950,7 @@
                     const allIds = this.allNotifs.map(n => n.id);
                     this.readNotifs = [...new Set([...this.readNotifs, ...allIds])];
                     localStorage.setItem('student_read_notifs', JSON.stringify(this.readNotifs));
+                    this.unreadNotifCount = 0;
                 },
                 getStaticImageUrl(filename) {
                     if (!filename) return "{% static 'images/PUPLogo.png' %}";
@@ -873,15 +960,34 @@
                 handleImageError(event) {
                     event.target.src = "{% static 'images/PUPLogo.png' %}";
                 },
-                openEventModal(data) {
+                openEventModal(data, event) {
                     this.selectedEvent = data;
                     this.isEventModalOpen = true;
                     document.body.style.overflow = 'hidden'; 
+                    if (event) {
+                        this.$nextTick(() => {
+                            const wrapper = document.querySelector('.ios-pop-wrapper');
+                            if (wrapper) {
+                                wrapper.style.setProperty('--click-x', event.clientX + 'px');
+                                wrapper.style.setProperty('--click-y', event.clientY + 'px');
+                            }
+                        });
+                    }
                 },
                 closeModal() {
-                    this.isEventModalOpen = false;
-                    this.isMsgModalOpen = false;
-                    document.body.style.overflow = ''; 
+                    const wrappers = document.querySelectorAll('.ios-pop-wrapper');
+                    if (wrappers.length > 0) {
+                        wrappers.forEach(w => w.classList.add('ios-pop-wrapper-close'));
+                        setTimeout(() => {
+                            this.isEventModalOpen = false;
+                            this.isMsgModalOpen = false;
+                            document.body.style.overflow = '';
+                        }, 350);
+                    } else {
+                        this.isEventModalOpen = false;
+                        this.isMsgModalOpen = false;
+                        document.body.style.overflow = ''; 
+                    }
                 },
                 viewEventDetails() {
                     this.closeModal();
