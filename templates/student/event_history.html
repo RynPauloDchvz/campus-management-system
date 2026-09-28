@@ -13,15 +13,24 @@
 <div v-pre>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full font-sans">
 
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
-        <div>
-            <h1 class="font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Event History</h1>
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
+        <div class="text-center md:text-left flex flex-col items-center md:items-start w-full md:w-auto">
+            <h1 class="font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide mb-2" id="pageTitle">Event History</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-xs sm:text-sm font-medium leading-relaxed max-w-xl text-center md:text-left" id="pageDesc">
+                Review your official institutional event records and history.
+            </p>
         </div>
 
         <div class="flex flex-row items-start gap-3 w-full md:w-auto z-50">
+            <!-- Dynamic Back Button (Hidden by default) -->
+            <a href="#" id="dynamicBackButton" class="hidden shrink-0 w-12 h-12 sm:w-auto sm:h-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl sm:py-3.5 sm:px-5 items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-colors shadow-sm">
+                <i class="ph-bold ph-arrow-left text-xl sm:text-lg"></i>
+                <span class="hidden sm:inline" id="dynamicBackText">Back</span>
+            </a>
+
             <div class="relative flex-grow sm:flex-none sm:w-80 group">
                 <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-pup-maroon dark:group-focus-within:text-pup-gold transition-colors text-lg"></i>
-                <input type="text" id="historySearch" placeholder="Search..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold transition-all shadow-sm text-gray-900 dark:text-white font-bold uppercase tracking-widest">
+                <input type="text" id="historySearch" placeholder="Search activities (e.g., General Assembly)..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold transition-all shadow-sm text-gray-900 dark:text-white">
             </div>
 
             <div class="relative w-[140px] sm:w-56 group flex-shrink-0" id="customFilterWrapper">
@@ -185,7 +194,38 @@ function initHistoryLogic() {
     const modal = document.getElementById('historyModal');
     const modalContent = document.getElementById('modalContentBlock');
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    
+    const backBtn = document.getElementById('dynamicBackButton');
+    const backText = document.getElementById('dynamicBackText');
+    const filterWrapper = document.getElementById('customFilterWrapper');
+    const pageDesc = document.getElementById('pageDesc');
+    
     window.currentFilterVal = 'all';
+
+    if (tabParam === 'attendance') {
+        window.currentFilterVal = 'Attendance';
+        document.getElementById('selectedFilterText').innerText = 'Attendance';
+        backBtn.href = "{% url 'student_school_events' %}";
+        backText.innerText = "Back to Participation";
+        backBtn.classList.remove('hidden');
+        backBtn.classList.add('flex');
+        pageTitle.innerText = "Attendance History";
+        if (pageDesc) pageDesc.innerText = "Review your verified participation and biometric attendance records.";
+        if (filterWrapper) filterWrapper.classList.add('hidden');
+    } else if (tabParam === 'evaluation') {
+        window.currentFilterVal = 'Evaluation';
+        document.getElementById('selectedFilterText').innerText = 'Evaluations';
+        backBtn.href = "{% url 'student_evaluation' %}";
+        backText.innerText = "Back to Evaluation";
+        backBtn.classList.remove('hidden');
+        backBtn.classList.add('flex');
+        pageTitle.innerText = "Evaluation History";
+        if (pageDesc) pageDesc.innerText = "Review your submitted feedback and synchronization scores.";
+        if (filterWrapper) filterWrapper.classList.add('hidden');
+    }
+
     window.toggleFilterDrawer = function() {
         const drawer = document.getElementById('filterOptions');
         const caret = document.getElementById('filterCaret');
@@ -527,7 +567,7 @@ function initHistoryLogic() {
         if(btn) btn.addEventListener('click', window.closeHistoryModal);
     });
 
-    renderHistory(historyData);
+    applyFilters();
 }
 
 window.addEventListener('load', () => {

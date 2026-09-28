@@ -49,9 +49,9 @@
         <div class="flex flex-row items-center gap-3 w-full md:w-auto shrink-0">
             <div class="relative flex-grow sm:w-80">
                 <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                <input type="text" id="eventSearch" placeholder="Search events..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm font-bold uppercase tracking-tight">
+                <input type="text" id="eventSearch" placeholder="Search events (e.g., General Assembly)..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold shadow-sm transition-all text-sm">
             </div>
-            <a href="{% url 'student_event_history' %}" class="shrink-0 w-12 h-12 sm:w-auto sm:h-auto bg-pup-maroon dark:bg-pup-gold hover:opacity-90 text-white dark:text-black rounded-xl sm:py-3.5 sm:px-5 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-colors shadow-sm">
+            <a href="{% url 'student_event_history' %}?tab=attendance" class="shrink-0 w-12 h-12 sm:w-auto sm:h-auto bg-pup-maroon dark:bg-pup-gold hover:opacity-90 text-white dark:text-black rounded-xl sm:py-3.5 sm:px-5 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-colors shadow-sm">
                 <i class="ph-bold ph-clock-counter-clockwise text-xl sm:text-lg"></i>
                 <span class="hidden sm:inline">Attendance History</span>
             </a>
@@ -65,7 +65,7 @@
     <div id="noResults" style="display: none;" class="text-center py-20 bg-gray-50 dark:bg-pup-darkcard rounded-[2rem] border border-dashed border-gray-200 dark:border-gray-800">
         <i class="ph-bold ph-calendar-blank text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
         <h3 class="font-black text-xl text-gray-600 dark:text-gray-400 uppercase tracking-tighter">No Events Found</h3>
-        <p class="text-gray-400 text-xs mt-1 uppercase tracking-widest font-bold">Check back later for newly approved activities.</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Check back later for newly approved activities.</p>
     </div>
 
 </div>
