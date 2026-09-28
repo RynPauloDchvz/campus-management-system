@@ -617,14 +617,14 @@
                     <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200 dark:border-red-900/40">
                         <i class="ph-fill ph-sign-out text-3xl text-[#800000] dark:text-red-500"></i>
                     </div>
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">Sign Out?</h3>
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-wide">Log Out?</h3>
                     <p class="text-gray-500 dark:text-gray-400 text-sm font-medium leading-relaxed px-2">Are you sure you want to securely log out of your Student account?</p>
                 </div>
                 <div class="flex gap-3 w-full">
                     <button type="button" @click="closeLogoutModal" class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold transition-colors uppercase text-[10px] tracking-widest border border-gray-200 dark:border-gray-700">Cancel</button>
                     <form action="{% url 'portal_logout' %}" method="post" class="flex-1 m-0">
                         {% csrf_token %}
-                        <button type="submit" class="w-full py-3 px-4 bg-[#800000] hover:bg-red-900 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 text-center flex items-center justify-center uppercase text-[10px] tracking-widest border-none cursor-pointer">Yes, Sign Out</button>
+                        <button type="submit" class="w-full py-3 px-4 bg-[#800000] hover:bg-red-900 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 text-center flex items-center justify-center uppercase text-[10px] tracking-widest border-none cursor-pointer">Yes, Log Out</button>
                     </form>
                 </div>
             </div>

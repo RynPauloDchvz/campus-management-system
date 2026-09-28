@@ -276,15 +276,15 @@
 
             filtered.forEach(e => {
                 const card = document.createElement('div');
-                card.className = "js-event-card bg-white dark:bg-pup-darkcard rounded-2xl sm:rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700 h-full";
+                card.className = "js-event-card bg-white dark:bg-pup-darkcard rounded-2xl sm:rounded-[2rem] overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:shadow-2xl transition-all duration-700 h-full relative";
                 card.innerHTML = `
                     <div class="w-24 h-24 sm:h-40 sm:w-full shrink-0 relative bg-gray-100 dark:bg-gray-800 flex items-center justify-center border-r sm:border-r-0 sm:border-b border-gray-100 dark:border-gray-800 overflow-hidden">
                         <img src="${e.image}" class="event-card-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" onerror="this.src=DEFAULT_IMG; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-4 sm:p-6');">
-                        <div class="absolute top-2 right-2 sm:top-3 sm:right-3">
-                            <span class="text-white text-[6px] sm:text-[8px] px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small flex items-center gap-1 sm:gap-1.5" data-event-id="${e.id}">
-                                <i class="ph-bold ph-clock"></i> --:--:--
-                            </span>
-                        </div>
+                    </div>
+                    <div class="absolute top-2 left-2 z-10">
+                        <span class="text-white text-[7px] px-2 py-1 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-upcoming flex items-center gap-0.5 max-w-full whitespace-nowrap overflow-hidden" data-event-id="${e.id}">
+                            <i class="ph-bold ph-clock shrink-0"></i><span class="truncate">--:--:--</span>
+                        </span>
                     </div>
                     <div class="p-3 sm:p-4 flex flex-col w-full min-w-0 flex-grow">
                         <div class="text-[7px] sm:text-[8px] font-black text-pup-maroon dark:text-pup-gold mb-0.5 sm:mb-1 truncate uppercase tracking-[0.2em]">${e.date_display}</div>
@@ -316,8 +316,8 @@
                 const diffExpiry = expiry - now;
 
                 if (e.has_timed_out) {
-                    el.innerHTML = `<i class="ph-fill ph-check-circle"></i> COMPLETED`;
-                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-completed whitespace-nowrap";
+                    el.innerHTML = `<i class="ph-fill ph-check-circle shrink-0"></i><span class="truncate">COMPLETED</span>`;
+                    el.className = "text-white text-[7px] sm:text-[9px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-completed whitespace-nowrap flex items-center gap-0.5 sm:gap-1 max-w-full overflow-hidden";
                 } else if (e.already_attended) {
                     const endISO = e.end_time_iso ? `${e.date}T${e.end_time_iso}` : null;
                     const endDt = endISO ? new Date(endISO) : null;
@@ -326,25 +326,25 @@
 
                     if (timeoutStart && now < timeoutStart) {
                         const diffOutStart = timeoutStart - now;
-                        el.innerHTML = `<i class="ph-bold ph-hourglass"></i> WAITING OUT • ${formatTimeDiff(diffOutStart)}`;
-                        el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-upcoming whitespace-nowrap";
+                        el.innerHTML = `<i class="ph-bold ph-hourglass shrink-0"></i><span class="truncate">WAITING • ${formatTimeDiff(diffOutStart)}</span>`;
+                        el.className = "text-white text-[7px] sm:text-[9px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-upcoming whitespace-nowrap flex items-center gap-0.5 sm:gap-1 max-w-full overflow-hidden";
                     } else if (timeoutExpiry && now < timeoutExpiry) {
                         const diffOutExpiry = timeoutExpiry - now;
-                        el.innerHTML = `<i class="ph-fill ph-broadcast animate-pulse"></i> TIME OUT • ${formatTimeDiff(diffOutExpiry)}`;
-                        el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ongoing animate-pulse whitespace-nowrap";
+                        el.innerHTML = `<i class="ph-fill ph-broadcast animate-pulse shrink-0"></i><span class="truncate">TIME OUT • ${formatTimeDiff(diffOutExpiry)}</span>`;
+                        el.className = "text-white text-[7px] sm:text-[9px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ongoing animate-pulse whitespace-nowrap flex items-center gap-0.5 sm:gap-1 max-w-full overflow-hidden";
                     } else {
-                        el.innerHTML = `<i class="ph-bold ph-lock"></i> OUT EXPIRED`;
-                        el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ended whitespace-nowrap";
+                        el.innerHTML = `<i class="ph-bold ph-lock shrink-0"></i><span class="truncate">OUT EXPIRED</span>`;
+                        el.className = "text-white text-[7px] sm:text-[9px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ended whitespace-nowrap flex items-center gap-0.5 sm:gap-1 max-w-full overflow-hidden";
                     }
                 } else if (diffStart > 0) {
-                    el.innerHTML = `<i class="ph-bold ph-hourglass"></i> ${formatTimeDiff(diffStart)}`;
-                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-upcoming whitespace-nowrap";
+                    el.innerHTML = `<i class="ph-bold ph-hourglass shrink-0"></i><span class="truncate">${formatTimeDiff(diffStart)}</span>`;
+                    el.className = "text-white text-[7px] sm:text-[9px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-upcoming whitespace-nowrap flex items-center gap-0.5 sm:gap-1 max-w-full overflow-hidden";
                 } else if (diffExpiry > 0) {
-                    el.innerHTML = `<i class="ph-fill ph-broadcast animate-pulse"></i> ACTIVE • ${formatTimeDiff(diffExpiry)}`;
-                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ongoing animate-pulse whitespace-nowrap";
+                    el.innerHTML = `<i class="ph-fill ph-broadcast animate-pulse shrink-0"></i><span class="truncate">ACTIVE • ${formatTimeDiff(diffExpiry)}</span>`;
+                    el.className = "text-white text-[7px] sm:text-[9px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ongoing animate-pulse whitespace-nowrap flex items-center gap-0.5 sm:gap-1 max-w-full overflow-hidden";
                 } else {
-                    el.innerHTML = `<i class="ph-bold ph-lock"></i> CLOSED`;
-                    el.className = "text-white text-[9px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ended whitespace-nowrap";
+                    el.innerHTML = `<i class="ph-bold ph-lock shrink-0"></i><span class="truncate">CLOSED</span>`;
+                    el.className = "text-white text-[7px] sm:text-[9px] px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-black uppercase tracking-widest shadow-2xl countdown-small status-ended whitespace-nowrap flex items-center gap-0.5 sm:gap-1 max-w-full overflow-hidden";
                 }
             });
 
