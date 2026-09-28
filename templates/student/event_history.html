@@ -2,7 +2,11 @@
 {% load static %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/event_history.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+    #modalLeafletMap { z-index: 0; }
+    .leaflet-popup-content-wrapper { border-radius: 12px; font-family: inherit; }
+</style>
 {% endblock extra_head %}
 
 {% block content %}
@@ -14,19 +18,29 @@
             <h1 class="font-black text-3xl sm:text-4xl text-pup-maroon dark:text-pup-gold uppercase tracking-wide">Event History</h1>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            <div class="relative w-full sm:w-64 group">
-                <i class="ph-bold ph-funnel absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 dark:text-black/70 pointer-events-none z-10"></i>
-                <select id="typeFilter" class="w-full bg-pup-maroon text-white dark:bg-pup-gold dark:text-black border-none text-sm rounded-xl py-3 pl-10 pr-10 focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-yellow-400 transition-all shadow-md appearance-none cursor-pointer font-black uppercase tracking-widest relative">
-                    <option value="all" class="bg-white text-gray-900 dark:bg-pup-darkcard dark:text-white">All Records</option>
-                    <option value="Attendance" class="bg-white text-gray-900 dark:bg-pup-darkcard dark:text-white">Attendance</option>
-                    <option value="Evaluation" class="bg-white text-gray-900 dark:bg-pup-darkcard dark:text-white">Evaluations</option>
-                </select>
-                <i class="ph-bold ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 text-white/70 dark:text-black/70 pointer-events-none z-10"></i>
+        <div class="flex flex-row items-start gap-3 w-full md:w-auto z-50">
+            <div class="relative flex-grow sm:flex-none sm:w-80 group">
+                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-pup-maroon dark:group-focus-within:text-pup-gold transition-colors text-lg"></i>
+                <input type="text" id="historySearch" placeholder="Search..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold transition-all shadow-sm text-gray-900 dark:text-white font-bold uppercase tracking-widest">
             </div>
-            <div class="relative w-full sm:w-80 group">
-                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-pup-maroon dark:group-focus-within:text-pup-gold transition-colors"></i>
-                <input type="text" id="historySearch" placeholder="Search record..." class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-sm rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold transition-all shadow-sm text-gray-900 dark:text-white">
+
+            <div class="relative w-[140px] sm:w-56 group flex-shrink-0" id="customFilterWrapper">
+                <div class="w-full bg-white dark:bg-pup-darkcard border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl p-0 transition-all shadow-sm overflow-hidden flex flex-col justify-start relative z-[100]" id="filterDrawer">
+                    <div class="flex items-center justify-between cursor-pointer px-4 py-3.5" onclick="toggleFilterDrawer()">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <i class="ph-bold ph-funnel text-gray-400 dark:text-gray-500 text-lg shrink-0"></i>
+                            <span id="selectedFilterText" class="text-[10px] sm:text-sm font-bold uppercase tracking-widest whitespace-nowrap overflow-hidden text-ellipsis">All</span>
+                        </div>
+                        <i class="ph-bold ph-caret-down text-gray-400 dark:text-gray-500 transition-transform duration-300 shrink-0" id="filterCaret"></i>
+                    </div>
+                    <div id="filterOptions" class="flex flex-col max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                        <div class="p-1 flex flex-col gap-1 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-[#111]">
+                            <div class="px-4 py-3 sm:py-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg cursor-pointer text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest transition-colors whitespace-nowrap" onclick="selectFilter('all', 'All')">All</div>
+                            <div class="px-4 py-3 sm:py-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg cursor-pointer text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest transition-colors whitespace-nowrap" onclick="selectFilter('Attendance', 'Attendance')">Attendance</div>
+                            <div class="px-4 py-3 sm:py-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg cursor-pointer text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest transition-colors whitespace-nowrap" onclick="selectFilter('Evaluation', 'Evaluations')">Evaluations</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -45,7 +59,7 @@
 <div id="historyModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-0 sm:p-4 font-sans">
     <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" id="bgOverlayClose"></div>
     
-    <div class="relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-3xl shadow-2xl w-full max-w-xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700 z-10 transition-colors transform transition-transform scale-95 opacity-0 duration-300" id="modalContentBlock">
+    <div class="ios-pop-wrapper relative bg-white dark:bg-pup-darkcard rounded-none sm:rounded-3xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col h-full sm:h-auto sm:max-h-[90vh] overflow-hidden border-0 sm:border border-gray-200 dark:border-gray-700 z-10" id="modalContentBlock">
         
         <button id="btnTopClose" class="absolute top-6 right-6 bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-gray-900 dark:text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-20">
             <i class="ph-bold ph-x"></i>
@@ -66,25 +80,43 @@
 
             <div id="viewAttendanceProof" class="hidden">
                 <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Proof of Attendance</h3>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm w-full sm:w-[40%]">
-                        <div class="w-full aspect-[3/4] rounded-xl bg-gray-200 dark:bg-black flex items-center justify-center mb-3 overflow-hidden border border-gray-300 dark:border-gray-700">
-                            <i class="ph-fill ph-user text-6xl text-gray-400"></i>
+                
+                <!-- Mobile Tabs (Attendance) -->
+                <div class="flex sm:hidden bg-gray-200 dark:bg-[#222] rounded-xl p-1 mb-4">
+                    <button type="button" onclick="switchAttTab('face')" id="tabAttFace" class="flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all">Face ID</button>
+                    <button type="button" onclick="switchAttTab('loc')" id="tabAttLoc" class="flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all">Location</button>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div id="attFaceBlock" class="w-full md:w-[40%] flex flex-col sm:!flex gap-3">
+                        <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm w-full">
+                            <div class="w-full aspect-[3/4] rounded-xl bg-gray-200 dark:bg-black flex items-center justify-center mb-3 overflow-hidden border border-gray-300 dark:border-gray-700">
+                                <i class="ph-fill ph-user text-6xl text-gray-400"></i>
+                            </div>
+                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Face Capture ID</div>
+                            <div class="text-xs font-bold text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-md w-full text-center border border-green-200 dark:border-green-800/50"><i class="ph-fill ph-check-circle"></i> Matched</div>
                         </div>
-                        <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Face Capture ID</div>
-                        <div class="text-xs font-bold text-green-600 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-md w-full text-center border border-green-200 dark:border-green-800/50"><i class="ph-fill ph-check-circle"></i> Matched</div>
                     </div>
                     
-                    <div class="flex flex-col gap-3 w-full sm:w-[60%]">
+                    <div id="attLocBlock" class="w-full md:w-[60%] hidden flex-col sm:!flex gap-3">
                         <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
                             <div id="modalProofType" class="text-[0.65rem] font-bold uppercase text-gray-400 mb-1">Timestamp Log</div>
                             <div id="proofTime" class="font-bold text-gray-900 dark:text-white text-base">--</div>
                         </div>
-                        <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex-grow">
+                        <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex-grow flex flex-col">
                             <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-2">Location Signature</div>
-                            <div class="flex items-start gap-3">
+                            <div class="flex items-start gap-3 mb-4">
                                 <i class="ph-fill ph-map-pin text-3xl text-pup-maroon dark:text-pup-gold shrink-0"></i>
-                                <div class="text-sm font-bold text-gray-900 dark:text-white leading-snug">Verified inside PUP Campus Perimeter.</div>
+                                <div class="text-sm font-bold text-gray-900 dark:text-white leading-snug" id="modalLocationText">Verified inside PUP Campus Perimeter.</div>
+                            </div>
+                            
+                            <!-- Leaflet Map -->
+                            <div class="w-full flex-grow min-h-[140px] sm:min-h-[200px] rounded-xl overflow-hidden border border-gray-300 dark:border-gray-700 relative" id="modalLeafletMapContainer">
+                                <div id="modalLeafletMap" class="w-full h-full absolute inset-0"></div>
+                                <div id="modalMapOverlay" class="absolute inset-0 bg-gray-200 dark:bg-[#111] flex flex-col gap-2 items-center justify-center z-10 transition-opacity duration-300">
+                                    <i class="ph ph-spinner animate-spin text-2xl text-gray-400"></i>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Loading Map...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -94,33 +126,45 @@
             <div id="viewEvaluationProof" class="hidden">
                 <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Evaluation Summary</h3>
                 
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
-                        <div class="text-[0.65rem] font-black uppercase text-gray-400 mb-2 tracking-widest">Synchronization Score</div>
-                        <div id="modalEvalStars" class="flex text-pup-gold text-xl gap-0.5 mb-1">
-                            <!-- Stars -->
-                        </div>
-                        <div class="text-[0.7rem] font-black text-gray-900 dark:text-white" id="modalEvalAvgLabel">5.0 / 5.0</div>
-                    </div>
-                    <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
-                        <div class="text-[0.65rem] font-black uppercase text-gray-400 mb-1 tracking-widest">Performance</div>
-                        <div class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-                            <span id="modalEvalPercent">0%</span>
-                            <span id="modalEvalEmoji">😐</span>
-                        </div>
-                        <div id="modalEvalGrade" class="text-[0.65rem] font-bold text-green-600 dark:text-green-400 mt-1 uppercase tracking-tighter">Excellent</div>
-                    </div>
+                <!-- Mobile Tabs (Evaluation) -->
+                <div class="flex sm:hidden bg-gray-200 dark:bg-[#222] rounded-xl p-1 mb-4">
+                    <button type="button" onclick="switchEvalTab('score')" id="tabEvalScore" class="flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all">Score</button>
+                    <button type="button" onclick="switchEvalTab('feedback')" id="tabEvalFeedback" class="flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all">Feedback</button>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 mb-4 relative overflow-hidden">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Sentiment Analysis</span>
-                        <div id="modalSentimentBadge" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                            <i class="ph-fill ph-smiley"></i> Positive
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div id="evalScoreBlock" class="w-full md:w-[40%] flex flex-col sm:!flex gap-3">
+                        <!-- Stars Card -->
+                        <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm">
+                            <div class="text-[0.65rem] font-black uppercase text-gray-400 mb-2 tracking-widest">Synchronization Score</div>
+                            <div id="modalEvalStars" class="flex justify-center text-pup-gold text-2xl gap-1 mb-2"></div>
+                            <div class="text-sm font-black text-gray-900 dark:text-white" id="modalEvalAvgLabel">5.0 / 5.0</div>
+                        </div>
+                        <!-- Performance Card -->
+                        <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm">
+                            <div class="text-[0.65rem] font-black uppercase text-gray-400 mb-2 tracking-widest">Performance</div>
+                            <div class="text-4xl font-black text-gray-900 dark:text-white flex items-center justify-center gap-3">
+                                <span id="modalEvalPercent">0%</span>
+                                <span id="modalEvalEmoji">😐</span>
+                            </div>
+                            <div id="modalEvalGrade" class="text-xs font-bold text-green-600 dark:text-green-400 mt-2 uppercase tracking-widest">Excellent</div>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 italic leading-relaxed relative z-10" id="modalEvalComment">"No feedback provided."</p>
-                    <i class="ph-fill ph-quotes absolute -top-4 -left-4 text-6xl text-gray-200/50 dark:text-white/5 pointer-events-none"></i>
+
+                    <div id="evalFeedbackBlock" class="w-full md:w-[60%] hidden flex-col sm:!flex">
+                        <div class="bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex-grow relative overflow-hidden flex flex-col">
+                            <div class="flex justify-between items-center mb-6">
+                                <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Sentiment Analysis</span>
+                                <div id="modalSentimentBadge" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                                    <i class="ph-fill ph-smiley"></i> Positive
+                                </div>
+                            </div>
+                            <div class="flex-grow overflow-y-auto hide-scrollbar">
+                                <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 italic leading-relaxed relative z-10" id="modalEvalComment">"No feedback provided."</p>
+                            </div>
+                            <i class="ph-fill ph-quotes absolute -top-4 -left-4 text-6xl text-gray-200/50 dark:text-white/5 pointer-events-none"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -137,10 +181,85 @@ function initHistoryLogic() {
 
     const grid = document.getElementById('historyGrid');
     const searchInput = document.getElementById('historySearch');
-    const typeFilter = document.getElementById('typeFilter');
     const noResults = document.getElementById('noResults');
     const modal = document.getElementById('historyModal');
     const modalContent = document.getElementById('modalContentBlock');
+
+    window.currentFilterVal = 'all';
+    window.toggleFilterDrawer = function() {
+        const drawer = document.getElementById('filterOptions');
+        const caret = document.getElementById('filterCaret');
+        if (drawer.style.maxHeight && drawer.style.maxHeight !== '0px') {
+            drawer.style.maxHeight = '0px';
+            caret.style.transform = 'rotate(0deg)';
+        } else {
+            drawer.style.maxHeight = drawer.scrollHeight + 'px';
+            caret.style.transform = 'rotate(180deg)';
+        }
+    };
+    window.selectFilter = function(val, text) {
+        window.currentFilterVal = val;
+        document.getElementById('selectedFilterText').innerText = text;
+        window.toggleFilterDrawer();
+        applyFilters();
+    };
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById('customFilterWrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            const drawer = document.getElementById('filterOptions');
+            const caret = document.getElementById('filterCaret');
+            if (drawer && drawer.style.maxHeight && drawer.style.maxHeight !== '0px') {
+                drawer.style.maxHeight = '0px';
+                caret.style.transform = 'rotate(0deg)';
+            }
+        }
+    });
+
+    window.switchAttTab = function(tab) {
+        const faceBtn = document.getElementById('tabAttFace');
+        const locBtn = document.getElementById('tabAttLoc');
+        const faceBlock = document.getElementById('attFaceBlock');
+        const locBlock = document.getElementById('attLocBlock');
+
+        if (tab === 'face') {
+            faceBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all";
+            locBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all";
+            faceBlock.classList.remove('hidden');
+            faceBlock.classList.add('flex');
+            locBlock.classList.add('hidden');
+            locBlock.classList.remove('flex');
+        } else {
+            locBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all";
+            faceBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all";
+            locBlock.classList.remove('hidden');
+            locBlock.classList.add('flex');
+            faceBlock.classList.add('hidden');
+            faceBlock.classList.remove('flex');
+        }
+    };
+
+    window.switchEvalTab = function(tab) {
+        const scoreBtn = document.getElementById('tabEvalScore');
+        const fbBtn = document.getElementById('tabEvalFeedback');
+        const scoreBlock = document.getElementById('evalScoreBlock');
+        const fbBlock = document.getElementById('evalFeedbackBlock');
+
+        if (tab === 'score') {
+            scoreBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all";
+            fbBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all";
+            scoreBlock.classList.remove('hidden');
+            scoreBlock.classList.add('flex');
+            fbBlock.classList.add('hidden');
+            fbBlock.classList.remove('flex');
+        } else {
+            fbBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all";
+            scoreBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all";
+            fbBlock.classList.remove('hidden');
+            fbBlock.classList.add('flex');
+            scoreBlock.classList.add('hidden');
+            scoreBlock.classList.remove('flex');
+        }
+    };
 
     function renderHistory(dataToRender) {
         if (!grid) return;
@@ -158,19 +277,19 @@ function initHistoryLogic() {
             const icon = isAttendance ? 'ph-user-focus' : 'ph-clipboard-text';
             
             const html = `
-                <div class="bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all" onclick="openHistoryModal('${item.id}')">
+                <div class="bg-white dark:bg-pup-darkcard rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-row sm:flex-col cursor-pointer group shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-all relative" onclick="openHistoryModal('${item.id}', event)">
                     <div class="w-24 sm:w-full h-24 sm:h-32 shrink-0 relative bg-gray-100 dark:bg-[#0a0a0a] border-r sm:border-r-0 sm:border-b border-gray-200 dark:border-gray-800">
                         <img src="${item.img}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='{% static 'images/PUPLogo.png' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2');">
-                        <div class="absolute top-2 right-2 hidden sm:block">
-                            <span class="text-[0.65rem] font-bold px-2 py-1 rounded-md uppercase ${badgeClass} shadow-sm"><i class="ph-fill ${icon}"></i> ${item.type}</span>
-                        </div>
+                    </div>
+                    <div class="absolute top-2 left-2 sm:right-2 sm:left-auto z-10">
+                        <span class="text-[9px] sm:text-[0.65rem] font-black px-2.5 py-1.5 rounded-lg uppercase ${badgeClass} shadow-md whitespace-nowrap backdrop-blur-sm tracking-widest"><i class="ph-fill ${icon}"></i> ${item.type}</span>
                     </div>
                     <div class="p-3 sm:p-4 flex flex-col justify-center flex-grow min-w-0">
-                        <div class="flex justify-between items-start mb-1">
-                            <div class="text-[0.65rem] font-bold text-pup-maroon dark:text-pup-gold truncate">${item.date}</div>
+                        <div class="flex justify-between items-start mb-1 mt-1 sm:mt-0">
+                            <div class="text-[10px] sm:text-[0.65rem] font-bold text-pup-maroon dark:text-pup-gold truncate uppercase tracking-widest">${item.date}</div>
                         </div>
-                        <h3 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white leading-tight mb-1 truncate">${item.title}</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">${item.venue}</span></p>
+                        <h3 class="font-black text-sm sm:text-base text-gray-900 dark:text-white leading-tight mb-1 truncate uppercase">${item.title}</h3>
+                        <p class="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate uppercase tracking-widest"><i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold shrink-0"></i> <span class="truncate">${item.venue}</span></p>
                     </div>
                 </div>
             `;
@@ -178,7 +297,10 @@ function initHistoryLogic() {
         });
     }
 
-    window.openHistoryModal = function(id) {
+    window.openHistoryModal = function(id, jsEvent) {
+        if(window.switchAttTab) window.switchAttTab('face');
+        if(window.switchEvalTab) window.switchEvalTab('score');
+        
         const item = historyData.find(i => i.id === id);
         if(!item) return;
 
@@ -204,30 +326,90 @@ function initHistoryLogic() {
             }
 
             // Handle location signature with Reverse Geocoding
-            const locSig = document.querySelector('#viewAttendanceProof .text-sm.font-bold');
+            const locSig = document.getElementById('modalLocationText');
+            const mapIframe = document.getElementById('modalMapIframe');
+            const mapOverlay = document.getElementById('modalMapOverlay');
+            
             const coords = item.details.coords || "N/A";
             const colorClass = item.details.is_valid_location ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
             let locText = item.details.is_valid_location ? "Verified inside designated location" : "Outside designated event geofence";
             
-            locSig.innerHTML = `<span class="text-gray-500 text-xs italic"><i class="ph ph-spinner animate-spin"></i> Fetching address...</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+            locSig.innerHTML = `<span class="text-gray-500 text-xs italic"><i class="ph ph-spinner animate-spin"></i> Fetching address...</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter mt-1 block">GPS: ${coords}</span>`;
 
             if (coords !== "N/A" && coords.includes(',')) {
+                // Embed Map with Leaflet
+                mapOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                mapOverlay.classList.add('flex');
+
                 const [lat, lng] = coords.split(',').map(s => s.trim());
+                const latNum = parseFloat(lat);
+                const lngNum = parseFloat(lng);
+
+                // Destroy old map instance if present
+                if (window._historyLeafletMap) {
+                    window._historyLeafletMap.remove();
+                    window._historyLeafletMap = null;
+                }
+
+                // Store reference to update popup after geocoding
+                let markerRef = null;
+
+                setTimeout(() => {
+                    const mapEl = document.getElementById('modalLeafletMap');
+                    if (!mapEl) return;
+                    const map = L.map(mapEl, { zoomControl: true, scrollWheelZoom: false }).setView([latNum, lngNum], 16);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors',
+                        maxZoom: 19
+                    }).addTo(map);
+
+                    const pinColor = item.details.is_valid_location ? '#22c55e' : '#ef4444';
+                    const markerIcon = L.divIcon({
+                        html: `<div style="background:${pinColor};width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>`,
+                        className: '',
+                        iconSize: [18, 18],
+                        iconAnchor: [9, 9]
+                    });
+
+                    markerRef = L.marker([latNum, lngNum], { icon: markerIcon }).addTo(map)
+                        .bindPopup(`<span style="font-size:10px;font-family:inherit;color:#666;">Fetching address...</span>`)
+                        .openPopup();
+
+                    map.invalidateSize();
+                    window._historyLeafletMap = map;
+                    window._historyLeafletMarker = markerRef;
+                    mapOverlay.classList.add('opacity-0', 'pointer-events-none');
+                }, 100);
+
                 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                     .then(r => r.json())
                     .then(data => {
                         if (data && data.display_name) {
                             const address = data.display_name.split(',').slice(0, 3).join(',');
                             locSig.innerHTML = `<span class="${colorClass} leading-tight">${address}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+                            // Update map popup with exact address
+                            if (window._historyLeafletMarker) {
+                                window._historyLeafletMarker.setPopupContent(`<span style="font-size:10px;font-family:inherit;line-height:1.4;display:block;max-width:180px;">${address}</span>`);
+                            }
                         } else {
                             locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+                            if (window._historyLeafletMarker) {
+                                window._historyLeafletMarker.setPopupContent(`<span style="font-size:10px;font-family:inherit;">${locText}</span>`);
+                            }
                         }
                     })
                     .catch(e => {
-                        locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+                        locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter mt-1 block">GPS: ${coords}</span>`;
                     });
             } else {
-                locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
+                mapOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                mapOverlay.innerHTML = `<span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Map Unavailable</span>`;
+                if (window._historyLeafletMap) {
+                    window._historyLeafletMap.remove();
+                    window._historyLeafletMap = null;
+                }
+                const colorClass = item.details.is_valid_location ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
+                locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter mt-1 block">GPS: ${coords}</span>`;
             }
 
             // Handle face capture status
@@ -303,24 +485,30 @@ function initHistoryLogic() {
 
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        setTimeout(() => {
-            modalContent.classList.remove('scale-95', 'opacity-0');
-            modalContent.classList.add('scale-100', 'opacity-100');
-        }, 10);
+        
+        modalContent.classList.remove('ios-pop-wrapper-close');
+        modalContent.classList.add('ios-pop-wrapper');
+        if (jsEvent && jsEvent.clientX) {
+            modalContent.style.setProperty('--click-x', jsEvent.clientX + 'px');
+            modalContent.style.setProperty('--click-y', jsEvent.clientY + 'px');
+        } else {
+            modalContent.style.setProperty('--click-x', '50%');
+            modalContent.style.setProperty('--click-y', '50%');
+        }
     };
 
     window.closeHistoryModal = function() {
-        modalContent.classList.remove('scale-100', 'opacity-100');
-        modalContent.classList.add('scale-95', 'opacity-0');
+        modalContent.classList.remove('ios-pop-wrapper');
+        modalContent.classList.add('ios-pop-wrapper-close');
         setTimeout(() => {
             modal.classList.add('hidden');
             document.body.style.overflow = '';
-        }, 300);
+        }, 350);
     };
 
     function applyFilters() {
         const query = searchInput.value.toLowerCase();
-        const selectedType = typeFilter.value;
+        const selectedType = window.currentFilterVal || 'all';
         
         const filtered = historyData.filter(item => {
             const matchesSearch = item.title.toLowerCase().includes(query) || item.venue.toLowerCase().includes(query);
@@ -333,7 +521,6 @@ function initHistoryLogic() {
     }
 
     if(searchInput) searchInput.addEventListener('input', applyFilters);
-    if(typeFilter) typeFilter.addEventListener('change', applyFilters);
 
     ['bgOverlayClose', 'btnTopClose'].forEach(id => {
         const btn = document.getElementById(id);
@@ -352,4 +539,5 @@ window.addEventListener('load', () => {
     }, 100);
 });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 {% endblock extra_js %}

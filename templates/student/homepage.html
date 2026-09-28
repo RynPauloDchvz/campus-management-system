@@ -435,9 +435,9 @@
 <!-- ========================================== -->
 
 <!-- Full Calendar Modal -->
-<div id="fullCalendarModal" class="hidden fixed inset-0 z-[5000] items-center justify-center px-4 sm:px-6 py-6">
+<div id="fullCalendarModal" class="hidden fixed inset-0 z-[5000] items-center justify-center px-0 py-0 sm:px-6 sm:py-6">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeFullCalendarModal()"></div>
-    <div class="ios-pop-wrapper relative bg-white dark:bg-pup-darkcard w-full max-w-4xl h-full max-h-[800px] rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col">
+    <div class="ios-pop-wrapper relative bg-white dark:bg-pup-darkcard w-full max-w-4xl h-full max-h-full sm:max-h-[800px] rounded-none sm:rounded-3xl shadow-2xl overflow-hidden border-0 sm:border border-gray-100 dark:border-gray-800 flex flex-col">
         <div class="flex items-center justify-between p-5 sm:p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-white/5">
             <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
                 <i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold"></i> Event Calendar
@@ -455,7 +455,7 @@
 <!-- News Modal -->
 <div v-if="isEventModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center px-0 sm:px-4 py-0 sm:py-6" v-cloak>
     <div class="absolute inset-0 bg-black/70 backdrop-blur-md" @click="closeModal"></div>
-    <button @click="closeModal" class="fixed sm:hidden top-6 right-6 z-[5010] text-white/70 hover:text-white text-3xl transition-all drop-shadow-lg">
+    <button @click="closeModal" class="fixed sm:hidden top-6 right-6 z-[5010] w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white/90 hover:text-white text-2xl transition-all drop-shadow-lg backdrop-blur-sm border border-white/10">
         <i class="ph-bold ph-x"></i>
     </button>
 
@@ -493,7 +493,7 @@
 <!-- Calendar Detail Modal -->
 <div id="calendarEventModal" class="hidden fixed inset-0 z-[5020] items-center justify-center px-0 sm:px-4 py-0 sm:py-6">
     <div class="absolute inset-0 bg-black/70 backdrop-blur-md" onclick="closeCalendarModal()"></div>
-    <button onclick="closeCalendarModal()" class="fixed top-6 right-6 z-[5030] text-white/70 hover:text-white text-3xl transition-all drop-shadow-lg sm:hidden">
+    <button onclick="closeCalendarModal()" class="fixed sm:hidden top-6 right-6 z-[5030] w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white/90 hover:text-white text-2xl transition-all drop-shadow-lg backdrop-blur-sm border border-white/10">
         <i class="ph-bold ph-x"></i>
     </button>
 
