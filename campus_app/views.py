@@ -3719,6 +3719,7 @@ def adviser_dashboard(request):
             'time': e.start_time.strftime('%I:%M %p') if e.start_time else '',
             'status': e.event_status.upper() if e.event_status else '',
             'venue': e.venue or '',
+            'description': e.description or '',
             'cover_photo': e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) else (e.cover_photo.url if getattr(e, 'cover_photo', None) else '')
         })
     

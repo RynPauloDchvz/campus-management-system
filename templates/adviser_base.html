@@ -144,10 +144,13 @@
                         </button>
 
                         <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 translate-y-2 scale-95" enter-to-class="opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-150" leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 translate-y-2 scale-95">
-                            <div v-if="showNotifications" class="absolute right-0 mt-3 w-80 bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden z-[4000]">
+                            <div v-if="showNotifications" class="absolute -right-14 sm:right-0 mt-3 w-[calc(100vw-2rem)] max-w-[360px] sm:max-w-none sm:w-80 bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden z-[4000] origin-top-right">
                                 <div class="p-4 bg-gray-50 dark:bg-[#111] border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
                                     <h4 class="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest">Notifications</h4>
-                                    <span class="text-[9px] font-bold bg-pup-maroon/10 dark:bg-pup-gold/10 text-pup-maroon dark:text-pup-gold px-2 py-0.5 rounded-full uppercase">${ unreadNotifCount } New</span>
+                                    <div class="flex items-center gap-2">
+                                        <button v-if="unreadNotifCount > 0" @click.stop="markAllAsRead" class="text-[9px] font-bold text-gray-500 hover:text-pup-maroon dark:text-gray-400 dark:hover:text-pup-gold uppercase transition-colors shrink-0">Mark all read</button>
+                                        <span v-if="unreadNotifCount > 0" class="text-[9px] font-bold bg-pup-maroon/10 dark:bg-pup-gold/10 text-pup-maroon dark:text-pup-gold px-2 py-0.5 rounded-full uppercase shrink-0">${ unreadNotifCount } New</span>
+                                    </div>
                                 </div>
                                 <div class="max-h-[350px] overflow-y-auto custom-scrollbar">
                                     <div v-if="state.notifications.length === 0" class="p-8 text-center">
@@ -193,17 +196,17 @@
 
             <!-- Mobile Bottom Nav -->
             <div id="mobile-nav-app" class="md:hidden fixed bottom-0 left-0 right-0 z-[500] w-full px-4 pb-4 pointer-events-none" v-cloak>
-                <div class="relative w-full h-16 bg-pup-maroon dark:bg-pup-gold rounded-2xl flex shadow-2xl pointer-events-auto transition-colors border border-white/5 overflow-visible">
+                <div class="relative w-full h-16 bg-pup-maroon/10 dark:bg-pup-gold/10 backdrop-blur-md rounded-2xl flex shadow-[0_4px_30px_rgba(0,0,0,0.1)] pointer-events-auto transition-colors border border-pup-maroon/20 dark:border-pup-gold/20 overflow-visible">
                     <div class="indicator-box absolute h-[70px] transition-all duration-400 ease-out flex justify-center items-center pointer-events-none z-10" :style="{ left: indicatorOffset + 'px', width: indicatorWidth + 'px', opacity: (activeIndex >= 0 && activeIndex <= 1 && indicatorWidth > 0) ? 1 : 0, top: '-20px' }">
                         <div class="w-full h-full bg-black dark:bg-white rounded-2xl shadow-2xl border-2 border-white/10 dark:border-black/5"></div>
                     </div>
                     <div v-for="(item, index) in navItems" :key="index" :ref="(el) => { if (el) setNavRef(index, el) }" @click="handleNavClick(item, index)" class="relative flex-1 h-full flex flex-col items-center justify-center cursor-pointer z-20 transition-all-custom" :class="{ 'active-unit-elevated': activeIndex === index && item.name !== 'Theme' && item.name !== 'Logout' }">
                         <div class="flex flex-col items-center justify-center gap-0.5">
-                            <div class="transition-colors duration-300 flex justify-center items-center" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'">
+                            <div class="transition-colors duration-300 flex justify-center items-center" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-black/70 dark:text-white/70'">
                                 <i v-if="item.name === 'Theme'" :class="[isDark ? 'ph-fill ph-sun' : 'ph-bold ph-moon', 'text-2xl']"></i>
                                 <i v-else :class="[activeIndex === index ? item.iconActive : item.icon, 'text-2xl']"></i>
                             </div>
-                            <span class="text-[7px] font-black transition-colors duration-300 uppercase tracking-tighter" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-white/60 dark:text-black/60'">${ item.label }</span>
+                            <span class="text-[7px] font-black transition-colors duration-300 uppercase tracking-tighter" :class="activeIndex === index ? 'text-white dark:text-black scale-110' : 'text-black/70 dark:text-white/70'">${ item.label }</span>
                         </div>
                     </div>
                 </div>
@@ -237,6 +240,35 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Notification Details Modal -->
+            <div v-show="state.isNotificationModalOpen" class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+                <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-800 relative animate-in fade-in zoom-in duration-200">
+                    <button @click="closeNotificationModal" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 transition-colors">
+                        <i class="ph-bold ph-x text-lg"></i>
+                    </button>
+                    
+                    <div class="mb-6 flex items-start gap-3 sm:gap-4 pr-6 sm:pr-8">
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center shrink-0">
+                            <i v-if="state.selectedNotification" :class="getNotifIcon(state.selectedNotification.type)" class="text-xl sm:text-2xl text-pup-maroon dark:text-pup-gold"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-sm sm:text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight leading-tight mb-1 truncate" v-if="state.selectedNotification">${ state.selectedNotification.title }</h3>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest" v-if="state.selectedNotification">${ state.selectedNotification.date }</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-[#111] p-4 rounded-xl border border-gray-100 dark:border-white/5 mb-6 text-sm text-gray-600 dark:text-gray-300 leading-relaxed" v-if="state.selectedNotification">
+                        ${ state.selectedNotification.message }
+                    </div>
+                    
+                    <div class="flex gap-3 w-full">
+                        <button @click="proceedToNotificationUrl" v-if="state.selectedNotification && state.selectedNotification.url" class="w-full py-3 bg-pup-maroon dark:bg-pup-gold hover:bg-red-900 dark:hover:bg-yellow-600 text-white dark:text-black rounded-xl font-black uppercase text-[10px] tracking-widest border-none transition-all flex items-center justify-center gap-2">
+                            Proceed to Review Hub <i class="ph-bold ph-arrow-right text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -247,7 +279,9 @@
             readNotifications: JSON.parse(localStorage.getItem('adviser_read_notifications') || '[]'),
             isDark: localStorage.getItem('theme') === 'dark',
             showProfileBubble: false,
-            isLogoutModalOpen: false
+            isLogoutModalOpen: false,
+            isNotificationModalOpen: false,
+            selectedNotification: null
         });
 
         const fetchNotifs = () => {
@@ -279,7 +313,10 @@
                 }
             },
             computed: {
-                unreadNotifCount() { return this.state.notifications.filter(n => !this.state.readNotifications.includes(n.id)).length; },
+                unreadNotifCount() { 
+                    const readIds = this.state.readNotifications.map(String);
+                    return this.state.notifications.filter(n => !readIds.includes(String(n.id))).length; 
+                },
                 isDark() { return this.state.isDark; },
                 showProfileBubble: { get() { return this.state.showProfileBubble; }, set(v) { this.state.showProfileBubble = v; } },
                 isLogoutModalOpen: { get() { return this.state.isLogoutModalOpen; }, set(v) { this.state.isLogoutModalOpen = v; } }
@@ -308,14 +345,28 @@
                     if (this.showNotifications) { fetchNotifs(); }
                 },
                 handleNotificationClick(notif) {
-                    if (!this.state.readNotifications.includes(notif.id)) { 
+                    const strId = String(notif.id);
+                    if (!this.state.readNotifications.map(String).includes(strId)) { 
                         this.state.readNotifications.push(notif.id); 
                         localStorage.setItem('adviser_read_notifications', JSON.stringify(this.state.readNotifications)); 
                     }
                     this.showNotifications = false; 
                     this.removeBanner(notif.id); 
-                    if (notif.url) {
-                        window.location.href = notif.url; 
+                    
+                    this.state.selectedNotification = notif;
+                    this.state.isNotificationModalOpen = true;
+                },
+                markAllAsRead() {
+                    this.state.readNotifications = this.state.notifications.map(n => n.id);
+                    localStorage.setItem('adviser_read_notifications', JSON.stringify(this.state.readNotifications));
+                },
+                closeNotificationModal() {
+                    this.state.isNotificationModalOpen = false;
+                    setTimeout(() => { this.state.selectedNotification = null; }, 200);
+                },
+                proceedToNotificationUrl() {
+                    if (this.state.selectedNotification && this.state.selectedNotification.url) {
+                        window.location.href = this.state.selectedNotification.url;
                     }
                 },
                 getNotifIcon(type) { 

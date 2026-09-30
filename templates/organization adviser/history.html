@@ -16,6 +16,27 @@
     }
     [v-cloak] { display: none !important; }
 
+    :root {
+        --click-x: 50vw;
+        --click-y: 50vh;
+    }
+    .ios-pop-wrapper {
+        transform-origin: var(--click-x) var(--click-y);
+        animation: iosPopOrigin 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        will-change: transform, opacity;
+    }
+    .ios-pop-wrapper-close {
+        animation: iosPopClose 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+    @keyframes iosPopOrigin {
+        0% { transform: scale(0.2); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes iosPopClose {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(0.2); opacity: 0; }
+    }
+
     /* 📄 Professional Document Preview System 📄 */
     .document-wrapper {
         width: 100%;
@@ -70,40 +91,61 @@
 
 {% block content %}
 
-<!-- Filter & Search Bar -->
-<div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col lg:flex-row justify-between items-center gap-4 mb-6 transition-colors duration-300">
-    <div v-if="isLoading" class="flex justify-between items-center w-full">
-        <div class="flex gap-3">
-            <div class="w-20 h-6 skeleton-shimmer rounded"></div>
-            <div class="w-40 h-10 skeleton-shimmer rounded-lg"></div>
-        </div>
-        <div class="w-72 h-10 skeleton-shimmer rounded-lg"></div>
-    </div>
-    <template v-else>
-        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <span class="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest ml-1"><i class="ph-bold ph-funnel"></i> Filters:</span>
-            
-            <div class="relative w-full sm:w-auto">
-                <select v-model="statusFilter" class="w-full sm:min-w-[180px] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg pl-4 pr-10 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold bg-gray-50 dark:bg-[#111] cursor-pointer appearance-none transition-all">
-                    <option value="All">All Event Records</option>
-                    <option value="Approved">Fully Published</option>
-                    <option value="In Progress">Under Process</option>
-                    <option value="Rejected">Rejected Proposals</option>
-                </select>
-                <i class="ph-bold ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-            </div>
-        </div>
-
-        <div class="relative w-full lg:w-96">
-            <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search event title, org, or venue..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-12 pr-4 py-2.5 text-xs font-bold outline-none focus:ring-1 focus:ring-pup-maroon dark:focus:ring-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
-        </div>
-    </template>
-</div>
-
-<!-- Main Table Container -->
+<!-- Unified History Container -->
 <div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
-    <div class="overflow-x-auto">
+    
+    <!-- Action Bar -->
+    <div class="p-3 sm:p-5 border-b border-gray-100 dark:border-gray-800 w-full flex flex-row items-start gap-2 sm:gap-4 justify-between relative z-10 transition-all duration-300">
+        
+        <div v-if="isLoading" class="flex justify-between items-center w-full">
+            <div class="w-full sm:w-72 h-10 skeleton-shimmer rounded-xl"></div>
+            <div class="w-24 sm:w-32 h-10 skeleton-shimmer rounded-xl"></div>
+        </div>
+        
+        <template v-else>
+            <!-- Clickaway Overlay to close dropdown when clicking outside -->
+            <div v-if="isFilterExpanded" @click="isFilterExpanded = false" class="fixed inset-0 z-0"></div>
+
+            <!-- Search Bar -->
+            <div class="relative flex-1 sm:flex-none sm:w-80 lg:w-96 shrink z-10">
+                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" v-model="searchQuery" placeholder="Search events e.g Assembly" class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2.5 text-[12px] sm:text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400 h-[40px] sm:h-[44px]">
+            </div>
+
+            <!-- Filter Card (Expands inline to push content down) -->
+            <div class="relative shrink-0 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 w-[140px] sm:w-48 flex flex-col z-10" :class="isFilterExpanded ? 'shadow-md border-gray-300 dark:border-gray-600' : 'shadow-sm'">
+                <!-- Toggle Button (Height is 2px smaller to account for parent borders) -->
+                <button @click="isFilterExpanded = !isFilterExpanded" class="w-full px-3 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 font-bold text-[11px] sm:text-sm text-gray-700 dark:text-gray-300 h-[38px] sm:h-[42px] transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                    <div class="flex items-center gap-1.5 sm:gap-2 truncate">
+                        <i class="ph-bold ph-funnel text-sm sm:text-lg shrink-0"></i>
+                        <span class="inline truncate">Filter: [[ statusFilter === 'In Progress' ? 'In Prog' : statusFilter ]]</span>
+                    </div>
+                    <i class="ph-bold ph-caret-down transition-transform duration-300 text-sm sm:text-base shrink-0" :class="{ 'rotate-180': isFilterExpanded }"></i>
+                </button>
+                
+                <!-- Inline Drawer Menu -->
+                <div class="grid transition-all duration-300 ease-in-out"
+                     :class="isFilterExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                    <div class="overflow-hidden flex flex-col px-1.5 sm:px-2 pb-1.5 sm:pb-2 gap-1 border-t border-gray-100 dark:border-gray-800">
+                        <button @click="selectFilter('All')" :class="statusFilter === 'All' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between mt-1.5">
+                            All records <i v-if="statusFilter === 'All'" class="ph-bold ph-check text-xs"></i>
+                        </button>
+                        <button @click="selectFilter('Approved')" :class="statusFilter === 'Approved' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
+                            Published <i v-if="statusFilter === 'Approved'" class="ph-bold ph-check text-xs"></i>
+                        </button>
+                        <button @click="selectFilter('In Progress')" :class="statusFilter === 'In Progress' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
+                            In progress <i v-if="statusFilter === 'In Progress'" class="ph-bold ph-check text-xs"></i>
+                        </button>
+                        <button @click="selectFilter('Rejected')" :class="statusFilter === 'Rejected' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
+                            Rejected <i v-if="statusFilter === 'Rejected'" class="ph-bold ph-check text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <div class="overflow-x-auto hidden sm:block">
         <table class="w-full text-left border-collapse min-w-[800px]">
             <thead>
                 <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/20">
@@ -128,10 +170,10 @@
 
             <!-- Real Data Body -->
             <tbody v-else-if="filteredEvents.length > 0" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
-                <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50/80 dark:hover:bg-[#151515] transition-colors cursor-pointer group" @click="openModal(event)">
+                <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50/80 dark:hover:bg-[#151515] transition-colors cursor-pointer group" @click="openModal(event, $event)">
                     <td class="py-4 px-6 font-black text-pup-maroon dark:text-pup-gold text-xs tracking-tight">[[ event.org ]]</td>
                     <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
-                    <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400">[[ event.date ]]</td>
+                    <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap text-[13px]">[[ event.date ]]</td>
                     <td class="py-4 px-6">
                         <span v-if="event.status === 'APPROVED'" class="px-3 py-1.5 rounded-lg border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 w-max">
                             <i class="ph-fill ph-check-circle text-xs"></i> Published
@@ -144,7 +186,7 @@
                         </span>
                     </td>
                     <td class="py-4 px-6 text-center" @click.stop>
-                        <button @click="openModal(event)" class="bg-gray-100 hover:bg-pup-maroon dark:bg-gray-800 dark:hover:bg-pup-gold text-gray-700 hover:text-white dark:text-gray-300 dark:hover:text-black font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg transition-all inline-flex items-center gap-2 border border-gray-200 dark:border-gray-700 shadow-sm group-hover:scale-105 active:scale-95">
+                        <button @click="openModal(event, $event)" class="bg-gray-100 hover:bg-pup-maroon dark:bg-gray-800 dark:hover:bg-pup-gold text-gray-700 hover:text-white dark:text-gray-300 dark:hover:text-black font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg transition-all inline-flex items-center gap-2 border border-gray-200 dark:border-gray-700 shadow-sm group-hover:scale-105 active:scale-95">
                             <i class="ph-bold ph-eye text-sm"></i> Details
                         </button>
                     </td>
@@ -155,16 +197,60 @@
             <tbody v-else>
                 <tr>
                     <td colspan="5" class="py-24 text-center">
-                        <div class="relative inline-block mb-4">
-                            <i class="ph-fill ph-folder-open text-7xl text-gray-200 dark:text-gray-800"></i>
-                            <i class="ph-bold ph-magnifying-glass absolute -bottom-2 -right-2 text-3xl text-gray-400 dark:text-gray-600"></i>
+                        <div class="inline-block mb-4">
+                            <i class="ph-bold ph-magnifying-glass text-6xl text-gray-300 dark:text-gray-700"></i>
                         </div>
-                        <h3 class="text-lg font-black text-gray-500 dark:text-gray-400 tracking-tight uppercase">No records found</h3>
-                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 font-bold uppercase tracking-widest">Refine your search or check filters.</p>
+                        <h3 class="text-base text-gray-500 dark:text-gray-400 font-medium">
+                            <span v-if="searchQuery">No results found for "[[ searchQuery ]]"</span>
+                            <span v-else>No records found</span>
+                        </h3>
                     </td>
                 </tr>
             </tbody>
         </table>
+    </div>
+
+    <!-- Mobile List View (Hidden on Desktop) -->
+    <div class="sm:hidden flex flex-col gap-3 p-4 bg-gray-50/50 dark:bg-[#111]/50 border-t border-gray-100 dark:border-gray-800">
+        <!-- Skeleton -->
+        <div v-if="isLoading" class="p-4 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col gap-3" v-for="i in 4" :key="'mob-skel-'+i">
+            <div class="h-4 w-1/4 skeleton-shimmer rounded"></div>
+            <div class="h-5 w-3/4 skeleton-shimmer rounded"></div>
+            <div class="h-3 w-1/2 skeleton-shimmer rounded mt-1"></div>
+        </div>
+
+        <!-- Empty states -->
+        <div v-else-if="filteredEvents.length === 0" class="py-12 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm text-center text-gray-500 font-medium px-4">
+            <div class="inline-block mb-4">
+                <i class="ph-bold ph-magnifying-glass text-4xl text-gray-400 opacity-50 block"></i>
+            </div>
+            <h3 class="text-sm font-medium">
+                <span v-if="searchQuery">No results found for "[[ searchQuery ]]"</span>
+                <span v-else>No records found</span>
+            </h3>
+        </div>
+
+        <!-- List Items -->
+        <div v-else v-for="event in filteredEvents" :key="'mob-'+event.id" @click="openModal(event, $event)" class="p-4 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors cursor-pointer relative overflow-hidden group">
+            <div class="flex justify-between items-start mb-2">
+                <span class="font-extrabold text-pup-maroon dark:text-pup-gold text-xs uppercase tracking-wider">[[ event.org ]]</span>
+                <!-- Status Badge -->
+                <span v-if="event.status === 'APPROVED'" class="px-2 py-0.5 rounded border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[9px] font-extrabold uppercase tracking-wide">
+                    Published
+                </span>
+                <span v-else-if="event.status === 'REJECTED'" class="px-2 py-0.5 rounded border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-[9px] font-extrabold uppercase tracking-wide">
+                    Rejected
+                </span>
+                <span v-else class="px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[9px] font-extrabold uppercase tracking-wide">
+                    In Progress
+                </span>
+            </div>
+            <h4 class="font-bold text-gray-900 dark:text-white text-[15px] leading-snug mb-3 pr-6">[[ event.title ]]</h4>
+            <div class="flex items-center text-[10px] text-gray-500 dark:text-gray-400 font-bold gap-3 uppercase tracking-wider">
+                <span class="flex items-center gap-1"><i class="ph-bold ph-calendar-blank text-lg"></i> [[ event.date ]]</span>
+            </div>
+            <i class="ph-bold ph-caret-right absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-300 dark:text-gray-600 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors text-xl"></i>
+        </div>
     </div>
 </div>
 
@@ -175,22 +261,25 @@
 
 {% block modals %}
 <!-- Event Details Modal -->
-<div v-if="isModalOpen" v-cloak class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity" @click="closeModal">
-    <div class="bg-gray-100 dark:bg-[#151515] rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-in fade-in zoom-in duration-200 max-h-[95vh]" @click.stop>
+<div v-show="isModalOpen" v-cloak class="fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-4">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" @click="closeModal"></div>
+    <div class="fixed inset-0 flex items-center justify-center pointer-events-none p-0 sm:p-4 z-10">
+        <div class="ios-pop-wrapper pointer-events-auto flex items-center justify-center w-full h-full" :class="{'ios-pop-wrapper-close': isModalClosing}" id="history-modal-wrapper">
+            <div v-if="selectedEvent" class="bg-gray-100 dark:bg-[#151515] sm:rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col border-0 sm:border border-gray-200 dark:border-gray-800 h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[95vh] relative z-10" @click.stop>
         
         <!-- Modal Header -->
-        <div class="p-5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#111] shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center">
-                    <i class="ph-fill ph-archive text-pup-maroon dark:text-pup-gold text-2xl"></i>
+        <div class="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#111] shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center">
+                    <i class="ph-fill ph-archive text-pup-maroon dark:text-pup-gold text-xl sm:text-2xl"></i>
                 </div>
                 <div>
-                    <h3 class="text-lg font-black text-gray-900 dark:text-white tracking-tight uppercase leading-none">Event History Log</h3>
-                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">Reference ID: #[[ selectedEvent.id ]]</p>
+                    <h3 class="text-sm sm:text-lg font-black text-gray-900 dark:text-white tracking-tight uppercase leading-none">Event History Log</h3>
+                    <p class="text-[9px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-1">Reference ID: #[[ selectedEvent.id ]]</p>
                 </div>
             </div>
-            <button @click="closeModal" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition bg-gray-50 dark:bg-[#1a1a1a] hover:bg-red-50 dark:hover:bg-red-900/20 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border border-transparent hover:border-red-200">
-                <i class="ph-bold ph-x text-xl"></i>
+            <button @click="closeModal" class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition bg-gray-50 dark:bg-[#1a1a1a] hover:bg-red-50 dark:hover:bg-red-900/20 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-sm border border-transparent hover:border-red-200 shrink-0">
+                <i class="ph-bold ph-x text-lg sm:text-xl"></i>
             </button>
         </div>
 
@@ -201,7 +290,7 @@
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-200 dark:border-gray-800 pb-6">
                 <div class="max-w-2xl">
                     <span class="inline-block px-3 py-1 rounded-md bg-pup-maroon/10 text-pup-maroon dark:bg-pup-gold/10 dark:text-pup-gold text-[10px] font-black tracking-widest uppercase mb-3 border border-pup-maroon/20 dark:border-pup-gold/20">[[ selectedEvent.org ]]</span>
-                    <h2 class="text-2xl md:text-3xl font-black text-gray-900 dark:text-white leading-tight uppercase">[[ selectedEvent.title ]]</h2>
+                    <h2 class="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 dark:text-white leading-tight uppercase">[[ selectedEvent.title ]]</h2>
                 </div>
                 <div class="flex flex-col items-start md:items-end">
                     <span class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Current Tracker</span>
@@ -217,9 +306,9 @@
                 </div>
             </div>
 
-            <!-- Documents Section (Dashboard Layout) -->
-            <div v-if="selectedEvent.status !== 'REJECTED'" class="bg-white dark:bg-gray-800/40 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm animate-fade-in">
-                <div class="flex justify-between items-center mb-6">
+            <!-- File Viewer (For Processed Document Records) -->
+            <div v-if="selectedEvent.status !== 'REJECTED'" class="flex flex-col gap-4 animate-fade-in w-full mb-8">
+                <div class="flex justify-between items-center mb-2">
                     <h4 class="text-xs font-black text-gray-900 dark:text-[#D4AF37] uppercase tracking-widest flex items-center gap-2">
                         <i class="ph-bold ph-folder-open text-xl text-pup-maroon dark:text-pup-gold"></i> Processed Document Records
                     </h4>
@@ -227,30 +316,57 @@
                         [[ currentDocCount ]] FILES ATTACHED
                     </span>
                 </div>
-                
-                <!-- Dynamic Grid based on 4 or 2 mode -->
-                <div :class="['grid gap-4', currentDocCount === 4 ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-2']">
-                    <div v-for="doc in activeDocs" :key="doc.label" 
-                         @click="viewActualDoc(doc.label, doc.url)"
-                         class="bg-gray-50 dark:bg-[#1a1a1a] p-5 rounded-xl border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-xl transition-all flex flex-col items-center justify-center group relative overflow-hidden">
-                        
-                        <div class="absolute inset-0 bg-pup-maroon dark:bg-pup-gold opacity-0 group-hover:opacity-[0.03] transition-opacity"></div>
-                        
-                        <div class="relative w-14 h-14 flex items-center justify-center mb-3">    
-                            <i :class="['ph-fill', doc.icon, 'text-5xl text-gray-300 dark:text-gray-600 transition-all group-hover:scale-110 group-hover:rotate-3']"></i>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <i class="ph-bold ph-eye text-5xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-pup-maroon dark:text-pup-gold/80"></i>
+
+                <!-- Desktop Segmented Tab Switches (Hidden on Mobile) -->
+                <div class="hidden sm:flex relative p-1 bg-gray-200/80 dark:bg-gray-800/80 rounded-xl shrink-0">
+                    <div class="absolute inset-y-1 left-1 right-1 flex pointer-events-none">
+                        <div class="h-full bg-white dark:bg-pup-darkcard rounded-lg shadow-sm transition-all duration-300 ease-out"
+                             :style="{ width: `${100 / activeDocs.length}%`, transform: `translateX(${(activeDocs.findIndex(d => d.label === activeFileTab) === -1 ? 0 : activeDocs.findIndex(d => d.label === activeFileTab)) * 100}%)` }"></div>
+                    </div>
+                    
+                    <button v-for="(doc, index) in activeDocs" :key="doc.label"
+                            @click="activeFileTab = doc.label"
+                            :class="['relative z-10 flex-1 px-4 py-3 text-xs font-bold capitalize transition-colors duration-300',
+                                    (activeFileTab === doc.label || (!activeFileTab && index === 0)) ? 'text-pup-maroon dark:text-pup-gold' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white']">
+                        [[ doc.label ]]
+                    </button>
+                </div>
+
+                <!-- Mobile Accordion Dropdown (Hidden on Desktop) -->
+                <div class="sm:hidden bg-gray-100 dark:bg-[#111] rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm shrink-0">
+                    <div @click="mobileDropdownOpen = !mobileDropdownOpen" class="p-4 flex justify-between items-center cursor-pointer bg-white dark:bg-pup-darkcard">
+                        <span class="font-bold capitalize text-pup-maroon dark:text-pup-gold text-sm">[[ activeFileTab || activeDocs[0]?.label ]]</span>
+                        <i class="ph-bold ph-caret-down transition-transform duration-300 text-gray-400" :class="{'rotate-180': mobileDropdownOpen}"></i>
+                    </div>
+                    <div class="grid transition-all duration-300 ease-in-out" :style="{ gridTemplateRows: mobileDropdownOpen ? '1fr' : '0fr' }">
+                        <div class="overflow-hidden flex flex-col divide-y divide-gray-100 dark:divide-gray-800 border-t border-gray-100 dark:border-gray-800">
+                            <div v-for="(doc, index) in activeDocs" :key="'mob-doc-'+index" 
+                                 @click="activeFileTab = doc.label; mobileDropdownOpen = false"
+                                 class="p-4 bg-gray-50 dark:bg-[#151515] cursor-pointer capitalize font-medium transition-colors text-sm"
+                                 :class="{'text-pup-maroon dark:text-pup-gold font-bold': activeFileTab === doc.label || (!activeFileTab && index === 0), 'text-gray-600 dark:text-gray-400': !(activeFileTab === doc.label || (!activeFileTab && index === 0))}">
+                                [[ doc.label ]]
                             </div>
                         </div>
-                        <span class="block text-[10px] font-black text-gray-700 dark:text-gray-300 uppercase leading-tight px-2">[[ doc.label ]]</span>
-                        <div class="mt-2 h-1 w-8 bg-gray-200 dark:bg-gray-700 rounded-full group-hover:w-16 group-hover:bg-pup-maroon dark:group-hover:bg-pup-gold transition-all duration-500"></div>
-                        <span class="text-[9px] text-blue-500 dark:text-pup-gold mt-3 font-bold uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity">View Record</span>
                     </div>
+                </div>
+                
+                <!-- Document Image Display -->
+                <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl flex flex-col items-center justify-center overflow-hidden min-h-[400px] sm:min-h-[500px]">
+                    <template v-for="(doc, index) in activeDocs" :key="'img-'+doc.label">
+                        <img v-if="(activeFileTab === doc.label || (!activeFileTab && index === 0)) && doc.url" 
+                             :src="doc.url" 
+                             @click="viewActualDoc(doc.label, doc.url)"
+                             class="w-full h-auto object-contain mx-auto animate-fade-in cursor-pointer hover:scale-[1.02] transition-transform" />
+                        <div v-else-if="(activeFileTab === doc.label || (!activeFileTab && index === 0)) && !doc.url" class="text-center py-20 w-full h-full flex flex-col items-center justify-center">
+                            <i class="ph-fill ph-image-broken text-6xl text-gray-300 dark:text-gray-700 mb-4 block"></i>
+                            <span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Record not found</span>
+                        </div>
+                    </template>
                 </div>
             </div>
 
             <!-- Rejection Remarks -->
-            <div v-if="selectedEvent.status === 'REJECTED'" class="bg-red-50 dark:bg-red-900/10 p-6 rounded-2xl border border-red-200 dark:border-red-900/40 animate-fade-in shadow-sm shadow-red-500/5">
+            <div v-if="selectedEvent.status === 'REJECTED'" class="bg-red-50 dark:bg-red-900/10 p-6 rounded-2xl border border-red-200 dark:border-red-900/40 animate-fade-in shadow-sm shadow-red-500/5 mb-8">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
                         <i class="ph-bold ph-warning-circle text-xl"></i>
@@ -262,27 +378,19 @@
                 </p>
             </div>
 
-            <!-- Modern Tab Layout (Organizer Style) -->
-            <div v-if="!selectedEvent.letter_url && selectedEvent.status !== 'REJECTED'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div @click="switchDocTab('main')" :class="activeTab === 'main' ? 'border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10' : 'border-gray-200 dark:border-gray-800'" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm">
-                    <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg shrink-0">
-                        <i class="ph-fill ph-seal-check"></i>
-                    </div>
-                    <div class="truncate">
-                        <h4 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-tight">[[ activeTabLabel ]]</h4>
-                        <p class="text-[8px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400">Main Generated Document</p>
-                    </div>
+            <!-- Segmented Tab Switches for Generated Letters -->
+            <div v-if="!selectedEvent.letter_url && selectedEvent.status !== 'REJECTED' && generatedLetterTabs.length > 1" class="flex relative p-1 bg-gray-200/80 dark:bg-gray-800/80 rounded-xl shrink-0 mt-2 mb-2">
+                <div class="absolute inset-y-1 left-1 right-1 flex pointer-events-none">
+                    <div class="h-full bg-white dark:bg-pup-darkcard rounded-lg shadow-sm transition-all duration-300 ease-out"
+                         :style="{ width: `${100 / generatedLetterTabs.length}%`, transform: `translateX(${(generatedLetterTabs.findIndex(t => t.id === activeTab) === -1 ? 0 : generatedLetterTabs.findIndex(t => t.id === activeTab)) * 100}%)` }"></div>
                 </div>
-
-                <div v-if="currentDocCount != 2" @click="switchDocTab('excuse')" :class="activeTab === 'excuse' ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/10' : 'border-gray-200 dark:border-gray-800'" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm">
-                    <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg shrink-0">
-                        <i class="ph-fill ph-users-four"></i>
-                    </div>
-                    <div class="truncate">
-                        <h4 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-tight">Excuse & Equipment</h4>
-                        <p class="text-[8px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400">Logistics & Participants</p>
-                    </div>
-                </div>
+                
+                <button v-for="tab in generatedLetterTabs" :key="tab.id"
+                        @click="switchDocTab(tab.id)"
+                        :class="['relative z-10 flex-1 px-2 sm:px-4 py-3 text-[10px] sm:text-xs font-bold capitalize transition-colors duration-300',
+                                activeTab === tab.id ? 'text-pup-maroon dark:text-pup-gold' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white']">
+                    [[ tab.label ]]
+                </button>
             </div>
 
             <!-- Formal Letter Preview Container -->
@@ -410,12 +518,7 @@
             
             <div class="h-4"></div>
         </div>
-
-        <!-- Modal Footer -->
-        <div class="p-5 bg-white dark:bg-[#111] border-t border-gray-200 dark:border-gray-800 shrink-0 flex justify-center">
-            <button @click="closeModal" class="w-full md:w-auto px-10 py-3 bg-gray-900 dark:bg-pup-gold text-white dark:text-black font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-all shadow-lg active:scale-95">
-                Close Record View
-            </button>
+    </div>
         </div>
     </div>
 </div>
@@ -463,9 +566,18 @@
                 const isLoading = ref(true);
                 const searchQuery = ref('');
                 const statusFilter = ref('All');
+                const isFilterExpanded = ref(false);
                 const isModalOpen = ref(false);
+                const isModalClosing = ref(false);
+
+                const selectFilter = (filter) => {
+                    statusFilter.value = filter;
+                    isFilterExpanded.value = false;
+                };
                 const selectedEvent = ref(null);
                 const activeTab = ref('main');
+                const activeFileTab = ref('');
+                const mobileDropdownOpen = ref(false);
 
                 const isDocViewerOpen = ref(false);
                 const viewedDocTitle = ref('');
@@ -486,6 +598,17 @@
                     const desc = selectedEvent.value.description || "";
                     if (desc.includes("[RESCHEDULE]")) return 'Reschedule Letter';
                     return 'Request Letter';
+                });
+
+                const generatedLetterTabs = computed(() => {
+                    if (!selectedEvent.value) return [];
+                    const tabs = [
+                        { id: 'main', label: activeTabLabel.value }
+                    ];
+                    if (currentDocCount.value != 2) {
+                        tabs.push({ id: 'excuse', label: 'Excuse & Equipment' });
+                    }
+                    return tabs;
                 });
 
                 const switchDocTab = (tab) => {
@@ -609,10 +732,19 @@
                     }
                 });
 
-                const openModal = (event) => {
+                const openModal = (event, jsEvent) => {
+                    if (jsEvent) {
+                       const wrapper = document.getElementById('history-modal-wrapper');
+                       if (wrapper) {
+                           wrapper.style.setProperty('--click-x', jsEvent.clientX + 'px');
+                           wrapper.style.setProperty('--click-y', jsEvent.clientY + 'px');
+                       }
+                    }
                     selectedEvent.value = event;
                     activeTab.value = 'main';
+                    activeFileTab.value = activeDocs.value[0]?.label || '';
                     isModalOpen.value = true;
+                    isModalClosing.value = false;
                     document.body.style.overflow = 'hidden';
                     // Double check scaling with a bit more delay to ensure DOM is ready
                     setTimeout(updateMobileScale, 100);
@@ -620,9 +752,13 @@
                 };
 
                 const closeModal = () => {
-                    isModalOpen.value = false;
-                    document.body.style.overflow = '';
-                    setTimeout(() => { selectedEvent.value = null; }, 300);
+                    isModalClosing.value = true;
+                    setTimeout(() => {
+                        isModalOpen.value = false;
+                        document.body.style.overflow = '';
+                        selectedEvent.value = null;
+                        isModalClosing.value = false;
+                    }, 400);
                 };
 
                 const viewActualDoc = (title, url) => {
@@ -636,10 +772,10 @@
                 };
 
                 return {
-                    isLoading, searchQuery, statusFilter, filteredEvents,
-                    isModalOpen, selectedEvent, openModal, closeModal,
+                    isLoading, searchQuery, statusFilter, isFilterExpanded, selectFilter, filteredEvents,
+                    isModalOpen, isModalClosing, selectedEvent, openModal, closeModal,
                     isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
-                    currentDocCount, activeDocs, activeTab, activeTabLabel, 
+                    currentDocCount, activeDocs, activeTab, activeFileTab, mobileDropdownOpen, generatedLetterTabs, activeTabLabel, 
                     switchDocTab, updateMobileScale, parsedDescription
                 }
             }

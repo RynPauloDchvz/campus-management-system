@@ -6,7 +6,80 @@
 {% block page_subtitle %}Review incoming proposals and verify permits for {{ assigned_org }}.{% endblock %}
 
 {% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <style>
+    /* iOS Pop Origin Animation */
+    :root {
+        --click-x: 50vw;
+        --click-y: 50vh;
+    }
+    .ios-pop-wrapper {
+        transform-origin: var(--click-x) var(--click-y);
+        animation: iosPopOrigin 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        will-change: transform, opacity;
+    }
+    @keyframes iosPopOrigin {
+        0% { transform: scale(0.2); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .ios-pop-wrapper-close {
+        animation: iosPopClose 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+    @keyframes iosPopClose {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(0.2); opacity: 0; }
+    }
+
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Vue Transition */
+    .fade-enter-active,
+    .fade-leave-active {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .fade-enter-from,
+    .fade-leave-to {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    /* Fix FullCalendar Event Overflow */
+    .fc-event {
+        overflow: hidden !important;
+        border-radius: 4px !important;
+        margin: 1px 2px !important;
+    }
+    .fc-event-main {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        padding: 2px 4px !important;
+        font-size: 0.70rem !important;
+    }
+
+    /* Mobile FullCalendar Optimization */
+    @media (max-width: 640px) {
+        .fc .fc-toolbar {
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        .fc .fc-toolbar-chunk:nth-child(2) {
+            order: -1;
+            width: 100%;
+            text-align: center;
+        }
+        .fc .fc-toolbar-title {
+            font-size: 1.2rem !important;
+        }
+        .fc .fc-button {
+            padding: 6px 10px !important;
+            font-size: 0.75rem !important;
+        }
+    }
+
     .animate-fade-in {
         animation: fadeIn 0.3s ease-in-out;
     }
@@ -74,127 +147,198 @@
 {% endblock %}
 
 {% block content %}
+<!-- Organization Header (Mobile Only) -->
+<div class="text-center mb-6 block sm:hidden">
+    <h2 class="text-xl font-bold text-pup-maroon dark:text-pup-gold uppercase">[[ assignedOrgAcronym ]]</h2>
+    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Assigned Organization Adviser</p>
+</div>
+
 <!-- Stats Dashboard Section -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-8">
     <!-- Monthly Approved -->
-    <div class="bg-white dark:bg-pup-darkcard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-5 transition-all hover:shadow-md">
-        <div class="w-14 h-14 rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
-            <i class="ph-fill ph-check-circle text-3xl"></i>
+    <div class="bg-white dark:bg-pup-darkcard p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-5 transition-all hover:shadow-md">
+        <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
+            <i class="ph-fill ph-check-circle text-2xl sm:text-3xl"></i>
         </div>
         <div>
-            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Approved This Month</span>
-            <h3 class="text-3xl font-black text-gray-900 dark:text-white leading-none">{{ monthly_approved_count }}</h3>
+            <span class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1 leading-tight sm:leading-normal">
+                Approved<br class="sm:hidden">
+                <span class="hidden sm:inline"> </span>This Month
+            </span>
+            <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-none">{{ monthly_approved_count }}</h3>
         </div>
     </div>
 
-    <!-- Currently with Admin -->
-    <div class="bg-white dark:bg-pup-darkcard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-5 transition-all hover:shadow-md">
-        <div class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-            <i class="ph-fill ph-paper-plane-right text-3xl"></i>
+    <!-- Currently with Adviser -->
+    <div class="bg-white dark:bg-pup-darkcard p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-5 transition-all hover:shadow-md">
+        <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+            <i class="ph-fill ph-paper-plane-right text-2xl sm:text-3xl"></i>
         </div>
         <div>
-            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Pending Admin Review</span>
-            <h3 class="text-3xl font-black text-gray-900 dark:text-white leading-none">{{ pending_admin_count }}</h3>
+            <span class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1 leading-tight sm:leading-normal">
+                Pending Adviser<br class="sm:hidden">
+                <span class="hidden sm:inline"> </span>Review
+            </span>
+            <h3 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-none">{{ pending_admin_count }}</h3>
         </div>
     </div>
 
-    <!-- Total Assigned Org -->
-    <div class="bg-white dark:bg-pup-darkcard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-5 transition-all hover:shadow-md">
+    <!-- Total Assigned Org (Desktop Only) -->
+    <div class="hidden sm:flex bg-white dark:bg-pup-darkcard p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 items-center gap-5 transition-all hover:shadow-md">
         <div class="w-14 h-14 rounded-2xl bg-pup-maroon/10 dark:bg-pup-gold/10 flex items-center justify-center text-pup-maroon dark:text-pup-gold shrink-0">
             <i class="ph-fill ph-users-three text-3xl"></i>
         </div>
         <div>
-            <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Assigned Organization</span>
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Assigned Organization</span>
             <h3 class="text-2xl font-black text-pup-maroon dark:text-pup-gold leading-none">[[ assignedOrgAcronym ]]</h3>
         </div>
     </div>
 </div>
 
 
-<!-- Action Bar -->
-<div class="bg-white dark:bg-pup-darkcard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center mb-6 transition-colors duration-300 gap-4">
-    <div v-if="isLoading" class="flex justify-between items-center w-full">
-        <div class="w-40 h-6 skeleton-shimmer rounded-lg"></div>
-        <div class="w-72 h-10 skeleton-shimmer rounded-xl"></div>
+<!-- Unified Dashboard Container -->
+<div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300 mb-6">
+    
+    <!-- Action Bar -->
+    <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+        
+        <!-- Title Header -->
+        <div class="flex items-center justify-center sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
+            <h2 class="text-sm sm:text-lg font-black text-gray-900 dark:text-white uppercase tracking-wider text-center sm:text-left">Pending Event Approvals</h2>
+        </div>
+
+        <div v-if="isLoading" class="flex justify-end items-center w-full sm:w-auto">
+            <div class="w-full sm:w-72 h-10 skeleton-shimmer rounded-xl"></div>
+        </div>
+        <template v-else>
+            <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                <div class="relative w-full sm:w-80">
+                    <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                    <input type="text" v-model="searchQuery" placeholder="Search event name or org e.g ITO Assembly" class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
+                </div>
+                <!-- View Calendar Button -->
+                <button @click="openCalendarModal($event)" class="h-[42px] px-3 sm:px-4 bg-pup-maroon hover:bg-maroon-800 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg shadow-md transition-colors flex items-center justify-center gap-2 shrink-0">
+                    <i class="ph-bold ph-calendar text-lg sm:text-base"></i>
+                    <span class="hidden sm:inline">View Calendar</span>
+                </button>
+            </div>
+        </template>
     </div>
-    <template v-else>
-        <div class="flex items-center gap-3">
-            <span class="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2 uppercase tracking-widest"><i class="ph-bold ph-clock"></i> Action Required</span>
-            <!-- View Calendar Button -->
-            <button @click="isCalendarOpen = true" class="ml-4 px-4 py-2 bg-pup-maroon hover:bg-maroon-800 text-white text-[11px] font-bold uppercase tracking-widest rounded-lg shadow-md transition-colors flex items-center gap-2">
-                <i class="ph-bold ph-calendar"></i> View Event Calendar
-            </button>
+
+    <!-- Data Container -->
+    <div class="w-full">
+        <!-- Desktop Table (Hidden on Mobile) -->
+        <div class="hidden sm:block overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                    <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#111]">
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Organization</th>
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Event Title</th>
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Target Date</th>
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Status</th>
+                        <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Action</th>
+                    </tr>
+                </thead>
+
+                <!-- Skeleton Body -->
+                <tbody v-if="isLoading" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+                    <tr v-for="i in 5" :key="'desk-skel-'+i">
+                        <td class="py-4 px-6"><div class="h-4 w-20 skeleton-shimmer rounded"></div></td>
+                        <td class="py-4 px-6"><div class="h-4 w-48 skeleton-shimmer rounded"></div></td>
+                        <td class="py-4 px-6"><div class="h-4 w-24 skeleton-shimmer rounded"></div></td>
+                        <td class="py-4 px-6"><div class="h-6 w-24 skeleton-shimmer rounded-lg"></div></td>
+                        <td class="py-4 px-6"><div class="h-9 w-32 skeleton-shimmer rounded-lg"></div></td>
+                    </tr>
+                </tbody>
+
+                <!-- Real Data Body -->
+                <tbody v-else class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+                    <tr v-if="events.length === 0">
+                        <td colspan="5" class="py-12 text-center text-gray-500 font-medium">
+                            <i class="ph-fill ph-check-circle text-4xl text-green-500 mb-2 opacity-50 block"></i>
+                            No pending proposals at the moment. You're all caught up!
+                        </td>
+                    </tr>
+                    <tr v-else-if="filteredEvents.length === 0">
+                        <td colspan="5" class="py-12 text-center text-gray-500 font-medium">
+                            <i class="ph-fill ph-magnifying-glass text-4xl text-gray-400 mb-2 opacity-50 block"></i>
+                            No results found for "[[ searchQuery ]]".
+                        </td>
+                    </tr>
+                    <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
+                        <td class="py-4 px-6 font-extrabold text-pup-maroon dark:text-pup-gold">[[ event.org ]]</td>
+                        <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
+                        <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400">[[ event.date ]]</td>
+                        <td class="py-4 px-6">
+                            <span v-if="event.status === 'PENDING ADVISER'" class="px-3 py-1 rounded border border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-500 text-[10px] font-extrabold uppercase tracking-wide">
+                                Initial Review
+                            </span>
+                            <span v-else-if="event.status === 'PERMIT VERIFICATION'" class="px-3 py-1 rounded border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-500 text-[10px] font-extrabold uppercase tracking-wide">
+                                Verify Signatures
+                            </span>
+                        </td>
+                        <td class="py-4 px-6">
+                            <button @click="openModal(event, $event)" class="bg-pup-maroon hover:bg-red-900 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-black text-white font-bold text-[11px] px-4 py-2 rounded-lg transition-colors shadow-sm">
+                                [[ event.status === 'PERMIT VERIFICATION' ? 'Check Documents' : 'Review Proposal' ]]
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-        <div class="relative w-full sm:w-80">
-            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search event or org..." class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400">
+
+        <!-- Mobile List View (Hidden on Desktop) -->
+        <div class="sm:hidden flex flex-col gap-3 p-4 bg-gray-50/50 dark:bg-[#111]/50 border-t border-gray-100 dark:border-gray-800">
+            <!-- Skeleton -->
+            <div v-if="isLoading" class="p-4 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col gap-3" v-for="i in 4" :key="'mob-skel-'+i">
+                <div class="h-4 w-1/4 skeleton-shimmer rounded"></div>
+                <div class="h-5 w-3/4 skeleton-shimmer rounded"></div>
+                <div class="h-3 w-1/2 skeleton-shimmer rounded mt-1"></div>
+            </div>
+
+            <!-- Empty states -->
+            <div v-else-if="events.length === 0" class="py-12 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm text-center text-gray-500 font-medium px-4">
+                <i class="ph-fill ph-check-circle text-4xl text-green-500 mb-2 opacity-50 block"></i>
+                No pending proposals at the moment. You're all caught up!
+            </div>
+            <div v-else-if="filteredEvents.length === 0" class="py-12 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm text-center text-gray-500 font-medium px-4">
+                <i class="ph-fill ph-magnifying-glass text-4xl text-gray-400 mb-2 opacity-50 block"></i>
+                No results found for "[[ searchQuery ]]".
+            </div>
+
+            <!-- List Items -->
+            <div v-else v-for="event in filteredEvents" :key="'mob-'+event.id" @click="openModal(event, $event)" class="p-4 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors cursor-pointer relative overflow-hidden group">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-extrabold text-pup-maroon dark:text-pup-gold text-xs uppercase tracking-wider">[[ event.org ]]</span>
+                    <!-- Status Badge -->
+                    <span v-if="event.status === 'PENDING ADVISER'" class="px-2 py-0.5 rounded border border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-500 text-[9px] font-extrabold uppercase tracking-wide">
+                        Initial Review
+                    </span>
+                    <span v-else-if="event.status === 'PERMIT VERIFICATION'" class="px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-500 text-[9px] font-extrabold uppercase tracking-wide">
+                        Verify Signatures
+                    </span>
+                </div>
+                <h4 class="font-bold text-gray-900 dark:text-white text-[15px] leading-snug mb-3 pr-6">[[ event.title ]]</h4>
+                <div class="flex items-center text-[10px] text-gray-500 dark:text-gray-400 font-bold gap-3 uppercase tracking-wider">
+                    <span class="flex items-center gap-1"><i class="ph-bold ph-calendar-blank text-lg"></i> [[ event.date ]]</span>
+                    <span v-if="event.time" class="flex items-center gap-1"><i class="ph-bold ph-clock text-lg"></i> [[ event.time ]]</span>
+                </div>
+                <i class="ph-bold ph-caret-right absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-300 dark:text-gray-600 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors text-xl"></i>
+            </div>
         </div>
-    </template>
-</div>
-
-<!-- Table Container -->
-<div class="bg-white dark:bg-pup-darkcard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300">
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[600px]">
-            <thead>
-                <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#111]">
-                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Organization</th>
-                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Event Title</th>
-                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Target Date</th>
-                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Status</th>
-                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 tracking-wider uppercase">Action</th>
-                </tr>
-            </thead>
-
-            <!-- Skeleton Body -->
-            <tbody v-if="isLoading" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
-                <tr v-for="i in 5" :key="i">
-                    <td class="py-4 px-6"><div class="h-4 w-20 skeleton-shimmer rounded"></div></td>
-                    <td class="py-4 px-6"><div class="h-4 w-48 skeleton-shimmer rounded"></div></td>
-                    <td class="py-4 px-6"><div class="h-4 w-24 skeleton-shimmer rounded"></div></td>
-                    <td class="py-4 px-6"><div class="h-6 w-24 skeleton-shimmer rounded-lg"></div></td>
-                    <td class="py-4 px-6"><div class="h-9 w-32 skeleton-shimmer rounded-lg"></div></td>
-                </tr>
-            </tbody>
-
-            <!-- Real Data Body -->
-            <tbody v-else class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
-                <tr v-if="filteredEvents.length === 0">
-                    <td colspan="5" class="py-12 text-center text-gray-500 font-medium">
-                        <i class="ph-fill ph-check-circle text-4xl text-green-500 mb-2 opacity-50 block"></i>
-                        No pending proposals at the moment. You're all caught up!
-                    </td>
-                </tr>
-                <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50 dark:hover:bg-[#151515] transition-colors">
-                    <td class="py-4 px-6 font-extrabold text-pup-maroon dark:text-pup-gold">[[ event.org ]]</td>
-                    <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
-                    <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400">[[ event.date ]]</td>
-                    <td class="py-4 px-6">
-                        <span v-if="event.status === 'PENDING ADVISER'" class="px-3 py-1 rounded border border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-500 text-[10px] font-extrabold uppercase tracking-wide">
-                            Initial Review
-                        </span>
-                        <span v-else-if="event.status === 'PERMIT VERIFICATION'" class="px-3 py-1 rounded border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-500 text-[10px] font-extrabold uppercase tracking-wide">
-                            Verify Signatures
-                        </span>
-                    </td>
-                    <td class="py-4 px-6">
-                        <button @click="openModal(event)" class="bg-pup-maroon hover:bg-red-900 dark:bg-pup-gold dark:hover:bg-yellow-500 dark:text-black text-white font-bold text-[11px] px-4 py-2 rounded-lg transition-colors shadow-sm">
-                            [[ event.status === 'PERMIT VERIFICATION' ? 'Check Documents' : 'Review Proposal' ]]
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 </div>
 {% endblock %}
 
 {% block modals %}
-    <div v-if="isModalOpen" v-cloak class="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300">
-        <div class="bg-gray-200 dark:bg-[#151515] rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col max-h-[90vh] border border-gray-300 dark:border-gray-700 z-10 overflow-hidden animate-in fade-in zoom-in duration-300" @click.stop>
+    <div v-show="isModalOpen" v-cloak class="fixed inset-0 z-[5000] flex items-center justify-center p-0 sm:p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal"></div>
+        <div class="fixed inset-0 flex items-center justify-center pointer-events-none p-0 sm:p-4 z-10">
+            <div class="ios-pop-wrapper pointer-events-auto flex items-center justify-center w-full h-full" :class="{'ios-pop-wrapper-close': isModalClosing}" id="review-modal-wrapper">
+                <div v-if="selectedEvent" class="bg-gray-200 dark:bg-[#151515] sm:rounded-xl shadow-2xl w-full max-w-4xl mx-auto flex flex-col h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] border-0 sm:border border-gray-300 dark:border-gray-700 z-10 overflow-hidden relative" @click.stop>
             
             <!-- Header -->
-            <div class="p-4 border-b border-gray-300 dark:border-gray-800 flex justify-between items-center bg-gray-100 dark:bg-[#111] shrink-0">
+            <div class="p-4 border-b border-gray-300 dark:border-gray-800 flex justify-between items-center bg-gray-100 dark:bg-[#111] shrink-0 z-20">
                 <h3 class="font-bold text-gray-800 dark:text-white flex items-center gap-2">
                     <i class="ph-fill ph-file-text text-pup-maroon dark:text-pup-gold text-xl"></i> 
                     [[ selectedEvent.status === 'PERMIT VERIFICATION' ? 'Document Verification Hub' : 'Event Proposal Review' ]]
@@ -203,58 +347,74 @@
             </div>
 
             <!-- Content Area -->
-            <div class="flex-grow overflow-y-auto bg-gray-50 dark:bg-[#0a0a0a]">
+            <div class="flex-grow overflow-y-auto bg-gray-50 dark:bg-[#0a0a0a] pb-24">
                 
                 <div class="p-4 sm:p-8 flex flex-col gap-8">
                     
-                    <!-- File Grid (Only shown in PERMIT VERIFICATION status) -->
-                    <div v-if="selectedEvent.status === 'PERMIT VERIFICATION'" class="bg-white dark:bg-pup-darkcard p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm animate-fade-in">
-                        <div class="flex justify-between items-center mb-6">
-                            <h4 class="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                <i class="ph-bold ph-folder-open text-lg"></i> Uploaded Signed Files
-                            </h4>
-                            <span class="bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                                [[ selectedEvent.requirement_mode ]] Files Detected
-                            </span>
+                    <!-- File Viewer (Only shown in PERMIT VERIFICATION status) -->
+                    <div v-if="selectedEvent.status === 'PERMIT VERIFICATION'" class="flex flex-col gap-4 animate-fade-in w-full">
+                        <!-- Desktop Segmented Tab Switches (Hidden on Mobile) -->
+                        <div class="hidden sm:flex relative p-1 bg-gray-200/80 dark:bg-gray-800/80 rounded-xl shrink-0">
+                            <!-- Sliding pill background wrapper -->
+                            <div class="absolute inset-y-1 left-1 right-1 flex pointer-events-none">
+                                <div class="h-full bg-white dark:bg-pup-darkcard rounded-lg shadow-sm transition-all duration-300 ease-out"
+                                     :style="{ width: `${100 / activeDocs.length}%`, transform: `translateX(${(activeDocs.findIndex(d => d.label === activeTab) === -1 ? 0 : activeDocs.findIndex(d => d.label === activeTab)) * 100}%)` }"></div>
+                            </div>
+                            
+                            <button v-for="(doc, index) in activeDocs" :key="doc.label"
+                                    @click="activeTab = doc.label"
+                                    :class="['relative z-10 flex-1 px-4 py-3 text-xs font-bold capitalize transition-colors duration-300',
+                                            (activeTab === doc.label || (activeTab === 'main' && index === 0)) ? 'text-pup-maroon dark:text-pup-gold' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white']">
+                                [[ doc.label ]]
+                            </button>
                         </div>
-                        
-                        <div :class="['grid gap-4', selectedEvent.requirement_mode === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4']" id="verification-files-grid">
-                            <div v-for="doc in activeDocs" :key="doc.label" 
-                                 @click="viewActualDoc(doc.label, doc.url)"
-                                 class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-center cursor-pointer hover:border-pup-maroon dark:hover:border-pup-gold hover:shadow-md transition-all flex flex-col items-center justify-center group relative overflow-hidden">
-                                <div class="absolute inset-0 bg-pup-maroon dark:bg-pup-gold opacity-0 group-hover:opacity-[0.03] transition-opacity"></div>
-                                <div class="relative w-12 h-12 flex items-center justify-center mb-2">    
-                                    <i :class="['ph-fill', doc.icon, 'text-4xl text-gray-300 dark:text-gray-500 transition-opacity']"></i>
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <i class="ph-bold ph-eye text-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-pup-maroon dark:text-pup-gold"></i>
+
+                        <!-- Mobile Accordion Dropdown (Hidden on Desktop) -->
+                        <div class="sm:hidden bg-gray-100 dark:bg-[#111] rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm shrink-0">
+                            <div @click="mobileDropdownOpen = !mobileDropdownOpen" class="p-4 flex justify-between items-center cursor-pointer bg-white dark:bg-pup-darkcard">
+                                <span class="font-bold capitalize text-pup-maroon dark:text-pup-gold">[[ activeTab === 'main' ? activeDocs[0].label : activeTab ]]</span>
+                                <i class="ph-bold ph-caret-down transition-transform duration-300 text-gray-400" :class="{'rotate-180': mobileDropdownOpen}"></i>
+                            </div>
+                            <div class="grid transition-all duration-300 ease-in-out" :style="{ gridTemplateRows: mobileDropdownOpen ? '1fr' : '0fr' }">
+                                <div class="overflow-hidden flex flex-col divide-y divide-gray-100 dark:divide-gray-800 border-t border-gray-100 dark:border-gray-800">
+                                    <div v-for="(doc, index) in activeDocs" :key="'mob-doc-'+index" 
+                                         @click="activeTab = doc.label; mobileDropdownOpen = false"
+                                         class="p-4 bg-gray-50 dark:bg-[#151515] cursor-pointer capitalize font-medium transition-colors"
+                                         :class="{'text-pup-maroon dark:text-pup-gold font-bold': activeTab === doc.label || (activeTab === 'main' && index === 0), 'text-gray-600 dark:text-gray-400': !(activeTab === doc.label || (activeTab === 'main' && index === 0))}">
+                                        [[ doc.label ]]
                                     </div>
                                 </div>
-                                <span class="block text-[8px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">[[ doc.label ]]</span>
                             </div>
+                        </div>
+                        
+                        <!-- Document Image Display -->
+                        <div class="bg-white dark:bg-[#111] border border-gray-200 dark:border-gray-800 rounded-2xl flex flex-col items-center justify-center overflow-hidden min-h-[500px]">
+                            <template v-for="(doc, index) in activeDocs" :key="'img-'+doc.label">
+                                <img v-if="(activeTab === doc.label || (activeTab === 'main' && index === 0)) && doc.url" 
+                                     :src="doc.url" 
+                                     class="w-full h-auto object-contain mx-auto animate-fade-in" />
+                                <div v-else-if="(activeTab === doc.label || (activeTab === 'main' && index === 0)) && !doc.url" class="text-center py-20 w-full h-full flex flex-col items-center justify-center">
+                                    <i class="ph-fill ph-image-broken text-6xl text-gray-300 dark:text-gray-700 mb-4 block"></i>
+                                    <span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Image not found</span>
+                                </div>
+                            </template>
                         </div>
                     </div>
 
-                    <!-- Modern Tab Layout (Organizer Style) - NOW BELOW FILES -->
-                    <div class="grid grid-cols-2 gap-4" v-if="!selectedEvent.letter_url && selectedEvent.status !== 'REJECTED'">
-                        <div @click="switchDocTab('main')" :class="activeTab === 'main' ? 'border-pup-maroon bg-maroon-50 dark:bg-maroon-900/10' : 'border-gray-200 dark:border-gray-800'" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm">
-                            <div class="w-12 h-12 rounded-xl bg-pup-maroon text-white flex items-center justify-center text-2xl shadow-lg shrink-0">
-                                <i class="ph-fill ph-seal-check"></i>
-                            </div>
-                            <div class="truncate">
-                                <h4 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-tight">[[ activeTabLabel ]]</h4>
-                                <p class="text-[8px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400">Main Document</p>
-                            </div>
+                    <!-- Segmented Tab Switches for Generated Letters -->
+                    <div v-if="!selectedEvent.letter_url && selectedEvent.status !== 'REJECTED' && generatedLetterTabs.length > 1" class="flex relative p-1 bg-gray-200/80 dark:bg-gray-800/80 rounded-xl shrink-0 mt-2 mb-2">
+                        <!-- Sliding pill background wrapper -->
+                        <div class="absolute inset-y-1 left-1 right-1 flex pointer-events-none">
+                            <div class="h-full bg-white dark:bg-pup-darkcard rounded-lg shadow-sm transition-all duration-300 ease-out"
+                                 :style="{ width: `${100 / generatedLetterTabs.length}%`, transform: `translateX(${(generatedLetterTabs.findIndex(t => t.id === activeTab) === -1 ? 0 : generatedLetterTabs.findIndex(t => t.id === activeTab)) * 100}%)` }"></div>
                         </div>
-
-                        <div v-if="selectedEvent.requirement_mode != 2" @click="switchDocTab('excuse')" :class="activeTab === 'excuse' ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/10' : 'border-gray-200 dark:border-gray-800'" class="cursor-pointer p-4 rounded-2xl border-2 transition-all flex items-center gap-4 group shadow-sm">
-                            <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg shrink-0">
-                                <i class="ph-fill ph-users-four"></i>
-                            </div>
-                            <div class="truncate">
-                                <h4 class="font-black text-[10px] sm:text-xs text-gray-900 dark:text-white uppercase tracking-tight">Excuse & Equipment</h4>
-                                <p class="text-[8px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400">Logistics & Participants</p>
-                            </div>
-                        </div>
+                        
+                        <button v-for="tab in generatedLetterTabs" :key="tab.id"
+                                @click="switchDocTab(tab.id)"
+                                :class="['relative z-10 flex-1 px-2 sm:px-4 py-3 text-[10px] sm:text-xs font-bold capitalize transition-colors duration-300',
+                                        activeTab === tab.id ? 'text-pup-maroon dark:text-pup-gold' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white']">
+                            [[ tab.label ]]
+                        </button>
                     </div>
 
                     <!-- Modern Document Preview (Bottom Section) -->
@@ -262,8 +422,9 @@
                         <div class="document-wrapper mx-auto">
                             <div class="document-page mx-auto shadow-2xl" id="document-preview-card">
                                 
+                                <transition name="fade" mode="out-in">
                                 <!-- Main Document Content -->
-                                <div v-if="activeTab === 'main'">
+                                <div v-if="activeTab === 'main'" key="main">
                                     <p class="mb-10 font-bold">[[ selectedEvent.date ]]</p>
                                     
                                     <p class="mb-8 leading-tight">
@@ -331,7 +492,7 @@
                                 </div>
 
                                 <!-- Excuse & Equipment Document Content -->
-                                <div v-if="activeTab === 'excuse'">
+                                <div v-else-if="activeTab === 'excuse'" key="excuse">
                                     <p class="mb-10 font-bold">[[ selectedEvent.date ]]</p>
                                     
                                     <p class="mb-8 leading-tight">
@@ -376,6 +537,7 @@
                                         <p class="mt-0">[[ selectedEvent.org ]] Adviser</p>
                                     </div>
                                 </div>
+                                </transition>
                             </div>
                         </div>
                     </div>
@@ -392,22 +554,26 @@
                 </div>
             </div>
 
-            <!-- Modal Footer -->
-            <div class="p-5 bg-gray-100 dark:bg-[#111] border-t border-gray-300 dark:border-gray-800 shrink-0 flex flex-wrap justify-end gap-3 font-sans">
+            <!-- Modal Footer (Fixed with Transparent BG) -->
+            <div class="absolute bottom-0 left-0 w-full p-4 sm:p-5 bg-white/80 dark:bg-black/80 backdrop-blur-md border-t border-gray-300/50 dark:border-gray-800/50 flex justify-end gap-2 sm:gap-3 font-sans z-30">
                 <template v-if="!isRejecting">
-                    <button @click="initiateReject" :disabled="actionLoading" class="px-6 py-2.5 bg-white dark:bg-[#1a1a1a] border border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 font-bold text-sm rounded-lg transition-colors disabled:opacity-50">Reject</button>
-                    <button id="verify-forward-btn" @click="approveEvent" :disabled="actionLoading" class="px-6 py-2.5 bg-[#16a34a] text-white hover:bg-green-700 font-bold text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md">
+                    <button @click="initiateReject" :disabled="actionLoading" class="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-2.5 bg-white/90 dark:bg-[#1a1a1a]/90 border border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-sm">Reject</button>
+                    <button id="verify-forward-btn" @click="approveEvent" :disabled="actionLoading" class="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-2.5 bg-[#16a34a]/90 text-white hover:bg-green-700 font-bold text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-md">
                         <i class="ph-bold ph-check-circle"></i>
-                        [[ selectedEvent.status === 'PERMIT VERIFICATION' ? 'Verify Signatures & Forward' : 'Approve & Forward to Admin' ]]
+                        <span>
+                            [[ selectedEvent.status === 'PERMIT VERIFICATION' ? 'Verify' : 'Approve' ]]<span class="hidden sm:inline"> & Forward</span>
+                        </span>
                     </button>
                 </template>
                 
                 <template v-else>
-                    <button @click="cancelReject" :disabled="actionLoading" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50">Cancel</button>
-                    <button @click="confirmReject" :disabled="actionLoading" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-md"><i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection</button>
+                    <button @click="cancelReject" :disabled="actionLoading" class="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-2.5 bg-gray-200/90 hover:bg-gray-300 dark:bg-gray-800/90 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-sm">Cancel</button>
+                    <button @click="confirmReject" :disabled="actionLoading" class="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-2.5 bg-red-600/90 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-md flex items-center justify-center gap-2"><i class="ph-bold ph-paper-plane-right"></i> <span>Confirm<span class="hidden sm:inline"> Rejection</span></span></button>
                 </template>
             </div>
         </div>
+    </div>
+    </div>
     </div>
 
     <!-- Image Preview Lightbox -->
@@ -450,103 +616,89 @@
         </div>
     </div>
     <!-- Calendar Modal -->
-    <div v-if="isCalendarOpen" v-cloak class="fixed inset-0 bg-black/70 z-[6000] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" @click.self="isCalendarOpen = false">
-        <div class="bg-white dark:bg-pup-darkcard w-full max-w-6xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col max-h-[95vh]">
-            <!-- Header -->
-            <div class="p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-[#111]">
-                <h2 class="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-3">
-                    <i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold"></i> Global Event Calendar
-                </h2>
-                <button @click="isCalendarOpen = false" class="w-10 h-10 rounded-full hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 text-gray-500 flex items-center justify-center transition-colors">
-                    <i class="ph-bold ph-x text-xl"></i>
-                </button>
-            </div>
-            
-            <!-- Calendar Body -->
-            <div class="p-6 overflow-y-auto custom-scrollbar bg-white dark:bg-pup-darkcard">
-                <div class="flex items-center justify-between mb-6">
-                    <button @click="prevMonth" class="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold transition flex items-center gap-2">
-                        <i class="ph-bold ph-caret-left"></i> Prev
-                    </button>
-                    <h3 class="text-2xl font-black text-gray-800 dark:text-white uppercase tracking-widest">[[ monthNames[currentMonth] ]] [[ currentYear ]]</h3>
-                    <button @click="nextMonth" class="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold transition flex items-center gap-2">
-                        Next <i class="ph-bold ph-caret-right"></i>
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800">
-                    <!-- Days Header -->
-                    <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day" class="bg-gray-50 dark:bg-[#111] py-3 text-center text-xs font-black text-gray-500 uppercase tracking-widest">
-                        [[ day ]]
+    <div v-show="isCalendarOpen" v-cloak class="fixed inset-0 z-[6000] flex items-center justify-center p-0 sm:p-6">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" @click="closeCalendarModal"></div>
+        <div class="fixed inset-0 flex items-center justify-center pointer-events-none p-0 sm:p-6 z-10">
+            <div class="ios-pop-wrapper pointer-events-auto flex items-center justify-center w-full h-full" :class="{'ios-pop-wrapper-close': isCalendarClosing}">
+                <div class="relative bg-white dark:bg-pup-darkcard w-full h-full sm:max-w-6xl sm:max-h-[90vh] sm:rounded-3xl shadow-2xl overflow-hidden border-0 sm:border border-gray-100 dark:border-gray-800 flex flex-col">
+                    <!-- Header -->
+                    <div class="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-[#111]">
+                        <!-- Invisible placeholder to balance the close button on mobile -->
+                        <div class="w-8 h-8 sm:hidden shrink-0 pointer-events-none"></div>
+                        
+                        <h2 class="flex-1 sm:flex-none text-[14px] sm:text-xl font-black text-gray-900 dark:text-white uppercase tracking-wider text-center sm:text-left truncate">
+                            Campus Event Calendar
+                        </h2>
+                        
+                        <button @click="closeCalendarModal" class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full hover:bg-gray-200 hover:text-red-600 dark:hover:bg-gray-700 dark:hover:text-red-400 text-gray-500 transition-colors shrink-0">
+                            <i class="ph-bold ph-x text-lg sm:text-xl"></i>
+                        </button>
                     </div>
                     
-                    <!-- Calendar Grid -->
-                    <div v-for="(day, index) in calendarDays" :key="index" class="bg-white dark:bg-pup-darkcard min-h-[140px] p-2 relative group transition hover:bg-gray-50 dark:hover:bg-gray-900/50">
-                        <template v-if="day.day">
-                            <span :class="['absolute top-2 right-2 text-sm font-bold w-8 h-8 flex items-center justify-center rounded-full', day.isToday ? 'bg-pup-maroon text-white dark:bg-pup-gold dark:text-black shadow-md' : 'text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white']">
-                                [[ day.day ]]
-                            </span>
-                            <div class="mt-10 flex flex-col gap-2 h-[100px] overflow-y-auto pr-1 custom-scrollbar">
-                                <div v-for="evt in day.events" :key="evt.id" @click.stop="selectedCalendarEvent = evt" :class="['text-xs p-2 rounded-lg leading-tight border-l-4 shadow-sm cursor-pointer hover:opacity-80 transition-opacity', evt.status === 'APPROVED' ? 'bg-green-50 text-green-900 border-green-500 dark:bg-green-900/20 dark:text-green-300' : 'bg-blue-50 text-blue-900 border-blue-500 dark:bg-blue-900/20 dark:text-blue-300']" :title="evt.title + ' - ' + evt.status">
-                                    <strong class="block text-pup-maroon dark:text-pup-gold truncate mb-0.5">[[ evt.org ]]</strong>
-                                    <span class="block font-bold truncate">[[ evt.title ]]</span>
-                                    <span class="block mt-0.5 opacity-80 text-[10px]"><i class="ph-bold ph-clock"></i> [[ evt.time ]]</span>
-                                </div>
-                            </div>
-                        </template>
+                    <!-- Calendar Body -->
+                    <div class="p-4 sm:p-6 overflow-y-auto flex-grow bg-white dark:bg-pup-darkcard">
+                        <div id="adviser-calendar" class="w-full h-full min-h-[500px]"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Calendar Event Details Modal -->
-                <div v-if="selectedCalendarEvent" v-cloak class="absolute inset-0 bg-black/80 z-[7000] flex items-center justify-center p-4 backdrop-blur-md animate-fade-in" @click.self="selectedCalendarEvent = null">
-                    <div class="bg-white dark:bg-[#151515] w-full max-w-xl rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col relative transform transition-all">
-                        <!-- Close Button -->
-                        <button @click="selectedCalendarEvent = null" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-red-600 text-white flex items-center justify-center transition-colors z-10 backdrop-blur-sm border border-white/20">
-                            <i class="ph-bold ph-x text-lg"></i>
-                        </button>
-
+    <!-- Calendar Event Details Modal -->
+    <div v-show="selectedCalendarEvent" v-cloak class="fixed inset-0 z-[7000] flex items-center justify-center p-0 sm:p-6">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="closeCalendarEventDetail"></div>
+        <div class="fixed inset-0 flex items-center justify-center pointer-events-none p-0 sm:p-6 z-10">
+            <div class="ios-pop-wrapper pointer-events-auto flex items-center justify-center w-full h-full" :class="{'ios-pop-wrapper-close': isEventDetailClosing}" id="event-detail-wrapper">
+                <div class="relative bg-white dark:bg-[#151515] w-full h-full sm:max-w-2xl sm:max-h-[90vh] sm:rounded-3xl shadow-2xl overflow-hidden border-0 sm:border border-gray-100 dark:border-gray-800 flex flex-col">
+                    <!-- Close Button -->
+                    <button @click="closeCalendarEventDetail" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-red-600 text-white flex items-center justify-center transition-colors z-10 backdrop-blur-sm border border-white/20">
+                        <i class="ph-bold ph-x text-lg"></i>
+                    </button>
+                    
+                    <div class="flex-grow overflow-y-auto hide-scrollbar">
                         <!-- Cover Photo Header -->
-                        <div class="h-48 sm:h-56 w-full relative bg-gray-900 flex-shrink-0">
-                            <img v-if="selectedCalendarEvent.cover_photo" :src="selectedCalendarEvent.cover_photo" class="w-full h-full object-cover opacity-90">
+                        <div class="h-64 sm:h-72 w-full relative bg-gray-900 flex-shrink-0">
+                            <img v-if="(selectedCalendarEvent?.image || selectedCalendarEvent?.cover_photo || selectedCalendarEvent?.extendedProps?.cover_photo) && !selectedCalendarEvent?.imageError" 
+                                 :src="selectedCalendarEvent.image || selectedCalendarEvent.cover_photo || selectedCalendarEvent.extendedProps?.cover_photo" 
+                                 @error="selectedCalendarEvent.imageError = true"
+                                 class="w-full h-full object-cover opacity-90">
                             <div v-else class="w-full h-full flex items-center justify-center bg-gray-800">
                                 <i class="ph-fill ph-image text-4xl text-gray-600"></i>
                             </div>
-                            <div class="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-[#151515] to-transparent"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                            <div class="absolute bottom-6 left-6 right-6">
+                                <div class="bg-pup-maroon text-white dark:bg-pup-gold dark:text-black inline-block font-black text-[0.65rem] px-3 py-1 rounded-full uppercase mb-2 shadow-sm border border-pup-maroon/30 dark:border-pup-gold/30">
+                                    [[ selectedCalendarEvent?.org || selectedCalendarEvent?.extendedProps?.org || 'Org' ]]
+                                </div>
+                                <h2 class="text-3xl sm:text-4xl font-black text-white leading-tight">[[ selectedCalendarEvent?.title ]]</h2>
+                            </div>
                         </div>
 
                         <!-- Details Content -->
-                        <div class="px-8 pb-8 pt-4 -mt-10 relative z-10 text-center">
-                            <span class="inline-block px-4 py-1 rounded-full bg-pup-maroon/20 text-pup-maroon dark:bg-pup-gold/20 dark:text-pup-gold text-xs font-black uppercase tracking-widest border border-pup-maroon/30 dark:border-pup-gold/30 mb-4 shadow-sm">
-                                [[ selectedCalendarEvent.org ]]
-                            </span>
-                            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-6 leading-tight">[[ selectedCalendarEvent.title ]]</h2>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-                                <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex items-center gap-4 transition hover:bg-gray-100 dark:hover:bg-[#222]">
-                                    <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                                        <i class="ph-bold ph-calendar-blank text-2xl"></i>
-                                    </div>
-                                    <div>
-                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Date & Time</span>
-                                        <strong class="text-gray-900 dark:text-white block text-sm">[[ selectedCalendarEvent.date ]]</strong>
-                                        <span class="text-gray-500 dark:text-gray-400 text-xs font-medium">[[ selectedCalendarEvent.time ]]</span>
+                        <div class="p-6 sm:p-8">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-gray-50 dark:bg-black/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                <div>
+                                    <div class="text-xs font-bold uppercase text-gray-400 mb-1">Date & Time</div>
+                                    <div class="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> 
+                                        [[ selectedCalendarEvent?.date || selectedCalendarEvent?.extendedProps?.date ]] 
+                                        [[ selectedCalendarEvent?.time || selectedCalendarEvent?.extendedProps?.time ? ' • ' + (selectedCalendarEvent?.time || selectedCalendarEvent?.extendedProps?.time) : '' ]]
                                     </div>
                                 </div>
-                                
-                                <div class="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex items-center gap-4 transition hover:bg-gray-100 dark:hover:bg-[#222]">
-                                    <div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                                        <i class="ph-bold ph-map-pin text-2xl"></i>
-                                    </div>
-                                    <div>
-                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Venue</span>
-                                        <strong class="text-gray-900 dark:text-white block text-sm truncate w-full" :title="selectedCalendarEvent.venue">[[ selectedCalendarEvent.venue || 'TBA' ]]</strong>
+                                <div>
+                                    <div class="text-xs font-bold uppercase text-gray-400 mb-1">Venue</div>
+                                    <div class="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> 
+                                        [[ selectedCalendarEvent?.venue || selectedCalendarEvent?.extendedProps?.venue || 'TBA' ]]
                                     </div>
                                 </div>
                             </div>
+                            
+                            <h3 class="font-black text-[9px] text-gray-400 uppercase tracking-[0.4em] mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">Activity Description</h3>
+                            <p class="text-gray-500 dark:text-gray-400 text-xs leading-relaxed text-justify mb-10 font-medium whitespace-pre-wrap">[[ parsedCalendarDescription?.originalDesc || 'No description provided.' ]]</p>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -567,12 +719,18 @@
             setup() {
                 const isLoading = ref(true);
                 const isModalOpen = ref(false);
+                const isModalClosing = ref(false);
                 const isCalendarOpen = ref(false);
+                const isCalendarClosing = ref(false);
                 const selectedCalendarEvent = ref(null);
+                const isEventDetailClosing = ref(false);
+                let calendarInstance = null;
+
                 const selectedEvent = ref(null);
                 const actionLoading = ref(false);
                 const searchQuery = ref('');
                 const activeTab = ref('main');
+                const mobileDropdownOpen = ref(false);
 
                 const isRejecting = ref(false);
                 const rejectReason = ref('');
@@ -605,41 +763,109 @@
                 }
                 const calendarEvents = ref(calendarParsedData);
 
-                // Calendar Logic
-                const currentMonth = ref(new Date().getMonth());
-                const currentYear = ref(new Date().getFullYear());
-                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-                const calendarDays = computed(() => {
-                    const year = currentYear.value;
-                    const month = currentMonth.value;
-                    const firstDay = new Date(year, month, 1).getDay();
-                    const daysInMonth = new Date(year, month + 1, 0).getDate();
-                    
-                    const days = [];
-                    for (let i = 0; i < firstDay; i++) {
-                        days.push({ day: null, events: [] });
+                // FullCalendar Logic
+                const openCalendarModal = (e) => {
+                    if (e) {
+                       document.documentElement.style.setProperty('--click-x', e.clientX + 'px');
+                       document.documentElement.style.setProperty('--click-y', e.clientY + 'px');
                     }
+                    isCalendarOpen.value = true;
+                    isCalendarClosing.value = false;
+                    document.body.style.overflow = 'hidden';
                     
-                    for (let i = 1; i <= daysInMonth; i++) {
-                        const m = (month + 1).toString().padStart(2, '0');
-                        const d = i.toString().padStart(2, '0');
-                        const dateString = `${year}-${m}-${d}`;
-                        
-                        const dayEvents = calendarEvents.value.filter(e => e.date === dateString);
-                        days.push({ day: i, events: dayEvents, isToday: new Date().toDateString() === new Date(year, month, i).toDateString() });
-                    }
-                    return days;
-                });
-
-                const prevMonth = () => {
-                    if (currentMonth.value === 0) { currentMonth.value = 11; currentYear.value--; }
-                    else { currentMonth.value--; }
+                    nextTick(() => {
+                        if (!calendarInstance) {
+                            const calEl = document.getElementById('adviser-calendar');
+                            calendarInstance = new FullCalendar.Calendar(calEl, {
+                                initialView: 'dayGridMonth',
+                                headerToolbar: {
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: 'dayGridMonth,timeGridWeek'
+                                },
+                                themeSystem: 'standard',
+                                events: calendarEvents.value.map(evt => {
+                                    let timeStr = "";
+                                    let displayTime = "";
+                                    if (evt.time || evt.start_time) {
+                                        const t = evt.time || evt.start_time;
+                                        displayTime = t;
+                                        if (t.includes('M')) {
+                                            const [time, modifier] = t.split(' ');
+                                            if (time && modifier) {
+                                                let [hours, minutes] = time.split(':');
+                                                if (hours === '12') hours = '00';
+                                                if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+                                                timeStr = 'T' + hours.toString().padStart(2, '0') + ':' + minutes + ':00';
+                                            }
+                                        } else {
+                                            timeStr = 'T' + t;
+                                        }
+                                    }
+                                    
+                                    const org = evt.org || evt.organization || '';
+                                    let bgColor = '#6b7280'; // gray for non-academic
+                                    let textColor = '#ffffff';
+                                    
+                                    const orgUpper = org.toUpperCase();
+                                    if (orgUpper === 'ITO') bgColor = '#800000'; // Maroon
+                                    else if (orgUpper === 'BEED') bgColor = '#2563eb'; // Blue
+                                    else if (orgUpper === 'YEO') { bgColor = '#eab308'; textColor = '#000000'; } // Yellow
+                                    else if (orgUpper === 'ITS') bgColor = '#000000'; // Black
+                                    else if (orgUpper === 'BPA') bgColor = '#dc2626'; // Red
+                                    
+                                    const displayTitle = `${displayTime} ${org}`.trim();
+                                    
+                                    return {
+                                        id: evt.id,
+                                        title: displayTitle,
+                                        start: evt.date, // Just the date guarantees it fits exactly in 1 day box
+                                        allDay: true,
+                                        display: 'block', // Ensure events are solid blocks
+                                        backgroundColor: bgColor,
+                                        borderColor: bgColor,
+                                        textColor: textColor,
+                                        extendedProps: evt
+                                    };
+                                }),
+                                eventClick: function(info) {
+                                    openCalendarEventDetail(info.event, info.jsEvent);
+                                },
+                                height: '100%'
+                            });
+                        }
+                        calendarInstance.render();
+                        setTimeout(() => {
+                            if (calendarInstance) calendarInstance.updateSize();
+                        }, 400); // Wait for modal animation to finish
+                    });
                 };
 
-                const nextMonth = () => {
-                    if (currentMonth.value === 11) { currentMonth.value = 0; currentYear.value++; }
-                    else { currentMonth.value++; }
+                const closeCalendarModal = () => {
+                    isCalendarClosing.value = true;
+                    setTimeout(() => {
+                        isCalendarOpen.value = false;
+                        document.body.style.overflow = '';
+                    }, 350);
+                };
+
+                const openCalendarEventDetail = (event, jsEvent) => {
+                    if (jsEvent) {
+                       const wrapper = document.getElementById('event-detail-wrapper');
+                       if (wrapper) {
+                           wrapper.style.setProperty('--click-x', jsEvent.clientX + 'px');
+                           wrapper.style.setProperty('--click-y', jsEvent.clientY + 'px');
+                       }
+                    }
+                    selectedCalendarEvent.value = event.extendedProps;
+                    isEventDetailClosing.value = false;
+                };
+
+                const closeCalendarEventDetail = () => {
+                    isEventDetailClosing.value = true;
+                    setTimeout(() => {
+                        selectedCalendarEvent.value = null;
+                    }, 350);
                 };
 
                 const activeTabLabel = computed(() => {
@@ -738,6 +964,30 @@
                     }
                 });
 
+                const parsedCalendarDescription = computed(() => {
+                    if (!selectedCalendarEvent.value) return null;
+                    let desc = selectedCalendarEvent.value.description || "";
+                    if (!desc) return null;
+
+                    if (desc.includes("[RESCHEDULE]")) {
+                        let origDescStr = desc;
+                        desc.split('|').forEach(part => {
+                            if(part.includes("Desc:")) origDescStr = part.split('Desc:')[1].trim();
+                        });
+                        return { originalDesc: origDescStr };
+                    }
+                    else if (desc.includes("[NEW EVENT]")) {
+                        let origDescStr = desc;
+                        desc.split('|').forEach(part => {
+                            if(part.includes("Desc:")) origDescStr = part.split('Desc:')[1].trim();
+                        });
+                        return { originalDesc: origDescStr }; 
+                    }
+                    else {
+                        return { originalDesc: desc };
+                    }
+                });
+
                 const activeDocs = computed(() => {
                     if (!selectedEvent.value) return [];
                     const e = selectedEvent.value;
@@ -758,12 +1008,31 @@
                     }
                 });
 
-                const openModal = (event) => {
+                const generatedLetterTabs = computed(() => {
+                    if (!selectedEvent.value) return [];
+                    const tabs = [
+                        { id: 'main', label: activeTabLabel.value }
+                    ];
+                    if (selectedEvent.value.requirement_mode != 2) {
+                        tabs.push({ id: 'excuse', label: 'Excuse & Equipment' });
+                    }
+                    return tabs;
+                });
+
+                const openModal = (event, jsEvent) => {
+                    if (jsEvent) {
+                       const wrapper = document.getElementById('review-modal-wrapper');
+                       if (wrapper) {
+                           wrapper.style.setProperty('--click-x', jsEvent.clientX + 'px');
+                           wrapper.style.setProperty('--click-y', jsEvent.clientY + 'px');
+                       }
+                    }
                     selectedEvent.value = event;
                     activeTab.value = 'main';
                     isRejecting.value = false;
                     rejectReason.value = '';
                     isModalOpen.value = true;
+                    isModalClosing.value = false;
                     document.body.style.overflow = 'hidden';
 
                     nextTick(() => {
@@ -772,9 +1041,12 @@
                 };
 
                 const closeModal = () => {
-                    isModalOpen.value = false;
-                    document.body.style.overflow = '';
-                    setTimeout(() => { selectedEvent.value = null; }, 300);
+                    isModalClosing.value = true;
+                    setTimeout(() => {
+                        isModalOpen.value = false;
+                        document.body.style.overflow = '';
+                        selectedEvent.value = null;
+                    }, 350);
                 };
 
                 const viewActualDoc = (title, url) => {
@@ -827,12 +1099,12 @@
                 };
 
                 return {
-                    isLoading, events, filteredEvents, searchQuery, isModalOpen, selectedEvent,
-                    actionLoading, isRejecting, rejectReason, activeTab, activeTabLabel,
+                    isLoading, events, filteredEvents, searchQuery, isModalOpen, isModalClosing, selectedEvent,
+                    actionLoading, isRejecting, rejectReason, activeTab, mobileDropdownOpen, activeTabLabel,
                     openModal, closeModal, approveEvent, initiateReject, cancelReject, confirmReject,
-                    parsedDescription, switchDocTab, assignedOrgAcronym,
+                    parsedDescription, parsedCalendarDescription, switchDocTab, assignedOrgAcronym,
                     isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
-                    activeDocs, currentMonth, currentYear, monthNames, calendarDays, prevMonth, nextMonth, isCalendarOpen, selectedCalendarEvent
+                    activeDocs, generatedLetterTabs, isCalendarOpen, isCalendarClosing, selectedCalendarEvent, isEventDetailClosing, openCalendarModal, closeCalendarModal, openCalendarEventDetail, closeCalendarEventDetail
                 }
             }
         }).mount('#app');
