@@ -97,52 +97,45 @@
     <!-- Action Bar -->
     <div class="p-3 sm:p-5 border-b border-gray-100 dark:border-gray-800 w-full flex flex-row items-start gap-2 sm:gap-4 justify-between relative z-10 transition-all duration-300">
         
-        <div v-if="isLoading" class="flex justify-between items-center w-full">
-            <div class="w-full sm:w-72 h-10 skeleton-shimmer rounded-xl"></div>
-            <div class="w-24 sm:w-32 h-10 skeleton-shimmer rounded-xl"></div>
+        <!-- Clickaway Overlay to close dropdown when clicking outside -->
+        <div v-if="isFilterExpanded" @click="isFilterExpanded = false" class="fixed inset-0 z-0"></div>
+
+        <!-- Search Bar -->
+        <div class="relative flex-1 sm:flex-none sm:w-80 lg:w-96 shrink z-10">
+            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+            <input type="text" v-model="searchQuery" placeholder="Search events e.g Assembly" class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2.5 text-[12px] sm:text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400 h-[40px] sm:h-[44px]">
         </div>
-        
-        <template v-else>
-            <!-- Clickaway Overlay to close dropdown when clicking outside -->
-            <div v-if="isFilterExpanded" @click="isFilterExpanded = false" class="fixed inset-0 z-0"></div>
 
-            <!-- Search Bar -->
-            <div class="relative flex-1 sm:flex-none sm:w-80 lg:w-96 shrink z-10">
-                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                <input type="text" v-model="searchQuery" placeholder="Search events e.g Assembly" class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2.5 text-[12px] sm:text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400 h-[40px] sm:h-[44px]">
-            </div>
-
-            <!-- Filter Card (Expands inline to push content down) -->
-            <div class="relative shrink-0 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 w-[140px] sm:w-48 flex flex-col z-10" :class="isFilterExpanded ? 'shadow-md border-gray-300 dark:border-gray-600' : 'shadow-sm'">
-                <!-- Toggle Button (Height is 2px smaller to account for parent borders) -->
-                <button @click="isFilterExpanded = !isFilterExpanded" class="w-full px-3 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 font-bold text-[11px] sm:text-sm text-gray-700 dark:text-gray-300 h-[38px] sm:h-[42px] transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                    <div class="flex items-center gap-1.5 sm:gap-2 truncate">
-                        <i class="ph-bold ph-funnel text-sm sm:text-lg shrink-0"></i>
-                        <span class="inline truncate">Filter: [[ statusFilter === 'In Progress' ? 'In Prog' : statusFilter ]]</span>
-                    </div>
-                    <i class="ph-bold ph-caret-down transition-transform duration-300 text-sm sm:text-base shrink-0" :class="{ 'rotate-180': isFilterExpanded }"></i>
-                </button>
-                
-                <!-- Inline Drawer Menu -->
-                <div class="grid transition-all duration-300 ease-in-out"
-                     :class="isFilterExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
-                    <div class="overflow-hidden flex flex-col px-1.5 sm:px-2 pb-1.5 sm:pb-2 gap-1 border-t border-gray-100 dark:border-gray-800">
-                        <button @click="selectFilter('All')" :class="statusFilter === 'All' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between mt-1.5">
-                            All records <i v-if="statusFilter === 'All'" class="ph-bold ph-check text-xs"></i>
-                        </button>
-                        <button @click="selectFilter('Approved')" :class="statusFilter === 'Approved' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
-                            Published <i v-if="statusFilter === 'Approved'" class="ph-bold ph-check text-xs"></i>
-                        </button>
-                        <button @click="selectFilter('In Progress')" :class="statusFilter === 'In Progress' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
-                            In progress <i v-if="statusFilter === 'In Progress'" class="ph-bold ph-check text-xs"></i>
-                        </button>
-                        <button @click="selectFilter('Rejected')" :class="statusFilter === 'Rejected' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
-                            Rejected <i v-if="statusFilter === 'Rejected'" class="ph-bold ph-check text-xs"></i>
-                        </button>
-                    </div>
+        <!-- Filter Card (Expands inline to push content down) -->
+        <div class="relative shrink-0 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 w-[140px] sm:w-48 flex flex-col z-10" :class="isFilterExpanded ? 'shadow-md border-gray-300 dark:border-gray-600' : 'shadow-sm'">
+            <!-- Toggle Button (Height is 2px smaller to account for parent borders) -->
+            <button @click="isFilterExpanded = !isFilterExpanded" class="w-full px-3 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 font-bold text-[11px] sm:text-sm text-gray-700 dark:text-gray-300 h-[38px] sm:h-[42px] transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                <div class="flex items-center gap-1.5 sm:gap-2 truncate">
+                    <i class="ph-bold ph-funnel text-sm sm:text-lg shrink-0"></i>
+                    <span class="inline truncate">Filter: [[ statusFilter === 'In Progress' ? 'In Prog' : statusFilter ]]</span>
+                </div>
+                <i class="ph-bold ph-caret-down transition-transform duration-300 text-sm sm:text-base shrink-0" :class="{ 'rotate-180': isFilterExpanded }"></i>
+            </button>
+            
+            <!-- Inline Drawer Menu -->
+            <div class="grid transition-all duration-300 ease-in-out"
+                 :class="isFilterExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                <div class="overflow-hidden flex flex-col px-1.5 sm:px-2 pb-1.5 sm:pb-2 gap-1 border-t border-gray-100 dark:border-gray-800">
+                    <button @click="selectFilter('All')" :class="statusFilter === 'All' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between mt-1.5">
+                        All records <i v-if="statusFilter === 'All'" class="ph-bold ph-check text-xs"></i>
+                    </button>
+                    <button @click="selectFilter('Approved')" :class="statusFilter === 'Approved' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
+                        Published <i v-if="statusFilter === 'Approved'" class="ph-bold ph-check text-xs"></i>
+                    </button>
+                    <button @click="selectFilter('In Progress')" :class="statusFilter === 'In Progress' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
+                        In progress <i v-if="statusFilter === 'In Progress'" class="ph-bold ph-check text-xs"></i>
+                    </button>
+                    <button @click="selectFilter('Rejected')" :class="statusFilter === 'Rejected' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
+                        Rejected <i v-if="statusFilter === 'Rejected'" class="ph-bold ph-check text-xs"></i>
+                    </button>
                 </div>
             </div>
-        </template>
+        </div>
     </div>
 
     <div class="overflow-x-auto hidden sm:block">
@@ -157,20 +150,9 @@
                 </tr>
             </thead>
 
-            <!-- Skeleton Body -->
-            <tbody v-if="isLoading" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
-                <tr v-for="i in 8" :key="i">
-                    <td class="py-4 px-6"><div class="h-4 w-16 skeleton-shimmer rounded"></div></td>
-                    <td class="py-4 px-6"><div class="h-4 w-56 skeleton-shimmer rounded"></div></td>
-                    <td class="py-4 px-6"><div class="h-4 w-24 skeleton-shimmer rounded"></div></td>
-                    <td class="py-4 px-6"><div class="h-6 w-28 skeleton-shimmer rounded-lg"></div></td>
-                    <td class="py-4 px-6 flex justify-center"><div class="h-9 w-24 skeleton-shimmer rounded-lg"></div></td>
-                </tr>
-            </tbody>
-
             <!-- Real Data Body -->
-            <tbody v-else-if="filteredEvents.length > 0" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
-                <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50/80 dark:hover:bg-[#151515] transition-colors cursor-pointer group" @click="openModal(event, $event)">
+            <tbody v-if="filteredEvents.length > 0" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
+                <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50/80 dark:hover:bg-[#151515] transition-colors group">
                     <td class="py-4 px-6 font-black text-pup-maroon dark:text-pup-gold text-xs tracking-tight">[[ event.org ]]</td>
                     <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
                     <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap text-[13px]">[[ event.date ]]</td>
@@ -212,15 +194,8 @@
 
     <!-- Mobile List View (Hidden on Desktop) -->
     <div class="sm:hidden flex flex-col gap-3 p-4 bg-gray-50/50 dark:bg-[#111]/50 border-t border-gray-100 dark:border-gray-800">
-        <!-- Skeleton -->
-        <div v-if="isLoading" class="p-4 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col gap-3" v-for="i in 4" :key="'mob-skel-'+i">
-            <div class="h-4 w-1/4 skeleton-shimmer rounded"></div>
-            <div class="h-5 w-3/4 skeleton-shimmer rounded"></div>
-            <div class="h-3 w-1/2 skeleton-shimmer rounded mt-1"></div>
-        </div>
-
         <!-- Empty states -->
-        <div v-else-if="filteredEvents.length === 0" class="py-12 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm text-center text-gray-500 font-medium px-4">
+        <div v-if="filteredEvents.length === 0" class="py-12 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm text-center text-gray-500 font-medium px-4">
             <div class="inline-block mb-4">
                 <i class="ph-bold ph-magnifying-glass text-4xl text-gray-400 opacity-50 block"></i>
             </div>
@@ -231,7 +206,7 @@
         </div>
 
         <!-- List Items -->
-        <div v-else v-for="event in filteredEvents" :key="'mob-'+event.id" @click="openModal(event, $event)" class="p-4 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors cursor-pointer relative overflow-hidden group">
+        <div v-else v-for="event in filteredEvents" :key="'mob-'+event.id" class="p-4 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors relative overflow-hidden group">
             <div class="flex justify-between items-start mb-2">
                 <span class="font-extrabold text-pup-maroon dark:text-pup-gold text-xs uppercase tracking-wider">[[ event.org ]]</span>
                 <!-- Status Badge -->
@@ -245,11 +220,15 @@
                     In Progress
                 </span>
             </div>
-            <h4 class="font-bold text-gray-900 dark:text-white text-[15px] leading-snug mb-3 pr-6">[[ event.title ]]</h4>
-            <div class="flex items-center text-[10px] text-gray-500 dark:text-gray-400 font-bold gap-3 uppercase tracking-wider">
-                <span class="flex items-center gap-1"><i class="ph-bold ph-calendar-blank text-lg"></i> [[ event.date ]]</span>
+            <h4 class="font-bold text-gray-900 dark:text-white text-[15px] leading-snug mb-3">[[ event.title ]]</h4>
+            <div class="flex items-center justify-between mt-3">
+                <div class="flex items-center text-[10px] text-gray-500 dark:text-gray-400 font-bold gap-3 uppercase tracking-wider">
+                    <span class="flex items-center gap-1"><i class="ph-bold ph-calendar-blank text-lg"></i> [[ event.date ]]</span>
+                </div>
+                <button @click="openModal(event, $event)" class="bg-gray-100 hover:bg-pup-maroon dark:bg-gray-800 dark:hover:bg-pup-gold text-gray-700 hover:text-white dark:text-gray-300 dark:hover:text-black font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-lg transition-all inline-flex items-center gap-2 border border-gray-200 dark:border-gray-700 shadow-sm active:scale-95">
+                    <i class="ph-bold ph-eye text-sm"></i> Details
+                </button>
             </div>
-            <i class="ph-bold ph-caret-right absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-300 dark:text-gray-600 group-hover:text-pup-maroon dark:group-hover:text-pup-gold transition-colors text-xl"></i>
         </div>
     </div>
 </div>
