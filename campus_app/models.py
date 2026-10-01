@@ -8,6 +8,7 @@ class OrgProfile(models.Model):
     organization = models.CharField(max_length=50)
     profile_picture = models.ImageField(upload_to='profiles/', null=True, blank=True)
     cover_photo = models.ImageField(upload_to='covers/', null=True, blank=True)
+    year_level = models.CharField(max_length=20, default='1st Year')
     face_encoding = models.TextField(null=True, blank=True)
     
     email_notifications = models.BooleanField(default=True)

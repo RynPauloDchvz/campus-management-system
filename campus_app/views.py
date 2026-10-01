@@ -3382,10 +3382,12 @@ def manage_accounts_view(request):
     
     for s in students:
         status = 'Active' if s.is_verified else 'Pending'
+        avatar_url = s.profile_picture.url if s.profile_picture else f"https://ui-avatars.com/api/?name={s.full_name}&background=800000&color=fff"
+        cover_url = s.cover_photo.url if s.cover_photo else ""
         student_data.append({
             'id': s.id, 'name': s.full_name, 'email': s.email_address, 'username': s.student_number,
             'org': s.organization, 'year': s.year_level, 'birthdate': str(s.birthdate) if s.birthdate else '',
-            'status': status, 'avatar': f"https://ui-avatars.com/api/?name={s.full_name}&background=800000&color=fff"
+            'status': status, 'avatar': avatar_url, 'cover': cover_url
         })
         
     return render(request, 'admin_dashboard/manage_accounts.html', {'students_json': json.dumps(student_data)})
@@ -3397,11 +3399,13 @@ def manage_organizers_view(request):
     org_data = []
     for profile in org_profiles:
         name = profile.user.first_name if profile.user.first_name else "Organizer"
+        avatar_url = profile.profile_picture.url if profile.profile_picture else f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
         org_data.append({
             'id': profile.user.id, 'name': name, 'username': profile.user.username,
             'email': profile.user.email,
             'org': profile.organization, 'status': 'Active',
-            'avatar': f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
+            'year_level': profile.year_level,
+            'avatar': avatar_url
         })
     return render(request, 'admin_dashboard/student_org.html', {'organizers_json': json.dumps(org_data)})
 
@@ -3434,10 +3438,13 @@ def student_api_action(request):
         try:
             data = json.loads(request.body)
             if data.get('action') == 'deactivate':
-                student = Student.objects.get(id=data.get('id'))
-                student.user.is_active = False 
-                student.user.save()
-                return JsonResponse({"status": "success", "message": "Student deactivated and moved to History."})
+                ids = str(data.get('id')).split(',')
+                for id_str in ids:
+                    if id_str.strip():
+                        student = Student.objects.get(id=int(id_str.strip()))
+                        student.user.is_active = False 
+                        student.user.save()
+                return JsonResponse({"status": "success", "message": f"{len(ids)} Student(s) deactivated and moved to History."})
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
     return JsonResponse({"status": "error", "message": "Invalid request"})
@@ -3455,7 +3462,7 @@ def organizer_api_action(request):
                 user = User.objects.create_user(username=username, password=data.get('password'), email=data.get('email', ''))
                 user.first_name = data.get('name') 
                 user.save()
-                OrgProfile.objects.create(user=user, organization=data.get('org'))
+                OrgProfile.objects.create(user=user, organization=data.get('org'), year_level=data.get('year_level', '1st Year'))
                 return JsonResponse({"status": "success", "message": f"Account for {data.get('org')} successfully created!"})
 
             elif action == 'edit':
@@ -3474,14 +3481,17 @@ def organizer_api_action(request):
                     cache.set(f'reset_pwd_{user.username}', data.get('password'), timeout=300)
                 user.save()
                 org_profile.organization = data.get('org')
+                org_profile.year_level = data.get('year_level', org_profile.year_level)
                 org_profile.save()
                 return JsonResponse({"status": "success", "message": "Account credentials updated successfully!"})
 
             elif action == 'delete': 
-                user_id = data.get('id')
-                user = User.objects.get(id=user_id)
-                user.is_active = False 
-                user.save()
+                user_ids = str(data.get('id')).split(',')
+                for uid in user_ids:
+                    if uid.strip():
+                        user = User.objects.get(id=uid.strip())
+                        user.is_active = False 
+                        user.save()
                 return JsonResponse({"status": "success", "message": "Org access deactivated and moved to History."})
 
         except Exception as e: return JsonResponse({"status": "error", "message": str(e)})

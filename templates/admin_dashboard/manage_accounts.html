@@ -8,8 +8,9 @@
 
 {% block extra_css %}
 <style>
+    /* --- MANAGE ACCOUNTS SPECIFIC STYLES --- */
     .actions-dropdown { position: relative; display: inline-block; }
-    .actions-menu { display: none; position: absolute; right: 0; top: 100%; background: var(--card-bg); min-width: 160px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index: 100; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
+    .actions-menu { display: none; position: absolute; right: 0; top: 100%; background: var(--card-bg); min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index: 100; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
     .actions-dropdown.active .actions-menu { display: block; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     .action-item { padding: 10px 15px; display: flex; align-items: center; gap: 10px; color: var(--text-main); text-decoration: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
@@ -29,64 +30,162 @@
     }
     .user-username { font-size: 0.75rem; color: var(--text-muted); }
 
-    /* 🟢 EXACT MATCH PROFILE VIEW MODAL 🟢 */
-    #profileModalBox { max-width: 420px; padding: 0; border-radius: 20px; overflow: hidden; background: #ffffff; position: relative; }
-    .profile-cover { width: 100%; height: 140px; background-color: #111; background-image: url('{% static "images/PUP1.jpg" %}'); background-size: cover; background-position: center; position: relative; }
-    .profile-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.2s; z-index: 10; font-family: sans-serif; font-size: 1.1rem; }
-    .profile-close:hover { background: var(--danger); }
-    
-    .profile-info { padding: 60px 30px 30px 30px; text-align: left; position: relative; background: #ffffff; }
-    .profile-avatar-container { position: absolute; top: -55px; left: 30px; }
-    .profile-avatar-container img { width: 110px; height: 110px; border-radius: 50%; border: 5px solid #ffffff; background: #ffffff; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    
-    .profile-name { font-size: 1.7rem; font-weight: 900; color: #111827; margin: 0; line-height: 1.2; font-family: 'Inter', sans-serif; letter-spacing: -0.5px; }
-    .profile-id { font-size: 0.95rem; font-weight: 800; color: #800000; margin-top: 5px; margin-bottom: 25px; font-family: 'Inter', sans-serif; }
-    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .profile-card-stat { border: 1px solid #e5e7eb; border-radius: 12px; padding: 15px; text-align: center; background: #ffffff; }
-    .profile-card-stat small { display: block; font-size: 0.65rem; font-weight: 800; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-family: 'Inter', sans-serif; }
-    .profile-card-stat span { display: block; font-size: 1rem; font-weight: 800; color: #111827; font-family: 'Inter', sans-serif; }
-    
-    /* Stylized UI Elements for Modal */
-    .cheesecake-title { font-family: 'Arial Black', Gadget, sans-serif; letter-spacing: -2px; opacity: 0.1; user-select: none; pointer-events: none; }
-    .name-tag { background-color: #2a211a; border: 2px solid #5a3a2a; color: #e5c7b3; box-shadow: 4px 4px 0px rgba(0,0,0,0.2); }
-    .info-box { background-color: #ffffff; border: 1px solid #e5e7eb; transition: background-color 0.3s, border-color 0.3s; }
-    [data-theme="dark"] .info-box { background-color: #151515; border-color: #1f2937; }
-    .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
-    /* 🟢 MANAGE ACCOUNTS MOBILE RESPONSIVENESS 🟢 */
+    /* Modals Custom Styles */
+    .form-group { margin-bottom: 15px; text-align: left; }
+    .form-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input { padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-family: 'Inter'; font-size: 0.9rem; width: 100%; outline: none; }
+    .form-input:focus { border-color: var(--accent); }
+
+    /* 🟢 STUDENT ORG MOBILE RESPONSIVENESS 🟢 */
     .manage-accounts-control { display: flex; gap: 15px; align-items: center; justify-content: flex-start; flex-wrap: wrap; }
     .manage-accounts-control .search-box { flex-grow: 1; min-width: 250px; }
-    .manage-accounts-control .history-btn { display: flex; align-items: center; gap: 8px; text-decoration: none; margin-left: auto; }
+    .action-buttons-group { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+    .manage-accounts-control .history-btn, .manage-accounts-control .create-btn { display: flex; align-items: center; gap: 8px; text-decoration: none; height: 42px; border-radius: 8px; padding: 0 15px; font-weight: 700; cursor: pointer; border: none; }
     
     @media (max-width: 900px) {
-        .manage-accounts-control { padding: 15px !important; gap: 10px; }
-        .manage-accounts-control .custom-select { order: 1; flex-grow: 1; width: calc(100% - 55px); }
-        .manage-accounts-control .history-btn { order: 2; width: 45px; height: 42px; padding: 0 !important; justify-content: center; flex-shrink: 0; margin-left: 0; border-radius: 8px; }
-        .manage-accounts-control .history-btn-text { display: none; }
-        .manage-accounts-control .search-box { order: 3; width: 100% !important; margin-top: 5px; }
+        .manage-accounts-control { padding: 15px !important; gap: 10px; display: flex !important; flex-wrap: wrap; align-items: flex-start !important; }
+        .manage-accounts-control .custom-dropdown { flex: 1; min-width: 0; order: 1; }
+        .manage-accounts-control .custom-dropdown-summary { justify-content: center; gap: 10px; }
+        
+        .action-buttons-group { display: flex; gap: 10px; flex-shrink: 0; margin-left: 0; order: 2; align-items: flex-start; }
+        .manage-accounts-control .history-btn, .manage-accounts-control .create-btn { width: 45px; padding: 0 !important; justify-content: center; margin: 0; }
+        .btn-text-hide { display: none; }
+        
+        .manage-accounts-control .search-box { width: 100% !important; margin-top: 0px; order: 3; }
+    }
 
-        /* Slide-up Bottom Sheet Modal for Profile details on Mobile */
-        #profileModal { align-items: flex-end; padding: 0; }
-        #profileModalBox { 
-            width: 100%; max-width: 100%; border-radius: 24px 24px 0 0; 
-            transform: translateY(100%) !important; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            margin: 0; max-height: 85vh; overflow-y: auto;
+    .manage-accounts-control { 
+        border: 1px solid var(--border) !important; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02) !important; 
+        background: var(--card-bg) !important; 
+        padding: 20px !important; 
+        margin-bottom: 25px;
+        border-radius: 16px;
+        align-items: flex-start !important;
+    }
+    
+    /* 🟢 ANIMATED DROPDOWN 🟢 */
+    .custom-dropdown {
+        position: relative;
+        background: var(--input-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-width: 200px;
+        transition: border-color 0.2s;
+    }
+    .custom-dropdown.active {
+        border-color: var(--accent);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .custom-dropdown-summary {
+        padding: 10px 15px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        list-style: none;
+        font-weight: 600;
+        color: var(--text-main);
+        transition: background 0.2s;
+    }
+    .custom-dropdown-summary:hover { background: var(--hover-bg); }
+    .custom-dropdown-menu {
+        display: flex;
+        flex-direction: column;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .custom-dropdown.active .custom-dropdown-menu {
+        max-height: 350px;
+        border-top: 1px solid var(--border);
+        overflow-y: auto;
+    }
+    .dropdown-item {
+        padding: 12px 15px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: 0.2s;
+        border-bottom: 1px solid var(--border);
+    }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover { background: var(--hover-bg); color: var(--accent); }
+    .dropdown-item.active { background: rgba(128,0,0,0.05); color: var(--accent); font-weight: 700; }
+    
+    /* 🟢 MOBILE LIST CSS 🟢 */
+    .mobile-card-list { display: none; flex-direction: column; gap: 15px; }
+    @media (max-width: 900px) {
+        #desktopTable { display: none; }
+        .mobile-card-list { display: flex; }
+    }
+    .student-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 12px; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: border-color 0.2s;}
+    .student-card.selected { border-color: var(--danger); background: rgba(220,53,69,0.02); }
+    .student-checkbox { display: none; width: 20px; height: 20px; margin-top: 8px; accent-color: var(--danger); pointer-events: none; }
+    .bulk-manage-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .bulk-manage-bar h3 { font-size: 1.2rem !important; }
+    .bulk-manage-bar button { padding: 8px 15px !important; font-size: 0.85rem !important; }
+    
+    .table-section { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+    .desktop-row.selected-row { background: rgba(220,53,69,0.02) !important; }
+    @media (max-width: 900px) { 
+        .bulk-manage-bar { padding: 0 0 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 12px; } 
+        .bulk-manage-bar h3 { font-size: 1rem !important; }
+        .bulk-manage-bar button { padding: 5px 10px !important; font-size: 0.75rem !important; }
+        .table-section { padding: 15px; }
+        #desktopTable { border: none !important; padding: 0 !important; background: transparent !important; box-shadow: none !important; max-height: none !important; }
+    }
+
+    #btnToggleManage {
+        background: var(--pup-maroon) !important;
+        color: white !important;
+        border: none !important;
+    }
+    .dark #btnToggleManage {
+        background: var(--pup-gold) !important;
+        color: black !important;
+    }
+
+
+    .manage-accounts-control .history-btn {
+        background: var(--pup-maroon) !important;
+        color: white !important;
+        border: none !important;
+    }
+    .dark .manage-accounts-control .history-btn {
+        background: var(--pup-gold) !important;
+        color: black !important;
+    }
+
+    /* MOBILE BOTTOM SHEET OVERRIDES */
+    @media (max-width: 900px) {
+        .modal.modal-bottom {
+            align-items: flex-end !important;
+            padding: 0 !important;
         }
-        #profileModal.active #profileModalBox { transform: translateY(0) !important; }
+        .modal.modal-bottom .modal-box {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            border-radius: 2.5rem 2.5rem 0 0 !important;
+            border-bottom: none !important;
+            transform: translateY(100%) !important;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .modal.modal-bottom.active .modal-box {
+            transform: translateY(0) !important;
+        }
     }
 </style>
+
 {% endblock %}
-
-
 
 {% block content %}
 <!-- 🟢 SKELETON LOADING STATE 🟢 -->
 <div id="skeleton-loader" class="fade-in">
     <div class="control-bar manage-accounts-control">
-        <div class="w-48 h-10 skeleton-shimmer rounded-lg custom-select"></div>
+        <div class="w-48 h-10 skeleton-shimmer rounded-lg custom-dropdown"></div>
         <div class="w-64 h-10 skeleton-shimmer rounded-lg search-box"></div>
-        <div class="w-40 h-10 skeleton-shimmer rounded-lg history-btn"></div>
+        <div class="w-10 h-10 skeleton-shimmer rounded-lg action-buttons-group"></div>
     </div>
     <div class="table-section">
         <div style="overflow-x: auto;">
@@ -101,76 +200,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
+                    <tr><td colspan="5"><div class="h-10 skeleton-shimmer rounded w-full mb-2"></div></td></tr>
+                    <tr><td colspan="5"><div class="h-10 skeleton-shimmer rounded w-full mb-2"></div></td></tr>
+                    <tr><td colspan="5"><div class="h-10 skeleton-shimmer rounded w-full mb-2"></div></td></tr>
                 </tbody>
             </table>
         </div>
@@ -180,40 +212,58 @@
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
 <div id="main-content-area" style="display: none;" class="fade-in">
     <div class="control-bar manage-accounts-control">
-        <select id="orgFilter" class="custom-select" onchange="filterUsers()">
-            <option value="all">All Organizations</option>
-            <option value="ITO">ITO</option>
-            <option value="ITS">ITS</option>
-            <option value="YEO">YEO</option>
-            <option value="FTO">FTO</option>
-            <option value="PAS">PAS</option>
-            <option value="CAO">CAO</option>
-            <option value="NEWS">NEWS (NEWSETTE)</option>
-            <option value="PRIDE">PRIDE (PRIDEVerse)</option>
-            <option value="ROTC">ROTC</option>
-            <option value="PUSO">PUSO</option>
-            <option value="SSC">SSC</option>
-        </select>
+        
+        <div class="custom-dropdown" id="orgFilterDropdown">
+            <div class="custom-dropdown-summary" onclick="toggleOrgDropdown(event)">
+                <span id="orgFilterLabel">All Organizations</span> <i class="ph-bold ph-caret-down"></i>
+            </div>
+            <div class="custom-dropdown-menu" id="orgFilterMenu">
+                <div class="dropdown-item active" onclick="selectOrgFilter(event, 'all', 'All Organizations')">All Organizations</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'ITO', 'ITO - Information Technology Org')">ITO - Information Technology Org</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'ITS', 'ITS - Institute of Technology Society')">ITS - Institute of Technology Society</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'YEO', 'YEO - Young Entrepreneurship Org')">YEO - Young Entrepreneurship Org</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'FTO', 'FTO - Future Teacher Org')">FTO - Future Teacher Org</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'PAS', 'PAS - Public Administration Society')">PAS - Public Administration Society</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'CAO', 'CAO - Culture and Arts')">CAO - Culture and Arts</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'NEWS', 'NEWS - NEWSETTE')">NEWS - NEWSETTE</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'PRIDE', 'PRIDE - PRIDEVerse')">PRIDE - PRIDEVerse</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'ROTC', 'ROTC - Reserve Officers Training Corps')">ROTC - Reserve Officers' Training Corps</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'PUSO', 'PUSO - PUP Unisan Sports Org')">PUSO - PUP Unisan Sports Org</div>
+                <div class="dropdown-item" onclick="selectOrgFilter(event, 'SSC', 'SSC - Supreme Student Council')">SSC - Supreme Student Council</div>
+            </div>
+        </div>
         
         <div class="search-box">
             <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search name or student ID..." onkeyup="filterUsers()" style="width: 100%;">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search Name or Student ID e.g Juan Dela Cruz, 2023..." onkeyup="filterUsers()" style="width: 100%;">
         </div>
         
-        <!-- 🟢 HISTORY BUTTON 🟢 -->
-        <a href="{% url 'account_history' %}" class="btn-cancel history-btn">
-            <i class="ph-bold ph-clock-counter-clockwise" style="font-size: 1.2rem;"></i> <span class="history-btn-text">Account History</span>
-        </a>
+        <div class="action-buttons-group">
+            <!-- 🟢 HISTORY BUTTON 🟢 -->
+            <a href="{% url 'account_history' %}?source=student" class="btn-cancel history-btn" title="Account History">
+                <i class="ph-bold ph-clock-counter-clockwise" style="font-size: 1.2rem;"></i> <span class="btn-text-hide">Account History</span>
+            </a>
+        </div>
     </div>
 
     <div class="table-section">
-        <div style="overflow-x: auto; max-height: 65vh;">
+        <!-- 🟢 MOBILE BULK ACTION BAR 🟢 -->
+        <div class="bulk-manage-bar" id="bulkManageBar">
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 900; text-transform: uppercase; color: var(--text-main); line-height: 1.1; flex-grow: 1;">Student List</h3>
+            <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
+                <button class="btn-cancel" id="btnToggleManage" onclick="toggleBulkManage()" style="padding: 5px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-pencil-simple"></i> Manage</button>
+                <button class="btn-primary" id="btnBulkDeactivate" onclick="openBulkDeleteModal()" style="display: none; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; background: var(--danger); border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-trash"></i> Deactivate</button>
+            </div>
+        </div>
+
+        <div id="desktopTable" style="overflow-x: auto; max-height: 65vh; border-radius: 16px;">
             <table id="usersTable">
                 <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
                     <tr>
-                        <th>Student Name</th>
+                        <th id="thCheckbox" style="display: none; width: 40px; text-align: center; padding-right: 0;"><i class="ph-bold ph-check-square" style="font-size: 1.1rem; color: var(--text-muted);"></i></th>
+                        <th>Student Details</th>
                         <th>Student ID</th>
-                        <th>Organization</th>
+                        <th>Assigned Org</th>
                         <th>Status</th>
                         <th style="text-align: center;">Actions</th>
                     </tr>
@@ -223,82 +273,81 @@
                 </tbody>
             </table>
         </div>
+        <div class="mobile-card-list" id="mobileCardList">
+            <!-- Data populated by JS -->
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block modals %}
-<!-- 🟢 PROFILE VIEW MODAL 🟢 -->
-<div id="profileModal" class="modal font-sans z-[5000]">
-    <div class="modal-box bg-white dark:bg-[#151515] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden border-t sm:border border-gray-200 dark:border-gray-800 transition-colors p-0 text-left" id="profileModalBox">
+<!-- 🟢 VIEW DETAILS MODAL (MOBILE) 🟢 -->
+<div id="viewDetailsModal" class="modal modal-bottom">
+    <div class="modal-box" style="max-width: 400px; text-align: left; padding: 0; border-radius: 1.5rem; overflow: hidden; position: relative;">
+        <!-- Mobile Handle -->
+        <div style="width: 45px; height: 6px; background: rgba(255,255,255,0.7); border-radius: 10px; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
         
-        <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-4 sm:hidden shrink-0"></div>
-
-        <button onclick="closeModal('profileModal')" class="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-[60] backdrop-blur-md border-none cursor-pointer">
-            <i class="ph-bold ph-x text-xl"></i>
-        </button>
-
-        <div class="overflow-y-auto hide-scrollbar flex-grow w-full">
-            <!-- Cover Photo Area -->
-            <div class="h-40 sm:h-48 w-full relative bg-gray-200 dark:bg-gray-800 shrink-0">
-                <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover opacity-90" id="viewCover">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                
-                <div class="absolute inset-x-0 bottom-4 text-center">
-                    <h3 class="cheesecake-title text-4xl font-black italic tracking-tighter text-white uppercase select-none m-0">CHEESECAKE</h3>
-                </div>
+        <!-- Header Image & Name Area -->
+        <div id="v_cover_container" style="height: 140px; background: var(--card-bg); background-size: cover; background-position: center; border-bottom: 1px solid var(--border); position: relative;">
+            <button onclick="closeModal('viewDetailsModal')" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; color: white; z-index: 50;"><i class="ph-bold ph-x"></i></button>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 40px; background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%); z-index: 1;"></div>
+        </div>
+        <div style="padding: 0 20px 20px; text-align: center; border-bottom: 1px solid var(--border); position: relative; margin-top: -55px;">
+            <div style="width: 110px; height: 110px; margin: 0 auto 10px; border-radius: 50%; overflow: hidden; border: 4px solid var(--card-bg); box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; z-index: 2; background: var(--card-bg);">
+                <img id="v_avatar" src="" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
+            <h3 id="v_name" style="margin: 0 0 5px; font-size: 1.3rem; font-weight: 900; color: var(--text-main); line-height: 1.2;"></h3>
+            <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Student</span>
+        </div>
 
-            <!-- Profile Identity Section -->
-            <div class="px-6 sm:px-8 pb-6 relative -mt-12 flex flex-col sm:flex-row items-center sm:items-end gap-5">
-                <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-[#151515] overflow-hidden bg-white dark:bg-gray-900 shadow-xl shrink-0 z-20">
-                    <img id="viewAvatar" src="" class="w-full h-full object-cover">
+        <!-- Info Grid -->
+        <div style="padding: 20px 15px; background: var(--input-bg);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Student ID</span>
+                    <span id="v_username" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
-                
-                <div class="flex-1 name-tag py-3 px-6 rounded-2xl flex items-center justify-center text-center shadow-lg mb-2 sm:mb-4 w-full sm:w-auto">
-                    <h4 id="viewName" class="text-lg sm:text-xl font-black uppercase tracking-tight leading-tight m-0">--</h4>
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Organization</span>
+                    <span id="v_org" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--accent); text-transform: uppercase; word-break: break-all;"></span>
                 </div>
-            </div>
-
-            <!-- Info Grid -->
-            <div class="px-6 sm:px-8 pb-8">
-                <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
-                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Student No.</span>
-                        <span id="viewId" class="block text-sm sm:text-base font-black text-red-600 dark:text-red-500 tracking-tight">--</span>
-                    </div>
-                    
-                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
-                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Organization</span>
-                        <span id="viewOrg" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
-                    </div>
-                    
-                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
-                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Year Level</span>
-                        <span id="viewYear" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
-                    </div>
-
-                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
-                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Birthdate</span>
-                        <span id="viewBirth" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
-                    </div>
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Year Level</span>
+                    <span id="v_year" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
+                </div>
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Birthday</span>
+                    <span id="v_birthdate" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
             </div>
         </div>
+        <input type="hidden" id="v_id">
     </div>
 </div>
 
-<!-- 🟢 DEACTIVATE MODAL 🟢 -->
-<div id="deactivateModal" class="modal">
+<!-- 🟢 CUSTOM ALERT MODAL 🟢 -->
+<div id="alertModal" class="modal">
+    <div class="modal-box" style="max-width: 300px; text-align: center; padding: 25px;">
+        <div style="width: 60px; height: 60px; background: rgba(220,53,69,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+            <i class="ph-fill ph-warning-circle" style="font-size: 2.2rem; color: var(--danger);"></i>
+        </div>
+        <h3 style="margin: 0 0 10px; font-size: 1.1rem; font-weight: 800; color: var(--text-main);">Action Required</h3>
+        <p id="alertModalMessage" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Please select at least one account.</p>
+        <button onclick="closeModal('alertModal')" class="btn-cancel" style="width: 100%; justify-content: center; padding: 12px; font-weight: 800;">OK</button>
+    </div>
+</div>
+
+<!-- 🟢 DELETE/DEACTIVATE MODAL 🟢 -->
+<div id="deleteModal" class="modal">
     <div class="modal-box" style="max-width: 400px; text-align: center;">
         <i class="ph-fill ph-warning-circle" style="font-size: 4rem; color: var(--danger); margin-bottom: 15px;"></i>
-        <h3 class="modal-title" style="margin-bottom: 10px;">Deactivate Student?</h3>
+        <h3 class="modal-title" style="margin-bottom: 10px;">Deactivate Account?</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 25px;">
             Are you sure you want to deactivate <strong id="d_name" style="color: var(--text-main);"></strong>? Their record will be moved to Account History.
         </p>
         <input type="hidden" id="d_id">
         <div class="modal-actions" style="justify-content: center; gap: 10px;">
-            <button type="button" class="btn-cancel" onclick="closeModal('deactivateModal')">Cancel</button>
+            <button type="button" class="btn-cancel" onclick="closeModal('deleteModal')">Cancel</button>
             <button type="button" class="btn-primary" style="background: var(--danger);" onclick="submitAction('deactivate')">Yes, Deactivate</button>
         </div>
     </div>
@@ -308,26 +357,51 @@
 {% block extra_js %}
 <script>
     let usersData = JSON.parse('{{ students_json|escapejs|default:"[]" }}');
+    let isBulkManageActive = false;
+    let selectedUserIds = new Set();
 
-    function renderTable(data) {
+    function renderTable(data, searchString = "", orgFilter = "all") {
         const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
+        const mobileList = document.getElementById('mobileCardList');
+        if (tbody) tbody.innerHTML = '';
+        if (mobileList) mobileList.innerHTML = '';
         
-        if(data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted);">No active student accounts found.</td></tr>`;
+        if (data.length === 0) {
+            let messageHtml = '';
+            let iconClass = 'ph-magnifying-glass';
+            
+            if (searchString) {
+                messageHtml = `No student account found matching "<span style="color: var(--text-main);">${searchString}</span>"`;
+            } else {
+                if (orgFilter !== 'all') {
+                    iconClass = 'ph-users';
+                    messageHtml = `No students found in this organization. <br><span style="font-size:0.85rem; font-weight:500;">Please wait for students to enroll to fill the org.</span>`;
+                } else {
+                    iconClass = 'ph-users';
+                    messageHtml = `No student accounts found in the system.`;
+                }
+            }
+            
+            if(tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px 20px; color: var(--text-muted);"><i class="ph-bold ${iconClass}" style="font-size: 3rem; color: var(--border); margin-bottom: 10px; display: block;"></i><span style="font-weight: 600; font-size: 1rem; display: block; line-height: 1.4;">${messageHtml}</span></td></tr>`;
+            if(mobileList) mobileList.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-muted);"><i class="ph-bold ${iconClass}" style="font-size: 3rem; color: var(--border); margin-bottom: 10px; display: block;"></i><span style="font-weight: 600; font-size: 1rem; display: block; line-height: 1.4;">${messageHtml}</span></div>`;
             return;
         }
 
         data.forEach(user => {
             let badgeClass = user.status === 'Active' ? 'badge-approved' : 'badge-pending';
+            const safeAvatar = user.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
 
+            // Desktop Table Row
             const row = `
-                <tr>
+                <tr class="desktop-row" id="desktop-row-${user.id}" onclick="handleDesktopRowClick(${user.id})" style="cursor: default; transition: background 0.2s;">
+                    <td class="td-checkbox" style="display: ${isBulkManageActive ? 'table-cell' : 'none'}; width: 40px; text-align: center; vertical-align: middle;">
+                        <input type="checkbox" class="desktop-checkbox" id="chk-desktop-${user.id}" value="${user.id}" style="display: ${isBulkManageActive ? 'inline-block' : 'none'}; width: 18px; height: 18px; accent-color: var(--danger); pointer-events: none; margin: 0;">
+                    </td>
                     <td>
                         <div class="user-cell">
-                            <img src="${user.avatar}" class="user-avatar" style="cursor:pointer;" onclick="viewProfile(${user.id})">
+                            <img src="${safeAvatar}" class="user-avatar">
                             <div>
-                                <span class="user-name" style="cursor:pointer;" onclick="viewProfile(${user.id})">${user.name}</span>
+                                <span class="user-name">${user.name}</span>
                                 <span class="user-username">${user.email || 'Student'}</span>
                             </div>
                         </div>
@@ -336,81 +410,280 @@
                     <td style="font-weight: 800; color: var(--accent);">${user.org}</td>
                     <td><span class="badge ${badgeClass}">${user.status}</span></td>
                     <td style="text-align: center;">
-                        <div class="actions-dropdown" id="dropdown-${user.id}">
-                            <button class="btn-action-small" onclick="toggleMenu(${user.id})">
-                                <i class="ph-bold ph-dots-three-outline-vertical"></i> Manage
-                            </button>
-                            <div class="actions-menu" style="text-align:left;">
-                                <a class="action-item" onclick="viewProfile(${user.id})"><i class="ph-bold ph-user-circle"></i> View Profile</a>
-                                <hr style="border-color: var(--border); margin:0;">
-                                <a class="action-item danger" onclick="openDeactivateModal(${user.id})"><i class="ph-bold ph-warning-circle"></i> Deactivate Account</a>
-                            </div>
-                        </div>
+                        <button class="btn-action-small desktop-manage-dropdown" onclick="event.stopPropagation(); openViewModal(${user.id})" style="padding: 8px 12px; border-radius: 8px;">
+                            <i class="ph-bold ph-eye" style="font-size: 1.1rem; margin:0;"></i>
+                        </button>
                     </td>
                 </tr>
             `;
-            tbody.innerHTML += row;
+            if (tbody) tbody.innerHTML += row;
+
+            // Mobile Card Row
+            if (mobileList) {
+                const mobileCard = `
+                    <div class="student-card" id="student-card-${user.id}" onclick="handleCardClick(${user.id})" style="cursor: pointer;">
+                        <input type="checkbox" class="student-checkbox" id="chk-${user.id}" value="${user.id}">
+                        <img src="${safeAvatar}" class="user-avatar" style="width: 45px; height: 45px; border-radius: 50%;">
+                        <div style="flex-grow: 1;">
+                            <span class="user-name" style="font-size: 0.95rem; word-break: break-word;">${user.name}</span>
+                            <div style="display: flex; gap: 8px; align-items: center; margin-top: 3px;">
+                                <span style="font-size: 0.7rem; font-weight: 700; color: var(--accent);">${user.org}</span>
+                                <span class="badge ${badgeClass}" style="font-size: 0.6rem; padding: 2px 6px;">${user.status}</span>
+                            </div>
+                        </div>
+                        
+                    </div>
+                `;
+                mobileList.innerHTML += mobileCard;
+            }
         });
+
+        // Re-apply bulk manage state to new DOM elements if active
+        if (isBulkManageActive) {
+            document.querySelectorAll('.student-checkbox').forEach(chk => chk.style.display = 'block');
+            document.querySelectorAll('.desktop-checkbox').forEach(chk => {
+                chk.style.display = 'inline-block';
+                if (selectedUserIds.has(parseInt(chk.value))) {
+                    chk.checked = true;
+                    document.getElementById(`desktop-row-${chk.value}`).classList.add('selected-row');
+                }
+            });
+            document.querySelectorAll('.td-checkbox').forEach(td => td.style.display = 'table-cell');
+            const thCheck = document.getElementById('thCheckbox');
+            if(thCheck) thCheck.style.display = 'table-cell';
+            
+            document.querySelectorAll('.desktop-manage-dropdown').forEach(btn => btn.style.display = 'none');
+            document.querySelectorAll('.student-checkbox').forEach(chk => {
+                if (selectedUserIds.has(parseInt(chk.value))) {
+                    chk.checked = true;
+                    document.getElementById(`student-card-${chk.value}`).classList.add('selected');
+                }
+            });
+            document.querySelectorAll('.desktop-row').forEach(row => row.style.cursor = 'pointer');
+        }
     }
 
-    function filterUsers() {
+    // 🟢 ANIMATED DROPDOWN CONTROLS 🟢
+    function toggleOrgDropdown(e) {
+        if(e) e.stopPropagation();
+        const menu = document.getElementById('orgFilterMenu');
+        const isClosed = menu.style.maxHeight === '0px' || menu.style.maxHeight === '';
+        document.querySelectorAll('.custom-dropdown-menu').forEach(m => m.style.maxHeight = null);
+        if (isClosed) {
+            menu.style.maxHeight = menu.scrollHeight + "px";
+        } else {
+            menu.style.maxHeight = null;
+        }
+    }
+
+    function selectOrgFilter(e, value, text) {
+        if(e) e.stopPropagation();
+        document.getElementById('orgFilterLabel').innerText = text;
+        
+        document.querySelectorAll('#orgFilterMenu .dropdown-item').forEach(item => item.classList.remove('active'));
+        if(e) e.target.classList.add('active');
+        
+        document.getElementById('orgFilterMenu').style.maxHeight = null;
+        
         const search = document.getElementById('searchInput').value.toLowerCase();
-        const org = document.getElementById('orgFilter').value;
         const filtered = usersData.filter(user => {
             const matchSearch = user.name.toLowerCase().includes(search) || user.username.toLowerCase().includes(search);
-            const matchOrg = org === 'all' || user.org === org;
+            const matchOrg = value === 'all' || user.org === value;
             return matchSearch && matchOrg;
         });
-        renderTable(filtered);
+        renderTable(filtered, search, value);
+    }
+
+    // 🟢 FILTER USERS 🟢
+    function filterUsers() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        let orgValue = 'all';
+        const activeOrgItem = document.querySelector('#orgFilterMenu .dropdown-item.active');
+        if (activeOrgItem) {
+            const onclickText = activeOrgItem.getAttribute('onclick');
+            const match = onclickText.match(/selectOrgFilter\(event,\s*'([^']+)'/);
+            if (match) orgValue = match[1];
+        }
+        
+        const filtered = usersData.filter(user => {
+            const matchSearch = user.name.toLowerCase().includes(search) || user.username.toLowerCase().includes(search);
+            const matchOrg = orgValue === 'all' || user.org === orgValue;
+            return matchSearch && matchOrg;
+        });
+        renderTable(filtered, search, orgValue);
+    }
+
+    // 🟢 BULK MANAGE LOGIC 🟢
+    function toggleBulkManage() {
+        isBulkManageActive = !isBulkManageActive;
+        const btnManage = document.getElementById('btnToggleManage');
+        const btnDeact = document.getElementById('btnBulkDeactivate');
+        
+        if (isBulkManageActive) {
+            if(btnManage) btnManage.innerHTML = `<i class="ph-bold ph-x"></i> Cancel`;
+            if(btnDeact) btnDeact.style.display = 'block';
+            
+            document.querySelectorAll('.student-checkbox').forEach(chk => chk.style.display = 'block');
+            
+            
+            const thCheck = document.getElementById('thCheckbox');
+            if(thCheck) thCheck.style.display = 'table-cell';
+            document.querySelectorAll('.td-checkbox').forEach(td => td.style.display = 'table-cell');
+            document.querySelectorAll('.desktop-checkbox').forEach(chk => chk.style.display = 'inline-block');
+            document.querySelectorAll('.desktop-manage-dropdown').forEach(btn => btn.style.display = 'none');
+            document.querySelectorAll('.desktop-row').forEach(row => row.style.cursor = 'pointer');
+            
+        } else {
+            if(btnManage) btnManage.innerHTML = `<i class="ph-bold ph-pencil-simple"></i> Manage`;
+            if(btnDeact) btnDeact.style.display = 'none';
+            
+            selectedUserIds.clear();
+            document.querySelectorAll('.student-checkbox, .desktop-checkbox').forEach(chk => {
+                chk.style.display = 'none';
+                chk.checked = false;
+            });
+            document.querySelectorAll('.student-card').forEach(card => card.classList.remove('selected'));
+            document.querySelectorAll('.desktop-row').forEach(row => {
+                row.classList.remove('selected-row');
+                row.style.cursor = 'default';
+            });
+            
+            
+            
+            const thCheck = document.getElementById('thCheckbox');
+            if(thCheck) thCheck.style.display = 'none';
+            document.querySelectorAll('.td-checkbox').forEach(td => td.style.display = 'none');
+            document.querySelectorAll('.desktop-manage-dropdown').forEach(btn => btn.style.display = 'block');
+        }
+    }
+    
+    function handleDesktopRowClick(id) {
+        if (isBulkManageActive) {
+            toggleStudentSelection(id);
+        }
+    }
+    
+    function handleCardClick(id) {
+        if (isBulkManageActive) {
+            toggleStudentSelection(id);
+        } else {
+            openViewModal(id);
+        }
+    }
+    
+    function toggleStudentSelection(id) {
+        if (!isBulkManageActive) return;
+        const chkMobile = document.getElementById(`chk-${id}`);
+        const chkDesktop = document.getElementById(`chk-desktop-${id}`);
+        const card = document.getElementById(`student-card-${id}`);
+        const row = document.getElementById(`desktop-row-${id}`);
+        
+        let newState = false;
+        if (chkMobile) {
+            chkMobile.checked = !chkMobile.checked;
+            newState = chkMobile.checked;
+        } else if (chkDesktop) {
+            chkDesktop.checked = !chkDesktop.checked;
+            newState = chkDesktop.checked;
+        }
+
+        if (chkMobile) chkMobile.checked = newState;
+        if (chkDesktop) chkDesktop.checked = newState;
+        
+        if (newState) {
+            selectedUserIds.add(id);
+            if(card) card.classList.add('selected');
+            if(row) row.classList.add('selected-row');
+        } else {
+            selectedUserIds.delete(id);
+            if(card) card.classList.remove('selected');
+            if(row) row.classList.remove('selected-row');
+        }
+    }
+
+    function openBulkDeleteModal() {
+        if (selectedUserIds.size === 0) {
+            document.getElementById('alertModalMessage').innerText = "Select at least one account to deactivate.";
+            openModal('alertModal');
+            return;
+        }
+        document.getElementById('d_id').value = Array.from(selectedUserIds).join(',');
+        document.getElementById('d_name').innerText = selectedUserIds.size + " selected account(s)";
+        openModal('deleteModal');
+    }
+
+    function openDeleteModal(id) {
+        const user = usersData.find(u => u.id === id);
+        document.getElementById('d_id').value = user.id;
+        document.getElementById('d_name').innerText = user.name;
+        openModal('deleteModal');
+    }
+
+    // 🟢 MODAL CONTROLS 🟢
+    function openViewModal(id) {
+        const user = usersData.find(u => u.id === id);
+        const safeAvatar = user.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
+        document.getElementById('v_id').value = user.id;
+        document.getElementById('v_avatar').src = safeAvatar;
+        
+        const coverEl = document.getElementById('v_cover_container');
+        if (user.cover) {
+            coverEl.style.backgroundImage = `url('${user.cover}')`;
+        } else {
+            coverEl.style.backgroundImage = "url('/static/images/PUP1.jpg')";
+        }
+        
+        document.getElementById('v_name').innerText = user.name;
+        document.getElementById('v_org').innerText = user.org;
+        document.getElementById('v_username').innerText = user.username;
+        document.getElementById('v_year').innerText = user.year || 'N/A';
+        
+        let formattedDate = 'N/A';
+        if (user.birthdate) {
+            let dateObj = new Date(user.birthdate);
+            if (!isNaN(dateObj)) {
+                formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            } else {
+                formattedDate = user.birthdate;
+            }
+        }
+        document.getElementById('v_birthdate').innerText = formattedDate;
+        
+        openModal('viewDetailsModal');
+    }
+
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(() => { modal.style.display = 'none'; }, 200);
+        }
     }
 
     function toggleMenu(id) {
         document.querySelectorAll('.actions-dropdown').forEach(d => { if(d.id !== `dropdown-${id}`) d.classList.remove('active'); });
-        document.getElementById(`dropdown-${id}`).classList.toggle('active');
+        const drop = document.getElementById(`dropdown-${id}`);
+        if (drop) drop.classList.toggle('active');
     }
 
     window.onclick = function(event) {
+        if (!event.target.closest('.custom-dropdown-summary')) {
+            document.querySelectorAll('.custom-dropdown-menu').forEach(m => m.style.maxHeight = null);
+        }
         if (!event.target.matches('.btn-action-small') && !event.target.matches('.ph-dots-three-outline-vertical')) {
             document.querySelectorAll('.actions-dropdown').forEach(d => d.classList.remove('active'));
         }
     }
 
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
-    }
-
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.remove('active');
-        setTimeout(() => { modal.style.display = 'none'; }, 200);
-    }
-
-    function viewProfile(id) {
-        const user = usersData.find(u => u.id === id);
-        document.getElementById('viewAvatar').src = user.avatar;
-        document.getElementById('viewName').innerText = user.name;
-        document.getElementById('viewId').innerText = user.username; 
-        document.getElementById('viewOrg').innerText = user.org;
-        document.getElementById('viewYear').innerText = user.year || 'Not Provided';
-        if (user.birthdate) {
-            let dateObj = new Date(user.birthdate);
-            let formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('viewBirth').innerText = isNaN(dateObj) ? user.birthdate : formattedDate;
-        } else {
-            document.getElementById('viewBirth').innerText = 'Not Provided';
-        }
-        openModal('profileModal');
-    }
-
-    function openDeactivateModal(id) {
-        const user = usersData.find(u => u.id === id);
-        document.getElementById('d_id').value = user.id;
-        document.getElementById('d_name').innerText = user.name;
-        openModal('deactivateModal');
-    }
-
+    // 🟢 SERVER ACTIONS 🟢
     async function submitAction(action) {
         let payload = { action: action, id: document.getElementById('d_id').value };
         const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken=')).split('=')[1];
@@ -423,17 +696,23 @@
             });
             const data = await response.json();
             if(data.status === 'success') {
-                alert(data.message);
                 location.reload(); 
-            } else { alert("Error: " + data.message); }
-        } catch (error) { alert("Server Error. Please try again."); }
+            } else { 
+                alert("Error: " + data.message); 
+            }
+        } catch (error) { 
+            alert("Server Error. Please try again."); 
+        }
     }
 
+    // INIT
     window.addEventListener('load', () => {
         setTimeout(() => {
-            document.getElementById('skeleton-loader').style.display = 'none';
-            document.getElementById('main-content-area').style.display = 'block';
-            renderTable(usersData);
+            const loader = document.getElementById('skeleton-loader');
+            const content = document.getElementById('main-content-area');
+            if (loader) loader.style.display = 'none';
+            if (content) content.style.display = 'block';
+            renderTable(usersData, '', 'all');
         }, 800);
     });
 </script>

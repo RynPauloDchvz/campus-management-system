@@ -22,28 +22,117 @@
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
     /* 🟢 ACCOUNT HISTORY RESPONSIVENESS 🟢 */
-    .manage-accounts-control { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-start; }
-    .manage-accounts-control .custom-select { min-width: 140px; }
-    .manage-accounts-control .search-box { flex-grow: 1; min-width: 250px; }
-    .manage-accounts-control .history-btn { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; height: 42px; border-radius: 8px; padding: 0 15px; margin-left: auto; font-weight: 700; white-space: nowrap; }
+    .manage-accounts-control { display: flex; gap: 10px; align-items: flex-start; flex-wrap: nowrap; justify-content: flex-start; }
+    .manage-accounts-control .search-box { flex-grow: 1; min-width: 150px; margin-left: auto; }
+    .manage-accounts-control .history-btn { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; height: 42px; border-radius: 8px; padding: 0 15px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
     
+    /* Animated Custom Dropdown */
+    .custom-dropdown {
+        position: relative;
+        background: var(--input-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-width: 160px;
+        transition: border-color 0.2s;
+        flex-shrink: 0;
+    }
+    .custom-dropdown.active {
+        border-color: var(--accent);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .custom-dropdown-summary {
+        padding: 10px 15px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-main);
+        transition: background 0.2s;
+        height: 42px;
+    }
+    .custom-dropdown-summary:hover { background: var(--hover-bg); }
+    .custom-dropdown-menu {
+        display: flex;
+        flex-direction: column;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: var(--card-bg);
+        border-radius: 0 0 8px 8px;
+    }
+    .custom-dropdown-summary span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        max-width: 90%;
+    }
+    .search-box { 
+        display: flex; 
+        align-items: center; 
+        background: var(--input-bg); 
+        border: 1px solid var(--border); 
+        border-radius: 8px; 
+        padding: 0 15px; 
+        height: 42px; 
+        gap: 10px; 
+    }
+    .search-input { 
+        border: none; 
+        background: transparent; 
+        outline: none; 
+        font-size: 0.9rem; 
+        color: var(--text-main); 
+        width: 100%;
+    }
+    .custom-dropdown.active .custom-dropdown-menu {
+        max-height: 350px;
+        border: 1px solid var(--border);
+        border-top: none;
+        overflow-y: auto;
+    }
+    .dropdown-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: 0.2s;
+        border-bottom: 1px solid var(--border);
+    }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover { background: var(--hover-bg); color: var(--accent); }
+    .dropdown-item.active { background: rgba(128,0,0,0.05); color: var(--accent); font-weight: 700; }
+
+    /* Hidden Select Inputs */
+    .hidden-input { display: none; }
+
+    .mobile-search-box { display: none; }
+    
+    /* Mobile Cards */
+    .mobile-card-list { display: none; flex-direction: column; gap: 15px; }
+    .history-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+
     @media (max-width: 900px) {
-        .manage-accounts-control { padding: 15px !important; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto; gap: 10px; }
+        .manage-accounts-control { display: grid; grid-template-columns: 42px 1fr 1fr; grid-template-rows: auto auto; gap: 10px; }
         
-        .manage-accounts-control .history-btn { grid-column: 1; grid-row: 1; width: 45px; height: 42px; padding: 0 !important; margin: 0; }
+        .manage-accounts-control .history-btn { grid-column: 1; grid-row: 1; width: 42px; padding: 0 !important; margin: 0; }
         .manage-accounts-control .history-btn-text { display: none; }
         
-        #typeFilter { grid-column: 2; grid-row: 1; width: 100%; min-width: 0; }
+        #orgFilterContainer { grid-column: 2 / 4; grid-row: 1; width: 100%; min-width: 0; }
+        #typeFilterContainer { grid-column: 1 / 3; grid-row: 2; width: 100%; min-width: 0; }
+        #yearFilterContainer { grid-column: 3; grid-row: 2; width: 100%; min-width: 0; }
         
-        #orgFilter { grid-column: 1; grid-row: 2; width: 100%; min-width: 0; }
-        #yearFilter { grid-column: 2; grid-row: 2; width: 100%; min-width: 0; }
+        .manage-accounts-control .search-box { display: none; }
+        .mobile-search-box { display: flex; margin-bottom: 15px; }
         
-        .manage-accounts-control .search-box { grid-column: 1 / -1; grid-row: 3; width: 100% !important; margin-top: 5px; }
+        #historyTable { display: none; }
+        .mobile-card-list { display: flex; }
 
         /* Slide-up Bottom Sheet Modal for Profile details on Mobile */
         #profileModal { align-items: flex-end; padding: 0; }
         #profileModalBox { 
-            width: 100%; max-width: 100%; border-radius: 24px 24px 0 0; 
+            width: 100%; max-width: 100%; border-radius: 24px 24px 0 0 !important; 
             transform: translateY(100%) !important; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             margin: 0; max-height: 85vh; overflow-y: auto;
         }
@@ -167,42 +256,73 @@
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
 <div id="main-content-area" style="display: none;" class="fade-in">
     <div class="control-bar manage-accounts-control">
-        <select id="typeFilter" class="custom-select" onchange="filterHistory()">
-            <option value="all">All Accounts</option>
-            <option value="Student">Students Only</option>
-            <option value="Student Org">Student Orgs Only</option>
-        </select>
-        <select id="orgFilter" class="custom-select" onchange="filterHistory()">
-            <option value="all">All Organizations</option>
-            <option value="ITO">ITO</option>
-            <option value="ITS">ITS</option>
-            <option value="YEO">YEO</option>
-            <option value="FTO">FTO</option>
-            <option value="PAS">PAS</option>
-            <option value="CAO">CAO</option>
-            <option value="NEWS">NEWS</option>
-            <option value="PRIDE">PRIDE</option>
-            <option value="ROTC">ROTC</option>
-            <option value="PUSO">PUSO</option>
-            <option value="SSC">SSC</option>
-        </select>
-        <select id="yearFilter" class="custom-select" onchange="filterHistory()">
-            <option value="all">All Year Levels</option>
-            <option value="1st Year">1st Year</option>
-            <option value="2nd Year">2nd Year</option>
-            <option value="3rd Year">3rd Year</option>
-            <option value="4th Year">4th Year</option>
-        </select>
+        <a href="{% url 'manage_accounts' %}" id="historyBackButton" class="btn-cancel history-btn">
+            <i class="ph-bold ph-arrow-left" style="font-size: 1.2rem;"></i> <span id="historyBtnText" class="history-btn-text">Back to Active</span>
+        </a>
+        
+        <!-- Type Filter -->
+        <div class="custom-dropdown" id="typeFilterContainer">
+            <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('typeFilterDropdown')">
+                <span id="typeFilterLabel">All Accounts</span> <i class="ph-bold ph-caret-down"></i>
+            </div>
+            <div class="custom-dropdown-menu" id="typeFilterDropdown">
+                <div class="dropdown-item active" onclick="selectFilter('typeFilter', 'all', 'All Accounts')">All Accounts</div>
+                <div class="dropdown-item" onclick="selectFilter('typeFilter', 'Student', 'Students Only')">Students Only</div>
+                <div class="dropdown-item" onclick="selectFilter('typeFilter', 'Student Org', 'Student Orgs Only')">Student Orgs Only</div>
+            </div>
+            <input type="hidden" id="typeFilter" class="hidden-input" value="all" onchange="filterHistory()">
+        </div>
+
+        <!-- Org Filter -->
+        <div class="custom-dropdown" id="orgFilterContainer">
+            <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('orgFilterDropdown')">
+                <span id="orgFilterLabel">All Organizations</span> <i class="ph-bold ph-caret-down"></i>
+            </div>
+            <div class="custom-dropdown-menu" id="orgFilterDropdown">
+                <div class="dropdown-item active" onclick="selectFilter('orgFilter', 'all', 'All Organizations')">All Organizations</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'ITO', 'ITO')">ITO</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'ITS', 'ITS')">ITS</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'YEO', 'YEO')">YEO</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'FTO', 'FTO')">FTO</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'PAS', 'PAS')">PAS</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'CAO', 'CAO')">CAO</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'NEWS', 'NEWS')">NEWS</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'PRIDE', 'PRIDE')">PRIDE</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'ROTC', 'ROTC')">ROTC</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'PUSO', 'PUSO')">PUSO</div>
+                <div class="dropdown-item" onclick="selectFilter('orgFilter', 'SSC', 'SSC')">SSC</div>
+            </div>
+            <input type="hidden" id="orgFilter" class="hidden-input" value="all" onchange="filterHistory()">
+        </div>
+
+        <!-- Year Filter -->
+        <div class="custom-dropdown" id="yearFilterContainer">
+            <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('yearFilterDropdown')">
+                <span id="yearFilterLabel">All Year Levels</span> <i class="ph-bold ph-caret-down"></i>
+            </div>
+            <div class="custom-dropdown-menu" id="yearFilterDropdown">
+                <div class="dropdown-item active" onclick="selectFilter('yearFilter', 'all', 'All Year Levels')">All Year Levels</div>
+                <div class="dropdown-item" onclick="selectFilter('yearFilter', '1st Year', '1st Year')">1st Year</div>
+                <div class="dropdown-item" onclick="selectFilter('yearFilter', '2nd Year', '2nd Year')">2nd Year</div>
+                <div class="dropdown-item" onclick="selectFilter('yearFilter', '3rd Year', '3rd Year')">3rd Year</div>
+                <div class="dropdown-item" onclick="selectFilter('yearFilter', '4th Year', '4th Year')">4th Year</div>
+            </div>
+            <input type="hidden" id="yearFilter" class="hidden-input" value="all" onchange="filterHistory()">
+        </div>
+
+        <!-- Search Desktop -->
         <div class="search-box">
             <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search name or ID..." onkeyup="filterHistory()" style="width: 100%;">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search e.g. Juan Dela Cruz..." onkeyup="filterHistory()" style="width: 100%;">
         </div>
-        <a href="{% url 'manage_accounts' %}" class="btn-cancel history-btn">
-            <i class="ph-bold ph-arrow-left" style="font-size: 1.2rem;"></i> <span class="history-btn-text">Back to Active</span>
-        </a>
     </div>
-
     <div class="table-section">
+        <!-- Search Mobile (Inside Table Section) -->
+        <div class="search-box mobile-search-box">
+            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="searchInputMobile" class="search-input" placeholder="Search e.g. Juan Dela Cruz..." onkeyup="filterHistory()" style="width: 100%;">
+        </div>
+
         <div style="overflow-x: auto; max-height: 65vh;">
             <table id="historyTable">
                 <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
@@ -219,65 +339,54 @@
                     <!-- Populated by JS -->
                 </tbody>
             </table>
+            <!-- Mobile List Container -->
+            <div id="mobileList" class="mobile-card-list"></div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block modals %}
-<div id="profileModal" class="modal font-sans z-[5000]">
-    <div class="modal-box bg-white dark:bg-[#151515] w-full max-w-lg rounded-t-[2.5rem] sm:rounded-3xl shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden border-t sm:border border-gray-200 dark:border-gray-800 transition-colors p-0 text-left" id="profileModalBox">
+<div id="profileModal" class="modal modal-bottom">
+    <div id="profileModalBox" class="modal-box" style="max-width: 400px; text-align: left; padding: 0; border-radius: 1.5rem; overflow: hidden; position: relative;">
+        <!-- Mobile Handle -->
+        <div style="width: 45px; height: 6px; background: rgba(255,255,255,0.7); border-radius: 10px; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
         
-        <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-4 sm:hidden shrink-0"></div>
-
-        <button onclick="closeModal('profileModal')" class="absolute top-4 right-4 bg-black/40 hover:bg-black/60 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors z-[60] backdrop-blur-md border-none cursor-pointer">
-            <i class="ph-bold ph-x text-xl"></i>
-        </button>
-
-        <div class="overflow-y-auto hide-scrollbar flex-grow w-full">
-            <div class="h-40 sm:h-48 w-full relative bg-gray-200 dark:bg-gray-800 shrink-0">
-                <img src="{% static 'images/PUP1.jpg' %}" class="w-full h-full object-cover opacity-90" id="viewCover">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                
-                <div class="absolute inset-x-0 bottom-4 text-center">
-                    <h3 class="cheesecake-title text-4xl font-black italic tracking-tighter text-white uppercase select-none m-0">CHEESECAKE</h3>
-                </div>
+        <!-- Header Image & Name Area -->
+        <div id="v_cover_container" style="height: 140px; background: var(--card-bg); background-size: cover; background-position: center; border-bottom: 1px solid var(--border); position: relative;">
+            <button onclick="closeModal('profileModal')" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; color: white; z-index: 50;"><i class="ph-bold ph-x"></i></button>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 40px; background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%); z-index: 1;"></div>
+        </div>
+        <div style="padding: 0 20px 20px; text-align: center; border-bottom: 1px solid var(--border); position: relative; margin-top: -55px;">
+            <div style="width: 110px; height: 110px; margin: 0 auto 10px; border-radius: 50%; overflow: hidden; border: 4px solid var(--card-bg); box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; z-index: 2; background: var(--card-bg);">
+                <img id="v_avatar" src="" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
+            <h3 id="v_name" style="margin: 0 0 5px; font-size: 1.3rem; font-weight: 900; color: var(--text-main); line-height: 1.2;"></h3>
+            <span id="v_type_badge" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Account</span>
+        </div>
 
-            <div class="px-6 sm:px-8 pb-6 relative -mt-12 flex flex-col sm:flex-row items-center sm:items-end gap-5">
-                <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-[#151515] overflow-hidden bg-white dark:bg-gray-900 shadow-xl shrink-0 z-20">
-                    <img id="viewAvatar" src="" class="w-full h-full object-cover">
+        <!-- Info Grid -->
+        <div style="padding: 20px 15px; background: var(--input-bg);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Username / ID</span>
+                    <span id="v_username" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
-                
-                <div class="flex-1 name-tag py-3 px-6 rounded-2xl flex items-center justify-center text-center shadow-lg mb-2 sm:mb-4 w-full sm:w-auto">
-                    <h4 id="viewName" class="text-lg sm:text-xl font-black uppercase tracking-tight leading-tight m-0">--</h4>
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Organization</span>
+                    <span id="v_org" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--accent); text-transform: uppercase; word-break: break-all;"></span>
                 </div>
-            </div>
-
-            <div class="px-6 sm:px-8 pb-8">
-                <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
-                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Student No.</span>
-                        <span id="viewId" class="block text-sm sm:text-base font-black text-red-600 dark:text-red-500 tracking-tight">--</span>
-                    </div>
-                    
-                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
-                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Organization</span>
-                        <span id="viewOrg" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
-                    </div>
-                    
-                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
-                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Year Level</span>
-                        <span id="viewYear" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
-                    </div>
-
-                    <div class="info-box py-4 rounded-2xl text-center shadow-sm flex flex-col justify-center">
-                        <span class="block text-[0.65rem] font-bold uppercase text-gray-500 mb-1 tracking-wider">Birthdate</span>
-                        <span id="viewBirth" class="block text-sm sm:text-base font-black text-gray-900 dark:text-white uppercase tracking-tight">--</span>
-                    </div>
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Year Level</span>
+                    <span id="v_year" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
+                </div>
+                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                    <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Birthday</span>
+                    <span id="v_birthdate" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
             </div>
         </div>
+        <input type="hidden" id="v_id">
     </div>
 </div>
 {% endblock %}
@@ -288,14 +397,36 @@
 
     function renderTable(data) {
         const tbody = document.getElementById('tableBody');
+        const mobileList = document.getElementById('mobileList');
         tbody.innerHTML = '';
+        mobileList.innerHTML = '';
         
         if(data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--text-muted);">No history records found.</td></tr>`;
+            const searchVal = (window.innerWidth <= 900) ? document.getElementById('searchInputMobile').value : document.getElementById('searchInput').value;
+            let emptyStateHtml = '';
+            
+            if (searchVal.trim() === '') {
+                emptyStateHtml = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted); background: var(--card-bg); border-radius: 12px; border: 1px dashed var(--border);">
+                        <i class="ph-bold ph-users" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+                        <p style="margin: 0; font-size: 0.95rem;">No history records available yet.</p>
+                    </div>
+                `;
+            } else {
+                emptyStateHtml = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted); background: var(--card-bg); border-radius: 12px; border: 1px dashed var(--border);">
+                        <i class="ph-bold ph-magnifying-glass" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+                        <p style="margin: 0; font-size: 0.95rem;">No account found matching "<b>${searchVal}</b>".</p>
+                    </div>
+                `;
+            }
+            tbody.innerHTML = `<tr><td colspan="6" style="padding: 0; border: none;">${emptyStateHtml}</td></tr>`;
+            mobileList.innerHTML = emptyStateHtml;
             return;
         }
 
         data.forEach(user => {
+            // Desktop Row
             const row = `
                 <tr>
                     <td>
@@ -319,11 +450,59 @@
                 </tr>
             `;
             tbody.innerHTML += row;
+
+            // Mobile Card
+            const card = `
+                <div class="history-card">
+                    <img src="${user.avatar}" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border);">
+                    <div style="flex-grow: 1;">
+                        <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-main); display: block;">${user.name}</span>
+                        <div style="display: flex; gap: 8px; align-items: center; margin-top: 3px;">
+                            <span style="font-size: 0.7rem; font-weight: 700; color: var(--accent);">${user.org}</span>
+                            <span class="badge badge-rejected" style="font-size: 0.6rem; padding: 2px 6px;">${user.status}</span>
+                        </div>
+                    </div>
+                    <button class="btn-action-small" onclick="viewProfile('${user.id}')" style="padding: 10px; border-radius: 8px; flex-shrink: 0;">
+                        <i class="ph-bold ph-eye" style="font-size: 1.1rem; margin:0;"></i>
+                    </button>
+                </div>
+            `;
+            mobileList.innerHTML += card;
         });
     }
 
+    // Close dropdowns on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-dropdown')) {
+            document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('active'));
+        }
+    });
+
+    function toggleCustomDropdown(menuId) {
+        const container = document.getElementById(menuId).closest('.custom-dropdown');
+        const isActive = container.classList.contains('active');
+        document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('active'));
+        if (!isActive) container.classList.add('active');
+    }
+
+    function selectFilter(inputId, value, labelText) {
+        document.getElementById(inputId).value = value;
+        document.getElementById(inputId + 'Label').innerText = labelText;
+        document.getElementById(inputId).dispatchEvent(new Event('change'));
+        document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('active'));
+        
+        // Highlight active item
+        const dropdownMenu = document.getElementById(inputId + 'Container').querySelector('.custom-dropdown-menu');
+        if (dropdownMenu) {
+            dropdownMenu.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('active'));
+            const activeEl = Array.from(dropdownMenu.querySelectorAll('.dropdown-item')).find(el => el.innerText.includes(labelText) || el.innerText === labelText);
+            if(activeEl) activeEl.classList.add('active');
+        }
+    }
+
     function filterHistory() {
-        const search = document.getElementById('searchInput').value.toLowerCase();
+        const searchInput = (window.innerWidth <= 900) ? document.getElementById('searchInputMobile') : document.getElementById('searchInput');
+        const search = searchInput ? searchInput.value.toLowerCase() : '';
         const type = document.getElementById('typeFilter').value;
         const org = document.getElementById('orgFilter').value;
         const year = document.getElementById('yearFilter').value;
@@ -332,7 +511,7 @@
             const matchSearch = user.name.toLowerCase().includes(search) || user.username.toLowerCase().includes(search);
             const matchType = type === 'all' || user.type === type;
             const matchOrg = org === 'all' || user.org === org;
-            const matchYear = year === 'all' || user.year === year || user.year === 'N/A'; // Orgs have N/A year
+            const matchYear = year === 'all' || user.year === year || user.year === 'N/A';
             return matchSearch && matchType && matchOrg && matchYear;
         });
         renderTable(filtered);
@@ -351,28 +530,73 @@
     }
 
     function viewProfile(id) {
-        const user = historyData.find(u => u.id === id);
-        document.getElementById('viewAvatar').src = user.avatar;
-        document.getElementById('viewName').innerText = user.name;
-        document.getElementById('viewId').innerText = user.username; 
-        document.getElementById('viewOrg').innerText = user.org;
-        document.getElementById('viewYear').innerText = user.year || 'Not Provided';
+        const user = historyData.find(u => u.id == id);
+        if (!user) return;
+        
+        const safeAvatar = user.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
+        document.getElementById('v_avatar').src = safeAvatar;
+        
+        const coverEl = document.getElementById('v_cover_container');
+        if (user.cover) {
+            coverEl.style.backgroundImage = `url('${user.cover}')`;
+        } else {
+            coverEl.style.backgroundImage = "url('/static/images/PUP1.jpg')";
+        }
+        
+        document.getElementById('v_name').innerText = user.name;
+        document.getElementById('v_type_badge').innerText = user.type;
+        document.getElementById('v_username').innerText = user.username;
+        document.getElementById('v_org').innerText = user.org;
+        document.getElementById('v_year').innerText = user.year || 'N/A';
         
         if (user.birthdate && user.birthdate !== '') {
             let dateObj = new Date(user.birthdate);
             let formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('viewBirth').innerText = isNaN(dateObj) ? user.birthdate : formattedDate;
+            document.getElementById('v_birthdate').innerText = isNaN(dateObj) ? user.birthdate : formattedDate;
         } else {
-            document.getElementById('viewBirth').innerText = 'Not Provided';
+            document.getElementById('v_birthdate').innerText = 'Not Provided';
         }
-        openModal('profileModal');
+        
+        const modal = document.getElementById('profileModal');
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+    
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(() => { modal.style.display = 'none'; }, 300);
+        }
     }
 
     window.addEventListener('load', () => {
+        const historyBtn = document.getElementById('historyBackButton');
+        const historyBtnText = document.getElementById('historyBtnText');
+        const typeFilter = document.getElementById('typeFilter');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const source = urlParams.get('source');
+        const referrer = document.referrer;
+        
+        if (source === 'org' || referrer.includes('manage_organizers') || referrer.includes('manage-organizers')) {
+            historyBtn.href = "{% url 'manage_organizers' %}";
+            historyBtnText.innerText = "Back to Organizer";
+            selectFilter('typeFilter', 'Student Org', 'Student Orgs Only');
+        } else if (source === 'student' || referrer.includes('manage_accounts') || referrer.includes('manage-accounts')) {
+            historyBtn.href = "{% url 'manage_accounts' %}";
+            historyBtnText.innerText = "Back to Student";
+            selectFilter('typeFilter', 'Student', 'Students Only');
+        } else {
+            historyBtn.href = "{% url 'manage_accounts' %}";
+            historyBtnText.innerText = "Back to Active";
+            selectFilter('typeFilter', 'all', 'All Accounts');
+        }
+
         setTimeout(() => {
             document.getElementById('skeleton-loader').style.display = 'none';
             document.getElementById('main-content-area').style.display = 'block';
-            renderTable(historyData);
+            filterHistory();
         }, 800);
     });
 </script>

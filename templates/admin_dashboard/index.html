@@ -104,27 +104,79 @@
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
 <div id="main-content-area" style="display: none;" class="fade-in">
     <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card" style="--accent: var(--pup-maroon);">
             <span class="stat-label">Total Events</span>
             <span class="stat-value">{{ total_events }}</span>
             <i class="ph-bold ph-calendar-check stat-icon"></i>
         </div>
-        <div class="stat-card" style="--accent: var(--warning);">
+        <div class="stat-card" style="--accent: #f59e0b;">
             <span class="stat-label">Pending Approval</span>
             <span class="stat-value">{{ pending_approval }}</span>
             <i class="ph-bold ph-clock-countdown stat-icon"></i>
         </div>
-        <div class="stat-card" style="--accent: #17a2b8;">
+        <div class="stat-card" style="--accent: #3b82f6;">
             <span class="stat-label">Active Orgs</span>
             <span class="stat-value">{{ active_orgs }}</span>
             <i class="ph-bold ph-buildings stat-icon"></i>
         </div>
-        <div class="stat-card" style="--accent: var(--success);">
+        <div class="stat-card" style="--accent: #10b981;">
             <span class="stat-label">Total Attendance</span>
             <span class="stat-value">{{ total_attendances }}</span>
             <i class="ph-bold ph-bounding-box stat-icon"></i>
         </div>
     </div>
+
+    <style>
+        @media (max-width: 900px) {
+            .table-header {
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                gap: 8px !important;
+            }
+            .table-header .view-all-btn {
+                margin: 0 0 0 auto !important;
+                align-self: flex-end !important;
+            }
+            
+            .charts-container {
+                display: flex !important;
+                overflow-x: auto !important;
+                scroll-snap-type: x mandatory;
+                gap: 8px;
+                /* Add vertical padding to prevent clipping when scaling up, negative horizontal margin to widen */
+                padding: 15px 0 !important;
+                margin: 5px -5px 15px -5px !important;
+                flex-wrap: nowrap !important;
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+            }
+            .charts-container::-webkit-scrollbar {
+                display: none;
+            }
+            .chart-box {
+                flex: 0 0 78% !important; /* Made smaller so side cards can peek more! */
+                padding: 15px !important;
+                scroll-snap-align: center;
+                transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+                transform: scale(0.9);
+                opacity: 0.35; 
+            }
+            .chart-box:first-child {
+                margin-left: 11%; /* Center mathematically (100 - 78) / 2 */
+            }
+            .chart-box:last-child {
+                margin-right: 11%;
+            }
+            .chart-box.focused-chart {
+                transform: scale(1.05) !important; /* Boldly scale up the active one */
+                opacity: 1 !important;
+                z-index: 10;
+                box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+            }
+        }
+    </style>
 
     <div class="charts-container">
         <div class="chart-box">
@@ -143,27 +195,32 @@
 
     <div class="table-section">
         <div class="table-header">
-            <h3 class="table-title">Recent Event Requests</h3>
-            <a href="/admin/event-approvals/" class="view-all-btn" style="text-decoration:none; color:var(--accent);">View All <i class="ph-bold ph-arrow-right"></i></a>
+            <h3 class="table-title mb-0">Recent Event Requests</h3>
+            <a href="/admin/event-approvals/" class="view-all-btn" style="text-decoration:none; color:var(--accent);">
+                <span class="max-[900px]:hidden">Manage Approvals</span>
+                <span class="min-[901px]:hidden">View All</span> 
+                <i class="ph-bold ph-arrow-right"></i>
+            </a>
         </div>
-        <div style="overflow-x: auto;">
+        
+        <div class="max-[900px]:hidden overflow-x-auto">
             <table>
                 <thead>
                     <tr>
-                        <th>Organization</th>
-                        <th>Event Title</th>
-                        <th>Target Date</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th style="white-space: nowrap;">Organization</th>
+                        <th style="width: 40%;">Event Title</th>
+                        <th style="white-space: nowrap;">Target Date</th>
+                        <th style="white-space: nowrap;">Status</th>
+                        <th style="white-space: nowrap;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for event in recent_events %}
                     <tr>
-                        <td style="font-weight: 700; color: var(--accent);">{{ event.org_id }}</td>
+                        <td style="font-weight: 700; color: var(--accent); white-space: nowrap;">{{ event.org_id }}</td>
                         <td>{{ event.event_title }}</td>
-                        <td style="color: var(--text-muted); font-weight: 600;">{{ event.event_date|date:"F d, Y" }}</td>
-                        <td>
+                        <td style="color: var(--text-muted); font-weight: 600; white-space: nowrap;">{{ event.event_date|date:"F d, Y" }}</td>
+                        <td style="white-space: nowrap;">
                             {% if event.event_status == 'Approved' %}
                                 <span class="badge badge-approved">Approved</span>
                             {% elif event.event_status == 'Rejected' %}
@@ -172,13 +229,13 @@
                                 <span class="badge badge-pending">Pending</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td style="white-space: nowrap;">
                             {% if event.event_status == 'Approved' or event.event_status == 'Rejected' %}
                                 <a href="/admin/event-approvals/">
                                     <button class="btn-action-small">View Details</button>
                                 </a>
                             {% else %}
-                                <button class="btn-action-small" onclick="openReviewModal('{{ event.org_id }}', '{{ event.event_title|escapejs }}', '{{ event.description|truncatewords:30|escapejs }}')">Review</button>
+                                <button class="btn-action-small" onclick="openReviewModal('{{ event.org_id }}', '{{ event.event_title|escapejs }}', '{{ event.description|default:'No event description provided.'|escapejs }}', '{% if event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% elif event.thumbnail %}{{ event.thumbnail.url }}{% else %}{% endif %}')">Review</button>
                             {% endif %}
                         </td>
                     </tr>
@@ -190,34 +247,86 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Mobile List View (Hidden on Desktop) -->
+        <div class="min-[901px]:hidden flex flex-col gap-3 mt-4">
+            {% for event in recent_events %}
+            <div onclick="{% if event.event_status == 'Approved' or event.event_status == 'Rejected' %}window.location.href='/admin/event-approvals/'{% else %}openReviewModal('{{ event.org_id }}', '{{ event.event_title|escapejs }}', '{{ event.description|default:'No event description provided.'|escapejs }}', '{% if event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% elif event.thumbnail %}{{ event.thumbnail.url }}{% else %}{% endif %}'){% endif %}" class="p-4 bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors cursor-pointer relative overflow-hidden group">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-extrabold text-pup-maroon dark:text-pup-gold text-xs uppercase tracking-wider">{{ event.org_id }}</span>
+                    <!-- Status Badge -->
+                    {% if event.event_status == 'Approved' %}
+                        <span class="px-2 py-0.5 rounded border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-500 text-[9px] font-extrabold uppercase tracking-wide">Approved</span>
+                    {% elif event.event_status == 'Rejected' %}
+                        <span class="px-2 py-0.5 rounded border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-500 text-[9px] font-extrabold uppercase tracking-wide">Rejected</span>
+                    {% else %}
+                        <span class="px-2 py-0.5 rounded border border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-500 text-[9px] font-extrabold uppercase tracking-wide">Pending</span>
+                    {% endif %}
+                </div>
+                <h4 class="font-bold text-gray-900 dark:text-white text-[15px] leading-snug mb-3 pr-6">{{ event.event_title }}</h4>
+                <div class="flex items-center text-[10px] text-gray-500 dark:text-gray-400 font-bold gap-3 uppercase tracking-wider">
+                    <span class="flex items-center gap-1"><i class="ph-bold ph-calendar-blank text-lg"></i> {{ event.event_date|date:"F d, Y" }}</span>
+                    <span class="flex items-center gap-1 ml-auto text-pup-maroon dark:text-pup-gold">
+                        {% if event.event_status == 'Approved' or event.event_status == 'Rejected' %}
+                            View Details <i class="ph-bold ph-arrow-right"></i>
+                        {% else %}
+                            Review <i class="ph-bold ph-arrow-right"></i>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="py-12 bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm text-center text-gray-500 font-medium px-4">
+                <i class="ph-fill ph-check-circle text-4xl text-green-500 mb-2 opacity-50 block"></i>
+                No recent event requests found.
+            </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block modals %}
-<div id="reviewModal" class="modal">
-    <div class="modal-box" style="max-width: 500px; text-align: left; padding: 25px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 15px;">
-            <span class="modal-title" style="margin: 0; font-size: 1.2rem;">Event Request Preview</span>
-            <button onclick="closeReviewModal()" style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;"><i class="ph-bold ph-x"></i></button>
+<style>
+    @media (max-width: 900px) {
+        #reviewModal .modal-box {
+            width: 100% !important;
+            height: 100dvh !important;
+            max-width: none !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            border: none !important;
+        }
+        #reviewModal {
+            padding: 0 !important;
+        }
+    }
+</style>
+<div id="reviewModal" class="modal" style="backdrop-filter: blur(8px);">
+    <div class="modal-box" style="max-width: 700px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; text-align: left; padding: 0; border-radius: 2rem; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+        
+        <!-- Header Banner Area -->
+        <div id="modalBanner" style="flex-shrink: 0; background: var(--pup-maroon); padding: 40px 35px; position: relative; background-size: cover; background-position: center;">
+            <div id="modalBannerOverlay" style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.4)); display: none;"></div>
+            <button onclick="closeReviewModal()" style="position: absolute; top: 20px; right: 20px; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; z-index: 20;"><i class="ph-bold ph-x" style="font-size: 1.2rem;"></i></button>
+            <div style="position: relative; z-index: 10;">
+                <span class="badge" id="modalOrgBadge" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); margin-bottom: 15px; font-size: 0.75rem; letter-spacing: 1px;">ORG</span>
+                <h2 id="modalEventTitle" style="color: white; font-weight: 900; font-size: 1.8rem; margin: 0; line-height: 1.2; text-transform: uppercase; letter-spacing: -0.5px;">Event Title Placeholder</h2>
+            </div>
         </div>
         
-        <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 12px;">
-            <span class="badge" id="modalOrgBadge" style="background: rgba(255, 215, 0, 0.15); color: var(--pup-gold); border: 1px solid var(--pup-gold);">ORG</span>
-            <span id="modalEventTitle" style="font-weight: 800; color: var(--text-main); font-size: 1.1rem;">Event Title Placeholder</span>
-        </div>
-        
-        <div style="background: var(--hover-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin: 15px 0 25px 0;">
-            <span style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px;">Message / Request Snippet:</span>
-            <p id="modalRequestText" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6; font-style: italic;">
+        <!-- Scrollable Content Area -->
+        <div style="flex-grow: 1; overflow-y: auto; padding: 35px;">
+            <h3 style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; font-weight: 800; letter-spacing: 2px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Event Description</h3>
+            <p id="modalRequestText" style="color: var(--text-main); font-size: 1.05rem; line-height: 1.8; font-weight: 500; text-align: justify; margin: 0;">
                 "Loading request message..."
             </p>
         </div>
-
-        <div class="modal-actions" style="justify-content: flex-end; margin-top: 10px;">
-            <button class="btn-cancel" onclick="closeReviewModal()">Cancel</button>
-            <a href="/admin/event-approvals/" style="text-decoration: none;">
-                <button class="btn-primary" style="display:flex; align-items:center; gap:8px;">View All Details <i class="ph-bold ph-arrow-right"></i></button>
+        
+        <!-- Fixed Button Area -->
+        <div style="flex-shrink: 0; padding: 25px 35px; border-top: 1px solid var(--border); background: var(--card-bg);">
+            <a href="/admin/event-approvals/" style="text-decoration: none; display: block; width: 100%;">
+                <button class="btn-primary" style="width: 100%; padding: 18px; border-radius: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 20px -5px rgba(128,0,0,0.4);">View Full Details <i class="ph-bold ph-arrow-right" style="font-size: 1.2rem;"></i></button>
             </a>
         </div>
     </div>
@@ -227,10 +336,34 @@
 {% block extra_js %}
 <script>
     // Modal Functions
-    function openReviewModal(orgName, eventTitle, requestText) {
+    function openReviewModal(orgName, eventTitle, requestText, coverPhotoUrl) {
         document.getElementById('modalOrgBadge').innerText = orgName;
         document.getElementById('modalEventTitle').innerText = eventTitle;
-        document.getElementById('modalRequestText').innerText = '"' + requestText + '"';
+        
+        // Extract actual description by removing tags used for docx (e.g. Target: ... | Equipment: ... | Desc: ...)
+        let finalDesc = requestText;
+        if (requestText && requestText.includes('| Desc:')) {
+            const parts = requestText.split('| Desc:');
+            finalDesc = parts[parts.length - 1].trim();
+        } else if (requestText && requestText.includes('Desc:')) {
+            const parts = requestText.split('Desc:');
+            finalDesc = parts[parts.length - 1].trim();
+        }
+        
+        document.getElementById('modalRequestText').innerText = finalDesc || 'No event description provided.';
+        
+        const banner = document.getElementById('modalBanner');
+        const overlay = document.getElementById('modalBannerOverlay');
+        
+        if (coverPhotoUrl && coverPhotoUrl.trim() !== '') {
+            banner.style.backgroundImage = `url('${coverPhotoUrl}')`;
+            overlay.style.display = 'block';
+        } else {
+            banner.style.backgroundImage = 'none';
+            banner.style.backgroundColor = 'var(--pup-maroon)';
+            overlay.style.display = 'none';
+        }
+        
         const modal = document.getElementById('reviewModal');
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('active'), 10);
@@ -374,6 +507,34 @@
             document.getElementById('skeleton-loader').style.display = 'none';
             document.getElementById('main-content-area').style.display = 'block';
             renderCharts();
+            
+            // Mobile Charts Carousel Focus Logic
+            if (window.innerWidth <= 900) {
+                const mainContainer = document.querySelector('#main-content-area .charts-container');
+                const realCharts = mainContainer.querySelectorAll('.chart-box');
+                
+                if (realCharts.length > 0) {
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                entry.target.classList.add('focused-chart');
+                            } else {
+                                entry.target.classList.remove('focused-chart');
+                            }
+                        });
+                    }, {
+                        root: mainContainer,
+                        threshold: 0.5
+                    });
+
+                    realCharts.forEach(chart => observer.observe(chart));
+                    
+                    // Auto-scroll to center the first item initially
+                    setTimeout(() => {
+                        mainContainer.scrollLeft = realCharts[0].offsetLeft - (mainContainer.clientWidth / 2) + (realCharts[0].clientWidth / 2);
+                    }, 100);
+                }
+            }
         }, 1000);
     });
 
@@ -385,5 +546,6 @@
             }, 50); 
         });
     });
+
 </script>
 {% endblock %}
