@@ -154,10 +154,10 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 
-EMAIL_HOST_USER = 'pupunicams@gmail.com' 
+EMAIL_HOST_USER = 'pupuqcams2526@gmail.com' 
 
 
-EMAIL_HOST_PASSWORD = 'xebi qnzi kfcf tpnc'
+EMAIL_HOST_PASSWORD = 'nbat affu cqed wton'
 
 
 

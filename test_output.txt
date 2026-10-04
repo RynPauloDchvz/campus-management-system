@@ -1,0 +1,1 @@
+<script id="test" type="application/json">"[{\"id\": 1, \"name\": \"test\"}]"</script>

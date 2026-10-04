@@ -9,6 +9,9 @@
 {% block extra_css %}
 <style>
     /* --- MANAGE ACCOUNTS SPECIFIC STYLES --- */
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .ph-spin { animation: spin 1s linear infinite; }
+    
     .actions-dropdown { position: relative; display: inline-flex; flex-direction: column; background: transparent; border-radius: 8px; border: 1px solid transparent; transition: border-color 0.2s, box-shadow 0.2s; }
     .actions-dropdown.active { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); background: var(--card-bg); }
     .actions-dropdown.active button { background: transparent !important; color: var(--accent) !important; border: none; }
@@ -475,10 +478,7 @@
             <button onclick="closeModal('createOrgModal')" style="position: absolute; top: -5px; right: 0px; background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; color: var(--text-muted);"><i class="ph-bold ph-x"></i></button>
         </div>
         
-        <div class="progress-container" style="display: flex; gap: 5px; margin-bottom: 25px;">
-            <div id="c-bar-1" style="flex: 1; height: 6px; background: var(--accent); border-radius: 5px; transition: background 0.3s;"></div>
-            <div id="c-bar-2" style="flex: 1; height: 6px; background: var(--border); border-radius: 5px; transition: background 0.3s;"></div>
-        </div>
+
 
         <form id="createForm" onsubmit="event.preventDefault(); submitAction('create');">
             <!-- PHASE 1: DETAILS -->
@@ -537,42 +537,16 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Password</label>
+                    <label class="form-label">Email Address</label>
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" id="c_password" required placeholder="Password" class="form-input" style="flex: 1;">
-                        <button type="button" class="btn-primary" onclick="autoFillPassword('c_password')" style="white-space: nowrap;"><i class="ph-bold ph-key"></i> Generate</button>
+                        <input type="email" id="c_email" required placeholder="Organizer's Email" class="form-input" style="flex: 1;">
+                        <button type="button" class="btn-primary" onclick="generateAndSendPassword('c')" style="white-space: nowrap;" id="btn-generate-c"><i class="ph-bold ph-key"></i> Generate & Send</button>
                     </div>
                 </div>
                 </div> <!-- End form-fields-scroll -->
 
                 <div class="modal-actions" style="justify-content: flex-end; margin-top: auto; padding-top: 25px;">
                     <button type="button" class="btn-cancel" onclick="closeModal('createOrgModal')">Cancel</button>
-                    <button type="button" class="btn-primary" onclick="nextPhase('c')">Proceed to OTP <i class="ph-bold ph-arrow-right"></i></button>
-                </div>
-            </div>
-
-            <!-- PHASE 2: OTP VERIFICATION -->
-            <div id="c-phase-2" class="phase-container" style="padding-top: 20px;">
-                <div class="form-fields-scroll">
-                    <div class="form-group">
-                        <label class="form-label" style="font-size: 1.1rem;">Verification OTP Code</label>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">A 6-digit code must be generated and verified to confirm this action. Please save the code.</p>
-                    <button type="button" id="btn-generate-otp-c" class="btn-primary" style="width: 100%; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border); margin-bottom: 20px;" onclick="generateOtpModal('c')">
-                        <i class="ph-bold ph-lock-key"></i> Generate OTP Code
-                    </button>
-                    <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 25px;">
-                        <input type="text" maxlength="1" class="otp-box c-otp" onkeyup="moveOtp(this, 'c-otp', event)" onpaste="handleOtpPaste(event, 'c')">
-                        <input type="text" maxlength="1" class="otp-box c-otp" onkeyup="moveOtp(this, 'c-otp', event)" onpaste="handleOtpPaste(event, 'c')">
-                        <input type="text" maxlength="1" class="otp-box c-otp" onkeyup="moveOtp(this, 'c-otp', event)" onpaste="handleOtpPaste(event, 'c')">
-                        <input type="text" maxlength="1" class="otp-box c-otp" onkeyup="moveOtp(this, 'c-otp', event)" onpaste="handleOtpPaste(event, 'c')">
-                        <input type="text" maxlength="1" class="otp-box c-otp" onkeyup="moveOtp(this, 'c-otp', event)" onpaste="handleOtpPaste(event, 'c')">
-                        <input type="text" maxlength="1" class="otp-box c-otp" onkeyup="moveOtp(this, 'c-otp', event)" onpaste="handleOtpPaste(event, 'c')">
-                    </div>
-                </div>
-                </div> <!-- End form-fields-scroll -->
-
-                <div class="modal-actions" style="justify-content: space-between; margin-top: auto; padding-top: 25px;">
-                    <button type="button" class="btn-cancel" onclick="prevPhase('c')"><i class="ph-bold ph-arrow-left"></i> Back</button>
                     <button type="submit" id="btn-create" class="btn-primary">Create Account</button>
                 </div>
             </div>
@@ -581,121 +555,7 @@
 </div>
 
 
-<!-- 🟢 EDIT MODAL 🟢 -->
-<div id="editOrgModal" class="modal modal-fullscreen">
-    <div class="modal-box" style="max-width: 600px;">
-        <div style="text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; position: relative;">
-            <h3 class="modal-title" style="margin: 0; font-size: 1.4rem; font-weight: 900; text-transform: uppercase;">Edit Credentials</h3>
-            <p class="modal-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">Modify the login access of the organizer.</p>
-            <button onclick="closeModal('editOrgModal')" style="position: absolute; top: -5px; right: 0px; background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; color: var(--text-muted);"><i class="ph-bold ph-x"></i></button>
-        </div>
-        
-        <div class="progress-container" style="display: flex; gap: 5px; margin-bottom: 25px;">
-            <div id="e-bar-1" style="flex: 1; height: 6px; background: var(--accent); border-radius: 5px; transition: background 0.3s;"></div>
-            <div id="e-bar-2" style="flex: 1; height: 6px; background: var(--border); border-radius: 5px; transition: background 0.3s;"></div>
-        </div>
 
-        <form id="editForm" onsubmit="event.preventDefault(); submitAction('edit');">
-            <input type="hidden" id="e_id">
-            
-            <!-- PHASE 1: DETAILS -->
-            <div id="e-phase-1" class="phase-container active-phase">
-                <div class="form-fields-scroll">
-                    <div class="form-group">
-                        <label class="form-label">Full Name</label>
-                    <input type="text" id="e_name" required class="form-input">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Organization</label>
-                    <div class="select-dropdown-container" id="e_org_dropdown">
-                        <div class="select-dropdown-header" onclick="toggleCustomDropdown('e_org_dropdown')">
-                            <span id="e_org_label">Select Organization</span>
-                            <i class="ph-bold ph-caret-down"></i>
-                        </div>
-                        <div class="select-dropdown-list">
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'ITO', 'ITO - Information Technology Org')">ITO - Information Technology Org</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'ITS', 'ITS - Institute of Technology Society')">ITS - Institute of Technology Society</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'YEO', 'YEO - Young Entrepreneurship Org')">YEO - Young Entrepreneurship Org</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'FTO', 'FTO - Future Teacher Org')">FTO - Future Teacher Org</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'PAS', 'PAS - Public Administration Society')">PAS - Public Administration Society</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'CAO', 'CAO - Culture and Arts')">CAO - Culture and Arts</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'NEWS', 'NEWS - NEWSETTE')">NEWS - NEWSETTE</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'PRIDE', 'PRIDE - PRIDEVerse')">PRIDE - PRIDEVerse</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'ROTC', 'ROTC - Reserve Officers\' Training Corps')">ROTC - Reserve Officers' Training Corps</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'PUSO', 'PUSO - PUP Unisan Sports Org')">PUSO - PUP Unisan Sports Org</div>
-                            <div class="select-dropdown-option" onclick="selectCustomOption('e_org', 'SSC', 'SSC - Supreme Student Council')">SSC - Supreme Student Council</div>
-                        </div>
-                    </div>
-                    <input type="hidden" id="e_org" required>
-                </div>
-                
-                <div style="display: flex; gap: 15px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label class="form-label">Student ID</label>
-                        <input type="text" id="e_username" required class="form-input">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label class="form-label">Year Level</label>
-                        <div class="select-dropdown-container" id="e_year_dropdown">
-                            <div class="select-dropdown-header" onclick="toggleCustomDropdown('e_year_dropdown')">
-                                <span id="e_year_label">Select Year</span>
-                                <i class="ph-bold ph-caret-down"></i>
-                            </div>
-                            <div class="select-dropdown-list">
-                                <div class="select-dropdown-option" onclick="selectCustomOption('e_year', '1st Year', '1st Year')">1st Year</div>
-                                <div class="select-dropdown-option" onclick="selectCustomOption('e_year', '2nd Year', '2nd Year')">2nd Year</div>
-                                <div class="select-dropdown-option" onclick="selectCustomOption('e_year', '3rd Year', '3rd Year')">3rd Year</div>
-                                <div class="select-dropdown-option" onclick="selectCustomOption('e_year', '4th Year', '4th Year')">4th Year</div>
-                            </div>
-                        </div>
-                        <input type="hidden" id="e_year" required>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">New Password (Optional)</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="e_password" placeholder="Password" class="form-input" style="flex: 1;">
-                        <button type="button" class="btn-primary" onclick="autoFillPassword('e_password')" style="white-space: nowrap;"><i class="ph-bold ph-key"></i> Generate</button>
-                    </div>
-                </div>
-                </div> <!-- End form-fields-scroll -->
-                
-                <div class="modal-actions" style="justify-content: flex-end; margin-top: auto; padding-top: 25px;">
-                    <button type="button" class="btn-cancel" onclick="closeModal('editOrgModal')">Cancel</button>
-                    <button type="button" class="btn-primary" onclick="nextPhase('e')">Proceed to OTP <i class="ph-bold ph-arrow-right"></i></button>
-                </div>
-            </div>
-
-            <!-- PHASE 2: OTP VERIFICATION -->
-            <div id="e-phase-2" class="phase-container" style="padding-top: 20px;">
-                <div class="form-fields-scroll">
-                    <div class="form-group">
-                        <label class="form-label" style="font-size: 1.1rem;">Verification OTP Code</label>
-                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">A 6-digit code must be generated and verified to confirm this action. Please save the code.</p>
-                    <button type="button" id="btn-generate-otp-e" class="btn-primary" style="width: 100%; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border); margin-bottom: 20px;" onclick="generateOtpModal('e')">
-                        <i class="ph-bold ph-lock-key"></i> Generate OTP Code
-                    </button>
-                    <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 25px;">
-                        <input type="text" maxlength="1" class="otp-box e-otp" onkeyup="moveOtp(this, 'e-otp', event)" onpaste="handleOtpPaste(event, 'e')">
-                        <input type="text" maxlength="1" class="otp-box e-otp" onkeyup="moveOtp(this, 'e-otp', event)" onpaste="handleOtpPaste(event, 'e')">
-                        <input type="text" maxlength="1" class="otp-box e-otp" onkeyup="moveOtp(this, 'e-otp', event)" onpaste="handleOtpPaste(event, 'e')">
-                        <input type="text" maxlength="1" class="otp-box e-otp" onkeyup="moveOtp(this, 'e-otp', event)" onpaste="handleOtpPaste(event, 'e')">
-                        <input type="text" maxlength="1" class="otp-box e-otp" onkeyup="moveOtp(this, 'e-otp', event)" onpaste="handleOtpPaste(event, 'e')">
-                        <input type="text" maxlength="1" class="otp-box e-otp" onkeyup="moveOtp(this, 'e-otp', event)" onpaste="handleOtpPaste(event, 'e')">
-                    </div>
-                </div>
-                </div> <!-- End form-fields-scroll -->
-
-                <div class="modal-actions" style="justify-content: space-between; margin-top: auto; padding-top: 25px;">
-                    <button type="button" class="btn-cancel" onclick="prevPhase('e')"><i class="ph-bold ph-arrow-left"></i> Back</button>
-                    <button type="submit" id="btn-edit" class="btn-primary">Save Changes</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 
 
 <!-- 🟢 DEACTIVATE / DELETE MODAL 🟢 -->
@@ -748,6 +608,12 @@
         <button type="button" class="btn-primary" style="width: 100%;" onclick="location.reload()">Continue</button>
     </div>
 </div>
+
+<!-- 🟢 CUSTOM TOAST 🟢 -->
+<div id="customToast" style="position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 10px 20px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10001; display: flex; align-items: center; justify-content: center; gap: 8px; width: max-content; max-width: 85%; text-align: center; word-break: break-word;">
+    <i class="ph-bold ph-check-circle" id="toastIcon" style="font-size: 1.1rem; flex-shrink: 0;"></i> <span id="toastMessage">Success</span>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -921,7 +787,6 @@
                             </button>
                             <div class="actions-menu" style="text-align:left;">
                                 <a class="action-item" onclick="event.stopPropagation(); openViewModal(${user.id})"><i class="ph-bold ph-user-circle"></i> View Profile</a>
-                                <a class="action-item" onclick="event.stopPropagation(); openEditModal(${user.id})"><i class="ph-bold ph-pencil-simple"></i> Edit Credentials</a>
                                 <hr style="border-color: var(--border); margin:0;">
                                 <a class="action-item danger" onclick="event.stopPropagation(); openDeleteModal(${user.id})"><i class="ph-bold ph-warning-circle"></i> Deactivate Access</a>
                             </div>
@@ -944,7 +809,6 @@
                                 <span class="badge ${badgeClass}" style="font-size: 0.6rem; padding: 2px 6px;">${user.status}</span>
                             </div>
                         </div>
-                        <button class="btn-action-small mobile-edit-btn" onclick="event.stopPropagation(); openEditModal(${user.id})" style="padding: 10px; border-radius: 8px; flex-shrink: 0;"><i class="ph-bold ph-pencil-simple" style="font-size: 1.1rem; margin:0;"></i></button>
                     </div>
                 `;
                 mobileList.innerHTML += mobileCard;
@@ -1023,8 +887,7 @@
     }
 
     function showError(msg) {
-        document.getElementById('errorMessage').innerText = msg;
-        openModal('errorModal');
+        showToast(msg, 'error');
     }
 
     function nextPhase(prefix) {
@@ -1123,18 +986,6 @@
         document.getElementById(`${prefix}_password`).value = '';
     }
 
-    function openEditModal(id) {
-        const user = usersData.find(u => u.id === id);
-        document.getElementById('e_id').value = user.id;
-        document.getElementById('e_name').value = user.name;
-        document.getElementById('e_username').value = user.username;
-        selectCustomOption('e_org', user.org, user.org);
-        selectCustomOption('e_year', user.year_level || '1st Year', user.year_level || '1st Year');
-        clearForm('e');
-        currentOtp = "";
-        openModal('editOrgModal');
-    }
-
     function openDeleteModal(id) {
         const user = usersData.find(u => u.id === id);
         document.getElementById('d_id').value = user.id;
@@ -1142,42 +993,73 @@
         openModal('deleteModal');
     }
 
-    function autoFillPassword(id) {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
-        let password = "";
-        for (let i = 0; i < 12; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
+    async function generateAndSendPassword(prefix) {
+        let email = document.getElementById(prefix + '_email').value;
+        if (!email) {
+            showError("Please enter an email address first.");
+            return;
         }
-        document.getElementById(id).value = password;
-    }
-
-    function generateOtpModal(prefix) {
-        let code = Math.floor(100000 + Math.random() * 900000).toString();
-        currentOtp = code;
-        document.getElementById('generatedOtpDisplay').innerText = code;
         
-        let btn = document.getElementById(`btn-generate-otp-${prefix}`);
+        let btn = document.getElementById('btn-generate-' + prefix);
+        let originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="ph-bold ph-spinner ph-spin" style="animation: spin 1s linear infinite;"></i> Sending...`;
         btn.disabled = true;
-        let timeLeft = 60;
-        let timer = setInterval(() => {
-            btn.innerHTML = `<i class="ph-bold ph-clock"></i> Wait ${timeLeft}s`;
-            if (timeLeft <= 0) {
-                clearInterval(timer);
+
+        const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
+
+        try {
+            const response = await fetch("{% url 'admin_generate_org_password' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': tokenValue },
+                body: JSON.stringify({ email: email, prefix: prefix })
+            });
+
+            const data = await response.json();
+            if(data.status === 'success') {
+                showToast(data.message);
+                
+                
+                // 60-second cooldown timer
+                let timeLeft = 60;
+                let timer = setInterval(() => {
+                    btn.innerHTML = `<i class="ph-bold ph-clock"></i> Wait ${timeLeft}s`;
+                    btn.disabled = true;
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }
+                    timeLeft -= 1;
+                }, 1000);
+                
+            } else {
+                showError("Error: " + data.message);
+                btn.innerHTML = originalText;
                 btn.disabled = false;
-                btn.innerHTML = `<i class="ph-bold ph-lock-key"></i> Generate OTP Code`;
             }
-            timeLeft -= 1;
-        }, 1000);
-        
-        openModal('otpModal');
+        } catch (error) {
+            showError("Server Error. Please try again.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     }
 
-    function moveOtp(element, cls, event) {
-        if (event.key === 'Backspace' && element.previousElementSibling) {
-            element.previousElementSibling.focus();
-        } else if (element.value && element.nextElementSibling) {
-            element.nextElementSibling.focus();
+    function showToast(message, type='success') {
+        const toast = document.getElementById('customToast');
+        const icon = document.getElementById('toastIcon');
+        document.getElementById('toastMessage').innerText = message;
+        if (type === 'error') {
+            toast.style.background = '#ef4444'; // Red
+            icon.className = 'ph-bold ph-warning-circle';
+        } else {
+            toast.style.background = '#10b981'; // Green
+            icon.className = 'ph-bold ph-check-circle';
         }
+        toast.style.bottom = '30px';
+        setTimeout(() => {
+            toast.style.bottom = '-100px';
+        }, 4000);
     }
 
     // 🟢 DATABASE API REQUESTS (CREATE, EDIT, DELETE) 🟢
@@ -1185,33 +1067,14 @@
         let payload = { action: action };
         let btn;
 
-        if (action === 'create' || action === 'edit') {
-            let prefix = action === 'create' ? 'c' : 'e';
-            let otpEntered = Array.from(document.querySelectorAll(`.${prefix}-otp`)).map(i => i.value).join('');
-            if (otpEntered !== currentOtp || !currentOtp) {
-                showError("Invalid OTP verification code.");
-                return;
-            }
-        }
-
         if (action === 'create') {
             payload.name = document.getElementById('c_name').value;
             payload.org = document.getElementById('c_org').value;
             payload.year_level = document.getElementById('c_year').value;
             payload.username = document.getElementById('c_username').value;
-            payload.password = document.getElementById('c_password').value;
-            if(!payload.name || !payload.org || !payload.username || !payload.password || !payload.year_level) return showError("Fill all fields.");
+            payload.email = document.getElementById('c_email').value;
+            if(!payload.name || !payload.org || !payload.username || !payload.email || !payload.year_level) return showError("Fill all fields.");
             btn = document.getElementById('btn-create');
-        } 
-        else if (action === 'edit') {
-            payload.id = document.getElementById('e_id').value;
-            payload.name = document.getElementById('e_name').value;
-            payload.org = document.getElementById('e_org').value;
-            payload.year_level = document.getElementById('e_year').value;
-            payload.username = document.getElementById('e_username').value;
-            payload.password = document.getElementById('e_password').value; // optional
-            if(!payload.name || !payload.org || !payload.username || !payload.year_level) return showError("Name, Org, Year, and Username are required.");
-            btn = document.getElementById('btn-edit');
         } 
         else if (action === 'delete') {
             payload.id = document.getElementById('d_id').value;
@@ -1235,18 +1098,17 @@
             const data = await response.json();
             if(data.status === 'success') {
                 closeModal('createOrgModal');
-                closeModal('editOrgModal');
                 closeModal('deleteModal');
                 
-                document.getElementById('successMessage').innerText = data.message;
-                openModal('successModal');
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1500);
             } else {
-                alert("Error: " + data.message);
+                showToast("Error: " + data.message, 'error');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         } catch (error) {
-            alert("Server Error. Please try again.");
+            showToast("Server Error. Please try again.", 'error');
             btn.innerHTML = originalText;
             btn.disabled = false;
         }

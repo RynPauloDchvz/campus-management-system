@@ -447,19 +447,26 @@
                                 </div>
                                 
                                 <div>
+                                    <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Password</label>
+                                    <input type="password" v-model="formData.password" required placeholder="Create a strong password" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm">
+                                </div>
+                                
+                                <div>
                                     <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Email Address</label>
-                                    <input type="email" v-model="formData.email_address" required placeholder="you@pup.edu.ph" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm">
+                                    <div class="relative flex items-center">
+                                        <input type="email" v-model="formData.email_address" required placeholder="you@pup.edu.ph" class="w-full px-4 py-3 pr-28 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm">
+                                        <button type="button" @click="sendRegistrationOtp" :disabled="isSendingOtp || !formData.email_address || countdown > 0" class="absolute right-2 px-3 py-1.5 bg-gray-900 hover:bg-black dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold rounded-lg transition-colors text-xs disabled:opacity-50 shadow-sm">
+                                            <span v-if="isSendingOtp"><i class="ph-bold ph-spinner animate-spin"></i></span>
+                                            <span v-else-if="countdown > 0">Wait [[ countdown ]]s</span>
+                                            <span v-else>Send OTP</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">System Password</label>
-                                    <div class="relative flex items-center">
-                                        <input type="text" v-model="formData.password" required placeholder="Check email for code..." class="w-full px-4 py-3 pr-28 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm">
-                                        <button type="button" @click="sendGeneratedPassword" :disabled="isSendingPassword || !formData.email_address || countdown > 0" class="absolute right-2 px-3 py-1.5 bg-gray-900 hover:bg-black dark:bg-pup-gold dark:hover:bg-yellow-600 text-white dark:text-black font-bold rounded-lg transition-colors text-xs disabled:opacity-50 shadow-sm">
-                                            <span v-if="isSendingPassword"><i class="ph-bold ph-spinner animate-spin"></i></span>
-                                            <span v-else-if="countdown > 0">Wait [[ countdown ]]s</span>
-                                            <span v-else>Get Code</span>
-                                        </button>
+                                    <label class="block text-[0.65rem] font-bold text-gray-500 dark:text-pup-gold mb-1 uppercase tracking-wider">Verification Code (OTP)</label>
+                                    <div class="flex justify-between gap-1 sm:gap-2">
+                                        <input type="text" maxlength="1" v-for="(val, index) in registerOtp" :key="'otp-'+index" v-model="registerOtp[index]" @keyup="moveRegisterOtp(index, $event)" @paste="handleRegisterOtpPaste" ref="registerOtpInputs" class="w-10 h-10 sm:w-12 sm:h-12 text-center font-black text-lg rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white shadow-inner transition-colors">
                                     </div>
                                 </div>
                             </div>
@@ -581,6 +588,11 @@
 
             </div>
         </div>
+        
+        <!-- 🟢 CUSTOM TOAST 🟢 -->
+        <div :class="toast.show ? 'bottom-[30px]' : '-bottom-[100px]'" class="fixed left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-[50px] font-bold text-[0.85rem] shadow-[0_4px_15px_rgba(0,0,0,0.2)] transition-[bottom] duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] z-[10001] flex items-center justify-center gap-2 w-max max-w-[85%] text-center break-words" :class="toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'">
+            <i class="ph-bold" :class="toast.type === 'error' ? 'ph-warning-circle' : 'ph-check-circle'" style="font-size: 1.1rem; flex-shrink: 0;"></i> <span>[[ toast.message ]]</span>
+        </div>
     </div>
 
     <script>
@@ -613,7 +625,8 @@
                     profilePreview: null, coverPreview: null,
                     capturedFace: null, faceCaptured: false,
                     isCameraActive: false, videoStream: null,
-                    isSubmitting: false, isSendingPassword: false, 
+                    isSubmitting: false, isSendingOtp: false, 
+                    registerOtp: ['', '', '', '', '', ''],
                     isVerifying: false, countdown: 0, timerInterval: null,
                     
                     // 🟢 ENHANCED QUALITY STATE 🟢
@@ -624,7 +637,8 @@
                     formData: {
                         full_name: '', student_number: '', birthdate: '',
                         year_level: '', program: '', email_address: '', password: '',
-                    }
+                    },
+                    toast: { show: false, message: '', type: 'success' }
                 }
             },
             computed: {
@@ -647,6 +661,12 @@
                 if (this.isLocked) { this.startLockoutCountdown(); }
             },
             methods: {
+                showToast(message, type='success') {
+                    this.toast.message = message;
+                    this.toast.type = type;
+                    this.toast.show = true;
+                    setTimeout(() => { this.toast.show = false; }, 4000);
+                },
                 formatTime(seconds) {
                     const mins = Math.floor(seconds / 60);
                     const secs = seconds % 60;
@@ -729,10 +749,10 @@
                                 if (match) this.attemptCount = parseInt(match[0]);
                                 this.showAttemptModal = true;
                             } else {
-                                alert(data.message || "Invalid credentials.");
+                                this.showToast(data.message || "Invalid credentials.", 'error');
                             }
                         }
-                    } catch (error) { alert("Connection error."); }
+                    } catch (error) { this.showToast("Connection error.", 'error'); }
                     finally { this.isLoggingIn = false; }
                 },
                 previewImage(event, type) {
@@ -751,12 +771,12 @@
                     try {
                         // 🟢 GUARD: Secure Context (HTTPS/Localhost) 🟢
                         if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-                            alert("Security Error: Camera access requires a secure connection (HTTPS). Please use HTTPS or access via localhost.");
+                            this.showToast("Security Error: Camera access requires a secure connection (HTTPS). Please use HTTPS or access via localhost.", "error");
                             return;
                         }
 
                         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                            alert("Device Error: Your browser or device does not support camera access.");
+                            this.showToast("Device Error: Your browser or device does not support camera access.", "error");
                             return;
                         }
 
@@ -786,9 +806,9 @@
                         }
                     } catch (err) { 
                         if (err.name === 'NotAllowedError') {
-                            alert("Permission Denied: Please allow camera access in your browser settings.");
+                            this.showToast("Permission Denied: Please allow camera access in your browser settings.", "error");
                         } else {
-                            alert("Camera Error: " + err.message);
+                            this.showToast("Camera Error: " + err.message, "error");
                         }
                     }
                 },
@@ -849,7 +869,7 @@
                 captureFace() {
                     // 🟢 FINAL GUARD: Re-check quality before capturing 🟢
                     if (!this.qualityStatus.isReady || this.qualityStatus.obstructed || this.qualityStatus.noFaceDetail) {
-                        alert("Biometric alignment failed. Please fix scanner issues.");
+                        this.showToast("Biometric alignment failed. Please fix scanner issues.", "error");
                         return;
                     }
 
@@ -869,34 +889,57 @@
                         if(this.countdown <= 0) clearInterval(this.timerInterval);
                     }, 1000);
                 },
-                async sendGeneratedPassword() {
+                moveRegisterOtp(index, event) {
+                    if (event.key === 'Backspace' && index > 0 && !this.registerOtp[index]) {
+                        this.$refs.registerOtpInputs[index - 1].focus();
+                    } else if (this.registerOtp[index] && index < 5) {
+                        this.$refs.registerOtpInputs[index + 1].focus();
+                    }
+                },
+                handleRegisterOtpPaste(e) {
+                    e.preventDefault();
+                    let pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                    for (let i = 0; i < pastedData.length; i++) {
+                        this.registerOtp[i] = pastedData[i];
+                    }
+                    if (pastedData.length === 6) {
+                        this.$refs.registerOtpInputs[5].focus();
+                    }
+                },
+                async sendRegistrationOtp() {
                     if (!this.formData.email_address) return;
-                    this.isSendingPassword = true;
+                    this.isSendingOtp = true;
                     const formData = new FormData();
-                    formData.append('email_address', this.formData.email_address);
+                    formData.append('email', this.formData.email_address);
                     const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
                     const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
                     try {
-                        const response = await fetch('/student/generate-password', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
+                        const response = await fetch('/student/send-register-otp', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
                         const data = await response.json();
-                        if(data.status === 'success') { alert(data.message); this.startCountdown(); }
-                        else alert(data.message);
-                    } catch (error) { alert("Failed to connect."); }
-                    finally { this.isSendingPassword = false; }
+                        if(data.status === 'success') { this.showToast(data.message, 'success'); this.startCountdown(); }
+                        else this.showToast(data.message, 'error');
+                    } catch (error) { this.showToast("Failed to connect.", 'error'); }
+                    finally { this.isSendingOtp = false; }
                 },
                 async verifyAndProceed() {
-                    if(!this.formData.password) { alert("Code required."); return; }
+                    const otpCode = this.registerOtp.join('');
+                    if(otpCode.length < 6) { this.showToast("Please enter the complete 6-digit OTP.", "error"); return; }
+                    if(!this.formData.password) { this.showToast("Password required.", "error"); return; }
                     this.isVerifying = true;
                     const formData = new FormData();
-                    formData.append('password', this.formData.password);
+                    formData.append('otp', otpCode);
                     const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
                     const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
                     try {
-                        const response = await fetch('/student/verify-password', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
+                        const response = await fetch('/student/verify-register-otp', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
                         const data = await response.json();
-                        if (data.status === 'success') this.registerStep = 5; 
-                        else alert(data.message); 
-                    } catch (error) { alert("Verification error."); }
+                        if (data.status === 'success') {
+                            this.showToast("Email verified successfully.", "success");
+                            this.registerStep = 5; 
+                        } else {
+                            this.showToast(data.message, "error"); 
+                        }
+                    } catch (error) { this.showToast("Verification error.", "error"); }
                     finally { this.isVerifying = false; }
                 },
                 async submitFinalRegistration() {
@@ -932,9 +975,9 @@
                     try {
                         const response = await fetch('/student/register', { method: 'POST', headers: { 'X-CSRFToken': tokenValue }, body: formData });
                         const data = await response.json();
-                        if (data.status === 'success') { alert(data.message); this.switchView('login'); }
-                        else alert(data.message);
-                    } catch (error) { alert("Error connecting to server."); }
+                        if (data.status === 'success') { this.showToast(data.message, 'success'); this.switchView('login'); }
+                        else this.showToast(data.message, 'error');
+                    } catch (error) { this.showToast("Error connecting to server.", 'error'); }
                     finally { this.isSubmitting = false; }
                 }
             }

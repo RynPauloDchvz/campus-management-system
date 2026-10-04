@@ -13,10 +13,11 @@
     .event-row:last-child { border-bottom: none; }
     .event-row:hover { background: var(--hover-bg); border-radius: 12px; padding: 20px 15px; margin: 0 -15px; }
     
-    .event-info { display: flex; align-items: center; gap: 20px; }
-    .event-icon { width: 55px; height: 55px; border-radius: 14px; background: var(--card-bg); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--accent); border: 2px solid var(--border); font-weight: 900; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .event-info { display: flex; align-items: center; gap: 20px; width: calc(100% - 40px); }
+    .event-icon { width: 55px; height: 55px; flex-shrink: 0; border-radius: 14px; background: var(--card-bg); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--accent); border: 2px solid var(--border); font-weight: 900; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .event-info-text { min-width: 0; flex: 1; }
     
-    .event-title { font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin-bottom: 5px; display: block; transition: 0.2s;}
+    .event-title { font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin-bottom: 5px; display: block; transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .event-row:hover .event-title { color: var(--accent); }
     
     .event-meta { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; display: flex; gap: 20px; }
@@ -36,6 +37,43 @@
     @media(max-width: 900px) {
         .modal-charts { grid-template-columns: 1fr; }
         .event-meta { flex-direction: column; gap: 5px; }
+        .stat-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 15px 10px; }
+        .stat-label { white-space: nowrap; font-size: 0.7rem; }
+        
+        .event-row { border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 12px; }
+        .event-row:last-child { border-bottom: 1px solid var(--border); }
+        .event-row:hover { margin: 0 0 12px 0; padding: 15px; }
+    }
+
+    /* Custom Styling for Search Integration */
+    .table-header-flex { display: flex; justify-content: space-between; align-items: center; gap: 15px; position: relative; }
+    .table-title-container { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.4s ease; }
+    .mobile-search-toggle { display: none; }
+    .close-search-mobile { display: none; }
+
+    @media(max-width: 900px) {
+        .table-title { font-size: 1.15rem; }
+        .mobile-search-toggle {
+            display: flex; align-items: center; justify-content: center;
+            width: 42px; height: 42px; border-radius: 10px; cursor: pointer;
+            flex-shrink: 0; transition: 0.3s;
+            border: 2px solid maroon; background: maroon; color: white; font-size: 1.2rem;
+        }
+        
+        .search-box-wrapper {
+            position: absolute; right: 0; width: 0; opacity: 0; overflow: hidden;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; z-index: 10;
+        }
+        .search-box-wrapper.active { width: 100%; opacity: 1; overflow: visible; }
+        .search-box-wrapper .search-box { width: 100%; display: flex; align-items: center; }
+        .search-box-wrapper .search-box input { width: 100%; }
+        .close-search-mobile { display: block !important; }
+        .table-header-flex.search-active .table-title-container { opacity: 0; transform: translateX(-20px); }
+        .desktop-only-skeleton { display: none; }
+    }
+    
+    html[data-theme="dark"] .mobile-search-toggle, body.dark-mode .mobile-search-toggle, .dark-mode .mobile-search-toggle {
+        border: 2px solid gold !important; background: gold !important; color: black !important;
     }
 </style>
 {% endblock %}
@@ -43,15 +81,7 @@
 {% block content %}
 <!-- 🟢 SKELETON LOADING STATE 🟢 -->
 <div id="skeleton-loader" class="fade-in">
-    <div class="control-bar" style="display: flex; justify-content: space-between; gap: 15px;">
-        <div class="filter-group flex items-center gap-3">
-            <div class="w-24 h-6 skeleton-shimmer rounded"></div>
-            <div class="w-40 h-10 skeleton-shimmer rounded-lg"></div>
-        </div>
-        <div class="w-64 h-10 skeleton-shimmer rounded-lg"></div>
-    </div>
-    
-    <div class="stats-grid">
+    <div class="stats-grid" style="margin-bottom: 20px;">
         <!-- 4 Stat Cards -->
         <div class="stat-card" style="position: relative;">
             <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
@@ -75,9 +105,12 @@
         </div>
     </div>
 
+
+
     <div class="table-section">
-        <div class="table-header">
+        <div class="table-header table-header-flex">
             <div class="w-64 h-8 skeleton-shimmer rounded"></div>
+            <div class="w-64 h-10 skeleton-shimmer rounded-lg desktop-only-skeleton"></div>
         </div>
         <div class="space-y-6 p-4">
             <!-- 5 List Items -->
@@ -122,18 +155,7 @@
 
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
 <div id="main-content-area" style="display: none;" class="fade-in">
-    <div class="control-bar">
-        <div class="filter-group">
-            <span style="font-weight: 800; text-transform: uppercase; color: var(--text-muted); font-size: 0.85rem; letter-spacing: 1px;">Monitoring:</span>
-            <span id="currentOrgDisplay" class="badge badge-approved" style="font-size: 1.1rem; padding: 8px 15px;">All Organizations</span>
-        </div>
-        <div class="search-box">
-            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-            <input type="text" id="searchEvent" class="search-input" placeholder="Search event title..." onkeyup="filterMonitor()">
-        </div>
-    </div>
-
-    <div class="stats-grid">
+    <div class="stats-grid" style="margin-bottom: 20px;">
         <div class="stat-card">
             <span class="stat-label">Total Events</span>
             <span class="stat-value" id="statTotalEvents">0</span>
@@ -145,7 +167,7 @@
             <i class="ph-fill ph-users stat-icon" style="color: #10b981;"></i>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Avg Rating</span>
+            <span class="stat-label">AVG QUESTIONS RATING</span>
             <span class="stat-value" id="statAvgRating">0.0</span>
             <i class="ph-fill ph-star stat-icon" style="color: #f59e0b;"></i>
         </div>
@@ -156,9 +178,25 @@
         </div>
     </div>
 
+
+
     <div class="table-section">
-        <div class="table-header">
-            <h2 class="table-title">Event Performance Records</h2>
+        <div class="table-header table-header-flex" id="tableHeaderFlex">
+            <div class="table-title-container">
+                <h2 class="table-title">Organization Event Records</h2>
+            </div>
+            
+            <div class="mobile-search-toggle" id="mobileSearchToggle" onclick="toggleMobileSearch()">
+                <i class="ph-bold ph-magnifying-glass"></i>
+            </div>
+            
+            <div class="search-box-wrapper" id="searchBoxWrapper">
+                <div class="search-box">
+                    <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+                    <input type="text" id="searchEvent" class="search-input" placeholder="Search event title... (e.g. General Assembly)" onkeyup="filterMonitor()">
+                    <i class="ph-bold ph-x close-search-mobile" onclick="toggleMobileSearch()" style="display: none; cursor: pointer; margin-left: 10px; color: var(--text-muted); font-size: 1.2rem;"></i>
+                </div>
+            </div>
         </div>
         
         <div id="monitorListContainer" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
@@ -179,17 +217,12 @@
     const urlParams = new URLSearchParams(window.location.search);
     let currentOrg = urlParams.get('org') ? urlParams.get('org').toUpperCase() : 'ALL';
 
-    // Update ng Badge Name sa UI
-    const orgDisplay = document.getElementById('currentOrgDisplay');
-    if (currentOrg === 'ALL') {
-        orgDisplay.innerText = "All Organizations Overview";
-    } else {
-        orgDisplay.innerText = currentOrg + " Events";
-    }
+
 
     // 🟢 RENDER LIST & STATS 🟢
     function filterMonitor() {
-        const searchVal = document.getElementById('searchEvent').value.toLowerCase();
+        const searchInput = document.getElementById('searchEvent').value.trim();
+        const searchVal = searchInput.toLowerCase();
         
         const filtered = systemEvents.filter(e => {
             const matchOrg = currentOrg === 'ALL' || e.org === currentOrg;
@@ -197,7 +230,7 @@
             return matchOrg && matchSearch;
         });
 
-        renderList(filtered);
+        renderList(filtered, searchInput.length > 0, searchInput);
         updateStats(filtered);
     }
 
@@ -227,12 +260,25 @@
         document.getElementById('statAvgSentiment').innerText = eventsWithEvals > 0 ? Math.round(totalSent / eventsWithEvals) + '%' : '0%';
     }
 
-    function renderList(data) {
+    function renderList(data, isSearch = false, searchVal = "") {
         const container = document.getElementById('monitorListContainer');
         container.innerHTML = '';
         
         if (data.length === 0) {
-            container.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-muted); font-weight: 600;">No event records found for ${currentOrg === 'ALL' ? 'any organization' : currentOrg}.</div>`;
+            if (isSearch) {
+                container.innerHTML = `
+                    <div style="padding: 60px 20px; text-align: center; color: var(--text-muted);">
+                        <i class="ph-bold ph-magnifying-glass" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 5px;">No results found</h4>
+                        <p style="font-weight: 600; font-size: 0.9rem;">No event record found matching "${searchVal}"</p>
+                    </div>`;
+            } else {
+                container.innerHTML = `
+                    <div style="padding: 60px 20px; text-align: center; color: var(--text-muted);">
+                        <i class="ph-bold ph-calendar-blank" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <p style="font-weight: 600; font-size: 1rem;">No event records found for ${currentOrg === 'ALL' ? 'any organization' : currentOrg}.</p>
+                    </div>`;
+            }
             return;
         }
 
@@ -243,8 +289,8 @@
                 <div class="event-row" onclick="window.location.href='/admin/org-monitor/detail/?event_id=' + ${event.id}">
                     <div class="event-info">
                         <div class="event-icon">${event.org}</div>
-                        <div>
-                            <span class="event-title">${event.title}</span>
+                        <div class="event-info-text">
+                            <span class="event-title" title="${event.title}">${event.title}</span>
                             <div class="event-meta">
                                 <span><i class="ph-bold ph-calendar-blank"></i> ${event.date}</span>
                                 <span><i class="ph-bold ph-users"></i> ${event.respondents} Respondents</span>
@@ -268,5 +314,27 @@
             filterMonitor();
         }, 800);
     });
+
+    // Mobile Search Toggle
+    function toggleMobileSearch() {
+        const wrapper = document.getElementById('searchBoxWrapper');
+        const header = document.getElementById('tableHeaderFlex');
+        const toggleBtn = document.getElementById('mobileSearchToggle');
+        
+        if (wrapper.classList.contains('active')) {
+            wrapper.classList.remove('active');
+            header.classList.remove('search-active');
+            toggleBtn.style.opacity = '1';
+            toggleBtn.style.pointerEvents = 'auto';
+        } else {
+            wrapper.classList.add('active');
+            header.classList.add('search-active');
+            toggleBtn.style.opacity = '0';
+            toggleBtn.style.pointerEvents = 'none';
+            setTimeout(() => {
+                document.getElementById('searchEvent').focus();
+            }, 300);
+        }
+    }
 </script>
 {% endblock %}

@@ -73,69 +73,99 @@
     <template v-else>
         <!-- Stats Bar -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 flex flex-col justify-center">
+            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 flex flex-col justify-center items-center text-center sm:items-start sm:text-left">
                 <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Total Logs</p>
                 <p class="text-2xl font-black">[[ logs.length ]]</p>
             </div>
-            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-green-500 flex flex-col justify-center">
+            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-green-500 flex flex-col justify-center items-center text-center sm:items-start sm:text-left">
                 <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Success</p>
                 <p class="text-2xl font-black text-green-500">[[ successCount ]]</p>
             </div>
-            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-red-500 flex flex-col justify-center">
+            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-red-500 flex flex-col justify-center items-center text-center sm:items-start sm:text-left">
                 <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Failures</p>
                 <p class="text-2xl font-black text-red-500">[[ failureCount ]]</p>
             </div>
-            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-gold flex flex-col justify-center">
+            <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-gold flex flex-col justify-center items-center text-center sm:items-start sm:text-left">
                 <p class="text-[10px] font-extrabold audit-text-muted uppercase tracking-widest">Breaches</p>
                 <p class="text-2xl font-black text-gold">[[ breachCount ]]</p>
             </div>
         </div>
 
-        <!-- Toolbar: Search & Filters -->
-        <div class="audit-card p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center">
-            <div class="relative flex-1 w-full">
-                <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 audit-text-muted"></i>
-                <input v-model="searchQuery" type="text" placeholder="Search actor, IP, or target..." 
-                       style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
-                       class="w-full pl-11 pr-4 py-2.5 rounded-xl outline-none focus:ring-2 focus:ring-maroon/50 transition-all">
-            </div>
-            <div class="flex gap-2 w-full md:w-auto">
-                <select v-model="statusFilter" 
-                        style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
-                        class="flex-1 md:w-40 px-3 py-2.5 rounded-xl outline-none text-sm font-semibold">
-                    <option value="">All Status</option>
-                    <option value="Success">Success</option>
-                    <option value="Failed">Failed</option>
-                    <option value="Denied">Denied</option>
-                </select>
-                <select v-model="actionFilter" 
-                        style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
-                        class="flex-1 md:w-40 px-3 py-2.5 rounded-xl outline-none text-sm font-semibold">
-                    <option value="">All Actions</option>
-                    <option value="LOGIN">Logins</option>
-                    <option value="LOGOUT">Logouts</option>
-                    <option value="ATTENDANCE">Attendance</option>
-                    <option value="EVALUATION">Evaluations</option>
-                    <option value="UNAUTHORIZED">Breaches</option>
-                    <option value="UPDATE">Updates</option>
-                    <option value="CREATE">Creates</option>
-                    <option value="REGISTRATION">Registrations</option>
-                    <option value="VERIFICATION">Verifications</option>
-                </select>
-            </div>
-        </div>
+        <!-- Combined Toolbar & Table Container -->
+        <div class="audit-card rounded-2xl overflow-visible sm:overflow-hidden shadow-lg border border-gray-200/10">
+            
+            <!-- Toolbar: Search & Filters -->
+            <div class="p-4 border-b border-gray-200/10 flex flex-col sm:flex-row items-start gap-3">
+                <div class="relative flex-1 w-full">
+                    <i class="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 audit-text-muted"></i>
+                    <input v-model="searchQuery" type="text" placeholder="Search actor, IP, or target..." 
+                           style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);"
+                           class="w-full py-2.5 pl-11 pr-4 rounded-xl outline-none focus:ring-2 focus:ring-maroon/50 transition-all font-semibold text-sm">
+                </div>
+                
+                <div class="flex gap-2 w-full sm:w-auto items-start shrink-0">
+                    <!-- Status Filter Dropdown -->
+                    <div class="relative shrink-0 flex-1 sm:flex-none sm:w-36 flex flex-col z-20">
+                        <button @click="isStatusFilterOpen = !isStatusFilterOpen; isActionFilterOpen = false;" 
+                                class="w-full py-2.5 px-3 flex items-center justify-between gap-1 font-semibold text-[11px] sm:text-xs rounded-xl transition-colors border"
+                                style="background: var(--input-bg); border-color: var(--border); color: var(--text-main);">
+                            <span class="truncate">[[ statusFilter ? statusFilter : 'All Status' ]]</span>
+                            <i class="ph-bold ph-caret-down transition-transform duration-300" :class="{ 'rotate-180': isStatusFilterOpen }"></i>
+                        </button>
+                        
+                        <!-- Inline Accordion Content -->
+                        <div class="grid transition-all duration-300 ease-in-out w-full relative mt-1 sm:mt-2 shadow-lg rounded-xl border border-gray-200/10"
+                             style="background: var(--card-bg);"
+                             :class="isStatusFilterOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                            <div class="overflow-hidden flex flex-col gap-1 p-1">
+                                <button @click="statusFilter = ''; isStatusFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">All Status</button>
+                                <button @click="statusFilter = 'Success'; isStatusFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Success</button>
+                                <button @click="statusFilter = 'Failed'; isStatusFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Failed</button>
+                                <button @click="statusFilter = 'Denied'; isStatusFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Denied</button>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Main Logs Table -->
-        <div class="audit-card rounded-2xl overflow-hidden shadow-lg border border-gray-200/10">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                    <!-- Action Filter Dropdown -->
+                    <div class="relative shrink-0 flex-1 sm:flex-none sm:w-36 flex flex-col z-20">
+                        <button @click="isActionFilterOpen = !isActionFilterOpen; isStatusFilterOpen = false;" 
+                                class="w-full py-2.5 px-3 flex items-center justify-between gap-1 font-semibold text-[11px] sm:text-xs rounded-xl transition-colors border"
+                                style="background: var(--input-bg); border-color: var(--border); color: var(--text-main);">
+                            <span class="truncate">
+                                [[ actionFilter === 'LOGIN' ? 'Logins' : actionFilter === 'LOGOUT' ? 'Logouts' : actionFilter === 'ATTENDANCE' ? 'Attendance' : actionFilter === 'EVALUATION' ? 'Evaluations' : actionFilter === 'UNAUTHORIZED' ? 'Breaches' : actionFilter === 'UPDATE' ? 'Updates' : actionFilter === 'CREATE' ? 'Creates' : actionFilter === 'REGISTRATION' ? 'Registrations' : actionFilter === 'VERIFICATION' ? 'Verifications' : 'All Actions' ]]
+                            </span>
+                            <i class="ph-bold ph-caret-down transition-transform duration-300" :class="{ 'rotate-180': isActionFilterOpen }"></i>
+                        </button>
+                        
+                        <!-- Inline Accordion Content -->
+                        <div class="grid transition-all duration-300 ease-in-out w-full relative mt-1 sm:mt-2 shadow-lg rounded-xl border border-gray-200/10"
+                             style="background: var(--card-bg);"
+                             :class="isActionFilterOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                            <div class="overflow-hidden flex flex-col gap-1 p-1 max-h-[250px] overflow-y-auto custom-scrollbar">
+                                <button @click="actionFilter = ''; isActionFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">All Actions</button>
+                                <button @click="actionFilter = 'LOGIN'; isActionFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Logins</button>
+                                <button @click="actionFilter = 'LOGOUT'; isActionFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Logouts</button>
+                                <button @click="actionFilter = 'ATTENDANCE'; isActionFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Attendance</button>
+                                <button @click="actionFilter = 'EVALUATION'; isActionFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Evaluations</button>
+                                <button @click="actionFilter = 'UNAUTHORIZED'; isActionFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Breaches</button>
+                                <button @click="actionFilter = 'UPDATE'; isActionFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Updates</button>
+                                <button @click="actionFilter = 'REGISTRATION'; isActionFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Registrations</button>
+                                <button @click="actionFilter = 'VERIFICATION'; isActionFilterOpen = false" class="p-2 text-left text-xs font-semibold rounded-lg hover:bg-maroon/10 hover:text-maroon">Verifications</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto relative z-10">
+                <table class="w-full text-left border-collapse hidden sm:table">
                     <thead style="background: rgba(128,0,0,0.05);" class="audit-text-muted uppercase text-[10px] font-black tracking-tighter">
                         <tr>
                             <th class="px-6 py-4">Time</th>
-                            <th class="px-6 py-4">Actor</th>
+                            <th class="px-6 py-4">User</th>
                             <th class="px-6 py-4">Action</th>
-                            <th class="px-6 py-4 mobile-hide">Target</th>
-                            <th class="px-6 py-4 mobile-hide">Origin</th>
+                            <th class="px-6 py-4 mobile-hide">Portal Accessed</th>
+                            <th class="px-6 py-4 mobile-hide">IP Address</th>
                             <th class="px-6 py-4 text-center">Status</th>
                             <th class="px-6 py-4 text-right">Action</th>
                         </tr>
@@ -144,18 +174,18 @@
                         <tr v-for="log in filteredLogs" :key="log.id" class="hover:bg-maroon/5 transition-all">
                             <td class="px-6 py-4">
                                 <div class="flex flex-col">
-                                    <span class="text-xs font-bold whitespace-nowrap">[[ log.timestamp.split(' ')[1] ]] [[ log.timestamp.split(' ')[2] ]]</span>
-                                    <span class="text-[10px] audit-text-muted whitespace-nowrap">[[ log.timestamp.split(' ')[0] ]]</span>
+                                    <span class="text-xs font-bold whitespace-nowrap">[[ formatTimestamp(log.timestamp).time ]]</span>
+                                    <span class="text-[10px] audit-text-muted whitespace-nowrap">[[ formatTimestamp(log.timestamp).date ]]</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2">
                                     <div class="w-7 h-7 rounded-lg bg-maroon flex items-center justify-center text-[10px] font-black text-white">
-                                        [[ log.actor.substring(0,2).toUpperCase() ]]
+                                        [[ (log.actor || 'U').substring(0,2).toUpperCase() ]]
                                     </div>
                                     <div class="flex flex-col overflow-hidden">
                                         <span class="text-sm font-bold truncate max-w-[120px]">[[ log.actor ]]</span>
-                                        <span v-if="log.action === 'LOGOUT' && log.changes.session_duration" class="text-[9px] text-green-500 font-bold">
+                                        <span v-if="log.action === 'LOGOUT' && log.changes && log.changes.session_duration" class="text-[9px] text-green-500 font-bold">
                                             Stayed: [[ log.changes.session_duration ]]
                                         </span>
                                     </div>
@@ -163,106 +193,123 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span :class="getActionClass(log.action)" class="px-2 py-0.5 rounded text-[9px] font-black uppercase whitespace-nowrap">
-                                    [[ log.action.replace('_', ' ') ]]
+                                    [[ formatActionTag(log.action) ]]
                                 </span>
                             </td>
-                            <td class="px-6 py-4 mobile-hide text-xs font-semibold audit-text-muted">[[ log.target ]]</td>
+                            <td class="px-6 py-4 mobile-hide text-xs font-semibold audit-text-muted">[[ getPortalName(log.role_type) ]]</td>
                             <td class="px-6 py-4 mobile-hide text-[10px] font-mono audit-text-muted">[[ log.ip ]]</td>
                             <td class="px-6 py-4 text-center">
-                                <i :class="log.status === 'Success' ? 'ph-bold ph-check-circle text-green-500' : 'ph-bold ph-warning-circle text-red-500'" class="text-lg"></i>
+                                <i :class="getStatusIcon(log)" class="text-lg"></i>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <button @click="viewDetails(log)" class="text-[10px] font-black uppercase tracking-widest text-maroon dark:text-gold hover:underline">
-                                    Details
+                                <button @click="viewDetails(log)" class="bg-maroon dark:bg-gold text-white dark:text-black font-black text-[10px] uppercase tracking-widest px-3 py-1.5 rounded flex items-center justify-end gap-1 ml-auto transition-colors hover:opacity-90">
+                                    <i class="ph-bold ph-eye text-sm"></i> Details
                                 </button>
                             </td>
                         </tr>
                         <tr v-if="filteredLogs.length === 0">
-                            <td colspan="7" class="px-6 py-20 text-center audit-text-muted italic text-sm">
-                                <i class="ph-bold ph-ghost text-4xl mb-2 block"></i>
-                                No activities detected matching your criteria.
+                            <td colspan="7" class="px-6 py-20 text-center audit-text-muted font-bold text-sm">
+                                <i class="ph-bold ph-magnifying-glass text-4xl mb-2 block text-maroon dark:text-gold animate-bounce"></i>
+                                No activities detected matching "[[ searchQuery ]]".
                             </td>
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- Mobile List View -->
+                <div class="sm:hidden flex flex-col divide-y divide-gray-200/10 w-full">
+                    <div v-for="log in filteredLogs" :key="'mobile-'+log.id" class="p-4 flex items-center justify-between gap-3 hover:bg-maroon/5 transition-all w-full relative">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <!-- Icon -->
+                            <div class="shrink-0 w-10 h-10 rounded-full bg-maroon flex items-center justify-center text-sm font-black text-white">
+                                [[ (log.actor || 'U').substring(0,2).toUpperCase() ]]
+                            </div>
+                            <!-- Details -->
+                            <div class="flex flex-col truncate max-w-[200px]">
+                                <span class="text-[10px] audit-text-muted font-bold">[[ formatTimestamp(log.timestamp).time ]]</span>
+                                <span class="text-sm font-black truncate text-gray-800 dark:text-gray-100">[[ log.actor ]]</span>
+                                <div class="flex items-center flex-wrap gap-1 mt-1">
+                                    <span :class="getActionClass(log.action)" class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest inline-flex items-center">
+                                        [[ formatActionTag(log.action) ]]
+                                    </span>
+                                    <span v-if="log.action === 'LOGOUT' && log.changes && log.changes.session_duration" class="text-[9px] text-green-500 font-bold ml-1">
+                                        Stayed: [[ log.changes.session_duration ]]
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Eye Icon Button -->
+                        <button @click="viewDetails(log)" class="shrink-0 w-8 h-8 rounded-full bg-maroon dark:bg-gold text-white dark:text-black flex items-center justify-center transition-colors hover:opacity-90 shadow-sm">
+                            <i class="ph-bold ph-eye text-lg"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Empty State Mobile -->
+                    <div v-if="filteredLogs.length === 0" class="p-8 text-center audit-text-muted font-bold text-sm w-full">
+                        <i class="ph-bold ph-magnifying-glass text-4xl mb-2 block text-maroon dark:text-gold animate-pulse"></i>
+                        No activities detected matching "[[ searchQuery ]]".
+                    </div>
+                </div>
             </div>
         </div>
     </template>
 
     <!-- Details Modal (Watchdog Portal) -->
-    <div v-if="selectedLog" class="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-8">
+    <div v-if="selectedLog" class="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4 md:p-8">
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" @click="selectedLog = null"></div>
+        <div class="fixed inset-0 bg-black/80 backdrop-blur-md w-full h-full" @click="selectedLog = null"></div>
         
         <!-- Modal Content -->
-        <div class="audit-card w-full max-w-3xl rounded-3xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+        <div class="audit-card !m-0 sm:!m-auto absolute inset-0 sm:relative sm:inset-auto w-full h-full sm:h-auto sm:max-w-3xl rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col sm:max-h-[90vh] animate-in fade-in zoom-in duration-200 border-0 sm:border">
+            
+            <!-- Close Button (Absolute positioned over header) -->
+            <button @click="selectedLog = null" class="absolute top-4 right-4 w-9 h-9 rounded-full border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 flex items-center justify-center text-lg transition-all z-10 shadow-sm backdrop-blur-sm">
+                <i class="ph-bold ph-x"></i>
+            </button>
+
             <!-- Modal Header -->
-            <div class="p-6 bg-maroon text-white flex justify-between items-center">
-                <div>
-                    <h3 class="text-xl font-black flex items-center gap-2 tracking-tighter">
-                        <i class="ph-bold ph-fingerprint"></i> LOG ENTRY #[[ selectedLog.id ]]
-                    </h3>
-                    <p class="text-[10px] text-white/60 font-bold uppercase tracking-widest">[[ selectedLog.timestamp ]]</p>
-                </div>
-                <button @click="selectedLog = null" class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-2xl transition-all">&times;</button>
+            <div class="p-6 bg-maroon text-white flex flex-col justify-center min-h-[100px] pt-8 sm:pt-6">
+                <h3 class="text-xl sm:text-2xl font-black flex items-center gap-2 tracking-tighter">
+                    LOG ENTRY #[[ selectedLog.id ]]
+                </h3>
+                <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest mt-1">[[ formatTimestamp(selectedLog.timestamp).date ]] - [[ formatTimestamp(selectedLog.timestamp).time ]]</p>
             </div>
             
             <div class="p-6 overflow-y-auto space-y-6 custom-scrollbar">
                 <!-- Metadata Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-black/5 dark:bg-white/5 p-4 rounded-2xl border border-gray-500/10">
-                        <p class="text-[9px] font-black audit-text-muted uppercase mb-1">Source IP</p>
-                        <p class="font-mono text-xs font-bold">[[ selectedLog.ip ]]</p>
-                    </div>
-                    <div class="bg-black/5 dark:bg-white/5 p-4 rounded-2xl border border-gray-500/10">
-                        <p class="text-[9px] font-black audit-text-muted uppercase mb-1">Actor Identity</p>
+                        <p class="text-[9px] font-black audit-text-muted uppercase mb-1">User Account</p>
+                        <!-- 1st line: Name -->
                         <p class="text-xs font-bold">[[ selectedLog.actor ]]</p>
+                        <!-- 2nd line: ID or Org Name (not for Admin) -->
+                        <p v-if="selectedLog.role_type !== 'Admin' && (selectedLog.student_id || selectedLog.org_name)" class="text-[10px] font-semibold text-gray-700 dark:text-gray-300">
+                            [[ selectedLog.student_id ? selectedLog.student_id : selectedLog.org_name ]]
+                        </p>
+                        <!-- 3rd line: User Type -->
+                        <p v-if="selectedLog.role_type !== 'Admin' && selectedLog.role_type !== 'Unauthorized User'" class="text-[9px] font-bold text-maroon dark:text-gold uppercase tracking-wider mt-1">
+                            [[ selectedLog.role_type ]]
+                        </p>
                     </div>
                     <div class="bg-black/5 dark:bg-white/5 p-4 rounded-2xl border border-gray-500/10">
-                        <p class="text-[9px] font-black audit-text-muted uppercase mb-1">Outcome</p>
-                        <p class="text-xs font-bold" :class="selectedLog.status === 'Success' ? 'text-green-500' : 'text-red-500'">[[ selectedLog.status ]]</p>
+                        <p class="text-[9px] font-black audit-text-muted uppercase mb-1">Action</p>
+                        <p class="text-xs font-bold" :class="getActionTextClass(selectedLog.action)">[[ formatActionTag(selectedLog.action) ]]</p>
+                    </div>
+                    <div class="bg-black/5 dark:bg-white/5 p-4 rounded-2xl border border-gray-500/10">
+                        <p class="text-[9px] font-black audit-text-muted uppercase mb-1">System Portal</p>
+                        <p class="text-xs font-bold">[[ getPortalName(selectedLog.target) ]]</p>
                     </div>
                 </div>
 
-                <div class="bg-black/5 dark:bg-white/5 p-4 rounded-2xl border border-gray-500/10">
-                    <p class="text-[9px] font-black audit-text-muted uppercase mb-1">User-Agent / Threat Info</p>
-                    <p class="text-[10px] italic audit-text-muted leading-relaxed">[[ selectedLog.ua ]]</p>
-                </div>
-
-                <!-- Raw Changes / JSON View -->
+                <!-- Human Readable Activity View -->
                 <div>
                     <h4 class="text-xs font-black uppercase tracking-widest audit-text-muted mb-3 flex items-center gap-2">
-                        <i class="ph-bold ph-code text-maroon dark:text-gold"></i> Raw State Data
+                        <i class="ph-bold ph-text-align-left text-maroon dark:text-gold"></i> Activity Summary
                     </h4>
                     <div class="bg-gray-900 rounded-2xl p-5 overflow-hidden shadow-inner">
-                        <div class="json-scroll overflow-auto max-h-[300px]">
-                            <pre class="text-green-400 text-[11px] font-mono leading-relaxed">[[ JSON.stringify(selectedLog.changes, null, 4) ]]</pre>
-                        </div>
+                        <p class="text-green-400 text-[13px] leading-relaxed">[[ getActivitySentence(selectedLog) ]]</p>
                     </div>
                 </div>
-
-                <!-- Visual Diff View (For Updates) -->
-                <div v-if="selectedLog.action === 'UPDATE' && hasChanges" class="border-t border-gray-500/10 pt-6">
-                    <h4 class="text-xs font-black uppercase tracking-widest audit-text-muted mb-4">Value Comparison</h4>
-                    <div class="space-y-3">
-                        <div v-for="(val, field) in selectedLog.changes" :key="field" 
-                             class="flex flex-col md:flex-row md:items-center gap-2 p-3 bg-maroon/5 rounded-xl border border-maroon/10">
-                            <span class="text-[10px] font-black uppercase audit-text-muted w-24">[[ field ]]</span>
-                            <div class="flex items-center gap-3 flex-1 overflow-hidden">
-                                <span class="bg-red-500/10 text-red-500 px-2 py-1 rounded text-[10px] line-through truncate">[[ val.old ]]</span>
-                                <i class="ph-bold ph-arrow-right text-maroon/30"></i>
-                                <span class="bg-green-500/10 text-green-500 px-2 py-1 rounded text-[10px] font-bold truncate">[[ val.new ]]</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-6 bg-black/5 dark:bg-white/5 border-t border-gray-500/10 text-right">
-                <button @click="selectedLog = null" 
-                        class="bg-maroon text-white dark:bg-gold dark:text-black px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg hover:opacity-90 transition-all">
-                    Acknowledge
-                </button>
             </div>
         </div>
     </div>
@@ -279,6 +326,8 @@
             searchQuery: '',
             statusFilter: '',
             actionFilter: '',
+            isStatusFilterOpen: false,
+            isActionFilterOpen: false,
             selectedLog: null
         },
         mounted() {
@@ -307,17 +356,114 @@
             }
         },
         methods: {
+            formatTimestamp(ts) {
+                try {
+                    let d = new Date(ts);
+                    if (isNaN(d)) {
+                        return { date: ts.split(' ')[0] || '', time: ts.split(' ').slice(1).join(' ').replace(/:\d{2}(\s?[APap]\.?M\.?)$/, '$1') };
+                    }
+                    let datePart = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+                    let timePart = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    return { date: datePart, time: timePart };
+                } catch(e) {
+                    return { date: ts, time: '' };
+                }
+            },
+            formatActionTag(action) {
+                if (!action) return '';
+                let formatted = action.replace(/_/g, ' ');
+                if (formatted.includes('APPROVE') && !formatted.includes('APPROVED')) {
+                    formatted = formatted.replace('APPROVE', 'APPROVED');
+                }
+                if (formatted.includes('REJECT') && !formatted.includes('REJECTED')) {
+                    formatted = formatted.replace('REJECT', 'REJECTED');
+                }
+                return formatted;
+            },
+            getPortalName(roleType) {
+                if (!roleType) return 'System Portal';
+                let roleStr = typeof roleType === 'string' ? roleType.toUpperCase() : '';
+                
+                if (roleStr.includes('STUDENT')) return 'Student Portal';
+                if (roleStr.includes('ORGANIZER')) return 'Organizer Portal';
+                if (roleStr.includes('ADVISER')) return 'Adviser Portal';
+                if (roleStr.includes('ADMIN')) return 'Admin Portal';
+                
+                return 'System Portal';
+            },
+            getActionClass(action) {
+                let a = action.toUpperCase();
+                if (a.includes('FAILED')) return 'bg-orange-500 text-white';
+                if (a.includes('UNAUTHORIZED')) return 'bg-red-500 text-white';
+                if (a.includes('CREATE')) return 'bg-blue-500 text-white';
+                if (a.includes('LOGIN') || a.includes('LOGOUT')) return 'bg-green-500 text-white';
+                return 'bg-gray-500 text-white';
+            },
+            getActionTextClass(action) {
+                let a = action.toUpperCase();
+                if (a.includes('FAILED')) return 'text-orange-500';
+                if (a.includes('UNAUTHORIZED')) return 'text-red-500';
+                if (a.includes('CREATE')) return 'text-blue-500';
+                if (a.includes('LOGIN') || a.includes('LOGOUT')) return 'text-green-500';
+                return 'text-gray-500';
+            },
+            getStatusIcon(log) {
+                let a = (log.action || '').toUpperCase();
+                // User asked for circled icons for status signs
+                if (a.includes('FAILED')) return 'ph-bold ph-x-circle text-orange-500';
+                if (a.includes('UNAUTHORIZED')) return 'ph-bold ph-warning-circle text-red-500';
+                if (a.includes('CREATE')) return 'ph-bold ph-check-circle text-blue-500';
+                if (a.includes('LOGIN') || a.includes('LOGOUT')) return 'ph-bold ph-check-circle text-green-500';
+                return 'ph-bold ph-check-circle text-gray-500';
+            },
+            getActivitySentence(log) {
+                const actor = log.actor || 'The user';
+                const action = (log.action || '').toUpperCase();
+                const portal = this.getPortalName(log.role_type);
+                
+                if (action.includes('LOGIN_FAILED') || action.includes('LOGIN FAILED')) {
+                    const reason = log.changes && log.changes.reason ? log.changes.reason : 'invalid credentials';
+                    return `User attempted to login at the ${portal} but failed because: ${reason}.`;
+                }
+                if (action.includes('UNAUTHORIZED')) {
+                    const attemptedRole = log.changes && log.changes.attempted_role ? log.changes.attempted_role : 'restricted areas';
+                    return `User tried to bypass access limits and enter the ${attemptedRole} portal without permission.`;
+                }
+                if (action.includes('LOGIN')) {
+                    return `User successfully authenticated and accessed the ${portal}.`;
+                }
+                if (action.includes('LOGOUT')) {
+                    const duration = log.changes && log.changes.session_duration ? log.changes.session_duration : 'an active session';
+                    return `User logged out of the ${portal} after staying connected for ${duration}.`;
+                }
+                if (action.includes('REGISTRATION') || action.includes('CREATE')) {
+                    const studentNum = log.changes && log.changes.student_number ? log.changes.student_number : '';
+                    return `User successfully registered a new account in the system${studentNum ? ` for ID ${studentNum}` : ''}.`;
+                }
+                if (action.includes('EVALUATION')) {
+                    return `User successfully submitted a post-event evaluation form via the ${portal}.`;
+                }
+                if (action.includes('ATTENDANCE')) {
+                    return `User recorded their event attendance using the ${portal} location and face matching system.`;
+                }
+                if (action.includes('UPDATE')) {
+                    return `User updated system records or profile information via the ${portal}.`;
+                }
+                if (action.includes('VERIFICATION')) {
+                    const studentName = log.changes && log.changes.student ? log.changes.student : 'a student';
+                    return `User verified the account registration of ${studentName} via the ${portal}.`;
+                }
+                if (action.includes('APPROVE') || action.includes('REJECT')) {
+                    const actionWord = action.includes('APPROVE') ? 'approved' : 'rejected';
+                    return `User reviewed an event proposal and ${actionWord} it via the ${portal}.`;
+                }
+                
+                return `User executed a system operation (${log.action}) inside the ${portal}.`;
+            },
             viewDetails(log) {
                 this.selectedLog = log;
                 // Add class to body to prevent scrolling when modal is open
                 document.body.style.overflow = 'hidden';
-            },
-            getActionClass(action) {
-                if (action.includes('FAILED')) return 'bg-red-500/10 text-red-500';
-                if (action.includes('UNAUTHORIZED')) return 'bg-orange-500/10 text-orange-500 animate-pulse';
-                if (action.includes('CREATE')) return 'bg-blue-500/10 text-blue-500';
-                if (action.includes('UPDATE')) return 'bg-purple-500/10 text-purple-500';
-                return 'bg-green-500/10 text-green-500';
             }
         },
         watch: {

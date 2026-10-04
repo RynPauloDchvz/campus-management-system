@@ -371,10 +371,12 @@
             <span class="nav-text">Audit Logs</span>
         </a>
 
-        <a href="/admin/notifications/" data-title="Notifications" class="nav-link {% if request.path == '/admin/notifications/' %}active{% endif %}">
-            <i class="ph-bold ph-bell"></i>
+        <a href="/admin/notifications/" data-title="Notifications" class="nav-link {% if request.path == '/admin/notifications/' %}active{% endif %}" style="position: relative;">
+            <i class="ph-bold ph-bell" id="notifBell"></i>
             <span class="nav-text">Notifications</span>
+            <span id="notifBadge" style="position: absolute; top: 5px; right: 5px; background: #dc3545; color: white; font-size: 0.65rem; font-weight: 900; min-width: 18px; height: 18px; border-radius: 9px; display: none; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid var(--sidebar-bg); z-index: 5;">0</span>
         </a>
+
 
         <div class="nav-item-dropdown" id="orgMonitorDropdown">
             <a href="javascript:void(0)" onclick="document.getElementById('orgMonitorDropdown').classList.toggle('open')" data-title="Org Monitors" class="nav-link {% if 'org-monitor' in request.path %}active{% endif %}">
@@ -551,27 +553,7 @@
                 <span style="font-size:0.95rem; color:var(--text-muted); font-weight: 500;">{% block page_subtitle %}Welcome back, Administrator.{% endblock %}</span>
             </div>
             <div class="admin-profile">
-                <!-- Notification Bell -->
-                <div style="position: relative;">
-                    <i id="notifBell" class="ph-fill ph-bell theme-toggle" style="margin-right: 5px; font-size: 1.8rem;" onclick="toggleAdminNotifications()" title="Notifications"></i>
-                    <span id="notifBadge" style="position: absolute; top: -5px; right: 0px; background: #dc3545; color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 6px; border-radius: 10px; display: none;">0</span>
-                    
-                    <div id="adminNotifDropdown" class="notification-dropdown">
-                        <div class="notif-header">
-                            <h4 style="font-size: 0.8rem; font-weight: 900; text-transform: uppercase; color: var(--text-main); letter-spacing: 1px;">Notifications</h4>
-                            <span id="notifDropdownBadge" style="font-size: 0.65rem; background: rgba(128,0,0,0.1); color: var(--pup-maroon); padding: 3px 8px; border-radius: 10px; font-weight: 800; text-transform: uppercase;">0 New</span>
-                        </div>
-                        <div id="notifList" class="notif-list custom-scrollbar">
-                            <div style="padding: 30px; text-align: center; color: var(--text-muted);">
-                                <i class="ph-bold ph-bell-slash" style="font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5;"></i>
-                                <p style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">No notifications yet</p>
-                            </div>
-                        </div>
-                        <div class="notif-footer">
-                            <a href="/admin/notifications/">View All History</a>
-                        </div>
-                    </div>
-                </div>
+                <!-- Notification Bell (Desktop) removed as per user request -->
 
                 <i class="ph-fill ph-moon theme-toggle" onclick="toggleTheme()" title="Toggle Theme"></i>
                 <div style="text-align: right;">
@@ -711,11 +693,11 @@
                     if(data.status === 'success') {
                         const newNotifs = data.notifications;
                         
-                        // Check for new unread notifications to show banners
+                        // Check for new unread notifications (Popup banners disabled as requested)
                         newNotifs.forEach(notif => {
                             const exists = adminNotifications.find(n => n.id === notif.id);
                             if(!exists && !adminReadNotifs.includes(notif.id)) {
-                                showNotificationBanner(notif);
+                                // showNotificationBanner(notif);
                             }
                         });
                         
@@ -736,7 +718,7 @@
 
             if(unreadCount > 0) {
                 if (bell) bell.classList.add('notify-active');
-                if (badge) { badge.style.display = 'block'; badge.innerText = unreadCount; }
+                if (badge) { badge.style.display = 'flex'; badge.innerText = unreadCount > 9 ? '9+' : unreadCount; }
                 if (dropBadge) dropBadge.innerText = unreadCount + ' New';
                 
                 if (mobileBell) mobileBell.classList.add('notify-active');

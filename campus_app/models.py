@@ -13,6 +13,7 @@ class OrgProfile(models.Model):
     
     email_notifications = models.BooleanField(default=True)
     read_notifications = models.TextField(default='', blank=True) # Comma-separated IDs
+    force_password_change = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.organization}"

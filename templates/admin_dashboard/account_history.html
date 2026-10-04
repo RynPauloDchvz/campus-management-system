@@ -380,7 +380,7 @@
                     <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Year Level</span>
                     <span id="v_year" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
-                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                <div id="v_birthdate_container" style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
                     <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Birthday</span>
                     <span id="v_birthdate" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
@@ -549,12 +549,17 @@
         document.getElementById('v_org').innerText = user.org;
         document.getElementById('v_year').innerText = user.year || 'N/A';
         
-        if (user.birthdate && user.birthdate !== '') {
-            let dateObj = new Date(user.birthdate);
-            let formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('v_birthdate').innerText = isNaN(dateObj) ? user.birthdate : formattedDate;
+        if (user.type === 'Student Org') {
+            document.getElementById('v_birthdate_container').style.display = 'none';
         } else {
-            document.getElementById('v_birthdate').innerText = 'Not Provided';
+            document.getElementById('v_birthdate_container').style.display = 'block';
+            if (user.birthdate && user.birthdate !== '') {
+                let dateObj = new Date(user.birthdate);
+                let formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                document.getElementById('v_birthdate').innerText = isNaN(dateObj) ? user.birthdate : formattedDate;
+            } else {
+                document.getElementById('v_birthdate').innerText = 'Not Provided';
+            }
         }
         
         const modal = document.getElementById('profileModal');

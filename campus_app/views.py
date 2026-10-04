@@ -188,6 +188,9 @@ def portal_login_view(request):
             if OrgProfile.objects.filter(user=user).exists():
                 login(request, user)
                 log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': 'Organizer'}, actor=user)
+                org_profile = OrgProfile.objects.get(user=user)
+                if getattr(org_profile, 'force_password_change', False):
+                    return JsonResponse({"status": "success", "redirect_url": "/organizer/force-change-password"})
                 return JsonResponse({"status": "success", "redirect_url": "/organizer/homepage"})
             elif Student.objects.filter(user=user).exists():
                 student = Student.objects.get(user=user)
@@ -244,25 +247,24 @@ def forgot_password_view(request):
                 else:
                     return JsonResponse({"status": "error", "message": "No email associated with this account. Please contact Admin."})
 
-            # Generate temporary code
-            chars = string.ascii_letters + string.digits
-            temp_code = ''.join(random.choice(chars) for i in range(8))
+            # Generate temporary code (6 digits)
+            import string, random
+            from django.core.mail import EmailMultiAlternatives
+            
+            chars = string.digits
+            temp_code = ''.join(random.choice(chars) for i in range(6))
             request.session['reset_code'] = temp_code
             request.session['reset_user_id'] = user.id
 
-            html_content = render_to_string('email/change_password.html', {
-                'password': temp_code,
-                'email_address': email
+            subject = "Password Reset Request - PUPUni-CAMS"
+            text_content = f"Your password reset code is: {temp_code}"
+            html_content = render_to_string('emails/otp_email.html', {
+                'otp': temp_code,
             })
 
-            send_mail(
-                "Password Reset Request - PUPUni-CAMS",
-                strip_tags(html_content),
-                settings.EMAIL_HOST_USER,
-                [email],
-                html_message=html_content,
-                fail_silently=False,
-            )
+            email_msg = EmailMultiAlternatives(subject, text_content, 'pupuqcams2526@gmail.com', [email])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send()
             return JsonResponse({"status": "success", "message": "Verification code sent to your registered email!"})
 
         except User.DoesNotExist:
@@ -323,47 +325,47 @@ def complete_password_reset(request):
 # ==========================================
 # STUDENT VIEWS
 # ==========================================
-def generate_student_password(request):
+def send_student_register_otp(request):
     if request.method == 'POST':
-        email = request.POST.get('email_address')
+        email = request.POST.get('email')
         if not email:
             return JsonResponse({"status": "error", "message": "Please enter an email address first."})
+            
+        if User.objects.filter(email=email, is_active=True).exists():
+            return JsonResponse({"status": "error", "message": "This email is already in use by an active account."})
 
-        chars = string.ascii_letters + string.digits
-        random_password = ''.join(random.choice(chars) for i in range(10))
-        request.session['generated_password'] = random_password 
+        import string, random
+        from django.core.mail import EmailMultiAlternatives
+        from django.template.loader import render_to_string
+        
+        chars = string.digits
+        otp_code = ''.join(random.choice(chars) for _ in range(6))
+        request.session['register_otp'] = otp_code 
+
+        subject = 'PUPuni-CAMS: Registration Verification Code'
+        text_content = f"Your verification code is: {otp_code}"
+        html_content = render_to_string('emails/otp_email.html', {'otp': otp_code})
 
         try:
-            html_content = render_to_string('email/create_account.html', {
-                'password': random_password,
-                'email_address': email
-            })
-            text_content = strip_tags(html_content)
-
-            send_mail(
-                "Your Account Password - PUPUni-CAMS",
-                text_content,             
-                settings.EMAIL_HOST_USER,
-                [email],
-                html_message=html_content,
-                fail_silently=False,
-            )
-            return JsonResponse({"status": "success", "message": "Code sent! Please check your email inbox (and spam folder)."})
+            email_msg = EmailMultiAlternatives(subject, text_content, 'pupuqcams2526@gmail.com', [email])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send()
+            return JsonResponse({"status": "success", "message": "OTP sent! Please check your email inbox (and spam folder)."})
         except Exception as e:
             return JsonResponse({"status": "error", "message": f"Email Error: {str(e)}"})
 
     return JsonResponse({"status": "error", "message": "Invalid request."})
 
-def verify_student_password(request):
+def verify_student_register_otp(request):
     if request.method == 'POST':
-        typed_password = request.POST.get('password')
-        saved_password = request.session.get('generated_password')
+        typed_otp = request.POST.get('otp')
+        saved_otp = request.session.get('register_otp')
 
-        if not saved_password:
-            return JsonResponse({"status": "error", "message": "Please click 'Get Code' first to receive your password."})
+        if not saved_otp:
+            return JsonResponse({"status": "error", "message": "Please click 'Send OTP' first to receive your code."})
 
-        if typed_password != saved_password:
-            return JsonResponse({"status": "error", "message": "Incorrect Code! Please make sure you copied the exact password from your email."})
+        if typed_otp != saved_otp:
+            return JsonResponse({"status": "error", "message": "Incorrect OTP Code! Please make sure you entered it correctly."})
 
         return JsonResponse({"status": "success"})
     return JsonResponse({"status": "error", "message": "Invalid request."})
@@ -372,10 +374,6 @@ def student_register(request):
     if request.method == 'POST':
         try:
             password = request.POST.get('password')
-            saved_password = request.session.get('generated_password')
-
-            if not saved_password or password != saved_password:
-                return JsonResponse({"status": "error", "message": "Authentication failed. Invalid password."})
 
             full_name = request.POST.get('full_name')
             student_number = request.POST.get('student_number')
@@ -387,6 +385,12 @@ def student_register(request):
             birthdate = request.POST.get('birthdate')
             profile_picture = request.FILES.get('profile_picture')
             cover_photo = request.FILES.get('cover_photo')
+
+            if User.objects.filter(username=student_number).exists():
+                return JsonResponse({"status": "error", "message": "This Student ID is already registered."})
+            
+            if User.objects.filter(email=email_address, is_active=True).exists():
+                return JsonResponse({"status": "error", "message": "This email is already in use by an active account."})
 
             user, created = User.objects.get_or_create(username=student_number)
             user.set_password(password)
@@ -412,8 +416,8 @@ def student_register(request):
 
             Student.objects.update_or_create(student_number=student_number, defaults=defaults_data)
 
-            if 'generated_password' in request.session:
-                del request.session['generated_password']
+            if 'register_otp' in request.session:
+                del request.session['register_otp']
 
             # 🟢 LOG REGISTRATION
             log_audit_event(request, 'REGISTRATION', status='Success', changes={'student_number': student_number})
@@ -1328,6 +1332,66 @@ ORG_ABOUT_US = {
     "NEWSETTE": "Official student publication. Delivering timely news and fearless journalism.",
     "PUSO": "Driving athletic endeavors. We promote sportsmanship and physical wellness."
 }
+
+@user_passes_test(is_organizer_strictly, login_url='/')
+def organizer_force_change_password_view(request):
+    org_profile = OrgProfile.objects.filter(user=request.user).first()
+    if not getattr(org_profile, 'force_password_change', False):
+        return redirect('/organizer/homepage')
+    return render(request, 'force_change_password.html')
+
+@user_passes_test(is_organizer_strictly, login_url='/')
+def force_change_send_otp(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        if not email: return JsonResponse({"status": "error", "message": "Email is required."})
+        
+        import string, random
+        from django.core.mail import EmailMultiAlternatives
+        
+        chars = string.digits
+        otp_code = ''.join(random.choice(chars) for _ in range(6))
+        request.session['force_change_otp'] = otp_code
+        
+        subject = 'PUPuni-CAMS: Password Change Verification Code'
+        text_content = f"Your verification code is: {otp_code}"
+        from django.template.loader import render_to_string
+        html_content = render_to_string('emails/otp_email.html', {'otp': otp_code})
+        
+        try:
+            email_msg = EmailMultiAlternatives(subject, text_content, 'pupuqcams2526@gmail.com', [email])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send()
+            return JsonResponse({"status": "success", "message": "OTP sent to your email."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": "Failed to send email. " + str(e)})
+    return JsonResponse({"status": "error", "message": "Invalid request."})
+
+@user_passes_test(is_organizer_strictly, login_url='/')
+def force_change_finalize(request):
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        otp = request.POST.get('otp')
+        
+        if otp != request.session.get('force_change_otp'):
+            return JsonResponse({"status": "error", "message": "Invalid or expired OTP code."})
+            
+        user = request.user
+        user.set_password(password)
+        user.save()
+        
+        from django.contrib.auth import update_session_auth_hash
+        update_session_auth_hash(request, user)
+        
+        org_profile = OrgProfile.objects.get(user=user)
+        org_profile.force_password_change = False
+        org_profile.save()
+        
+        if 'force_change_otp' in request.session:
+            del request.session['force_change_otp']
+            
+        return JsonResponse({"status": "success", "message": "Password changed successfully!", "redirect_url": "/organizer/homepage"})
+    return JsonResponse({"status": "error", "message": "Invalid request."})
 
 @user_passes_test(is_organizer_strictly, login_url='/')
 def organizer_homepage(request):
@@ -2919,6 +2983,40 @@ def event_approvals_view(request):
         'history_json': json.dumps(history_data)
     })
 
+@user_passes_test(is_admin_strictly, login_url='/admin/login/')
+def event_history_view(request):
+    history = Event.objects.exclude(is_flag_raising=True).order_by('-created_at')
+    history_data = []
+    for e in history:
+        att_count = Attendance.objects.filter(event=e).count()
+        eval_count = AuditLog.objects.filter(action='EVALUATION', target_id=str(e.id)).count()
+        full_org_name = ORG_FULL_NAMES.get(e.org_id, e.org_id)
+
+        history_data.append({
+            'id': e.id, 'org': e.org_id, 'full_org': full_org_name, 'title': e.event_title or '',
+            'date': e.event_date.strftime('%B %d, %Y') if e.event_date else '',
+            'time': e.start_time.strftime('%I:%M %p') if e.start_time else '',
+            'end_time': e.end_time.strftime('%I:%M %p') if getattr(e, 'end_time', None) else '',
+            'attendance_count': att_count,
+            'evaluation_count': eval_count,
+            'status': e.event_status.upper() if e.event_status else '',
+            'requester_name': getattr(e, 'requester_name', '') or '',
+            'adviser_name': getattr(e, 'adviser_name', '') or '',
+            'venue': e.venue or '', 'description': e.description or '',
+            'letter_url': e.letter_of_approval.url if getattr(e, 'letter_of_approval', None) else (e.letter_image.url if getattr(e, 'letter_image', None) else ''),
+            'permit_url': e.permit_to_conduct.url if getattr(e, 'permit_to_conduct', None) else (e.permit_image.url if getattr(e, 'permit_image', None) else ''),
+            'equipment_url': e.excuse_letter_equipment.url if getattr(e, 'excuse_letter_equipment', None) else (e.equipment_image.url if getattr(e, 'equipment_image', None) else ''),
+            'event_cover_photo': e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) else (e.cover_photo.url if getattr(e, 'cover_photo', None) else ''),
+            'letter_of_reschedule': e.letter_of_reschedule.url if getattr(e, 'letter_of_reschedule', None) else '',
+            'reschedule_cover_photo': e.reschedule_cover_photo.url if getattr(e, 'reschedule_cover_photo', None) else '',
+            'requirement_mode': e.requirement_mode,
+            'remarks': e.remarks or ''
+        })
+        
+    return render(request, 'admin_dashboard/event_history.html', {
+        'history_json': history_data
+    })
+
 @login_required
 def record_attendance(request):
     if request.method == 'POST':
@@ -3320,38 +3418,33 @@ def get_all_admin_notifications():
     notifications = []
     now = timezone.now()
     
-    # 1. Password Reset Requests
-    try:
-        reset_logs = AuditLog.objects.filter(action='PASSWORD_RESET_REQUEST').order_by('-timestamp')[:20]
-        for log in reset_logs:
-            # We want to link to manage accounts page
-            url = '/admin/manage-organizers/'
-            changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes) if log.changes else {}
-            msg = changes.get('message', 'An organizer requested a password reset.')
-            
-            notifications.append({
-                'id': f"reset_{log.id}", 'type': 'alert', 'title': 'Password Reset Request',
-                'message': msg,
-                'sender': 'System', 'date': log.timestamp.strftime('%b %d, %Y'), 'timestamp': log.timestamp.timestamp(),
-                'url': url
-            })
-    except Exception: pass
-
-    # 2. Events pending Admin actions
+    # 1. Events pending Admin actions
     try:
         pending_events = Event.objects.filter(event_status__in=['Pending Admin', 'Final Admin Review']).order_by('-id')
         for e in pending_events:
             dt = getattr(e, 'created_at', None) or now
             
+            # Map org_id to full name if exists
+            full_org_name = ORG_FULL_NAMES.get(e.org_id, e.org_id)
+            org_display = full_org_name
+            
             if e.event_status == 'Pending Admin':
-                msg = f"Event '{e.event_title}' by {e.org_id} is awaiting Initial Admin Clearance."
+                title = "New Event Proposal"
+                msg = f"Good day Admin, {e.requester_name or 'an Organizer'} from {org_display} has submitted the event '{e.event_title}' for Initial Admin Clearance. Please review the proposal."
             else:
-                msg = f"Event '{e.event_title}' by {e.org_id} is awaiting Final Admin Review."
+                title = "Final Review Request"
+                msg = f"Good day Admin, {e.requester_name or 'an Organizer'} from {org_display} has uploaded the signed permits for '{e.event_title}'. It is now awaiting Final Admin Review."
                 
+            org_profile = OrgProfile.objects.filter(organization=e.org_id).first()
+            avatar_url = org_profile.profile_picture.url if (org_profile and org_profile.profile_picture) else f"https://ui-avatars.com/api/?name={e.org_id}&background=800000&color=fff"
+            
             notifications.append({
-                'id': f"event_{e.id}_{e.event_status.replace(' ', '')}", 'type': 'event', 'title': 'Pending Event Approval',
+                'id': f"event_{e.id}_{e.event_status.replace(' ', '')}", 'type': 'message', 'title': title,
                 'message': msg,
-                'sender': 'Event Portal', 'date': dt.strftime('%b %d, %Y'), 'timestamp': dt.timestamp(), 
+                'sender': e.requester_name or 'Organizer', 'org': f"{e.org_id} President", 
+                'avatar': avatar_url,
+                'date': dt.strftime('%B %d, %Y'), 'time': dt.strftime('%I:%M %p'),
+                'timestamp': dt.timestamp(), 
                 'url': '/admin/event-approvals/'
             })
     except Exception: pass
@@ -3400,12 +3493,13 @@ def manage_organizers_view(request):
     for profile in org_profiles:
         name = profile.user.first_name if profile.user.first_name else "Organizer"
         avatar_url = profile.profile_picture.url if profile.profile_picture else f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
+        cover_url = profile.cover_photo.url if profile.cover_photo else ""
         org_data.append({
             'id': profile.user.id, 'name': name, 'username': profile.user.username,
             'email': profile.user.email,
             'org': profile.organization, 'status': 'Active',
             'year_level': profile.year_level,
-            'avatar': avatar_url
+            'avatar': avatar_url, 'cover': cover_url
         })
     return render(request, 'admin_dashboard/student_org.html', {'organizers_json': json.dumps(org_data)})
 
@@ -3415,20 +3509,24 @@ def account_history_view(request):
     history_data = []
     students = Student.objects.select_related('user').filter(user__is_active=False)
     for s in students:
+        avatar_url = s.profile_picture.url if s.profile_picture else f"https://ui-avatars.com/api/?name={s.full_name}&background=800000&color=fff"
+        cover_url = s.cover_photo.url if s.cover_photo else ""
         history_data.append({
             'id': f"S-{s.id}", 'name': s.full_name, 'username': s.student_number,
             'org': s.organization, 'year': s.year_level, 'birthdate': str(s.birthdate) if s.birthdate else '',
             'type': 'Student', 'status': 'Deactivated',
-            'avatar': f"https://ui-avatars.com/api/?name={s.full_name}&background=800000&color=fff"
+            'avatar': avatar_url, 'cover': cover_url
         })
     orgs = OrgProfile.objects.select_related('user').filter(user__is_active=False)
     for o in orgs:
         name = o.user.first_name if o.user.first_name else "Organizer"
+        avatar_url = o.profile_picture.url if o.profile_picture else f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
+        cover_url = o.cover_photo.url if o.cover_photo else ""
         history_data.append({
             'id': f"O-{o.user.id}", 'name': name, 'username': o.user.username,
-            'org': o.organization, 'year': 'N/A', 'birthdate': '',
+            'org': o.organization, 'year': o.year_level, 'birthdate': '',
             'type': 'Student Org', 'status': 'Deactivated',
-            'avatar': f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
+            'avatar': avatar_url, 'cover': cover_url
         })
     return render(request, 'admin_dashboard/account_history.html', {'history_json': json.dumps(history_data)})
 
@@ -3450,6 +3548,46 @@ def student_api_action(request):
     return JsonResponse({"status": "error", "message": "Invalid request"})
 
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
+def admin_generate_org_password(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            
+            if not email:
+                return JsonResponse({"status": "error", "message": "Email is required."})
+            
+            import string
+            import random
+            from django.core.mail import EmailMultiAlternatives
+            from django.template.loader import render_to_string
+            
+            chars = string.ascii_letters + string.digits + "!@#$%^&*"
+            password = ''.join(random.choice(chars) for _ in range(12))
+            
+            # Store in cache to be used when form is submitted
+            cache.set(f'generated_org_pwd_{email}', password, timeout=600) # Valid for 10 minutes
+            
+            subject = 'PUPuni-CAMS: Organizer Account Password'
+            text_content = f"Your generated password for PUPuni-CAMS is: {password}\n\nPlease use this to log in and change your password immediately."
+            
+            login_url = request.build_absolute_uri('/')
+            html_content = render_to_string('emails/generated_org_password.html', {
+                'password': password,
+                'login_url': login_url
+            })
+            
+            email_msg = EmailMultiAlternatives(subject, text_content, 'pupuqcams2526@gmail.com', [email])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send()
+            
+            return JsonResponse({"status": "success", "message": "Password generated and sent to email successfully."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+    return JsonResponse({"status": "error", "message": "Invalid request."})
+
+
+@user_passes_test(is_admin_strictly, login_url='/admin/login/')
 def organizer_api_action(request):
     if request.method == 'POST':
         try:
@@ -3458,32 +3596,39 @@ def organizer_api_action(request):
 
             if action == 'create':
                 username = data.get('username')
-                if User.objects.filter(username=username).exists(): return JsonResponse({"status": "error", "message": "Username already exists!"})
-                user = User.objects.create_user(username=username, password=data.get('password'), email=data.get('email', ''))
+                email = data.get('email', '')
+                if User.objects.filter(email=email, is_active=True).exists(): return JsonResponse({"status": "error", "message": "This email is already in use by an active account."})
+                
+                password = cache.get(f'generated_org_pwd_{email}')
+                if not password:
+                    return JsonResponse({"status": "error", "message": "Please generate and send a password first, or it has expired."})
+                    
+                existing_user = User.objects.filter(username=username).first()
+                if existing_user:
+                    if existing_user.is_active:
+                        return JsonResponse({"status": "error", "message": "Username already exists and is active!"})
+                    
+                    existing_user.is_active = True
+                    existing_user.email = email
+                    existing_user.set_password(password)
+                    existing_user.first_name = data.get('name')
+                    existing_user.save()
+                    
+                    org_profile, _ = OrgProfile.objects.get_or_create(user=existing_user)
+                    org_profile.organization = data.get('org')
+                    org_profile.year_level = data.get('year_level', '1st Year')
+                    org_profile.force_password_change = True
+                    org_profile.save()
+                    
+                    cache.delete(f'generated_org_pwd_{email}')
+                    return JsonResponse({"status": "success", "message": f"Account for {data.get('org')} successfully restored and updated!"})
+
+                user = User.objects.create_user(username=username, password=password, email=email)
                 user.first_name = data.get('name') 
                 user.save()
-                OrgProfile.objects.create(user=user, organization=data.get('org'), year_level=data.get('year_level', '1st Year'))
+                OrgProfile.objects.create(user=user, organization=data.get('org'), year_level=data.get('year_level', '1st Year'), force_password_change=True)
+                cache.delete(f'generated_org_pwd_{email}')
                 return JsonResponse({"status": "success", "message": f"Account for {data.get('org')} successfully created!"})
-
-            elif action == 'edit':
-                user_id = data.get('id')
-                user = User.objects.get(id=user_id)
-                org_profile = OrgProfile.objects.get(user=user)
-                new_username = data.get('username')
-                if new_username != user.username and User.objects.filter(username=new_username).exists():
-                    return JsonResponse({"status": "error", "message": "Username is already taken by another account!"})
-                user.first_name = data.get('name')
-                user.username = new_username
-                user.email = data.get('email', user.email)
-                if data.get('password'): 
-                    user.set_password(data.get('password'))
-                    # Store plain-text password temporarily for the "Forgot Password" auto-fill feature (expires in 5 mins)
-                    cache.set(f'reset_pwd_{user.username}', data.get('password'), timeout=300)
-                user.save()
-                org_profile.organization = data.get('org')
-                org_profile.year_level = data.get('year_level', org_profile.year_level)
-                org_profile.save()
-                return JsonResponse({"status": "success", "message": "Account credentials updated successfully!"})
 
             elif action == 'delete': 
                 user_ids = str(data.get('id')).split(',')
@@ -3783,6 +3928,53 @@ def adviser_history(request):
     return render(request, 'organization adviser/history.html', {'events_json': json.dumps(events_data)})
 
 @user_passes_test(is_adviser_strictly, login_url='/admin/login/')
+def adviser_download_documents(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            event_ids = data.get('event_ids', [])
+            if not event_ids:
+                return JsonResponse({'status': 'error', 'message': 'No events selected.'}, status=400)
+            
+            events = Event.objects.filter(id__in=event_ids)
+            
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                for event in events:
+                    docs = [
+                        (getattr(event, 'letter_of_approval', None), 'letter_of_approval'),
+                        (getattr(event, 'letter_image', None), 'letter_image'),
+                        (getattr(event, 'permit_to_conduct', None), 'permit_to_conduct'),
+                        (getattr(event, 'permit_image', None), 'permit_image'),
+                        (getattr(event, 'excuse_letter_equipment', None), 'excuse_letter'),
+                        (getattr(event, 'equipment_image', None), 'equipment_image'),
+                        (getattr(event, 'letter_of_reschedule', None), 'reschedule_letter'),
+                    ]
+                    
+                    folder_name = f"Event_{event.id}_{event.event_title or 'Untitled'}"
+                    folder_name = "".join(c if c.isalnum() or c in " _-" else "_" for c in folder_name).strip()
+                    
+                    for doc_field, label in docs:
+                        if doc_field and hasattr(doc_field, 'path') and os.path.exists(doc_field.path):
+                            ext = os.path.splitext(doc_field.path)[1]
+                            file_name = f"{folder_name}/{label}{ext}"
+                            zip_file.write(doc_field.path, arcname=file_name)
+                            
+            if len(events) == 1:
+                event = events.first()
+                zip_filename = f"Event_{event.id}_{event.event_title or 'Untitled'}.zip"
+                zip_filename = "".join(c if c.isalnum() or c in " _-." else "_" for c in zip_filename).strip()
+            else:
+                zip_filename = "event_documents.zip"
+                
+            response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+            return response
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
+@user_passes_test(is_adviser_strictly, login_url='/admin/login/')
 def adviser_api_action(request):
     if request.method == 'POST':
         try:
@@ -4005,17 +4197,51 @@ def admin_audit_logs(request):
         
         # 🟢 Determine Actor Name with Fallback
         changes = log.changes if isinstance(log.changes, dict) else (json.loads(log.changes) if log.changes else {})
-        actor_name = log.actor.username if log.actor else (changes.get('username', 'Anonymous') if changes.get('reason') != 'Account does not exist' else 'Anonymous')
-
+        
+        actor_name = 'Anonymous'
+        role_type = 'System'
+        org_name = ''
+        student_id = ''
+        
+        if log.actor:
+            if hasattr(log.actor, 'student') and log.actor.student:
+                student = log.actor.student
+                actor_name = student.full_name or log.actor.username
+                student_id = student.student_number
+                role_type = student.role # 'Student' or 'Organizer'
+                if role_type == 'Organizer':
+                    org_name = student.organization
+            elif hasattr(log.actor, 'orgprofile') and log.actor.orgprofile:
+                org = log.actor.orgprofile
+                actor_name = log.actor.get_full_name() or log.actor.username
+                role_type = 'Organizer'
+                org_name = org.organization
+            elif log.actor.is_superuser:
+                actor_name = "Admin"
+                role_type = "Admin"
+            elif log.actor.is_staff:
+                actor_name = log.actor.get_full_name() or log.actor.username
+                role_type = "Adviser"
+                # Check if username indicates an org (e.g. ito_adviser)
+                if '_' in log.actor.username.lower():
+                    org_name = log.actor.username.split('_')[0].upper()
+            else:
+                actor_name = log.actor.username
+        else:
+            actor_name = changes.get('username', 'Anonymous') if changes.get('reason') != 'Account does not exist' else changes.get('username', 'Anonymous')
+            role_type = "Unauthorized User"
+            
         logs_data.append({
             'id': log.id,
             'actor': actor_name,
+            'role_type': role_type,
+            'org_name': org_name,
+            'student_id': student_id,
             'action': log.action,
             'target': log.target_model or 'System',
             'status': log.status,
             'ip': log.ip_address,
             'ua': log.user_agent,
-            # 🟢 12-hour format with AM/PM for accuracy and readability
             'timestamp': local_time.strftime('%Y-%m-%d %I:%M:%S %p'),
             'changes': changes
         })

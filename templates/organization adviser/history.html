@@ -100,39 +100,76 @@
         <!-- Clickaway Overlay to close dropdown when clicking outside -->
         <div v-if="isFilterExpanded" @click="isFilterExpanded = false" class="fixed inset-0 z-0"></div>
 
-        <!-- Search Bar -->
-        <div class="relative flex-1 sm:flex-none sm:w-80 lg:w-96 shrink z-10">
-            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-            <input type="text" v-model="searchQuery" placeholder="Search events e.g Assembly" class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-4 py-2.5 text-[12px] sm:text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400 h-[40px] sm:h-[44px]">
-        </div>
-
-        <!-- Filter Card (Expands inline to push content down) -->
-        <div class="relative shrink-0 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 w-[140px] sm:w-48 flex flex-col z-10" :class="isFilterExpanded ? 'shadow-md border-gray-300 dark:border-gray-600' : 'shadow-sm'">
-            <!-- Toggle Button (Height is 2px smaller to account for parent borders) -->
-            <button @click="isFilterExpanded = !isFilterExpanded" class="w-full px-3 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 font-bold text-[11px] sm:text-sm text-gray-700 dark:text-gray-300 h-[38px] sm:h-[42px] transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                <div class="flex items-center gap-1.5 sm:gap-2 truncate">
-                    <i class="ph-bold ph-funnel text-sm sm:text-lg shrink-0"></i>
-                    <span class="inline truncate">Filter: [[ statusFilter === 'In Progress' ? 'In Prog' : statusFilter ]]</span>
-                </div>
-                <i class="ph-bold ph-caret-down transition-transform duration-300 text-sm sm:text-base shrink-0" :class="{ 'rotate-180': isFilterExpanded }"></i>
+        <!-- Search Bar / Icon -->
+        <div class="relative z-10 flex items-center transition-all duration-300 ease-in-out" :class="isMobileSearchActive ? 'w-full flex-1' : 'shrink w-auto sm:flex-1 sm:w-80 lg:w-96'">
+            <!-- Mobile Search Icon (When Inactive) -->
+            <button v-show="!isMobileSearchActive" @click="isMobileSearchActive = true" class="sm:hidden w-[38px] h-[38px] flex items-center justify-center rounded-lg bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors shrink-0">
+                <i class="ph-bold ph-magnifying-glass text-lg"></i>
             </button>
             
-            <!-- Inline Drawer Menu -->
-            <div class="grid transition-all duration-300 ease-in-out"
-                 :class="isFilterExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
-                <div class="overflow-hidden flex flex-col px-1.5 sm:px-2 pb-1.5 sm:pb-2 gap-1 border-t border-gray-100 dark:border-gray-800">
-                    <button @click="selectFilter('All')" :class="statusFilter === 'All' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between mt-1.5">
-                        All records <i v-if="statusFilter === 'All'" class="ph-bold ph-check text-xs"></i>
+            <!-- Search Input Container -->
+            <div class="relative w-full overflow-hidden transition-all duration-300 ease-in-out" 
+                 :class="{'max-w-0 opacity-0 sm:max-w-[500px] sm:opacity-100': !isMobileSearchActive && isMobileScreen, 'max-w-[500px] opacity-100': isMobileSearchActive || !isMobileScreen}">
+                
+                <div class="w-full relative min-w-[150px] sm:min-w-0">
+                    <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                    <input type="text" v-model="searchQuery" placeholder="Search events e.g Assembly" class="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#111] rounded-lg pl-10 pr-10 sm:pr-4 py-2.5 text-[12px] sm:text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition placeholder-gray-400 h-[38px] sm:h-[44px]">
+                    <!-- Mobile Close Search -->
+                    <button @click="isMobileSearchActive = false; searchQuery = ''" class="sm:hidden absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
+                        <i class="ph-bold ph-x text-base"></i>
                     </button>
-                    <button @click="selectFilter('Approved')" :class="statusFilter === 'Approved' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
-                        Published <i v-if="statusFilter === 'Approved'" class="ph-bold ph-check text-xs"></i>
-                    </button>
-                    <button @click="selectFilter('In Progress')" :class="statusFilter === 'In Progress' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
-                        In progress <i v-if="statusFilter === 'In Progress'" class="ph-bold ph-check text-xs"></i>
-                    </button>
-                    <button @click="selectFilter('Rejected')" :class="statusFilter === 'Rejected' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
-                        Rejected <i v-if="statusFilter === 'Rejected'" class="ph-bold ph-check text-xs"></i>
-                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Controls -->
+        <div class="flex items-start transition-all duration-300 ease-in-out shrink-0" 
+             :class="{'max-w-0 opacity-0 gap-0 ml-0 overflow-hidden': isMobileSearchActive, 'max-w-[500px] opacity-100 gap-2 sm:gap-3 overflow-visible': !isMobileSearchActive}">
+            
+            <!-- Cancel Selection Button -->
+            <button v-if="isSelectionMode" @click="cancelSelection" class="h-[38px] sm:h-[42px] px-3 sm:px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-bold text-[11px] sm:text-sm transition-colors border border-gray-200 dark:border-gray-700">
+                Cancel
+            </button>
+
+            <!-- Download Actions -->
+            <button v-if="!isSelectionMode" @click="isSelectionMode = true" class="h-[38px] sm:h-[42px] px-3 sm:px-4 bg-pup-maroon hover:bg-maroon-800 text-white rounded-lg flex items-center justify-center gap-2 transition-colors border-none shadow-md font-bold text-[11px] sm:text-sm">
+                <i class="ph-bold ph-download-simple text-lg"></i>
+                <span class="hidden sm:inline">Download Documents</span>
+            </button>
+            
+            <button v-else @click="confirmDownloadModal = true" class="h-[38px] sm:h-[42px] px-3 sm:px-4 bg-pup-maroon hover:bg-maroon-800 text-white font-bold text-[11px] sm:text-sm rounded-lg shadow-md transition-colors border-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" :disabled="selectedEventIds.length === 0">
+                <i class="ph-bold ph-download-simple text-lg sm:hidden"></i>
+                <span class="hidden sm:inline">Download Selected ([[ selectedEventIds.length ]])</span>
+                <span class="inline sm:hidden">([[ selectedEventIds.length ]])</span>
+            </button>
+
+            <!-- Filter Card -->
+            <div class="relative shrink-0 bg-gray-50 dark:bg-[#111] rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 w-[120px] sm:w-48 flex flex-col z-10" :class="isFilterExpanded ? 'shadow-md border-gray-300 dark:border-gray-600' : 'shadow-sm'">
+                <button @click="isFilterExpanded = !isFilterExpanded" class="w-full px-3 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 font-bold text-[11px] sm:text-sm text-gray-700 dark:text-gray-300 h-[38px] sm:h-[42px] transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                    <div class="flex items-center gap-1.5 sm:gap-2 truncate">
+                        <i class="ph-bold ph-funnel text-sm sm:text-lg shrink-0"></i>
+                        <span class="inline truncate hidden sm:inline">Filter: [[ statusFilter === 'In Progress' ? 'In Prog' : statusFilter ]]</span>
+                        <span class="inline truncate sm:hidden">[[ statusFilter === 'In Progress' ? 'In Prog' : statusFilter ]]</span>
+                    </div>
+                    <i class="ph-bold ph-caret-down transition-transform duration-300 text-sm sm:text-base shrink-0" :class="{ 'rotate-180': isFilterExpanded }"></i>
+                </button>
+                
+                <div class="grid transition-all duration-300 ease-in-out w-full"
+                     :class="isFilterExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
+                    <div class="overflow-hidden flex flex-col px-1.5 sm:px-2 pb-1.5 sm:pb-2 gap-1 border-gray-100 dark:border-gray-800" :class="{'border-t': isFilterExpanded}">
+                        <button @click="selectFilter('All')" :class="statusFilter === 'All' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between mt-1.5">
+                            All records <i v-if="statusFilter === 'All'" class="ph-bold ph-check text-xs"></i>
+                        </button>
+                        <button @click="selectFilter('Approved')" :class="statusFilter === 'Approved' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
+                            Published <i v-if="statusFilter === 'Approved'" class="ph-bold ph-check text-xs"></i>
+                        </button>
+                        <button @click="selectFilter('In Progress')" :class="statusFilter === 'In Progress' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
+                            In progress <i v-if="statusFilter === 'In Progress'" class="ph-bold ph-check text-xs"></i>
+                        </button>
+                        <button @click="selectFilter('Rejected')" :class="statusFilter === 'Rejected' ? 'bg-gray-200 dark:bg-gray-800 text-pup-maroon dark:text-pup-gold font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium'" class="p-2 sm:p-2.5 rounded-md text-[11px] sm:text-[13px] text-left transition-colors flex items-center justify-between">
+                            Rejected <i v-if="statusFilter === 'Rejected'" class="ph-bold ph-check text-xs"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -142,6 +179,7 @@
         <table class="w-full text-left border-collapse min-w-[800px]">
             <thead>
                 <tr class="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/20">
+                    <th v-if="isSelectionMode" class="py-4 px-4 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest text-center w-12"><i class="ph-bold ph-check-square text-lg"></i></th>
                     <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Organization</th>
                     <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Event Title</th>
                     <th class="py-4 px-6 text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-widest uppercase">Event Date</th>
@@ -153,6 +191,9 @@
             <!-- Real Data Body -->
             <tbody v-if="filteredEvents.length > 0" class="text-sm divide-y divide-gray-50 dark:divide-gray-800/50">
                 <tr v-for="event in filteredEvents" :key="event.id" class="hover:bg-gray-50/80 dark:hover:bg-[#151515] transition-colors group">
+                    <td v-if="isSelectionMode" class="py-4 px-4 text-center border-b border-transparent group-hover:border-gray-200 dark:group-hover:border-gray-800" @click.stop>
+                        <input type="checkbox" :value="event.id" v-model="selectedEventIds" class="w-4 h-4 text-pup-maroon bg-gray-100 border-gray-300 rounded focus:ring-pup-maroon dark:focus:ring-pup-gold dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
+                    </td>
                     <td class="py-4 px-6 font-black text-pup-maroon dark:text-pup-gold text-xs tracking-tight">[[ event.org ]]</td>
                     <td class="py-4 px-6 font-bold text-gray-900 dark:text-white">[[ event.title ]]</td>
                     <td class="py-4 px-6 font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap text-[13px]">[[ event.date ]]</td>
@@ -207,7 +248,12 @@
 
         <!-- List Items -->
         <div v-else v-for="event in filteredEvents" :key="'mob-'+event.id" class="p-4 bg-white dark:bg-pup-darkcard rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors relative overflow-hidden group">
-            <div class="flex justify-between items-start mb-2">
+            
+            <div v-if="isSelectionMode" class="absolute top-4 right-4 z-10" @click.stop>
+                <input type="checkbox" :value="event.id" v-model="selectedEventIds" class="w-5 h-5 text-pup-maroon bg-gray-100 border-gray-300 rounded focus:ring-pup-maroon dark:focus:ring-pup-gold dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
+            </div>
+
+            <div class="flex justify-between items-start mb-2" :class="{'pr-8': isSelectionMode}">
                 <span class="font-extrabold text-pup-maroon dark:text-pup-gold text-xs uppercase tracking-wider">[[ event.org ]]</span>
                 <!-- Status Badge -->
                 <span v-if="event.status === 'APPROVED'" class="px-2 py-0.5 rounded border border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[9px] font-extrabold uppercase tracking-wide">
@@ -531,6 +577,29 @@
         </div>
     </div>
 </div>
+
+<!-- Download Confirmation Modal -->
+<div v-show="confirmDownloadModal" v-cloak class="fixed inset-0 z-[7000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity" @click="confirmDownloadModal = false">
+    <div class="bg-white dark:bg-pup-darkcard rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800 animate-fade-in relative z-10 p-6 text-center" @click.stop>
+        <div class="w-16 h-16 bg-pup-maroon/10 dark:bg-pup-gold/10 text-pup-maroon dark:text-pup-gold rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="ph-bold ph-download-simple text-3xl"></i>
+        </div>
+        <h3 class="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2">Download Documents?</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium mb-6">
+            You are about to download the documents for [[ selectedEventIds.length ]] selected event<span v-if="selectedEventIds.length > 1">s</span>. This will be saved as a zip file.
+        </p>
+        <div class="flex gap-3">
+            <button @click="confirmDownloadModal = false" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold transition-colors border border-gray-200 dark:border-gray-700 shadow-sm">
+                Cancel
+            </button>
+            <button @click="processDownload" :disabled="isDownloading" class="flex-1 py-3 bg-pup-maroon hover:bg-maroon-800 text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-md">
+                <i v-if="isDownloading" class="ph-bold ph-spinner animate-spin"></i>
+                <span v-if="!isDownloading">Yes, Download</span>
+                <span v-else>Downloading...</span>
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -561,6 +630,70 @@
                 const isDocViewerOpen = ref(false);
                 const viewedDocTitle = ref('');
                 const viewedDocUrl = ref('');
+
+                // Document Selection Logic
+                const isSelectionMode = ref(false);
+                const selectedEventIds = ref([]);
+                const confirmDownloadModal = ref(false);
+                const isDownloading = ref(false);
+                const isMobileSearchActive = ref(false);
+                const isMobileScreen = ref(window.innerWidth <= 640);
+                
+                const cancelSelection = () => {
+                    isSelectionMode.value = false;
+                    selectedEventIds.value = [];
+                };
+
+                const processDownload = async () => {
+                    isDownloading.value = true;
+                    try {
+                        for (let i = 0; i < selectedEventIds.value.length; i++) {
+                            const eventId = selectedEventIds.value[i];
+                            const response = await fetch('/adviser/api/download-documents/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': '{{ csrf_token }}'
+                                },
+                                body: JSON.stringify({ event_ids: [eventId] })
+                            });
+                            
+                            if (response.ok) {
+                                let filename = `Event_${eventId}_documents.zip`;
+                                const contentDisposition = response.headers.get('Content-Disposition');
+                                if (contentDisposition && contentDisposition.includes('filename=')) {
+                                    filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
+                                }
+
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = filename;
+                                document.body.appendChild(a);
+                                a.click();
+                                a.remove();
+                                window.URL.revokeObjectURL(url);
+                            } else {
+                                const data = await response.json();
+                                console.error('Error downloading files for event:', eventId, data);
+                            }
+                            
+                            // Slight delay to ensure multiple downloads trigger smoothly
+                            if (i < selectedEventIds.value.length - 1) {
+                                await new Promise(r => setTimeout(r, 600));
+                            }
+                        }
+                        
+                        confirmDownloadModal.value = false;
+                        cancelSelection();
+                    } catch(e) {
+                        console.error(e);
+                        alert('An error occurred while downloading.');
+                    } finally {
+                        isDownloading.value = false;
+                    }
+                };
 
                 let parsedData = [];
                 try {
@@ -627,6 +760,7 @@
                     setTimeout(() => {
                         isLoading.value = false;
                         window.addEventListener('resize', updateMobileScale);
+                        window.addEventListener('resize', () => { isMobileScreen.value = window.innerWidth <= 640; });
 
                         const urlParams = new URLSearchParams(window.location.search);
                         const eventId = urlParams.get('id');
@@ -755,7 +889,9 @@
                     isModalOpen, isModalClosing, selectedEvent, openModal, closeModal,
                     isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
                     currentDocCount, activeDocs, activeTab, activeFileTab, mobileDropdownOpen, generatedLetterTabs, activeTabLabel, 
-                    switchDocTab, updateMobileScale, parsedDescription
+                    switchDocTab, updateMobileScale, parsedDescription,
+                    isSelectionMode, selectedEventIds, confirmDownloadModal, isDownloading, isMobileSearchActive, isMobileScreen,
+                    cancelSelection, processDownload
                 }
             }
         }).mount('#app');

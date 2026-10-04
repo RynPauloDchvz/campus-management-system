@@ -29,8 +29,10 @@ urlpatterns = [
     # 🟢 API PARA SA MANAGE ACCOUNTS (DEACTIVATE/CREATE) 🟢
     path('admin/api/student-action/', views.student_api_action, name='student_api_action'),
     path('admin/api/organizer-action/', views.organizer_api_action, name='organizer_api_action'),
+    path('admin/api/generate-org-password/', views.admin_generate_org_password, name='admin_generate_org_password'),
     
     path('admin/event-approvals/', views.event_approvals_view, name='event_approvals'),
+    path('admin/event-history/', views.event_history_view, name='event_history'),
     
     # 🟢 BAGONG API PARA SA ADMIN APPROVE/REJECT EVENTS 🟢
     path('admin/api/event-action/', views.admin_api_action, name='admin_api_action'),
@@ -39,6 +41,7 @@ urlpatterns = [
 
     path('adviser/dashboard/', views.adviser_dashboard, name='adviser_dashboard'),
     path('adviser/history/', views.adviser_history, name='adviser_history'),
+    path('adviser/api/download-documents/', views.adviser_download_documents, name='adviser_download_documents'),
     path('adviser/api/notifications/', views.get_adviser_notifications_api, name='adviser_api_notifications'),
 
     # 🟢 BAGONG API PARA SA ADVISER APPROVE/REJECT 🟢
@@ -62,8 +65,8 @@ urlpatterns = [
     # STUDENT URLS
     # ==========================================
     path('student/register', views.student_register, name='student_register'),
-    path('student/generate-password', views.generate_student_password, name='generate_student_password'),
-    path('student/verify-password', views.verify_student_password, name='verify_student_password'),
+    path('student/send-register-otp', views.send_student_register_otp, name='send_student_register_otp'),
+    path('student/verify-register-otp', views.verify_student_register_otp, name='verify_student_register_otp'),
     path('student/update-password', views.update_student_password, name='update_student_password'),
     path('student/update-profile', views.update_student_profile, name='update_student_profile'),
     path('student/update-face', views.update_student_face, name='update_student_face'),
@@ -114,6 +117,11 @@ urlpatterns = [
     path('organizer/message-history', views.organizer_message_history, name='organizer_message_history'),
     path('organizer/attendance-history', views.organizer_attendance_history, name='organizer_attendance_history'),
     path('organizer/document-tracking', views.organizer_document_tracking, name='organizer_document_tracking'),
+    
+    # 🟢 FORCE CHANGE PASSWORD URLS 🟢
+    path('organizer/force-change-password', views.organizer_force_change_password_view, name='organizer_force_change_password'),
+    path('organizer/api/force-change-send-otp/', views.force_change_send_otp, name='force_change_send_otp'),
+    path('organizer/api/force-change-finalize/', views.force_change_finalize, name='force_change_finalize'),
 
     # 🟢 DOCUMENT VAULT URLS (PARA SA UPLOADS) 🟢
     path('organizer/event-vault/', views.organizer_event_vault, name='organizer_event_vault'),

@@ -24,7 +24,7 @@
 {% endblock extra_head %}
 
 {% block skeleton %}
-<div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen pt-8">
+<div class="w-full relative pb-16 min-h-screen pt-8">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mb-8">
             <div class="w-32 h-4 rounded skeleton-shimmer"></div>
@@ -33,8 +33,8 @@
             <div class="w-64 h-10 rounded-lg skeleton-shimmer"></div>
             <div class="w-full sm:w-80 h-12 rounded-xl skeleton-shimmer"></div>
         </div>
-        <div class="flex flex-col gap-4">
-            <div v-for="i in 6" :key="i" class="h-32 bg-white dark:bg-[#151515] rounded-2xl border border-gray-100 dark:border-gray-800 p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex flex-col bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm">
+            <div v-for="i in 6" :key="i" class="h-32 bg-transparent dark:bg-transparent border-b border-gray-100 dark:border-gray-800 last:border-b-0 p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-start sm:items-center gap-4 flex-1 w-full">
                     <div class="w-12 h-12 rounded-full skeleton-shimmer shrink-0"></div>
                     <div class="space-y-2 flex-1">
@@ -53,25 +53,87 @@
 {% block content %}
 <div v-pre>
 
-<div class="w-full relative pb-16 bg-[#f4f4f4] dark:bg-[#0a0a0a] min-h-screen font-sans transition-colors duration-300 pt-8">
+<div class="w-full relative pb-16 min-h-screen transition-colors duration-300 pt-8">
     
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-full px-4 sm:px-6 lg:px-8 mx-auto xl:max-w-7xl">
         
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
-            <h1 class="text-3xl sm:text-4xl font-black text-pup-maroon dark:text-pup-gold uppercase tracking-wide flex items-center gap-3">
-                <i class="ph-fill ph-bell text-3xl"></i> Admin Notifications
+        <div class="flex flex-col items-center sm:flex-row sm:justify-between sm:items-end gap-4 mb-6 sm:mb-2 pb-2 sm:pb-4 border-b border-gray-200 dark:border-gray-800">
+            <h1 class="text-2xl sm:text-4xl font-black text-pup-maroon dark:text-pup-gold uppercase tracking-wide text-center whitespace-nowrap w-full sm:w-auto">
+                Admin Notifications
             </h1>
             
-            <div class="relative w-full sm:w-80 shrink-0">
-                <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                <input type="text" id="searchInput" onkeyup="filterNotifications()" placeholder="Search title, sender, or content..." class="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#151515] rounded-xl pl-10 pr-4 py-3 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition shadow-sm">
+            <div class="flex flex-row items-center justify-between w-full sm:w-auto gap-3">
+                <div class="relative w-full sm:w-80 shrink-1">
+                    <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                    <input type="text" id="searchInput" onkeyup="filterNotifications()" placeholder="Search title, sender..." class="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-700 rounded-xl pl-10 pr-4 py-2 sm:py-3 text-sm font-medium outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-900 dark:text-white transition shadow-sm">
+                </div>
+                
+                <a onclick="markAllAsRead()" class="cursor-pointer shrink-0 text-xs sm:text-sm font-bold text-gray-500 hover:text-pup-maroon dark:hover:text-pup-gold transition-colors flex items-center gap-1">
+                    <i class="ph-bold ph-check-double text-lg sm:text-xl"></i> <span class="hidden sm:inline">Mark all as read</span><span class="sm:hidden">Read All</span>
+                </a>
             </div>
         </div>
 
-        <div class="flex flex-col gap-4" id="notificationsContainer">
+        <div class="flex flex-col bg-white dark:bg-[#151515] border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden shadow-sm" id="notificationsContainer">
             <!-- Notifications will be injected here -->
         </div>
 
+    </div>
+    
+    <!-- Modal Message UI -->
+    <div id="notifModal" class="hidden fixed inset-0 flex items-center justify-center sm:p-4 bg-black/50 backdrop-blur-sm transition-opacity" style="z-index: 9999;">
+        <div class="bg-white dark:bg-[#151515] sm:rounded-2xl w-full h-full sm:h-auto sm:max-w-lg shadow-2xl sm:border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+            
+            <div class="flex justify-between items-center p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-[#1a1a1a]">
+                <h3 class="font-bold text-lg text-gray-900 dark:text-white truncate pr-2" id="modalTitle">Notification Details</h3>
+                <button onclick="closeNotifModal()" class="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors shrink-0">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 flex-1 overflow-y-auto">
+                
+                <div class="flex flex-col sm:flex-row gap-4 mb-6 bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div class="flex-1 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-gray-200 dark:border-gray-700" style="background-color: rgba(128,0,0,0.1); color: var(--accent);">
+                            <img id="modalSenderAvatar" src="" class="w-full h-full object-cover hidden" alt="Profile">
+                            <i id="modalSenderIcon" class="ph-fill ph-user-circle text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-0.5">Sender</p>
+                            <p class="text-sm font-bold text-gray-900 dark:text-white leading-tight" id="modalSender"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full h-px bg-gray-200 dark:bg-gray-700 sm:w-px sm:h-auto sm:block"></div>
+                    
+                    <div class="flex-1 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 dark:bg-[#222] dark:text-gray-300 flex items-center justify-center shrink-0">
+                            <i class="ph-fill ph-calendar-blank text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-0.5">Date Received</p>
+                            <p class="text-sm font-bold leading-tight" style="color: var(--accent);" id="modalDate"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <p class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2"><i class="ph-bold ph-envelope-open text-sm"></i> Message Content</p>
+                    <div class="bg-gray-100 dark:bg-[#111] p-5 rounded-xl border-2 border-gray-300 dark:border-gray-600 shadow-inner relative">
+                        <i class="ph-fill ph-quotes text-4xl absolute top-2 right-3 opacity-10" style="color: var(--accent);"></i>
+                        <p class="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap text-justify relative z-10 font-medium" id="modalMessage"></p>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div class="p-5 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-[#1a1a1a] flex justify-end gap-3 mt-auto">
+                <button id="modalActionBtn" class="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-xl font-bold text-sm text-white dark:text-black hover:opacity-90 transition-colors shadow-md border-2" style="background-color: var(--accent); border-color: var(--accent);">
+                    View Action
+                </button>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -91,11 +153,18 @@
         const container = document.getElementById('notificationsContainer');
         if (!container) return;
         
+        const query = document.getElementById('searchInput').value.trim();
+        
         if (dataList.length === 0) {
+            const emptyIcon = query ? 'ph-magnifying-glass' : 'ph-bell-slash';
+            const emptyText = query ? `No notification found matching "${query}"` : 'You have no notifications yet.';
+            
             container.innerHTML = `
-                <div class="bg-white dark:bg-[#151515] rounded-2xl border border-gray-200 border-dashed dark:border-gray-800 p-12 text-center shadow-sm">
-                    <i class="ph-fill ph-magnifying-glass text-5xl text-gray-300 dark:text-gray-700 mb-3 block"></i>
-                    <h3 class="font-bold text-gray-500 dark:text-gray-400 text-lg">No notifications found.</h3>
+                <div class="p-12 text-center">
+                    <i class="ph-fill ${emptyIcon} text-5xl text-gray-300 dark:text-gray-700 mb-3 block"></i>
+                    <h3 class="text-gray-500 dark:text-gray-400 text-lg font-normal">
+                        ${emptyText}
+                    </h3>
                 </div>
             `;
             return;
@@ -134,37 +203,36 @@
             } else if (notif.type === 'message') {
                 borderClass = 'border-l-pup-maroon dark:border-l-pup-gold';
                 iconBg = 'bg-maroon-50 text-pup-maroon dark:bg-gold-900/10 dark:text-pup-gold';
-                iconClass = 'ph-chats-teardrop';
+                iconClass = 'ph-envelope-open';
             }
 
             const readClass = isRead 
                 ? 'opacity-60 bg-gray-50 dark:bg-[#111111] border-gray-300 dark:border-gray-800' 
-                : 'bg-white dark:bg-[#151515] shadow-sm hover:shadow-md border-gray-200 dark:border-gray-700';
+                : 'bg-transparent dark:bg-transparent border-gray-100 dark:border-gray-800';
 
             htmlString += `
                 <div onclick="handleNotifClick(${index})" 
-                     class="notif-card-transition cursor-pointer border-l-[5px] rounded-2xl p-5 sm:p-6 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${borderClass} ${readClass}">
+                     class="notif-card-transition cursor-pointer border-b border-l-[5px] last:border-b-0 p-4 sm:p-5 sm:py-6 flex flex-row items-center justify-between gap-2 sm:gap-4 ${borderClass} ${readClass} hover:bg-gray-50 dark:hover:bg-[#1a1a1a]">
                     
-                    <div class="flex items-start sm:items-center gap-4 flex-1 min-w-0">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-xl shadow-inner ${iconBg}">
-                            <i class="ph-fill ${iconClass}"></i>
+                    <div class="flex flex-row items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div class="hidden sm:flex w-12 h-12 rounded-full items-center justify-center shrink-0 text-xl shadow-inner ${iconBg} overflow-hidden border border-gray-200 dark:border-gray-700">
+                            ${notif.avatar ? `<img src="${notif.avatar}" alt="Org Profile" class="w-full h-full object-cover">` : `<i class="ph-fill ${iconClass}"></i>`}
                         </div>
                         
-                        <div class="flex-1 min-w-0">
-                            <h4 class="font-bold text-gray-900 dark:text-white text-base truncate mb-1">${notif.title}</h4>
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                                    ${notif.sender}
-                                </span>
-                            </div>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                        <div class="flex-1 min-w-0 flex flex-col gap-0.5 sm:gap-1">
+                            <h4 class="font-bold text-gray-900 dark:text-white text-sm sm:text-base truncate">${notif.title}</h4>
+                            <span class="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 truncate">${notif.sender}</span>
+                            <span class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-pup-maroon dark:text-pup-gold truncate">${notif.org}</span>
+                            
+                            <p class="hidden sm:block text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mt-1">
                                 ${notif.message}
                             </p>
                         </div>
                     </div>
                     
-                    <div class="shrink-0 sm:text-right mt-2 sm:mt-0">
-                        <span class="text-xs font-bold text-pup-maroon dark:text-pup-gold block uppercase tracking-wider">${notif.date}</span>
+                    <div class="shrink-0 text-right flex flex-col justify-center pl-3 sm:pl-4 border-l border-gray-100 dark:border-gray-800 sm:border-none sm:pl-0">
+                        <span class="text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 block tracking-wider whitespace-nowrap">${notif.date}</span>
+                        <span class="text-xs sm:text-sm font-black text-pup-maroon dark:text-pup-gold block uppercase tracking-wider whitespace-nowrap mt-0.5">${notif.time || ''}</span>
                     </div>
                 </div>
             `;
@@ -192,9 +260,65 @@
         if (!readNotifs.includes(notif.id)) {
             readNotifs.push(notif.id);
             localStorage.setItem('admin_read_notifs', JSON.stringify(readNotifs));
+            updateNotificationBadge();
+            renderNotifications(currentFiltered);
         }
+        
+        // Populate and open modal
+        document.getElementById('modalTitle').innerText = notif.title;
+        document.getElementById('modalSender').innerText = notif.sender + ' | ' + notif.org;
+        document.getElementById('modalDate').innerText = notif.date + ' - ' + notif.time;
+        document.getElementById('modalMessage').innerText = notif.message;
+        
+        if (notif.avatar) {
+            document.getElementById('modalSenderAvatar').src = notif.avatar;
+            document.getElementById('modalSenderAvatar').classList.remove('hidden');
+            document.getElementById('modalSenderIcon').classList.add('hidden');
+        } else {
+            document.getElementById('modalSenderAvatar').classList.add('hidden');
+            document.getElementById('modalSenderIcon').classList.remove('hidden');
+        }
+        
         if (notif.url && notif.url !== '#') {
-            window.location.href = notif.url;
+            document.getElementById('modalActionBtn').onclick = () => window.location.href = notif.url;
+            document.getElementById('modalActionBtn').style.display = 'block';
+        } else {
+            document.getElementById('modalActionBtn').style.display = 'none';
+        }
+        
+        document.getElementById('notifModal').classList.remove('hidden');
+        document.getElementById('notifModal').classList.add('flex');
+    }
+    
+    function closeNotifModal() {
+        document.getElementById('notifModal').classList.add('hidden');
+        document.getElementById('notifModal').classList.remove('flex');
+    }
+
+    function markAllAsRead() {
+        notifications.forEach(n => {
+            if (!readNotifs.includes(n.id)) {
+                readNotifs.push(n.id);
+            }
+        });
+        localStorage.setItem('admin_read_notifs', JSON.stringify(readNotifs));
+        updateNotificationBadge();
+        renderNotifications(currentFiltered);
+    }
+    
+    function updateNotificationBadge() {
+        const unreadCount = notifications.filter(n => !readNotifs.includes(n.id)).length;
+        
+        // This targets badges that we'll add to the admin_base navbar
+        const desktopBadge = document.getElementById('notifBadge');
+        const mobileBadge = document.getElementById('notifBadgeMobile');
+        
+        if (unreadCount > 0) {
+            if (desktopBadge) { desktopBadge.style.display = 'flex'; desktopBadge.innerText = unreadCount; }
+            if (mobileBadge) { mobileBadge.style.display = 'flex'; mobileBadge.innerText = unreadCount; }
+        } else {
+            if (desktopBadge) desktopBadge.style.display = 'none';
+            if (mobileBadge) mobileBadge.style.display = 'none';
         }
     }
 
@@ -205,8 +329,10 @@
                 notifications = JSON.parse(rawData.trim());
                 currentFiltered = notifications;
                 renderNotifications(notifications);
+                updateNotificationBadge();
             } else {
                 renderNotifications([]);
+                updateNotificationBadge();
             }
         } catch (error) {
             console.error("Error loading notifications:", error);
