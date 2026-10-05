@@ -3707,7 +3707,10 @@ def admin_feedback_detail(request):
         total_evals = eval_logs.count()
         
         avg_rating = 0
+        total_raw_score_sum = 0
         pos_count = 0
+        neu_count = 0
+        neg_count = 0
         criteria_scores = [0, 0, 0, 0, 0] # Match labels in template
         year_dist = {'1st Year': 0, '2nd Year': 0, '3rd Year': 0, '4th Year': 0}
         comments = []
@@ -3716,8 +3719,9 @@ def admin_feedback_detail(request):
             try:
                 changes = log.changes if isinstance(log.changes, dict) else json.loads(log.changes)
                 r = float(changes.get('rating', 0))
+                raw_score = int(changes.get('total_raw_score', 0))
                 avg_rating += r
-                if r >= 4: pos_count += 1
+                total_raw_score_sum += raw_score
                 
                 # Criteria logic (details is a list of dicts from frontend)
                 details = changes.get('detailed_scores', [])
@@ -3740,6 +3744,10 @@ def admin_feedback_detail(request):
                 else:
                     feedback_text = changes.get('feedback', '')
                     sentiment = get_sentiment(feedback_text).get('label', 'neutral')
+                
+                if sentiment == 'positive': pos_count += 1
+                elif sentiment == 'negative': neg_count += 1
+                else: neu_count += 1
                 
                 # Get student year level
                 student = Student.objects.filter(user=log.actor).first()
@@ -3768,9 +3776,20 @@ def admin_feedback_detail(request):
         if total_evals > 0:
             avg_rating /= total_evals
             criteria_scores = [round(s/total_evals, 1) for s in criteria_scores]
-            pos_sentiment = int((pos_count / total_evals) * 100)
+            
+            # Overall Sentiment (Student Mood) -> Max 125 raw score algorithm
+            avg_raw_score = total_raw_score_sum / total_evals
+            pos_sentiment = int(round((avg_raw_score / 125) * 100))
+            
+            # Text sentiment percentages
+            pos_percent = int(round((pos_count / total_evals) * 100))
+            neu_percent = int(round((neu_count / total_evals) * 100))
+            neg_percent = int(round((neg_count / total_evals) * 100))
         else:
             pos_sentiment = 0
+            pos_percent = 0
+            neu_percent = 0
+            neg_percent = 0
 
         # 2. ATTENDANCE DATA (For matching)
         att_count = Attendance.objects.filter(event=event).count()
@@ -3797,6 +3816,9 @@ def admin_feedback_detail(request):
             'att_count': att_count,
             'avg_rating': round(avg_rating, 1),
             'pos_sentiment': pos_sentiment,
+            'pos_percent': pos_percent,
+            'neu_percent': neu_percent,
+            'neg_percent': neg_percent,
             'highest_area': highest_area,
             'criteria_scores': json.dumps(criteria_scores),
             'year_dist': json.dumps(list(year_dist.values())),
