@@ -674,71 +674,180 @@
             </div>
         </div>
 
+        <!-- History Section Skeleton -->
+        <div class="table-section" style="margin-top: 40px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: nowrap; gap: 15px; margin-bottom: 25px;">
+                <div class="filter-group flex items-center gap-3" style="flex-shrink: 0; padding-top: 10px;">
+                    <div class="w-8 h-8 skeleton-shimmer rounded-full opacity-20"></div>
+                    <div class="w-48 h-6 skeleton-shimmer rounded"></div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: nowrap; flex-grow: 1; justify-content: flex-end;">
+                    <div class="h-10 skeleton-shimmer rounded-lg" style="flex-grow: 1;"></div>
+                    <div class="w-10 h-10 skeleton-shimmer rounded-lg" style="flex-shrink: 0;"></div>
+                    <div class="w-40 h-10 skeleton-shimmer rounded-lg" style="flex-shrink: 0;"></div>
+                    <div class="w-48 h-10 skeleton-shimmer rounded-lg" style="flex-shrink: 0;"></div>
+                </div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="px-3"><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
+                            <th class="px-3"><div class="w-32 h-4 skeleton-shimmer rounded"></div></th>
+                            <th class="px-3"><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
+                            <th class="px-3"><div class="w-32 h-4 skeleton-shimmer rounded"></div></th>
+                            <th class="px-3 text-center"><div class="w-20 h-4 skeleton-shimmer rounded mx-auto"></div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-8 skeleton-shimmer rounded-lg w-20 mx-auto"></div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-8 skeleton-shimmer rounded-lg w-20 mx-auto"></div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-8 skeleton-shimmer rounded-lg w-20 mx-auto"></div></td>
+                        </tr>
+                        <tr>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
+                            <td><div class="h-8 skeleton-shimmer rounded-lg w-20 mx-auto"></div></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- 🟢 ACTUAL CONTENT 🟢 -->
     <div v-else class="fade-in">
 
-        <!-- 🎯 PENDING APPROVALS SECTION 🎯 -->
+        <!-- 🔙 BACK BUTTON 🔙 -->
+        <a href="{% url 'event_approvals' %}" class="back-btn fade-in" style="display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted); font-weight: 500; text-transform: lowercase; letter-spacing: 1px; font-size: 0.85rem; margin-top: 15px; margin-bottom: 15px; text-decoration: none; transition: 0.3s; white-space: nowrap;">
+            <i class="ph-bold ph-arrow-left" style="font-size: 1.2rem;"></i> back to approvals
+        </a>
+
+        <!-- 🎯 HISTORY LOG SECTION 🎯 -->
         <div class="table-section">
-            <div class="pending-header-wrapper" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 15px; margin-bottom: 25px;">
-                <div class="filter-group pending-header-title" style="flex-shrink: 0;">
+            <div class="history-header-wrapper" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: nowrap; gap: 15px; margin-bottom: 25px;">
+                <div class="filter-group history-header-title" style="flex-shrink: 0; padding-top: 10px;">
                     <span style="font-weight:900; color:var(--text-main); display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem;">
-                        <i class="ph-bold ph-shield-warning theme-text-accent" style="font-size: 1.4rem;"></i> Pending Approvals
+                        <i class="ph-bold ph-clock-counter-clockwise theme-text-accent" style="font-size: 1.4rem;"></i> Event Records
                     </span>
                 </div>
-                <div class="pending-header-controls" style="display: flex; align-items: center; gap: 15px; flex-wrap: nowrap; flex-grow: 1; justify-content: flex-end;">
-                    <div class="search-box" style="flex-grow: 1; max-width: 600px;">
-                        <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-                        <input type="text" v-model="searchPending" class="search-input" placeholder="Search event e.g FTO Assembly">
+                
+                <div class="history-header-controls" style="display: flex; align-items: flex-start; gap: 15px; flex-wrap: nowrap; flex-grow: 1; justify-content: flex-end;">
+                    
+                    <div class="history-controls-row1" style="display: flex; gap: 15px; flex-grow: 1;">
+                        <div class="search-box" style="flex-grow: 1; max-width: none;">
+                            <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+                            <input type="text" v-model="searchHistory" class="search-input" placeholder="Search event record e.g General Assembly">
+                        </div>
+                        
+                        <button class="calendar-btn" style="padding: 10px 14px; flex-shrink: 0; justify-content: center;" title="Filter by Month/Year">
+                            <i class="ph-bold ph-calendar" style="font-size: 1.2rem; margin: 0;"></i>
+                        </button>
                     </div>
-                    <!-- View Calendar Button -->
-                    <button @click="isCalendarOpen = true" class="calendar-btn pending-calendar-btn" style="flex-shrink: 0;">
-                        <i class="ph-bold ph-calendar"></i> <span class="hide-on-mobile">VIEW EVENT CALENDAR</span>
-                    </button>
-                    <!-- Event Records Button -->
-                    <a href="{% url 'event_records' %}" class="calendar-btn pending-calendar-btn" style="flex-shrink: 0;">
-                        <i class="ph-bold ph-folder-open"></i> <span class="hide-on-mobile">EVENT RECORDS</span>
-                    </a>
+
+                    <div class="history-controls-row2" style="display: flex; gap: 15px;">
+                        <div class="custom-dd history-dd" :class="{ 'is-open': isOrgDropdownOpen }">
+                            <div class="custom-dd-header" @click="toggleOrgDropdown">
+                                <span class="hide-on-mobile">[[ histOrgLabel ]]</span>
+                                <span class="show-on-mobile" style="display: none;">[[ histOrgLabel === 'All Organizations' ? 'All Orgs' : histOrgLabel ]]</span>
+                                <i class="ph-bold ph-caret-down" style="transition: 0.3s;"></i>
+                            </div>
+                            <div class="custom-dd-content">
+                                <div v-for="org in orgOptions" :key="org.value" 
+                                     class="custom-dd-option" 
+                                     :class="{ 'active': histOrg === org.value }"
+                                     @click="selectHistOrg(org.value)">
+                                    [[ org.label ]]
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="custom-dd history-dd" :class="{ 'is-open': isStatusDropdownOpen }">
+                            <div class="custom-dd-header" @click="toggleStatusDropdown">
+                                <span class="hide-on-mobile">[[ histStatusLabel ]]</span>
+                                <span class="show-on-mobile" style="display: none;">[[ histStatusLabel === 'All Transactions' ? 'All Transac' : histStatusLabel ]]</span>
+                                <i class="ph-bold ph-caret-down" style="transition: 0.3s;"></i>
+                            </div>
+                            <div class="custom-dd-content">
+                                <div v-for="status in statusOptions" :key="status.value" 
+                                     class="custom-dd-option" 
+                                     :class="{ 'active': histStatus === status.value }"
+                                     @click="selectHistStatus(status.value)">
+                                    [[ status.label ]]
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div class="desktop-table-wrapper" style="overflow-x: auto;">
+            
+            <div class="desktop-table-wrapper" style="overflow-x: auto; max-height: 60vh;">
                 <table>
-                    <thead>
+                    <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
                         <tr>
                             <th style="text-align: center;">Organization</th>
                             <th style="text-align: center;">Event Title</th>
                             <th style="text-align: center;">Target Date</th>
-                            <th style="text-align: center;">Status / Stage</th>
-                            <th style="text-align: center;">Action</th>
+                            <th style="text-align: center;">Participation Ledger</th>
+                            <th style="text-align: center;">Final Result</th>
+                            <th style="text-align: center;">Details</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-if="filteredPending.length === 0">
-                            <td colspan="5" style="text-align: center; padding: 60px; color: var(--text-muted);">
-                                <div v-if="searchPending">
+                        <tr v-if="filteredHistory.length === 0">
+                            <td colspan="6" style="text-align: center; padding: 60px; color: var(--text-muted);">
+                                <div v-if="searchHistory">
                                     <i class="ph-fill ph-magnifying-glass" style="font-size: 4rem; color: var(--text-muted); opacity: 0.3; display: block; margin-bottom: 15px;"></i>
-                                    <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main);">No campus event found matching "[[ searchPending ]]"</span>
+                                    <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main);">No campus event record found matching "[[ searchHistory ]]"</span>
                                 </div>
                                 <div v-else>
-                                    <i class="ph-fill ph-check-circle" style="font-size: 4rem; color: #28a745; opacity: 0.3; display: block; margin-bottom: 15px;"></i>
-                                    <span style="font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;">No pending approvals!</span>
-                                    <span style="font-size: 0.85rem; font-weight: 500;">There are currently no events waiting for your approval.</span>
+                                    <i class="ph-fill ph-folder-open" style="font-size: 4rem; opacity: 0.2; display: block; margin-bottom: 15px;"></i>
+                                    <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main); display: block; margin-bottom: 5px;">No campus event records found.</span>
+                                    <span style="font-size: 0.85rem; font-weight: 500;">There are no completed or rejected events logged in the system.</span>
                                 </div>
                             </td>
                         </tr>
-                        <tr v-for="event in filteredPending" :key="event.id" class="fade-in">
+                        <tr v-for="event in filteredHistory" :key="event.id" class="fade-in">
                             <td class="theme-text-accent" style="font-weight: 900; text-align: center;">[[ event.org ]]</td>
                             <td style="font-weight: 800; color: var(--text-main);">[[ event.title ]]</td>
                             <td style="color: var(--text-muted); font-weight: 700; text-align: center; white-space: nowrap; font-size: 0.8rem;">[[ event.date ]]</td>
-                            <td style="text-align: center;">
-                                <span v-if="event.status === 'PENDING ADMIN'" class="badge badge-pending"><i class="ph-bold ph-file-text"></i> Initial Clearance</span>
-                                <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review"><i class="ph-bold ph-seal-check"></i> Final Publication</span>
+                            <td>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <span class="badge" style="background: rgba(40, 167, 69, 0.1); color: #28a745; border-color: rgba(40, 167, 69, 0.3);">
+                                        <i class="ph-bold ph-users"></i> [[ event.attendance_count || 0 ]] Attendance
+                                    </span>
+                                    <span class="badge" style="background: rgba(0, 123, 255, 0.1); color: #007bff; border-color: rgba(0, 123, 255, 0.3);">
+                                        <i class="ph-bold ph-star"></i> [[ event.evaluation_count || 0 ]] Feedback
+                                    </span>
+                                </div>
                             </td>
                             <td style="text-align: center;">
-                                <button @click="openModal(event, false)" class="action-btn theme-action-btn" style="padding: 10px 20px;">
-                                    [[ event.status === 'FINAL ADMIN REVIEW' ? 'Final Approval' : 'Initial Review' ]]
+                                <span v-if="event.status === 'APPROVED'" class="badge badge-approved"><i class="ph-bold ph-check-circle"></i> Published</span>
+                                <span v-else-if="event.status === 'REJECTED'" class="badge badge-rejected"><i class="ph-bold ph-x-circle"></i> Rejected</span>
+                                <span v-else class="badge badge-pending" style="color: #6c757d; border-color: #6c757d;"><i class="ph-bold ph-clock"></i> [[ event.status ]]</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <button @click="openModal(event, true)" class="action-btn theme-action-btn" style="padding: 10px 15px;">
+                                    <i class="ph-bold ph-eye"></i> View Record
                                 </button>
                             </td>
                         </tr>
@@ -746,40 +855,40 @@
                 </table>
             </div>
 
-            <!-- 📱 Mobile Card List 📱 -->
+            <!-- 📱 Mobile Card List (Event Records) 📱 -->
             <div class="mobile-card-list">
-                <div v-if="filteredPending.length === 0" style="text-align: center; padding: 40px 20px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 12px;">
-                    <div v-if="searchPending">
+                <div v-if="filteredHistory.length === 0" style="text-align: center; padding: 40px 20px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 12px;">
+                    <div v-if="searchHistory">
                         <i class="ph-fill ph-magnifying-glass" style="font-size: 3rem; color: var(--text-muted); opacity: 0.3; display: block; margin-bottom: 10px;"></i>
-                        <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-main);">No campus event found matching "[[ searchPending ]]"</span>
+                        <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-main);">No campus event record found matching "[[ searchHistory ]]"</span>
                     </div>
                     <div v-else>
-                        <i class="ph-fill ph-check-circle" style="font-size: 3rem; color: #28a745; opacity: 0.3; display: block; margin-bottom: 10px;"></i>
-                        <span style="font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; font-size: 0.9rem;">No pending approvals!</span>
+                        <i class="ph-fill ph-folder-open" style="font-size: 3rem; opacity: 0.2; display: block; margin-bottom: 10px;"></i>
+                        <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main); display: block; margin-bottom: 5px;">No campus event records found.</span>
                     </div>
                 </div>
                 
-                <div v-for="event in filteredPending" :key="event.id" class="mobile-pending-card fade-in">
+                <div v-for="event in filteredHistory" :key="event.id" class="mobile-pending-card fade-in">
                     <div class="mobile-card-left">
                         <div class="mobile-card-org theme-text-accent">[[ event.org ]]</div>
                         <div class="mobile-card-info">
                             <div class="mobile-card-title">[[ event.title ]]</div>
                             <div>
-                                <span v-if="event.status === 'PENDING ADMIN'" class="badge badge-pending" style="font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-file-text"></i> Init Clear</span>
-                                <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review" style="font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-seal-check"></i> Final Pub</span>
+                                <span v-if="event.status === 'APPROVED'" class="badge badge-approved" style="font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-check-circle"></i> Published</span>
+                                <span v-else-if="event.status === 'REJECTED'" class="badge badge-rejected" style="font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-x-circle"></i> Rejected</span>
+                                <span v-else class="badge badge-pending" style="color: #6c757d; border-color: #6c757d; font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-clock"></i> [[ event.status ]]</span>
                             </div>
                         </div>
                     </div>
                     <div class="mobile-card-right">
                         <div class="mobile-card-date">[[ event.date ]]</div>
-                        <button @click="openModal(event, false)" class="action-btn theme-action-btn" style="padding: 6px 14px; font-size: 0.7rem;">
+                        <button @click="openModal(event, true)" class="action-btn theme-action-btn" style="padding: 6px 14px; font-size: 0.7rem;">
                             View
                         </button>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 
     <!-- 🏛️ MAIN APPROVAL/RECORD MODAL 🏛️ -->
@@ -1086,23 +1195,23 @@
                     </div>
 
                     <!-- MODAL FOOTERS -->
-                    <div class="absolute bottom-0 left-0 w-full p-4 sm:p-5 bg-[var(--card-bg)]/90 backdrop-blur-md border-t border-[var(--border)] flex justify-end gap-2 sm:gap-3 font-sans z-30" v-if="!isHistoryMode">
+                    <div class="av-modal-footer" v-if="!isHistoryMode">
                         <template v-if="!isRejecting">
-                            <button class="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-2.5 bg-white/90 dark:bg-[#1a1a1a]/90 border border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-sm" @click="initiateReject" :disabled="actionLoading">
+                            <button class="btn-large btn-reject" @click="initiateReject" :disabled="actionLoading">
                                 Reject Proposal
                             </button>
                             
-                            <button v-if="selectedEvent.status === 'PENDING ADMIN'" class="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-2.5 bg-[#16a34a]/90 text-white hover:bg-green-700 font-bold text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-md" @click="approveEvent" :disabled="actionLoading">
+                            <button v-if="selectedEvent.status === 'PENDING ADMIN'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
                                 Grant Initial Clearance
                             </button>
-                            <button v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'" class="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-2.5 bg-[#16a34a]/90 text-white hover:bg-green-700 font-bold text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-md" @click="approveEvent" :disabled="actionLoading">
+                            <button v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
                                 <i class="ph-bold ph-rocket-launch"></i> Fully Approve & Publish
                             </button>
                         </template>
                         
                         <template v-else-if="isRejecting">
-                            <button class="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-2.5 bg-gray-200/90 hover:bg-gray-300 dark:bg-gray-800/90 dark:hover:bg-gray-700 text-gray-800 dark:text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-sm" @click="cancelReject" :disabled="actionLoading">Go Back</button>
-                            <button class="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-2.5 bg-red-600/90 hover:bg-red-700 text-white font-bold text-sm rounded-lg transition-colors disabled:opacity-50 shadow-md flex items-center justify-center gap-2" @click="confirmReject" :disabled="actionLoading">
+                            <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="cancelReject" :disabled="actionLoading">Go Back</button>
+                            <button class="btn-large" style="background: var(--danger); color: white; border: none;" @click="confirmReject" :disabled="actionLoading">
                                 <i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection
                             </button>
                         </template>

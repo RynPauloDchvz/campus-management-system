@@ -1,0 +1,550 @@
+671: 
+672: <!-- 🟢 ACTUAL CONTENT 🟢 -->
+673: <div v-else class="fade-in">
+674: 
+675: <!-- 🎯 PENDING APPROVALS SECTION 🎯 -->
+676: <div class="table-section">
+677: <div class="pending-header-wrapper" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 15px; margin-bottom: 25px;">
+678: <div class="filter-group pending-header-title" style="flex-shrink: 0;">
+679: <span style="font-weight:900; color:var(--text-main); display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem;">
+680: <i class="ph-bold ph-shield-warning theme-text-accent" style="font-size: 1.4rem;"></i> Pending Approvals
+681: </span>
+682: </div>
+683: <div class="pending-header-controls" style="display: flex; align-items: center; gap: 15px; flex-wrap: nowrap; flex-grow: 1; justify-content: flex-end;">
+684: <div class="search-box" style="flex-grow: 1; max-width: none;">
+685: <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+686: <input type="text" v-model="searchPending" class="search-input" placeholder="Search pending event org org name e.g FTO Assembly">
+687: </div>
+688: <!-- View Calendar Button -->
+689: <button @click="isCalendarOpen = true" class="calendar-btn pending-calendar-btn" style="flex-shrink: 0;">
+690: <i class="ph-bold ph-calendar"></i> <span class="hide-on-mobile">VIEW EVENT CALENDAR</span>
+691: </button>
+692: </div>
+693: </div>
+694: 
+695: <div class="desktop-table-wrapper" style="overflow-x: auto;">
+696: <table>
+697: <thead>
+698: <tr>
+699: <th style="text-align: center;">Organization</th>
+700: <th style="text-align: center;">Event Title</th>
+701: <th style="text-align: center;">Target Date</th>
+702: <th style="text-align: center;">Status / Stage</th>
+703: <th style="text-align: center;">Action</th>
+704: </tr>
+705: </thead>
+706: <tbody>
+707: <tr v-if="filteredPending.length === 0">
+708: <td colspan="5" style="text-align: center; padding: 60px; color: var(--text-muted);">
+709: <div v-if="searchPending">
+710: <i class="ph-fill ph-magnifying-glass" style="font-size: 4rem; color: var(--text-muted); opacity: 0.3; display: block; margin-bottom: 15px;"></i>
+711: <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main);">No campus event found matching "[[ searchPending ]]"</span>
+712: </div>
+713: <div v-else>
+714: <i class="ph-fill ph-check-circle" style="font-size: 4rem; color: #28a745; opacity: 0.3; display: block; margin-bottom: 15px;"></i>
+715: <span style="font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;">No pending approvals!</span>
+716: <span style="font-size: 0.85rem; font-weight: 500;">There are currently no events waiting for your approval.</span>
+717: </div>
+718: </td>
+719: </tr>
+720: <tr v-for="event in filteredPending" :key="event.id" class="fade-in">
+721: <td class="theme-text-accent" style="font-weight: 900; text-align: center;">[[ event.org ]]</td>
+722: <td style="font-weight: 800; color: var(--text-main);">[[ event.title ]]</td>
+723: <td style="color: var(--text-muted); font-weight: 700; text-align: center; white-space: nowrap; font-size: 0.8rem;">[[ event.date ]]</td>
+724: <td style="text-align: center;">
+725: <span v-if="event.status === 'PENDING ADMIN'" class="badge badge-pending"><i class="ph-bold ph-file-text"></i> Initial Clearance</span>
+726: <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review"><i class="ph-bold ph-seal-check"></i> Final Publication</span>
+727: </td>
+728: <td style="text-align: center;">
+729: <button @click="openModal(event, false)" class="action-btn theme-action-btn" style="padding: 10px 20px;">
+730: [[ event.status === 'FINAL ADMIN REVIEW' ? 'Final Approval' : 'Initial Review' ]]
+731: </button>
+732: </td>
+733: </tr>
+734: </tbody>
+735: </table>
+736: </div>
+737: 
+738: <!-- 📱 Mobile Card List 📱 -->
+739: <div class="mobile-card-list">
+740: <div v-if="filteredPending.length === 0" style="text-align: center; padding: 40px 20px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 12px;">
+741: <div v-if="searchPending">
+742: <i class="ph-fill ph-magnifying-glass" style="font-size: 3rem; color: var(--text-muted); opacity: 0.3; display: block; margin-bottom: 10px;"></i>
+743: <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-main);">No campus event found matching "[[ searchPending ]]"</span>
+744: </div>
+745: <div v-else>
+746: <i class="ph-fill ph-check-circle" style="font-size: 3rem; color: #28a745; opacity: 0.3; display: block; margin-bottom: 10px;"></i>
+747: <span style="font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; font-size: 0.9rem;">No pending approvals!</span>
+748: </div>
+749: </div>
+750: 
+751: <div v-for="event in filteredPending" :key="event.id" class="mobile-pending-card fade-in">
+752: <div class="mobile-card-left">
+753: <div class="mobile-card-org theme-text-accent">[[ event.org ]]</div>
+754: <div class="mobile-card-info">
+755: <div class="mobile-card-title">[[ event.title ]]</div>
+756: <div>
+757: <span v-if="event.status === 'PENDING ADMIN'" class="badge badge-pending" style="font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-file-text"></i> Init Clear</span>
+758: <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review" style="font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-seal-check"></i> Final Pub</span>
+759: </div>
+760: </div>
+761: </div>
+762: <div class="mobile-card-right">
+763: <div class="mobile-card-date">[[ event.date ]]</div>
+764: <button @click="openModal(event, false)" class="action-btn theme-action-btn" style="padding: 6px 14px; font-size: 0.7rem;">
+765: View
+766: </button>
+767: </div>
+768: </div>
+769: </div>
+770: </div>
+771: 
+772: <!-- 🎯 HISTORY LOG SECTION 🎯 -->
+773: <div class="table-section" style="margin-top: 40px;">
+774: <div class="history-header-wrapper" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: nowrap; gap: 15px; margin-bottom: 25px;">
+775: <div class="filter-group history-header-title" style="flex-shrink: 0; padding-top: 10px;">
+776: <span style="font-weight:900; color:var(--text-main); display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem;">
+777: <i class="ph-bold ph-clock-counter-clockwise theme-text-accent" style="font-size: 1.4rem;"></i> Event Records
+778: </span>
+779: </div>
+780: 
+781: <div class="history-header-controls" style="display: flex; align-items: flex-start; gap: 15px; flex-wrap: nowrap; flex-grow: 1; justify-content: flex-end;">
+782: 
+783: <div class="history-controls-row1" style="display: flex; gap: 15px; flex-grow: 1;">
+784: <div class="search-box" style="flex-grow: 1; max-width: none;">
+785: <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
+786: <input type="text" v-model="searchHistory" class="search-input" placeholder="Search event record e.g General Assembly">
+787: </div>
+788: 
+789: <button class="calendar-btn" style="padding: 10px 14px; flex-shrink: 0; justify-content: center;" title="Filter by Month/Year">
+790: <i class="ph-bold ph-calendar" style="font-size: 1.2rem; margin: 0;"></i>
+791: </button>
+792: </div>
+793: 
+794: <div class="history-controls-row2" style="display: flex; gap: 15px;">
+795: <div class="custom-dd history-dd" :class="{ 'is-open': isOrgDropdownOpen }">
+796: <div class="custom-dd-header" @click="toggleOrgDropdown">
+797: <span class="hide-on-mobile">[[ histOrgLabel ]]</span>
+798: <span class="show-on-mobile" style="display: none;">[[ histOrgLabel === 'All Organizations' ? 'All Orgs' : histOrgLabel ]]</span>
+799: <i class="ph-bold ph-caret-down" style="transition: 0.3s;"></i>
+800: </div>
+801: <div class="custom-dd-content">
+802: <div v-for="org in orgOptions" :key="org.value"
+803: class="custom-dd-option"
+804: :class="{ 'active': histOrg === org.value }"
+805: @click="selectHistOrg(org.value)">
+806: [[ org.label ]]
+807: </div>
+808: </div>
+809: </div>
+810: 
+811: <div class="custom-dd history-dd" :class="{ 'is-open': isStatusDropdownOpen }">
+812: <div class="custom-dd-header" @click="toggleStatusDropdown">
+813: <span class="hide-on-mobile">[[ histStatusLabel ]]</span>
+814: <span class="show-on-mobile" style="display: none;">[[ histStatusLabel === 'All Transactions' ? 'All Transac' : histStatusLabel ]]</span>
+815: <i class="ph-bold ph-caret-down" style="transition: 0.3s;"></i>
+816: </div>
+817: <div class="custom-dd-content">
+818: <div v-for="status in statusOptions" :key="status.value"
+819: class="custom-dd-option"
+820: :class="{ 'active': histStatus === status.value }"
+821: @click="selectHistStatus(status.value)">
+822: [[ status.label ]]
+823: </div>
+824: </div>
+825: </div>
+826: </div>
+827: </div>
+828: </div>
+829: 
+830: <div class="desktop-table-wrapper" style="overflow-x: auto; max-height: 60vh;">
+831: <table>
+832: <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
+833: <tr>
+834: <th style="text-align: center;">Organization</th>
+835: <th style="text-align: center;">Event Title</th>
+836: <th style="text-align: center;">Target Date</th>
+837: <th style="text-align: center;">Participation Ledger</th>
+838: <th style="text-align: center;">Final Result</th>
+839: <th style="text-align: center;">Details</th>
+840: </tr>
+841: </thead>
+842: <tbody>
+843: <tr v-if="filteredHistory.length === 0">
+844: <td colspan="6" style="text-align: center; padding: 60px; color: var(--text-muted);">
+845: <div v-if="searchHistory">
+846: <i class="ph-fill ph-magnifying-glass" style="font-size: 4rem; color: var(--text-muted); opacity: 0.3; display: block; margin-bottom: 15px;"></i>
+847: <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main);">No campus event record found matching "[[ searchHistory ]]"</span>
+848: </div>
+849: <div v-else>
+850: <i class="ph-fill ph-folder-open" style="font-size: 4rem; opacity: 0.2; display: block; margin-bottom: 15px;"></i>
+851: <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main); display: block; margin-bottom: 5px;">No campus event records found.</span>
+852: <span style="font-size: 0.85rem; font-weight: 500;">There are no completed or rejected events logged in the system.</span>
+853: </div>
+854: </td>
+855: </tr>
+856: <tr v-for="event in filteredHistory" :key="event.id" class="fade-in">
+857: <td class="theme-text-accent" style="font-weight: 900; text-align: center;">[[ event.org ]]</td>
+858: <td style="font-weight: 800; color: var(--text-main);">[[ event.title ]]</td>
+859: <td style="color: var(--text-muted); font-weight: 700; text-align: center; white-space: nowrap; font-size: 0.8rem;">[[ event.date ]]</td>
+860: <td>
+861: <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+862: <span class="badge" style="background: rgba(40, 167, 69, 0.1); color: #28a745; border-color: rgba(40, 167, 69, 0.3);">
+863: <i class="ph-bold ph-users"></i> [[ event.attendance_count || 0 ]] Attendance
+864: </span>
+865: <span class="badge" style="background: rgba(0, 123, 255, 0.1); color: #007bff; border-color: rgba(0, 123, 255, 0.3);">
+866: <i class="ph-bold ph-star"></i> [[ event.evaluation_count || 0 ]] Feedback
+867: </span>
+868: </div>
+869: </td>
+870: <td style="text-align: center;">
+871: <span v-if="event.status === 'APPROVED'" class="badge badge-approved"><i class="ph-bold ph-check-circle"></i> Published</span>
+872: <span v-else-if="event.status === 'REJECTED'" class="badge badge-rejected"><i class="ph-bold ph-x-circle"></i> Rejected</span>
+873: <span v-else class="badge badge-pending" style="color: #6c757d; border-color: #6c757d;"><i class="ph-bold ph-clock"></i> [[ event.status ]]</span>
+874: </td>
+875: <td style="text-align: center;">
+876: <button @click="openModal(event, true)" class="action-btn theme-action-btn" style="padding: 10px 15px;">
+877: <i class="ph-bold ph-eye"></i> View Record
+878: </button>
+879: </td>
+880: </tr>
+881: </tbody>
+882: </table>
+883: </div>
+884: 
+885: <!-- 📱 Mobile Card List (Event Records) 📱 -->
+886: <div class="mobile-card-list">
+887: <div v-if="filteredHistory.length === 0" style="text-align: center; padding: 40px 20px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 12px;">
+888: <div v-if="searchHistory">
+889: <i class="ph-fill ph-magnifying-glass" style="font-size: 3rem; color: var(--text-muted); opacity: 0.3; display: block; margin-bottom: 10px;"></i>
+890: <span style="font-weight: 500; font-size: 0.85rem; color: var(--text-main);">No campus event record found matching "[[ searchHistory ]]"</span>
+891: </div>
+892: <div v-else>
+893: <i class="ph-fill ph-folder-open" style="font-size: 3rem; opacity: 0.2; display: block; margin-bottom: 10px;"></i>
+894: <span style="font-weight: 500; font-size: 0.95rem; color: var(--text-main); display: block; margin-bottom: 5px;">No campus event records found.</span>
+895: </div>
+896: </div>
+897: 
+898: <div v-for="event in filteredHistory" :key="event.id" class="mobile-pending-card fade-in">
+899: <div class="mobile-card-left">
+900: <div class="mobile-card-org theme-text-accent">[[ event.org ]]</div>
+901: <div class="mobile-card-info">
+902: <div class="mobile-card-title">[[ event.title ]]</div>
+903: <div>
+904: <span v-if="event.status === 'APPROVED'" class="badge badge-approved" style="font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-check-circle"></i> Published</span>
+905: <span v-else-if="event.status === 'REJECTED'" class="badge badge-rejected" style="font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-x-circle"></i> Rejected</span>
+906: <span v-else class="badge badge-pending" style="color: #6c757d; border-color: #6c757d; font-size: 0.6rem; padding: 4px 6px; white-space: nowrap;"><i class="ph-bold ph-clock"></i> [[ event.status ]]</span>
+907: </div>
+908: </div>
+909: </div>
+910: <div class="mobile-card-right">
+911: <div class="mobile-card-date">[[ event.date ]]</div>
+912: <button @click="openModal(event, true)" class="action-btn theme-action-btn" style="padding: 6px 14px; font-size: 0.7rem;">
+913: View
+914: </button>
+915: </div>
+916: </div>
+917: </div>
+918: </div>
+919: </div>
+920: 
+921: <!-- 🏛️ MAIN APPROVAL/RECORD MODAL 🏛️ -->
+922: <transition
+923: enter-active-class="transition duration-300 ease-out"
+924: enter-from-class="opacity-0"
+925: enter-to-class="opacity-100"
+926: leave-active-class="transition duration-200 ease-in"
+927: leave-from-class="opacity-100"
+928: leave-to-class="opacity-0"
+929: >
+930: <div class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 sm:p-6" v-if="isModalOpen" @click="closeModal">
+931: <transition
+932: enter-active-class="transition duration-300 ease-out delay-75"
+933: enter-from-class="opacity-0 scale-95 translate-y-4 sm:translate-y-0"
+934: enter-to-class="opacity-100 scale-100 translate-y-0"
+935: leave-active-class="transition duration-200 ease-in"
+936: leave-from-class="opacity-100 scale-100 translate-y-0"
+937: leave-to-class="opacity-0 scale-95 translate-y-4 sm:translate-y-0"
+938: >
+939: <div class="bg-[var(--card-bg)] border border-[var(--border)] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden" v-if="isModalOpen" @click.stop>
+940: 
+941: <!-- 🟢 STEP-BY-STEP LOADING OVERLAY (MODAL LEVEL) 🟢 -->
+942: <div v-if="actionLoading" class="absolute inset-0 z-[6000] bg-[var(--card-bg)] flex items-center justify-center">
+943: <div class="loading-step-container">
+944: <h3 style="font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; color: var(--text-main); font-size: 1.2rem;">
+945: <i class="ph-bold ph-gear-six spin" style="display: inline-block; margin-right: 10px;"></i> Processing Request
+946: </h3>
+947: 
+948: <div :class="['step-item', loadingStep >= 1 ? (loadingStep > 1 ? 'completed' : 'active') : '']">
+949: <i v-if="loadingStep > 1" class="ph-bold ph-check-circle text-green-500"></i>
+950: <i v-else-if="loadingStep === 1" class="ph-bold ph-spinner step-spinner"></i>
+951: <div v-else class="step-dot"></div>
+952: <span>Updating System Records...</span>
+953: </div>
+954: 
+955: <div :class="['step-item', loadingStep >= 2 ? (loadingStep > 2 ? 'completed' : 'active') : '']">
+956: <i v-if="loadingStep > 2" class="ph-bold ph-check-circle text-green-500"></i>
+957: <i v-else-if="loadingStep === 2" class="ph-bold ph-spinner step-spinner"></i>
+958: <div v-else class="step-dot"></div>
+959: <span>Notifying Organization...</span>
+960: </div>
+961: 
+962: <div v-if="selectedEvent && selectedEvent.status === 'FINAL ADMIN REVIEW'" :class="['step-item', loadingStep >= 3 ? (loadingStep > 3 ? 'completed' : 'active') : '']">
+963: <i v-if="loadingStep > 3" class="ph-bold ph-check-circle text-green-500"></i>
+964: <i v-else-if="loadingStep === 3" class="ph-bold ph-spinner step-spinner"></i>
+965: <div v-else class="step-dot"></div>
+966: <span>Publishing to Student Hub...</span>
+967: </div>
+968: 
+969: <div :class="['step-item', loadingStep >= 4 ? (loadingStep > 4 ? 'completed' : 'active') : '']">
+970: <i v-if="loadingStep > 4" class="ph-bold ph-check-circle text-green-500"></i>
+971: <i v-else-if="loadingStep === 4" class="ph-bold ph-spinner step-spinner"></i>
+972: <div v-else class="step-dot"></div>
+973: <span>Finalizing Uploads...</span>
+974: </div>
+975: </div>
+976: </div>
+977: 
+978: <div class="av-modal-header">
+979: <h3 class="av-modal-title">
+980: <i class="ph-bold ph-magnifying-glass-plus" style="color: var(--pup-maroon);"></i>
+981: <span v-if="isHistoryMode">Historical Event Record</span>
+982: <span v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'">Final Document Verification</span>
+983: <span v-else>Initial Clearance Review</span>
+984: </h3>
+985: <button class="av-btn-close" @click="closeModal"><i class="ph-bold ph-x"></i></button>
+986: </div>
+987: 
+988: <div class="av-modal-body" v-if="selectedEvent">
+989: 
+990: <!-- 🟢 SUCCESS MINI MODAL (GLOBAL TO VUE APP) 🟢 -->
+991: <teleport to="body">
+992: <transition
+993: enter-active-class="transition duration-300 ease-out"
+994: enter-from-class="opacity-0 scale-90 translate-y-10"
+995: enter-to-class="opacity-100 scale-100 translate-y-0"
+996: leave-active-class="transition duration-200 ease-in"
+997: leave-from-class="opacity-100 scale-100 translate-y-0"
+998: leave-to-class="opacity-0 scale-90 translate-y-10"
+999: >
+1000: <div v-if="showSuccessMsg" class="success-mini-modal">
+1001: <i class="ph-fill ph-check-circle" style="font-size: 5rem; color: #28a745; margin-bottom: 20px;"></i>
+1002: <h2 style="font-size: 1.5rem; font-weight: 900; color: var(--text-main); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Success!</h2>
+1003: <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6;">[[ statusMessage ]]</p>
+1004: </div>
+1005: </transition>
+1006: </teleport>
+1007: 
+1008: <!-- Header Info -->
+1009: <div style="display:flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 5px;">
+1010: <div style="flex: 1;">
+1011: <span style="display: block; font-size: 0.65rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px;">Activity Track Ref: #[[ selectedEvent.id ]]</span>
+1012: <span style="font-size: 1.4rem; font-weight: 900; color: var(--text-main); line-height: 1.2;">[[ selectedEvent.title ]]</span>
+1013: </div>
+1014: <div style="text-align: right;">
+1015: <span class="badge" style="background: rgba(128,0,0,0.1); color: var(--pup-maroon); border: 2.5px solid rgba(128,0,0,0.3); font-size: 0.9rem; padding: 8px 15px; margin-bottom: 5px;">[[ selectedEvent.org ]]</span>
+1016: <p style="font-size: 0.6rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin: 0;">[[ selectedEvent.full_org ]]</p>
+1017: </div>
+1018: </div>
+1019: 
+1020: <!-- 📂 UPLOADED DOCUMENT GRID 📂 -->
+1021: <div v-if="selectedEvent.status === 'FINAL ADMIN REVIEW' || (isHistoryMode && selectedEvent.status !== 'REJECTED' && selectedEvent.letter_url)"
+1022: class="fade-in"
+1023: style="background: rgba(0, 123, 255, 0.03); padding: 20px; border-radius: 20px; border: 1.5px solid rgba(0, 123, 255, 0.15);">
+1024: 
+1025: <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+1026: <h4 style="font-size: 0.75rem; font-weight: 900; color: #007bff; margin: 0; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+1027: <i class="ph-bold ph-folder-open" style="font-size: 1.1rem;"></i> Signed Document Records
+1028: </h4>
+1029: <span style="font-size: 0.65rem; font-weight: 900; background: #007bff; color: white; padding: 4px 10px; border-radius: 6px;">[[ activeDocs.length ]] FILES ATTACHED</span>
+1030: </div>
+1031: 
+1032: <div :class="['doc-grid', activeDocs.length > 2 ? 'grid-cols-4' : 'grid-cols-2']">
+1033: <div v-for="doc in activeDocs" :key="doc.label"
+1034: @click="viewActualDoc(doc.label, doc.url)"
+1035: class="doc-card" style="padding: 15px 10px;">
+1036: <div class="doc-icon-wrapper" style="width: 40px; height: 40px; margin-bottom: 8px;">
+1037: <i :class="['ph-fill', doc.icon, 'doc-icon-bg']" style="font-size: 2rem;"></i>
+1038: <i class="ph-bold ph-eye doc-icon-eye" style="font-size: 2rem;"></i>
+1039: </div>
+1040: <span class="doc-label" style="font-size: 0.6rem;">[[ doc.label ]]</span>
+1041: <span class="doc-status">Verified Image</span>
+1042: </div>
+1043: </div>
+1044: </div>
+1045: 
+1046: <!-- 🏷️ TAB SELECTOR 🏷️ -->
+1047: <div class="preview-tabs" v-if="parsedDescription.type !== 'reschedule' && !selectedEvent.letter_url && selectedEvent.status !== 'REJECTED'">
+1048: <button @click="activeTab = 'main'" :class="['preview-tab', activeTab === 'main' ? 'active' : '']">
+1049: <i class="ph-bold ph-file-text"></i> Request Letter
+1050: </button>
+1051: <button @click="activeTab = 'excuse'" :class="['preview-tab', activeTab === 'excuse' ? 'active' : '']">
+1052: <i class="ph-bold ph-users-four"></i> Excuse & Equipment
+1053: </button>
+1054: </div>
+1055: 
+1056: <!-- 📜 OFFICIAL LETTER PREVIEW 📜 -->
+1057: <div v-if="!selectedEvent.letter_url && selectedEvent.status !== 'REJECTED'" class="letter-preview fade-in">
+1058: <!-- Main / Reschedule Letter Content -->
+1059: <div v-if="activeTab === 'main'">
+1060: <p style="margin-bottom: 25px; font-weight: bold;">[[ selectedEvent.date ]]</p>
+1061: 
+1062: <p style="margin-bottom: 25px; line-height: 1.2;">
+1063: <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+1064: Director<br>
+1065: PUP Unisan Campus
+1066: </p>
+1067: 
+1068: <p style="margin-bottom: 25px; line-height: 1.2;">
+1069: Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+1070: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+1071: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;PUP Unisan Campus
+1072: </p>
+1073: 
+1074: <div v-if="parsedDescription">
+1075: <!-- STANDARD / NEW EVENT -->
+1076: <div v-if="parsedDescription.type === 'standard' || parsedDescription.type === 'new_event'">
+1077: <p style="margin-bottom: 25px;">
+1078: Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Approval of Organizational Student Activity</strong>
+1079: </p>
+1080: <p style="margin-bottom: 15px;">Dear <strong>Dr. Malabuyoc</strong>:</p>
+1081: <p style="margin-bottom: 15px;">Greetings!</p>
+1082: <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;">
+1083: To comply with the commitment to UPHOLD E2E Program: Upscaling Holistic Development from Enrollment to Employment, the <strong>[[ selectedEvent.full_org ]]</strong> will be conducting an activity entitled <strong>"[[ selectedEvent.title ]]"</strong>. [[ parsedDescription.originalDesc ]]
+1084: </p>
+1085: <p style="margin-bottom: 30px; text-align: justify; text-indent: 40px;">
+1086: The activity is scheduled for <strong>[[ selectedEvent.date ]]</strong>, <strong>[[ selectedEvent.time ]]</strong> to <strong>[[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+1087: </p>
+1088: </div>
+1089: 
+1090: <!-- RESCHEDULE LETTER -->
+1091: <div v-if="parsedDescription.type === 'reschedule'">
+1092: <p style="margin-bottom: 25px;">
+1093: Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Scheduling of Organizational Student Activity</strong>
+1094: </p>
+1095: <p style="margin-bottom: 15px;">Dear <strong>Dr. Malabuyoc</strong>:</p>
+1096: <p style="margin-bottom: 15px;">Greetings!</p>
+1097: <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;">
+1098: We hope this letter finds you well. <strong>[[ selectedEvent.full_org ]]</strong> respectfully requests a rescheduling of our upcoming event entitled <strong>"[[ selectedEvent.title ]]"</strong>. The event was originally set for <strong>[[ parsedDescription.origDate || '(Original Date)' ]]</strong>.
+1099: </p>
+1100: <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;">
+1101: We propose moving the event to <strong>[[ selectedEvent.date ]]</strong>, from <strong>[[ selectedEvent.time ]] to [[ selectedEvent.end_time || '(End Time)' ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+1102: </p>
+1103: <p style="margin-bottom: 30px; text-align: justify; text-indent: 40px;">
+1104: This request is made due to [[ parsedDescription.reason ]]. [[ parsedDescription.originalDesc ]]
+1105: </p>
+1106: </div>
+1107: </div>
+1108: 
+1109: <p style="margin-bottom: 35px;">Thank you for your kind consideration and usual support.</p>
+1110: <p style="margin-bottom: 30px;">Respectfully yours,</p>
+1111: 
+1112: <div style="margin-bottom: 30px;">
+1113: <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+1114: <p style="margin: 0;">[[ selectedEvent.org ]] President</p>
+1115: </div>
+1116: 
+1117: <div>
+1118: <p style="margin-bottom: 10px;">Noted by:</p>
+1119: <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+1120: <p style="margin: 0;">[[ selectedEvent.org ]] Adviser</p>
+1121: </div>
+1122: </div>
+1123: 
+1124: <!-- Excuse & Equipment Tab -->
+1125: <div v-if="activeTab === 'excuse'">
+1126: <p style="margin-bottom: 25px; font-weight: bold;">[[ selectedEvent.date ]]</p>
+1127: 
+1128: <p style="margin-bottom: 25px; line-height: 1.2;">
+1129: <strong>Dr. EDWIN G. MALABUYOC</strong><br>
+1130: Director<br>
+1131: PUP Unisan Campus
+1132: </p>
+1133: 
+1134: <p style="margin-bottom: 25px; line-height: 1.2;">
+1135: Thru/Attn: &nbsp; &nbsp;<strong>ANNABEL S. JANORAS</strong><br>
+1136: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Head of Students Services<br>
+1137: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;PUP Unisan Campus
+1138: </p>
+1139: 
+1140: <p style="margin-bottom: 25px;">
+1141: Re: &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <strong>Excuse and Request Usage of Equipment/Facility</strong>
+1142: </p>
+1143: <p style="margin-bottom: 15px;">Dear <strong>Dr. Malabuyoc</strong>:</p>
+1144: <p style="margin-bottom: 15px;">Greetings!</p>
+1145: 
+1146: <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;">
+1147: The <strong>[[ selectedEvent.full_org ]]</strong> is organizing an event entitled <strong>"[[ selectedEvent.title ]]"</strong> on <strong>[[ selectedEvent.date ]]</strong> at <strong>[[ selectedEvent.venue ]]</strong>.
+1148: </p>
+1149: <p style="margin-bottom: 15px; text-align: justify; text-indent: 40px;" v-if="parsedDescription.type === 'new_event'">
+1150: We respectfully request the excusal of <strong>[[ parsedDescription.target || 'all affected students' ]]</strong> whose classes will be affected, and we also request usage of the aforementioned facility, together with <strong>[[ parsedDescription.equipment || 'the necessary equipment' ]]</strong>.
+1151: </p>
+1152: <p style="margin-bottom: 30px; text-align: justify; text-indent: 40px;" v-else>
+1153: We respectfully request the usage of the facility and aforementioned equipment for the success of this event.
+1154: </p>
+1155: 
+1156: <p style="margin-bottom: 35px;">We look forward to your response. Thank you for your kind consideration and usual support!</p>
+1157: <p style="margin-bottom: 30px;">Respectfully yours,</p>
+1158: 
+1159: <div style="margin-bottom: 30px;">
+1160: <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.requester_name || '(Requester Name)' ]]</p>
+1161: <p style="margin: 0;">[[ selectedEvent.org ]] President</p>
+1162: </div>
+1163: 
+1164: <div>
+1165: <p style="margin-bottom: 10px;">Noted by:</p>
+1166: <p style="margin: 0; font-weight: bold; text-transform: uppercase;">[[ selectedEvent.adviser_name || '(Adviser Name)' ]]</p>
+1167: <p style="margin: 0;">[[ selectedEvent.org ]] Adviser</p>
+1168: </div>
+1169: </div>
+1170: </div>
+1171: 
+1172: <!-- Remarks for Rejected Events -->
+1173: <div v-if="selectedEvent.status === 'REJECTED'" class="readonly-box" style="border: 2px solid rgba(220, 53, 69, 0.3); background: rgba(220, 53, 69, 0.03); padding: 25px; border-radius: 15px;">
+1174: <span class="form-label" style="color: var(--danger); font-size: 0.8rem;"><i class="ph-bold ph-warning-circle"></i> Admin Rejection Remarks</span>
+1175: <p style="color: var(--danger); font-size: 1rem; margin: 10px 0 0 0; font-weight: 800; line-height: 1.5;">[[ selectedEvent.remarks || 'No detailed reason provided.' ]]</p>
+1176: </div>
+1177: 
+1178: <!-- Rejection Form -->
+1179: <div v-if="isRejecting && !isHistoryMode" class="fade-in" style="background: rgba(220, 53, 69, 0.05); padding: 25px; border-radius: 15px; border: 2px solid rgba(220, 53, 69, 0.2);">
+1180: <label class="form-label" style="color: var(--danger);"><i class="ph-bold ph-warning-circle"></i> Official Reason for Rejection (Required)</label>
+1181: <textarea v-model="rejectReason" rows="4" class="form-input" placeholder="State the administrative or technical reason why this proposal cannot proceed..." style="resize: none; border-color: rgba(220, 53, 69, 0.3);"></textarea>
+1182: </div>
+1183: 
+1184: </div>
+1185: 
+1186: <!-- MODAL FOOTERS -->
+1187: <div class="av-modal-footer" v-if="!isHistoryMode">
+1188: <template v-if="!isRejecting">
+1189: <button class="btn-large btn-reject" @click="initiateReject" :disabled="actionLoading">
+1190: Reject Proposal
+1191: </button>
+1192: 
+1193: <button v-if="selectedEvent.status === 'PENDING ADMIN'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
+1194: Grant Initial Clearance
+1195: </button>
+1196: <button v-else-if="selectedEvent.status === 'FINAL ADMIN REVIEW'" class="btn-large btn-approve" @click="approveEvent" :disabled="actionLoading">
+1197: <i class="ph-bold ph-rocket-launch"></i> Fully Approve & Publish
+1198: </button>
+1199: </template>
+1200: 
+1201: <template v-else-if="isRejecting">
+1202: <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main);" @click="cancelReject" :disabled="actionLoading">Go Back</button>
+1203: <button class="btn-large" style="background: var(--danger); color: white; border: none;" @click="confirmReject" :disabled="actionLoading">
+1204: <i class="ph-bold ph-paper-plane-right"></i> Confirm Rejection
+1205: </button>
+1206: </template>
+1207: </div>
+1208: 
+1209: <div class="av-modal-footer" v-else>
+1210: <button class="btn-large" style="background: var(--input-bg); border: 1px solid var(--border); color: var(--text-main); width: 100%;" @click="closeModal">Close Record</button>
+1211: </div>
+1212: 
+1213: </div>
+1214: </transition>
+1215: </div>
+1216: </transition>
+1217: 
+1218: <!-- 🔍 TRUE FULLSCREEN LIGHTBOX VIEWER 🔍 -->
+1219: <div v-if="isDocViewerOpen" class="lightbox-overlay fade-in" @click="closeDocViewer">
+1220: <div class="lightbox-header">

@@ -3017,6 +3017,41 @@ def event_history_view(request):
         'history_json': history_data
     })
 
+@user_passes_test(is_admin_strictly, login_url='/admin/login/')
+def event_records_view(request):
+    history = Event.objects.exclude(is_flag_raising=True).order_by('-created_at')
+    history_data = []
+    for e in history:
+        att_count = Attendance.objects.filter(event=e).count()
+        eval_count = AuditLog.objects.filter(action='EVALUATION', target_id=str(e.id)).count()
+        full_org_name = ORG_FULL_NAMES.get(e.org_id, e.org_id)
+
+        history_data.append({
+            'id': e.id, 'org': e.org_id, 'full_org': full_org_name, 'title': e.event_title or '',
+            'date': e.event_date.strftime('%B %d, %Y') if e.event_date else '',
+            'time': e.start_time.strftime('%I:%M %p') if e.start_time else '',
+            'end_time': e.end_time.strftime('%I:%M %p') if getattr(e, 'end_time', None) else '',
+            'attendance_count': att_count,
+            'evaluation_count': eval_count,
+            'status': e.event_status.upper() if e.event_status else '',
+            'requester_name': getattr(e, 'requester_name', '') or '',
+            'adviser_name': getattr(e, 'adviser_name', '') or '',
+            'venue': e.venue or '', 'description': e.description or '',
+            'letter_url': e.letter_of_approval.url if getattr(e, 'letter_of_approval', None) else (e.letter_image.url if getattr(e, 'letter_image', None) else ''),
+            'permit_url': e.permit_to_conduct.url if getattr(e, 'permit_to_conduct', None) else (e.permit_image.url if getattr(e, 'permit_image', None) else ''),
+            'equipment_url': e.excuse_letter_equipment.url if getattr(e, 'excuse_letter_equipment', None) else (e.equipment_image.url if getattr(e, 'equipment_image', None) else ''),
+            'event_cover_photo': e.event_cover_photo.url if getattr(e, 'event_cover_photo', None) else (e.cover_photo.url if getattr(e, 'cover_photo', None) else ''),
+            'letter_of_reschedule': e.letter_of_reschedule.url if getattr(e, 'letter_of_reschedule', None) else '',
+            'reschedule_cover_photo': e.reschedule_cover_photo.url if getattr(e, 'reschedule_cover_photo', None) else '',
+            'requirement_mode': e.requirement_mode,
+            'remarks': e.remarks or ''
+        })
+        
+    return render(request, 'admin_dashboard/event_records.html', {
+        'events_json': [],
+        'history_json': history_data
+    })
+
 @login_required
 def record_attendance(request):
     if request.method == 'POST':

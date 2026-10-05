@@ -33,6 +33,7 @@ urlpatterns = [
     
     path('admin/event-approvals/', views.event_approvals_view, name='event_approvals'),
     path('admin/event-history/', views.event_history_view, name='event_history'),
+    path('admin/event-records/', views.event_records_view, name='event_records'),
     
     # 🟢 BAGONG API PARA SA ADMIN APPROVE/REJECT EVENTS 🟢
     path('admin/api/event-action/', views.admin_api_action, name='admin_api_action'),
