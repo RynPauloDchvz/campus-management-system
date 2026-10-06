@@ -29,48 +29,7 @@
 </style>
 
 <div id="audit-app" class="space-y-6" v-cloak>
-    <!-- 🟢 SKELETON LOADING STATE 🟢 -->
-    <div v-if="isLoading" class="space-y-6 fade-in">
-        <!-- Stats Bar Skeleton -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div v-for="i in 4" :key="i" class="audit-card p-4 rounded-2xl border-l-4 border-gray-200 dark:border-gray-800">
-                <div class="w-16 h-3 skeleton-shimmer rounded mb-2"></div>
-                <div class="w-12 h-8 skeleton-shimmer rounded"></div>
-            </div>
-        </div>
-
-        <!-- Toolbar Skeleton -->
-        <div class="audit-card p-4 rounded-2xl flex flex-col md:flex-row gap-4">
-            <div class="flex-1 h-10 skeleton-shimmer rounded-xl"></div>
-            <div class="flex gap-2 w-full md:w-auto">
-                <div class="w-full md:w-40 h-10 skeleton-shimmer rounded-xl"></div>
-                <div class="w-full md:w-40 h-10 skeleton-shimmer rounded-xl"></div>
-            </div>
-        </div>
-
-        <!-- Table Skeleton -->
-        <div class="audit-card rounded-2xl overflow-hidden shadow-lg border border-gray-200/10">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead style="background: rgba(128,0,0,0.05);">
-                        <tr>
-                            <th v-for="i in 7" :key="i" class="px-6 py-4"><div class="w-20 h-3 skeleton-shimmer rounded"></div></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="i in 8" :key="i">
-                            <td v-for="j in 7" :key="j" class="px-6 py-4">
-                                <div class="h-4 skeleton-shimmer rounded w-full"></div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
     <!-- 🟢 ACTUAL CONTENT 🟢 -->
-    <template v-else>
         <!-- Stats Bar -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="audit-card p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 flex flex-col justify-center items-center text-center sm:items-start sm:text-left">
@@ -252,7 +211,6 @@
                 </div>
             </div>
         </div>
-    </template>
 
     <!-- Details Modal (Watchdog Portal) -->
     <div v-if="selectedLog" class="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4 md:p-8">

@@ -7,102 +7,8 @@
 {% block page_subtitle %}Welcome back, Administrator.{% endblock %}
 
 {% block content %}
-<!-- 🟢 SKELETON LOADING STATE 🟢 -->
-<div id="skeleton-loader" class="fade-in">
-    <div class="stats-grid">
-        <!-- 4 Stat Cards -->
-        <div class="stat-card" style="position: relative;">
-            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
-            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
-            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
-        </div>
-        <div class="stat-card" style="position: relative;">
-            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
-            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
-            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
-        </div>
-        <div class="stat-card" style="position: relative;">
-            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
-            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
-            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
-        </div>
-        <div class="stat-card" style="position: relative;">
-            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
-            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
-            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
-        </div>
-    </div>
-
-    <div class="charts-container">
-        <!-- 3 Chart Boxes -->
-        <div class="chart-box">
-            <div class="w-40 h-6 skeleton-shimmer rounded mb-6"></div>
-            <div class="h-[250px] w-full skeleton-shimmer rounded-xl"></div>
-        </div>
-        <div class="chart-box">
-            <div class="w-40 h-6 skeleton-shimmer rounded mb-6"></div>
-            <div class="h-[250px] w-full skeleton-shimmer rounded-xl"></div>
-        </div>
-        <div class="chart-box">
-            <div class="w-40 h-6 skeleton-shimmer rounded mb-6"></div>
-            <div class="h-[250px] w-full skeleton-shimmer rounded-xl"></div>
-        </div>
-    </div>
-
-    <div class="table-section">
-        <div class="table-header">
-            <div class="w-48 h-8 skeleton-shimmer rounded"></div>
-            <div class="w-24 h-6 skeleton-shimmer rounded"></div>
-        </div>
-        <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th><div class="w-20 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-20 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-20 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-20 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-20 h-4 skeleton-shimmer rounded"></div></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- 4 Table Rows -->
-                    <tr>
-                        <td><div class="w-12 h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="w-12 h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="w-12 h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="w-12 h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                        <td><div class="w-full h-5 skeleton-shimmer rounded"></div></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
-<div id="main-content-area" style="display: none;" class="fade-in">
+<div id="main-content-area" class="fade-in">
     <div class="stats-grid">
         <div class="stat-card" style="--accent: var(--pup-maroon);">
             <span class="stat-label">Total Events</span>
@@ -504,8 +410,6 @@
     window.addEventListener('load', () => {
         // Delay to show skeleton
         setTimeout(() => {
-            document.getElementById('skeleton-loader').style.display = 'none';
-            document.getElementById('main-content-area').style.display = 'block';
             renderCharts();
             
             // Mobile Charts Carousel Focus Logic

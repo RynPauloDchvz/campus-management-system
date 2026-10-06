@@ -142,119 +142,8 @@
 {% endblock %}
 
 {% block content %}
-<!-- 🟢 SKELETON LOADING STATE 🟢 -->
-<div id="skeleton-loader" class="fade-in">
-    <div class="control-bar" style="display: flex; justify-content: space-between; gap: 15px;">
-        <div class="filter-group flex gap-3">
-            <div class="w-32 h-10 skeleton-shimmer rounded-lg"></div>
-            <div class="w-32 h-10 skeleton-shimmer rounded-lg"></div>
-            <div class="w-32 h-10 skeleton-shimmer rounded-lg"></div>
-            <div class="w-64 h-10 skeleton-shimmer rounded-lg"></div>
-        </div>
-        <div class="w-36 h-10 skeleton-shimmer rounded-lg"></div>
-    </div>
-    <div class="table-section">
-        <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                    <tr>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                        <td><div class="h-5 skeleton-shimmer rounded w-full"></div></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
-<div id="main-content-area" style="display: none;" class="fade-in">
+<div id="main-content-area" class="fade-in">
     <div class="control-bar manage-accounts-control">
         <a href="{% url 'manage_accounts' %}" id="historyBackButton" class="btn-cancel history-btn">
             <i class="ph-bold ph-arrow-left" style="font-size: 1.2rem;"></i> <span id="historyBtnText" class="history-btn-text">Back to Active</span>
@@ -599,8 +488,6 @@
         }
 
         setTimeout(() => {
-            document.getElementById('skeleton-loader').style.display = 'none';
-            document.getElementById('main-content-area').style.display = 'block';
             filterHistory();
         }, 800);
     });

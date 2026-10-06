@@ -180,37 +180,8 @@
 {% endblock %}
 
 {% block content %}
-<!-- 🟢 SKELETON LOADING STATE 🟢 -->
-<div id="skeleton-loader" class="fade-in">
-    <div class="control-bar manage-accounts-control">
-        <div class="w-48 h-10 skeleton-shimmer rounded-lg custom-dropdown"></div>
-        <div class="w-64 h-10 skeleton-shimmer rounded-lg search-box"></div>
-        <div class="w-10 h-10 skeleton-shimmer rounded-lg action-buttons-group"></div>
-    </div>
-    <div class="table-section">
-        <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                        <th><div class="w-24 h-4 skeleton-shimmer rounded"></div></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="5"><div class="h-10 skeleton-shimmer rounded w-full mb-2"></div></td></tr>
-                    <tr><td colspan="5"><div class="h-10 skeleton-shimmer rounded w-full mb-2"></div></td></tr>
-                    <tr><td colspan="5"><div class="h-10 skeleton-shimmer rounded w-full mb-2"></div></td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
-<div id="main-content-area" style="display: none;" class="fade-in">
+<div id="main-content-area" class="fade-in">
     <div class="control-bar manage-accounts-control">
         
         <div class="custom-dropdown" id="orgFilterDropdown">
@@ -708,10 +679,6 @@
     // INIT
     window.addEventListener('load', () => {
         setTimeout(() => {
-            const loader = document.getElementById('skeleton-loader');
-            const content = document.getElementById('main-content-area');
-            if (loader) loader.style.display = 'none';
-            if (content) content.style.display = 'block';
             renderTable(usersData, '', 'all');
         }, 800);
     });

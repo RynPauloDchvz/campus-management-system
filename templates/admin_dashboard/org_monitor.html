@@ -79,82 +79,8 @@
 {% endblock %}
 
 {% block content %}
-<!-- 🟢 SKELETON LOADING STATE 🟢 -->
-<div id="skeleton-loader" class="fade-in">
-    <div class="stats-grid" style="margin-bottom: 20px;">
-        <!-- 4 Stat Cards -->
-        <div class="stat-card" style="position: relative;">
-            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
-            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
-            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
-        </div>
-        <div class="stat-card" style="position: relative;">
-            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
-            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
-            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
-        </div>
-        <div class="stat-card" style="position: relative;">
-            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
-            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
-            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
-        </div>
-        <div class="stat-card" style="position: relative;">
-            <div class="w-24 h-4 skeleton-shimmer rounded mb-2"></div>
-            <div class="w-16 h-8 skeleton-shimmer rounded"></div>
-            <div class="absolute right-5 bottom-5 w-12 h-12 skeleton-shimmer rounded-full opacity-20"></div>
-        </div>
-    </div>
-
-
-
-    <div class="table-section">
-        <div class="table-header table-header-flex">
-            <div class="w-64 h-8 skeleton-shimmer rounded"></div>
-            <div class="w-64 h-10 skeleton-shimmer rounded-lg desktop-only-skeleton"></div>
-        </div>
-        <div class="space-y-6 p-4">
-            <!-- 5 List Items -->
-            <div class="flex gap-4">
-                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
-                <div class="grow">
-                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
-                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
-                <div class="grow">
-                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
-                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
-                <div class="grow">
-                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
-                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
-                <div class="grow">
-                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
-                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <div class="w-14 h-14 skeleton-shimmer rounded-xl shrink-0"></div>
-                <div class="grow">
-                    <div class="w-3/4 h-6 skeleton-shimmer rounded mb-2"></div>
-                    <div class="w-1/2 h-4 skeleton-shimmer rounded"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- 🟢 ACTUAL CONTENT (HIDDEN UNTIL LOADED) 🟢 -->
-<div id="main-content-area" style="display: none;" class="fade-in">
+<div id="main-content-area" class="fade-in">
     <div class="stats-grid" style="margin-bottom: 20px;">
         <div class="stat-card">
             <span class="stat-label">Total Events</span>
@@ -309,8 +235,6 @@
 
     window.addEventListener('load', () => {
         setTimeout(() => {
-            document.getElementById('skeleton-loader').style.display = 'none';
-            document.getElementById('main-content-area').style.display = 'block';
             filterMonitor();
         }, 800);
     });
