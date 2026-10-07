@@ -1,0 +1,42 @@
+# 13-Point System Security Checklist for PUP UNISAN CAMS
+
+Ito ang 13 mahahalagang security measures na kailangan ng isang system (lalo na sa Django) para maging 100% secure laban sa mga hackers at unauthorized access:
+
+1. Authentication & Password Hashing
+Hindi pwedeng naka-text lang ang mga passwords sa database. Ginagamit ng system ang PBKDF2 password hasher ng Django para kahit ma-access ng hacker ang database, hindi nila mababasa ang passwords ng mga students at admins.
+
+2. Role-Based Access Control (RBAC) Guards
+Ang system ay may mahigpit na guards sa views.py (@is_admin_strictly, @is_adviser_strictly, @is_organizer_strictly). Tinitiyak nito na hindi pwedeng i-type lang ng estudyante ang URL ng admin dashboard para makapasok.
+
+3. Cross-Site Scripting (XSS) Protection
+Lahat ng inputs mula sa users (tulad ng event descriptions at comments) ay naka-auto-escape sa Django templates. Pinipigilan nito ang mga hackers na mag-inject ng malisyosong JavaScript code para nakawin ang session ng iba.
+
+4. Cross-Site Request Forgery (CSRF) Protection
+Lahat ng forms sa system ay may CSRF token. Pinipigilan nito ang mga pekeng websites na mag-submit ng forms (tulad ng pag-approve ng events) sa system mo nang walang pahintulot ng admin.
+
+5. SQL Injection Prevention
+Imbes na manual SQL queries, ginagamit ng system ang Django ORM (Object-Relational Mapping). Awtomatiko nitong nililinis (sanitize) ang lahat ng search queries at inputs para hindi masira o manakaw ang laman ng SQLite database.
+
+6. Secure Session & Cookie Management
+Ang mga login sessions ay may expiration. Kapag na-deploy na ang system, dapat i-set ang SESSION_COOKIE_SECURE = True at CSRF_COOKIE_SECURE = True sa settings.py para sa HTTPS lang ipapadala ang cookies.
+
+7. Data Encryption in Transit (HTTPS / SSL)
+Kapag naka-deploy na online, kailangan ng SSL Certificate (HTTPS). Tinitiyak nito na lahat ng data na dumadaan mula sa phone ng estudyante papunta sa server (tulad ng passwords at face encodings) ay naka-encrypt at hindi mananakaw ng mga nakiki-connect sa public WiFi.
+
+8. Secure File Uploads (Media & Documents)
+Ang mga permits at profile pictures na in-upload ng users ay nakahiwalay sa media/ folder. Nililimitahan din natin ang file types (e.g., .jpg, .pdf) para hindi makapag-upload ang hacker ng malicious script na pwedeng sumira sa server.
+
+9. Geofencing Validation (Location Spoofing Prevention)
+Para sa attendance, tinitiyak ng system na nasa tamang latitude/longitude ang estudyante. Binabangga natin ang coordinates ng estudyante sa target_latitude/longitude ng event para maiwasan ang mga "proxy" attendees na nasa bahay lang.
+
+10. Biometric / Face Matching Security
+Bilang 2nd layer ng attendance security, kinukumpara ang mukha ng estudyante sa nakatabing face_encoding. Tinitiyak nitong ang totoong may-ari ng account ang pumapasok sa event.
+
+11. Audit Logging & System Monitoring
+Lahat ng galaw ng mga Organizer, Adviser, at Admin (tulad ng pag-approve o pag-reject ng events) ay naka-record sa Audit Logs. Madaling matutukoy kung sino ang may sala kapag may maling nangyari sa system.
+
+12. Environment Secrets Management
+Ang mga sensitibong impormasyon tulad ng SECRET_KEY, SMTP Gmail Passwords, at Database credentials ay dapat nakatago sa isang .env file at HINDI naka-upload sa GitHub o public repositories para hindi manakaw.
+
+13. Rate Limiting & Brute Force Protection
+Para maiwasang hulaan ng hacker ang password ng admin (Brute Force Attack), maglalagay ng limitasyon (rate limiting) kung ilang beses lang pwedeng magkamali sa pag-login ang isang account bago ito pansamantalang ma-lock.

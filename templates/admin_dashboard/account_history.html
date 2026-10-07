@@ -1,7 +1,7 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 
-{% block title %}Account History | PUPUni-CAMS{% endblock %}
+{% block title %}Account History | PUP UNISAN CAMS{% endblock %}
 
 {% block page_title %}Account History{% endblock %}
 {% block page_subtitle %}View records of deactivated students and organization accounts.{% endblock %}
@@ -332,7 +332,7 @@
                     <td>${user.year}</td>
                     <td><span class="badge badge-rejected">${user.status}</span></td>
                     <td style="text-align: center;">
-                        <button class="btn-action-small" onclick="viewProfile('${user.id}')">
+                        <button class="btn-action-small" onclick="viewProfile('${user.id}', event)">
                             <i class="ph-bold ph-eye"></i> View
                         </button>
                     </td>
@@ -351,7 +351,7 @@
                             <span class="badge badge-rejected" style="font-size: 0.6rem; padding: 2px 6px;">${user.status}</span>
                         </div>
                     </div>
-                    <button class="btn-action-small" onclick="viewProfile('${user.id}')" style="padding: 10px; border-radius: 8px; flex-shrink: 0;">
+                    <button class="btn-action-small" onclick="viewProfile('${user.id}', event)" style="padding: 10px; border-radius: 8px; flex-shrink: 0;">
                         <i class="ph-bold ph-eye" style="font-size: 1.1rem; margin:0;"></i>
                     </button>
                 </div>
@@ -406,19 +406,120 @@
         renderTable(filtered);
     }
 
-    function openModal(modalId) {
+    function openModal(modalId, event) {
         const modal = document.getElementById(modalId);
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
+        if (!modal) return;
+        const modalBox = modal.querySelector('.modal-box');
+        
+        if (window.innerWidth <= 900) {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            return;
+        }
+
+        let originEl = null;
+        if (event) {
+            originEl = event.currentTarget || event.target;
+            if (originEl.nodeType === 3) originEl = originEl.parentNode;
+            modal._originElement = originEl;
+        } else {
+            modal._originElement = null;
+        }
+
+        if (modal._originElement && modalBox) {
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            modalBox.style.transition = 'none';
+            
+            requestAnimationFrame(() => {
+                const originRect = modal._originElement.getBoundingClientRect();
+                const modalRect = modalBox.getBoundingClientRect();
+                
+                const startX = originRect.left + (originRect.width / 2);
+                const startY = originRect.top + (originRect.height / 2);
+                const endX = modalRect.left + (modalRect.width / 2);
+                const endY = modalRect.top + (modalRect.height / 2);
+                
+                const translateX = startX - endX;
+                const translateY = startY - endY;
+                const scaleX = originRect.width / (modalRect.width || 1);
+                const scaleY = originRect.height / (modalRect.height || 1);
+                const scale = Math.max(Math.min(scaleX, scaleY), 0.05);
+                
+                modalBox.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                modalBox.style.opacity = '0';
+                modalBox.style.transformOrigin = 'center';
+                
+                modal.style.opacity = '1';
+                void modalBox.offsetWidth; // reflow
+                
+                modalBox.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.3s ease';
+                modalBox.style.transform = 'translate(0, 0) scale(1)';
+                modalBox.style.opacity = '1';
+                
+                modal.classList.add('active');
+            });
+        } else {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            if (modalBox) {
+                modalBox.style.transform = '';
+                modalBox.style.transition = '';
+                modalBox.style.opacity = '';
+            }
+        }
     }
 
     function closeModal(modalId) {
         const modal = document.getElementById(modalId);
-        modal.classList.remove('active');
-        setTimeout(() => { modal.style.display = 'none'; }, 200);
+        if (!modal) return;
+        const modalBox = modal.querySelector('.modal-box');
+        
+        function finalizeClose() {
+            modal.style.display = 'none';
+            if (modalBox) {
+                modalBox.style.transform = '';
+                modalBox.style.transition = '';
+                modalBox.style.opacity = '';
+            }
+            modal._originElement = null;
+        }
+
+        if (window.innerWidth <= 900) {
+            modal.classList.remove('active');
+            setTimeout(finalizeClose, 200);
+            return;
+        }
+
+        if (modal._originElement && modalBox) {
+            const originRect = modal._originElement.getBoundingClientRect();
+            const modalRect = modalBox.getBoundingClientRect();
+            
+            const startX = originRect.left + (originRect.width / 2);
+            const startY = originRect.top + (originRect.height / 2);
+            const endX = modalRect.left + (modalRect.width / 2);
+            const endY = modalRect.top + (modalRect.height / 2);
+            
+            const translateX = startX - endX;
+            const translateY = startY - endY;
+            const scaleX = originRect.width / (modalRect.width || 1);
+            const scaleY = originRect.height / (modalRect.height || 1);
+            const scale = Math.max(Math.min(scaleX, scaleY), 0.05);
+            
+            modalBox.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+            modalBox.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            modalBox.style.opacity = '0';
+            
+            modal.classList.remove('active');
+            
+            setTimeout(finalizeClose, 300);
+        } else {
+            modal.classList.remove('active');
+            setTimeout(finalizeClose, 200);
+        }
     }
 
-    function viewProfile(id) {
+    function viewProfile(id, event) {
         const user = historyData.find(u => u.id == id);
         if (!user) return;
         
@@ -451,18 +552,10 @@
             }
         }
         
-        const modal = document.getElementById('profileModal');
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
+        openModal('profileModal', event);
     }
     
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('active');
-            setTimeout(() => { modal.style.display = 'none'; }, 300);
-        }
-    }
+    
 
     window.addEventListener('load', () => {
         const historyBtn = document.getElementById('historyBackButton');

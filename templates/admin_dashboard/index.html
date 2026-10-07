@@ -1,7 +1,7 @@
 {% extends 'admin_base.html' %} 
 {% load static %}
 
-{% block title %}Admin Dashboard | PUPUni-CAMS{% endblock %}
+{% block title %}Admin Dashboard | PUP UNISAN CAMS{% endblock %}
 
 {% block page_title %}System Overview{% endblock %}
 {% block page_subtitle %}Welcome back, Administrator.{% endblock %}
@@ -141,7 +141,7 @@
                                     <button class="btn-action-small">View Details</button>
                                 </a>
                             {% else %}
-                                <button class="btn-action-small" onclick="openReviewModal('{{ event.org_id }}', '{{ event.event_title|escapejs }}', '{{ event.description|default:'No event description provided.'|escapejs }}', '{% if event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% elif event.thumbnail %}{{ event.thumbnail.url }}{% else %}{% endif %}')">Review</button>
+                                <button class="btn-action-small" onclick="openReviewModal(event, '{{ event.org_id }}', '{{ event.event_title|escapejs }}', '{{ event.description|default:'No event description provided.'|escapejs }}', '{% if event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% elif event.thumbnail %}{{ event.thumbnail.url }}{% else %}{% endif %}')">Review</button>
                             {% endif %}
                         </td>
                     </tr>
@@ -157,7 +157,7 @@
         <!-- Mobile List View (Hidden on Desktop) -->
         <div class="min-[901px]:hidden flex flex-col gap-3 mt-4">
             {% for event in recent_events %}
-            <div onclick="{% if event.event_status == 'Approved' or event.event_status == 'Rejected' %}window.location.href='/admin/event-approvals/'{% else %}openReviewModal('{{ event.org_id }}', '{{ event.event_title|escapejs }}', '{{ event.description|default:'No event description provided.'|escapejs }}', '{% if event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% elif event.thumbnail %}{{ event.thumbnail.url }}{% else %}{% endif %}'){% endif %}" class="p-4 bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors cursor-pointer relative overflow-hidden group">
+            <div onclick="{% if event.event_status == 'Approved' or event.event_status == 'Rejected' %}window.location.href='/admin/event-approvals/'{% else %}openReviewModal(event, '{{ event.org_id }}', '{{ event.event_title|escapejs }}', '{{ event.description|default:'No event description provided.'|escapejs }}', '{% if event.event_cover_photo %}{{ event.event_cover_photo.url }}{% elif event.cover_photo %}{{ event.cover_photo.url }}{% elif event.thumbnail %}{{ event.thumbnail.url }}{% else %}{% endif %}'){% endif %}" class="p-4 bg-white dark:bg-[#1e1e1e] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:border-pup-maroon dark:hover:border-pup-gold transition-colors cursor-pointer relative overflow-hidden group">
                 <div class="flex justify-between items-start mb-2">
                     <span class="font-extrabold text-pup-maroon dark:text-pup-gold text-xs uppercase tracking-wider">{{ event.org_id }}</span>
                     <!-- Status Badge -->
@@ -242,7 +242,27 @@
 {% block extra_js %}
 <script>
     // Modal Functions
-    function openReviewModal(orgName, eventTitle, requestText, coverPhotoUrl) {
+    let iosOriginX = null;
+    let iosOriginY = null;
+
+    function openReviewModal(e, orgName, eventTitle, requestText, coverPhotoUrl) {
+        // Record click origin for iOS animation
+        iosOriginX = null;
+        iosOriginY = null;
+        if (e) {
+            if (e.clientX !== undefined && e.clientX !== 0) {
+                iosOriginX = e.clientX;
+                iosOriginY = e.clientY;
+            } else if (e.touches && e.touches.length > 0) {
+                iosOriginX = e.touches[0].clientX;
+                iosOriginY = e.touches[0].clientY;
+            } else if (e.currentTarget) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                iosOriginX = rect.left + rect.width / 2;
+                iosOriginY = rect.top + rect.height / 2;
+            }
+        }
+
         document.getElementById('modalOrgBadge').innerText = orgName;
         document.getElementById('modalEventTitle').innerText = eventTitle;
         
@@ -271,14 +291,63 @@
         }
         
         const modal = document.getElementById('reviewModal');
+        const modalBox = modal.querySelector('.modal-box');
+        
+        // Reset transforms
+        modalBox.style.transition = 'none';
+        modalBox.style.transform = 'none';
         modal.style.display = 'flex';
+        
+        // Set scale(1) temporarily to get accurate measurements without CSS transform interference
+        modalBox.style.transform = 'scale(1)';
+        void modalBox.offsetWidth;
+        
+        const targetRect = modalBox.getBoundingClientRect();
+        
+        if (iosOriginX !== null && iosOriginY !== null) {
+            const deltaX = iosOriginX - (targetRect.left + targetRect.width / 2);
+            const deltaY = iosOriginY - (targetRect.top + targetRect.height / 2);
+            
+            modalBox.style.transformOrigin = 'center center';
+            modalBox.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.15)`;
+            modalBox.style.opacity = '0';
+            
+            // Force reflow
+            void modalBox.offsetWidth;
+            
+            // Start animation
+            modalBox.style.transition = 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease';
+            modalBox.style.transform = 'translate(0px, 0px) scale(1)';
+            modalBox.style.opacity = '1';
+        }
+
         setTimeout(() => modal.classList.add('active'), 10);
     }
 
     function closeReviewModal() {
         const modal = document.getElementById('reviewModal');
+        const modalBox = modal.querySelector('.modal-box');
+        
         modal.classList.remove('active');
-        setTimeout(() => modal.style.display = 'none', 200);
+        
+        if (iosOriginX !== null && iosOriginY !== null) {
+            const targetRect = modalBox.getBoundingClientRect();
+            
+            const deltaX = iosOriginX - (targetRect.left + targetRect.width / 2);
+            const deltaY = iosOriginY - (targetRect.top + targetRect.height / 2);
+            
+            modalBox.style.transformOrigin = 'center center';
+            modalBox.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease';
+            modalBox.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.15)`;
+            modalBox.style.opacity = '0';
+        }
+
+        setTimeout(() => {
+            modal.style.display = 'none';
+            modalBox.style.transform = '';
+            modalBox.style.transition = '';
+            modalBox.style.opacity = '';
+        }, 300);
     }
 
     // Charts Configuration

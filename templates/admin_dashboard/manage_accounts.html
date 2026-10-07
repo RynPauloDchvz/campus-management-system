@@ -1,7 +1,7 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 
-{% block title %}Manage Students | PUPUni-CAMS{% endblock %}
+{% block title %}Manage Students | PUP UNISAN CAMS{% endblock %}
 
 {% block page_title %}Manage Students{% endblock %}
 {% block page_subtitle %}Monitor, view profiles, and deactivate student accounts for record history.{% endblock %}
@@ -223,7 +223,7 @@
             <h3 style="margin: 0; font-size: 1rem; font-weight: 900; text-transform: uppercase; color: var(--text-main); line-height: 1.1; flex-grow: 1;">Student List</h3>
             <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
                 <button class="btn-cancel" id="btnToggleManage" onclick="toggleBulkManage()" style="padding: 5px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-pencil-simple"></i> Manage</button>
-                <button class="btn-primary" id="btnBulkDeactivate" onclick="openBulkDeleteModal()" style="display: none; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; background: var(--danger); border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-trash"></i> Deactivate</button>
+                <button class="btn-primary" id="btnBulkDeactivate" onclick="openBulkDeleteModal(event)" style="display: none; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; background: var(--danger); border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-trash"></i> Deactivate</button>
             </div>
         </div>
 
@@ -381,7 +381,7 @@
                     <td style="font-weight: 800; color: var(--accent);">${user.org}</td>
                     <td><span class="badge ${badgeClass}">${user.status}</span></td>
                     <td style="text-align: center;">
-                        <button class="btn-action-small desktop-manage-dropdown" onclick="event.stopPropagation(); openViewModal(${user.id})" style="padding: 8px 12px; border-radius: 8px;">
+                        <button class="btn-action-small desktop-manage-dropdown" onclick="event.stopPropagation(); openViewModal(${user.id}, event)" style="padding: 8px 12px; border-radius: 8px;">
                             <i class="ph-bold ph-eye" style="font-size: 1.1rem; margin:0;"></i>
                         </button>
                     </td>
@@ -392,7 +392,7 @@
             // Mobile Card Row
             if (mobileList) {
                 const mobileCard = `
-                    <div class="student-card" id="student-card-${user.id}" onclick="handleCardClick(${user.id})" style="cursor: pointer;">
+                    <div class="student-card" id="student-card-${user.id}" onclick="handleCardClick(${user.id}, event)" style="cursor: pointer;">
                         <input type="checkbox" class="student-checkbox" id="chk-${user.id}" value="${user.id}">
                         <img src="${safeAvatar}" class="user-avatar" style="width: 45px; height: 45px; border-radius: 50%;">
                         <div style="flex-grow: 1;">
@@ -534,11 +534,11 @@
         }
     }
     
-    function handleCardClick(id) {
+    function handleCardClick(id, event) {
         if (isBulkManageActive) {
             toggleStudentSelection(id);
         } else {
-            openViewModal(id);
+            openViewModal(id, event);
         }
     }
     
@@ -572,26 +572,26 @@
         }
     }
 
-    function openBulkDeleteModal() {
+    function openBulkDeleteModal(event) {
         if (selectedUserIds.size === 0) {
             document.getElementById('alertModalMessage').innerText = "Select at least one account to deactivate.";
-            openModal('alertModal');
+            openModal('alertModal', event);
             return;
         }
         document.getElementById('d_id').value = Array.from(selectedUserIds).join(',');
         document.getElementById('d_name').innerText = selectedUserIds.size + " selected account(s)";
-        openModal('deleteModal');
+        openModal('deleteModal', event);
     }
 
-    function openDeleteModal(id) {
+    function openDeleteModal(id, event) {
         const user = usersData.find(u => u.id === id);
         document.getElementById('d_id').value = user.id;
         document.getElementById('d_name').innerText = user.name;
-        openModal('deleteModal');
+        openModal('deleteModal', event);
     }
 
     // 🟢 MODAL CONTROLS 🟢
-    function openViewModal(id) {
+    function openViewModal(id, event) {
         const user = usersData.find(u => u.id === id);
         const safeAvatar = user.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
         document.getElementById('v_id').value = user.id;
@@ -620,20 +620,113 @@
         }
         document.getElementById('v_birthdate').innerText = formattedDate;
         
-        openModal('viewDetailsModal');
+        openModal('viewDetailsModal', event);
     }
 
-    function openModal(modalId) {
+    function openModal(modalId, event) {
         const modal = document.getElementById(modalId);
-        if (modal) {
+        if (!modal) return;
+        const modalBox = modal.querySelector('.modal-box');
+        
+        if (window.innerWidth <= 900) {
             modal.style.display = 'flex';
             setTimeout(() => modal.classList.add('active'), 10);
+            return;
+        }
+
+        let originEl = null;
+        if (event) {
+            originEl = event.currentTarget || event.target;
+            if (originEl.nodeType === 3) originEl = originEl.parentNode;
+            modal._originElement = originEl;
+        } else {
+            modal._originElement = null;
+        }
+
+        if (modal._originElement && modalBox) {
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            modalBox.style.transition = 'none';
+            
+            requestAnimationFrame(() => {
+                const originRect = modal._originElement.getBoundingClientRect();
+                const modalRect = modalBox.getBoundingClientRect();
+                
+                const startX = originRect.left + (originRect.width / 2);
+                const startY = originRect.top + (originRect.height / 2);
+                const endX = modalRect.left + (modalRect.width / 2);
+                const endY = modalRect.top + (modalRect.height / 2);
+                
+                const translateX = startX - endX;
+                const translateY = startY - endY;
+                const scaleX = originRect.width / (modalRect.width || 1);
+                const scaleY = originRect.height / (modalRect.height || 1);
+                const scale = Math.max(Math.min(scaleX, scaleY), 0.05);
+                
+                modalBox.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                modalBox.style.opacity = '0';
+                modalBox.style.transformOrigin = 'center';
+                
+                modal.style.opacity = '1';
+                void modalBox.offsetWidth; // reflow
+                
+                modalBox.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.3s ease';
+                modalBox.style.transform = 'translate(0, 0) scale(1)';
+                modalBox.style.opacity = '1';
+                
+                modal.classList.add('active');
+            });
+        } else {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            if (modalBox) {
+                modalBox.style.transform = '';
+                modalBox.style.transition = '';
+                modalBox.style.opacity = '';
+            }
         }
     }
 
     function closeModal(modalId) {
         const modal = document.getElementById(modalId);
-        if (modal) {
+        if (!modal) return;
+        const modalBox = modal.querySelector('.modal-box');
+        
+        if (window.innerWidth <= 900) {
+            modal.classList.remove('active');
+            setTimeout(() => { modal.style.display = 'none'; }, 200);
+            return;
+        }
+
+        if (modal._originElement && modalBox) {
+            const originRect = modal._originElement.getBoundingClientRect();
+            const modalRect = modalBox.getBoundingClientRect();
+            
+            const startX = originRect.left + (originRect.width / 2);
+            const startY = originRect.top + (originRect.height / 2);
+            const endX = modalRect.left + (modalRect.width / 2);
+            const endY = modalRect.top + (modalRect.height / 2);
+            
+            const translateX = startX - endX;
+            const translateY = startY - endY;
+            const scaleX = originRect.width / (modalRect.width || 1);
+            const scaleY = originRect.height / (modalRect.height || 1);
+            const scale = Math.max(Math.min(scaleX, scaleY), 0.05);
+            
+            modalBox.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+            modalBox.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            modalBox.style.opacity = '0';
+            
+            modal.classList.remove('active');
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modalBox.style.transform = '';
+                modalBox.style.transition = '';
+                modalBox.style.opacity = '';
+                modal._originElement = null;
+            }, 300);
+        } else {
             modal.classList.remove('active');
             setTimeout(() => { modal.style.display = 'none'; }, 200);
         }

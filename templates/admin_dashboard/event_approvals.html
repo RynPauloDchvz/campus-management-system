@@ -1,7 +1,7 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 
-{% block title %}Event Approvals | PUPUni-CAMS{% endblock %}
+{% block title %}Event Approvals | PUP UNISAN CAMS{% endblock %}
 
 {% block page_title %}Event Approvals & History{% endblock %}
 {% block page_subtitle %}Review proposals, verify physical permits, and manage event rescheduling.{% endblock %}
@@ -772,7 +772,7 @@
                                 <span v-else-if="event.status === 'FINAL ADMIN REVIEW'" class="badge badge-review"><i class="ph-bold ph-seal-check"></i> Final Publication</span>
                             </td>
                             <td style="text-align: center;">
-                                <button @click="openModal(event, false)" class="action-btn theme-action-btn" style="padding: 10px 20px;">
+                                <button @click="openModal(event, false, $event)" class="action-btn theme-action-btn" style="padding: 10px 20px;">
                                     [[ event.status === 'FINAL ADMIN REVIEW' ? 'Final Approval' : 'Initial Review' ]]
                                 </button>
                             </td>
@@ -807,7 +807,7 @@
                     </div>
                     <div class="mobile-card-right">
                         <div class="mobile-card-date">[[ event.date ]]</div>
-                        <button @click="openModal(event, false)" class="action-btn theme-action-btn" style="padding: 6px 14px; font-size: 0.7rem;">
+                        <button @click="openModal(event, false, $event)" class="action-btn theme-action-btn" style="padding: 6px 14px; font-size: 0.7rem;">
                             View
                         </button>
                     </div>
@@ -818,24 +818,8 @@
     </div>
 
     <!-- 🏛️ MAIN APPROVAL/RECORD MODAL 🏛️ -->
-    <transition 
-        enter-active-class="transition duration-300 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition duration-200 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-    >
-        <div class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/70 backdrop-blur-md p-0 sm:p-4" v-if="isModalOpen" @click="closeModal">
-            <transition 
-                enter-active-class="transition duration-300 ease-out delay-75"
-                enter-from-class="opacity-0 scale-95 translate-y-4 sm:translate-y-0"
-                enter-to-class="opacity-100 scale-100 translate-y-0"
-                leave-active-class="transition duration-200 ease-in"
-                leave-from-class="opacity-100 scale-100 translate-y-0"
-                leave-to-class="opacity-0 scale-95 translate-y-4 sm:translate-y-0"
-            >
-                <div class="bg-[var(--card-bg)] border-0 sm:border border-[var(--border)] rounded-none sm:rounded-2xl w-full max-w-4xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative" v-if="isModalOpen" @click.stop>
+    <div id="main-backdrop" class="fixed inset-0 z-[5000] flex items-center justify-center bg-black/70 backdrop-blur-md p-0 sm:p-4" v-if="isModalOpen" @click="closeModal" style="opacity: 0; transition: opacity 0.3s ease-out;">
+        <div id="main-modal-box" class="bg-[var(--card-bg)] border-0 sm:border border-[var(--border)] rounded-none sm:rounded-2xl w-full max-w-4xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative" @click.stop>
                     
                     <!-- 🟢 STEP-BY-STEP LOADING OVERLAY (MODAL LEVEL) 🟢 -->
                     <div v-if="actionLoading" class="absolute inset-0 z-[6000] bg-[var(--card-bg)] flex items-center justify-center">
@@ -959,7 +943,7 @@
                                     <img v-if="(selectedDocUrl === doc.url || (!selectedDocUrl && index === 0)) && doc.url" 
                                          :src="doc.url" 
                                          class="w-full h-auto object-contain mx-auto animate-fade-in cursor-pointer" 
-                                         @click="viewActualDoc(doc.label, doc.url)" title="Click to view full screen" />
+                                         @click="viewActualDoc(doc.label, doc.url, $event)" title="Click to view full screen" />
                                     <div v-else-if="(selectedDocUrl === doc.url || (!selectedDocUrl && index === 0)) && !doc.url" class="text-center py-20 w-full h-full flex flex-col items-center justify-center">
                                         <i class="ph-fill ph-image-broken text-6xl text-gray-300 dark:text-gray-700 mb-4 block"></i>
                                         <span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Image not found</span>
@@ -1146,13 +1130,11 @@
 
 
                 </div>
-            </transition>
-        </div>
-    </transition>
+    </div>
 
     <!-- 🔍 TRUE FULLSCREEN LIGHTBOX VIEWER 🔍 -->
-    <div v-if="isDocViewerOpen" class="lightbox-overlay fade-in" @click="closeDocViewer">
-        <div class="lightbox-header">
+    <div id="doc-viewer-backdrop" v-if="isDocViewerOpen" class="lightbox-overlay fade-in" style="z-index: 6000; opacity: 0; transition: opacity 0.3s ease-out;" @click="closeDocViewer">
+        <div class="lightbox-header" style="z-index: 6010;">
             <a v-if="viewedDocUrl" :href="viewedDocUrl" download class="lightbox-btn" title="Download Image">
                 <i class="ph-bold ph-download-simple" style="font-size: 1.5rem;"></i>
             </a>
@@ -1161,23 +1143,22 @@
             </button>
         </div>
         
-        <div class="lightbox-content" @click.stop>
-            <template v-if="viewedDocUrl">
-                <img :src="viewedDocUrl" :alt="viewedDocTitle" class="lightbox-image">
-            </template>
-            <template v-else>
-                <div style="text-align: center; color: white;">
-                    <i class="ph-fill ph-image-broken" style="font-size: 6rem; color: #dc3545; opacity: 0.5; margin-bottom: 20px;"></i>
-                    <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase;">Image Not Found</h2>
+        <div id="doc-viewer-box" class="lightbox-content" @click.stop style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <template v-if="viewedDocUrl">
+                        <img :src="viewedDocUrl" :alt="viewedDocTitle" class="lightbox-image" style="max-height: 90vh;">
+                    </template>
+                    <template v-else>
+                        <div style="text-align: center; color: white;">
+                            <i class="ph-fill ph-image-broken" style="font-size: 6rem; color: #dc3545; opacity: 0.5; margin-bottom: 20px;"></i>
+                            <h2 style="font-size: 1.5rem; font-weight: 900; text-transform: uppercase;">Image Not Found</h2>
+                        </div>
+                    </template>
                 </div>
-            </template>
-        </div>
     </div>
 
     <!-- Calendar Modal -->
-    <!-- Calendar Modal -->
-    <div v-show="isCalendarOpen" v-cloak class="av-modal fade-in" style="z-index: 6000;" @click.self="closeCalendarModal">
-        <div class="bg-white dark:bg-pup-darkcard w-full sm:max-w-6xl h-[100dvh] sm:h-auto sm:max-h-[95vh] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col border-0 sm:border border-gray-100 dark:border-gray-800 relative" style="background: var(--card-bg);">
+    <div id="calendar-backdrop" v-show="isCalendarOpen" v-cloak class="av-modal fade-in" style="z-index: 6000; position: fixed; inset: 0; background: rgba(0,0,0,0.7); opacity: 0; transition: opacity 0.3s ease-out;" @click.self="closeCalendarModal">
+        <div id="calendar-modal-box" class="bg-white dark:bg-pup-darkcard w-full sm:max-w-6xl h-[100dvh] sm:h-auto sm:max-h-[95vh] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col border-0 sm:border border-gray-100 dark:border-gray-800 relative mx-auto my-auto" style="background: var(--card-bg);">
             
             <!-- Close button (Upper right, bordered circle) -->
             <button @click="closeCalendarModal" class="absolute top-4 right-2 sm:top-6 sm:right-6 w-10 h-10 rounded-full border-2 border-gray-200 dark:border-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:border-red-900/50 dark:hover:text-red-400 text-gray-500 flex items-center justify-center transition-colors z-50 bg-white dark:bg-pup-darkcard shadow-sm" style="cursor: pointer;">
@@ -1199,10 +1180,10 @@
     </div>
 
                 <!-- Calendar Event Details Modal -->
-                <div v-if="selectedCalendarEvent" v-cloak class="absolute inset-0 bg-black/80 z-[7000] flex items-center justify-center p-0 sm:p-6 backdrop-blur-md animate-fade-in" @click.self="selectedCalendarEvent = null" style="position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 7000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(12px);">
-                    <div class="bg-white dark:bg-[#151515] w-full h-full sm:max-w-2xl sm:max-h-[90vh] sm:rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-col relative transform transition-all" style="background: var(--card-bg);">
+                <div id="cal-evt-backdrop" v-if="selectedCalendarEvent" v-cloak class="absolute inset-0 bg-black/80 z-[7000] flex items-center justify-center p-0 sm:p-6 backdrop-blur-md" @click.self="closeCalendarEventModal" style="position: absolute; inset: 0; background: rgba(0,0,0,0.8); z-index: 7000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(12px); opacity: 0; transition: opacity 0.3s ease-out;">
+                    <div id="cal-evt-box" class="bg-white dark:bg-[#151515] w-full h-full sm:max-w-2xl sm:max-h-[90vh] sm:rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800 flex flex-col relative" style="background: var(--card-bg);">
                         <!-- Close Button -->
-                        <button @click="selectedCalendarEvent = null" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-red-600 text-white flex items-center justify-center transition-colors z-10 backdrop-blur-sm border border-white/20">
+                        <button @click="closeCalendarEventModal" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 hover:bg-red-600 text-white flex items-center justify-center transition-colors z-10 backdrop-blur-sm border border-white/20">
                             <i class="ph-bold ph-x text-lg"></i>
                         </button>
                         
@@ -1247,9 +1228,6 @@
                                 <h3 class="font-black text-[9px] text-gray-400 uppercase tracking-[0.4em] mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">Activity Description</h3>
                                 <p class="text-gray-500 dark:text-gray-400 text-xs leading-relaxed text-justify mb-10 font-medium whitespace-pre-wrap">[[ parsedCalendarDescription?.originalDesc || 'No description provided.' ]]</p>
                             </div>
-                        </div>
-                    </div>
-                </div>
                         </div>
                     </div>
                 </div>
@@ -1402,8 +1380,11 @@
             let calendarInstance = null;
             
             const openCalendarModal = (e) => {
+                if (e && e.currentTarget) calOrigin.value = e.currentTarget.getBoundingClientRect();
+                else calOrigin.value = null;
                 isCalendarOpen.value = true;
                 document.body.style.overflow = 'hidden';
+                animateModalOpen('calendar-modal-box', 'calendar-backdrop', calOrigin);
                 
                 nextTick(() => {
                     if (!calendarInstance) {
@@ -1462,7 +1443,9 @@
                                 };
                             },
                             eventClick: function(info) {
+                                calEvtOrigin.value = info.el.getBoundingClientRect();
                                 selectedCalendarEvent.value = info.event.extendedProps;
+                                animateModalOpen('cal-evt-box', 'cal-evt-backdrop', calEvtOrigin);
                             },
                             height: '100%',
                         });
@@ -1470,13 +1453,21 @@
                     calendarInstance.render();
                     setTimeout(() => {
                         if (calendarInstance) calendarInstance.updateSize();
-                    }, 400);
+                    }, 500);
                 });
             };
 
             const closeCalendarModal = () => {
-                isCalendarOpen.value = false;
-                document.body.style.overflow = '';
+                animateModalClose('calendar-modal-box', 'calendar-backdrop', calOrigin, () => {
+                    isCalendarOpen.value = false;
+                    document.body.style.overflow = '';
+                });
+            };
+
+            const closeCalendarEventModal = () => {
+                animateModalClose('cal-evt-box', 'cal-evt-backdrop', calEvtOrigin, () => {
+                    selectedCalendarEvent.value = null;
+                });
             };
 
             onMounted(() => {
@@ -1567,7 +1558,95 @@
                 }
             });
 
-            const openModal = (event, historyMode) => { 
+            const animateModalOpen = (boxId, backdropId, originRef) => {
+                nextTick(() => {
+                    const box = document.getElementById(boxId);
+                    const backdrop = document.getElementById(backdropId);
+                    
+                    if (backdrop) {
+                        backdrop.style.opacity = '0';
+                        backdrop.style.transition = 'none';
+                        requestAnimationFrame(() => {
+                            void backdrop.offsetWidth;
+                            backdrop.style.transition = 'opacity 0.3s ease-out';
+                            backdrop.style.opacity = '1';
+                        });
+                    }
+
+                    if (box) {
+                        if (originRef.value) {
+                            const rect = originRef.value;
+                            const startX = rect.left + rect.width / 2 - window.innerWidth / 2;
+                            const startY = rect.top + rect.height / 2 - window.innerHeight / 2;
+                            const scaleX = rect.width / window.innerWidth;
+                            const scaleY = rect.height / window.innerHeight;
+                            let scale = Math.min(scaleX, scaleY) * 0.8;
+                            if(scale < 0.1) scale = 0.1;
+
+                            box.style.transform = `translate(${startX}px, ${startY}px) scale(${scale})`;
+                            box.style.opacity = '0';
+                            box.style.transition = 'none';
+                        } else {
+                            box.style.transform = 'scale(0.95) translateY(20px)';
+                            box.style.opacity = '0';
+                            box.style.transition = 'none';
+                        }
+                        
+                        requestAnimationFrame(() => {
+                            void box.offsetWidth;
+                            box.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.3s ease-out';
+                            box.style.transform = 'translate(0, 0) scale(1)';
+                            box.style.opacity = '1';
+                        });
+                    }
+                });
+            };
+
+            const animateModalClose = (boxId, backdropId, originRef, closeCallback) => {
+                const box = document.getElementById(boxId);
+                const backdrop = document.getElementById(backdropId);
+                
+                if (backdrop) {
+                    backdrop.style.transition = 'opacity 0.3s ease-in';
+                    backdrop.style.opacity = '0';
+                }
+
+                if (box) {
+                    if (originRef.value) {
+                        const rect = originRef.value;
+                        const startX = rect.left + rect.width / 2 - window.innerWidth / 2;
+                        const startY = rect.top + rect.height / 2 - window.innerHeight / 2;
+                        const scaleX = rect.width / window.innerWidth;
+                        const scaleY = rect.height / window.innerHeight;
+                        let scale = Math.min(scaleX, scaleY) * 0.8;
+                        if(scale < 0.1) scale = 0.1;
+
+                        box.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in';
+                        box.style.transform = `translate(${startX}px, ${startY}px) scale(${scale})`;
+                        box.style.opacity = '0';
+                    } else {
+                        box.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in';
+                        box.style.transform = 'scale(0.95) translateY(20px)';
+                        box.style.opacity = '0';
+                    }
+                }
+                
+                setTimeout(closeCallback, 300);
+            };
+
+            const originRect = ref(null);
+            const docOrigin = ref(null);
+            const calOrigin = ref(null);
+            const calEvtOrigin = ref(null);
+
+
+
+            const openModal = (event, historyMode, domEvent) => { 
+                if (domEvent && domEvent.currentTarget) {
+                    originRect.value = domEvent.currentTarget.getBoundingClientRect();
+                } else {
+                    originRect.value = null;
+                }
                 selectedEvent.value = event; 
                 isHistoryMode.value = historyMode;
                 isRejecting.value = false;
@@ -1580,24 +1659,32 @@
                 activeTab.value = 'main';
                 isModalOpen.value = true; 
                 document.body.style.overflow = 'hidden';
+                animateModalOpen('main-modal-box', 'main-backdrop', originRect);
             };
-            
+
             const closeModal = () => { 
-                isModalOpen.value = false; 
-                document.body.style.overflow = '';
-                setTimeout(() => { 
+                animateModalClose('main-modal-box', 'main-backdrop', originRect, () => {
+                    isModalOpen.value = false; 
+                    document.body.style.overflow = '';
                     selectedEvent.value = null; 
                     showSuccessMsg.value = false;
                     loadingStep.value = 0;
-                }, 300); 
+                });
             };
 
-            const viewActualDoc = (title, url) => {
+            const viewActualDoc = (title, url, domEvent) => {
+                if (domEvent && domEvent.currentTarget) docOrigin.value = domEvent.currentTarget.getBoundingClientRect();
+                else docOrigin.value = null;
                 viewedDocTitle.value = title;
                 viewedDocUrl.value = url || '';
                 isDocViewerOpen.value = true;
+                animateModalOpen('doc-viewer-box', 'doc-viewer-backdrop', docOrigin);
             };
-            const closeDocViewer = () => { isDocViewerOpen.value = false; };
+            const closeDocViewer = () => { 
+                animateModalClose('doc-viewer-box', 'doc-viewer-backdrop', docOrigin, () => {
+                    isDocViewerOpen.value = false; 
+                });
+            };
 
             const getCookie = (name) => {
                 let cookieValue = null;
@@ -1749,10 +1836,11 @@
                 isRescheduling, rescheduleDate, rescheduleTime, rescheduleEndTime, initiateReschedule, cancelReschedule, confirmReschedule,
                 isDocViewerOpen, viewedDocTitle, viewedDocUrl, viewActualDoc, closeDocViewer,
                 openModal, closeModal, approveEvent,
+                
                 currentDocCount, activeDocs,
                 showSuccessMsg, statusMessage,
                 loadingStep, activeTab, selectedDocUrl, mobileDropdownOpen, parsedDescription,
-                isCalendarOpen, selectedCalendarEvent, openCalendarModal, closeCalendarModal, parsedCalendarDescription,
+                isCalendarOpen, selectedCalendarEvent, openCalendarModal, closeCalendarModal, closeCalendarEventModal, parsedCalendarDescription,
                 getOrgStyle
             }
         }

@@ -130,7 +130,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-500/10">
-                        <tr v-for="log in filteredLogs" :key="log.id" class="hover:bg-maroon/5 transition-all">
+                        <tr v-for="log in displayedLogs" :key="log.id" class="hover:bg-maroon/5 transition-all">
                             <td class="px-6 py-4">
                                 <div class="flex flex-col">
                                     <span class="text-xs font-bold whitespace-nowrap">[[ formatTimestamp(log.timestamp).time ]]</span>
@@ -161,7 +161,7 @@
                                 <i :class="getStatusIcon(log)" class="text-lg"></i>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <button @click="viewDetails(log)" class="bg-maroon dark:bg-gold text-white dark:text-black font-black text-[10px] uppercase tracking-widest px-3 py-1.5 rounded flex items-center justify-end gap-1 ml-auto transition-colors hover:opacity-90">
+                                <button @click="viewDetails(log, $event)" class="bg-maroon dark:bg-gold text-white dark:text-black font-black text-[10px] uppercase tracking-widest px-3 py-1.5 rounded flex items-center justify-end gap-1 ml-auto transition-colors hover:opacity-90">
                                     <i class="ph-bold ph-eye text-sm"></i> Details
                                 </button>
                             </td>
@@ -172,12 +172,19 @@
                                 No activities detected matching "[[ searchQuery ]]".
                             </td>
                         </tr>
+                        <tr v-if="displayedLogs.length < filteredLogs.length">
+                            <td colspan="7" class="px-6 py-4 text-center">
+                                <button @click="loadMore" class="text-xs font-bold text-maroon dark:text-gold hover:underline">
+                                    <i class="ph-bold ph-caret-down"></i> Load More Logs ([[ filteredLogs.length - displayedLogs.length ]] remaining)
+                                </button>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
 
                 <!-- Mobile List View -->
                 <div class="sm:hidden flex flex-col divide-y divide-gray-200/10 w-full">
-                    <div v-for="log in filteredLogs" :key="'mobile-'+log.id" class="p-4 flex items-center justify-between gap-3 hover:bg-maroon/5 transition-all w-full relative">
+                    <div v-for="log in displayedLogs" :key="'mobile-'+log.id" class="p-4 flex items-center justify-between gap-3 hover:bg-maroon/5 transition-all w-full relative">
                         <div class="flex items-center gap-3 overflow-hidden">
                             <!-- Icon -->
                             <div class="shrink-0 w-10 h-10 rounded-full bg-maroon flex items-center justify-center text-sm font-black text-white">
@@ -198,7 +205,7 @@
                             </div>
                         </div>
                         <!-- Eye Icon Button -->
-                        <button @click="viewDetails(log)" class="shrink-0 w-8 h-8 rounded-full bg-maroon dark:bg-gold text-white dark:text-black flex items-center justify-center transition-colors hover:opacity-90 shadow-sm">
+                        <button @click="viewDetails(log, $event)" class="shrink-0 w-8 h-8 rounded-full bg-maroon dark:bg-gold text-white dark:text-black flex items-center justify-center transition-colors hover:opacity-90 shadow-sm">
                             <i class="ph-bold ph-eye text-lg"></i>
                         </button>
                     </div>
@@ -208,20 +215,27 @@
                         <i class="ph-bold ph-magnifying-glass text-4xl mb-2 block text-maroon dark:text-gold animate-pulse"></i>
                         No activities detected matching "[[ searchQuery ]]".
                     </div>
+                    
+                    <!-- Load More Mobile -->
+                    <div v-if="displayedLogs.length < filteredLogs.length" class="p-4 text-center w-full">
+                        <button @click="loadMore" class="text-xs font-bold text-maroon dark:text-gold hover:underline w-full py-2 bg-maroon/5 rounded-lg">
+                            Load More Logs
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
     <!-- Details Modal (Watchdog Portal) -->
-    <div v-if="selectedLog" class="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4 md:p-8">
+    <div id="log-modal-backdrop" v-if="selectedLog" class="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4 md:p-8" style="opacity: 0; transition: opacity 0.3s ease-out;">
         <!-- Backdrop -->
-        <div class="fixed inset-0 bg-black/80 backdrop-blur-md w-full h-full" @click="selectedLog = null"></div>
+        <div class="fixed inset-0 bg-black/80 w-full h-full" @click="closeModal"></div>
         
         <!-- Modal Content -->
-        <div class="audit-card !m-0 sm:!m-auto absolute inset-0 sm:relative sm:inset-auto w-full h-full sm:h-auto sm:max-w-3xl rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col sm:max-h-[90vh] animate-in fade-in zoom-in duration-200 border-0 sm:border">
+        <div id="log-modal-box" class="bg-white dark:bg-[#151515] fixed inset-0 sm:relative sm:inset-auto w-full sm:h-auto sm:max-w-3xl rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col sm:max-h-[90vh] border-0 sm:border border-gray-200 dark:border-gray-800 m-0 sm:m-auto" style="opacity: 0; transform: scale(0.95) translateY(20px);" @click.stop>
             
             <!-- Close Button (Absolute positioned over header) -->
-            <button @click="selectedLog = null" class="absolute top-4 right-4 w-9 h-9 rounded-full border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 flex items-center justify-center text-lg transition-all z-10 shadow-sm backdrop-blur-sm">
+            <button @click="closeModal" class="absolute top-4 right-4 w-9 h-9 rounded-full border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 flex items-center justify-center text-lg transition-all z-10 shadow-sm">
                 <i class="ph-bold ph-x"></i>
             </button>
 
@@ -286,7 +300,9 @@
             actionFilter: '',
             isStatusFilterOpen: false,
             isActionFilterOpen: false,
-            selectedLog: null
+            selectedLog: null,
+            originRect: null,
+            displayLimit: 50
         },
         mounted() {
             setTimeout(() => { this.isLoading = false; }, 800);
@@ -305,6 +321,9 @@
                     return matchesSearch && matchesStatus && matchesAction;
                 });
             },
+            displayedLogs() {
+                return this.filteredLogs.slice(0, this.displayLimit);
+            },
             successCount() { return this.logs.filter(l => l.status === 'Success').length; },
             failureCount() { return this.logs.filter(l => l.status === 'Failed' || l.status === 'Denied').length; },
             breachCount() { return this.logs.filter(l => l.action === 'UNAUTHORIZED').length; },
@@ -314,6 +333,9 @@
             }
         },
         methods: {
+            loadMore() {
+                this.displayLimit += 50;
+            },
             formatTimestamp(ts) {
                 try {
                     let d = new Date(ts);
@@ -418,16 +440,100 @@
                 
                 return `User executed a system operation (${log.action}) inside the ${portal}.`;
             },
-            viewDetails(log) {
+            viewDetails(log, event) {
+                if (event && event.currentTarget) {
+                    this.originRect = event.currentTarget.getBoundingClientRect();
+                } else {
+                    this.originRect = null;
+                }
                 this.selectedLog = log;
-                // Add class to body to prevent scrolling when modal is open
                 document.body.style.overflow = 'hidden';
+                
+                this.$nextTick(() => {
+                    this.animateModalOpen('log-modal-box', 'log-modal-backdrop', this.originRect);
+                });
+            },
+            closeModal() {
+                this.animateModalClose('log-modal-box', 'log-modal-backdrop', this.originRect, () => {
+                    this.selectedLog = null;
+                    document.body.style.overflow = 'auto';
+                });
+            },
+            animateModalOpen(boxId, backdropId, originRect) {
+                const box = document.getElementById(boxId);
+                const backdrop = document.getElementById(backdropId);
+                
+                if (backdrop) {
+                    backdrop.style.opacity = '0';
+                    backdrop.style.transition = 'none';
+                    requestAnimationFrame(() => {
+                        void backdrop.offsetWidth;
+                        backdrop.style.transition = 'opacity 0.3s ease-out';
+                        backdrop.style.opacity = '1';
+                    });
+                }
+
+                if (box) {
+                    if (originRect) {
+                        const startX = originRect.left + originRect.width / 2 - window.innerWidth / 2;
+                        const startY = originRect.top + originRect.height / 2 - window.innerHeight / 2;
+                        const scaleX = originRect.width / window.innerWidth;
+                        const scaleY = originRect.height / window.innerHeight;
+                        let scale = Math.min(scaleX, scaleY) * 0.8;
+                        if(scale < 0.1) scale = 0.1;
+
+                        box.style.transform = `translate(${startX}px, ${startY}px) scale(${scale})`;
+                        box.style.opacity = '0';
+                        box.style.transition = 'none';
+                    } else {
+                        box.style.transform = 'scale(0.95) translateY(20px)';
+                        box.style.opacity = '0';
+                        box.style.transition = 'none';
+                    }
+                    
+                    requestAnimationFrame(() => {
+                        void box.offsetWidth;
+                        box.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.3s ease-out';
+                        box.style.transform = 'translate(0, 0) scale(1)';
+                        box.style.opacity = '1';
+                    });
+                }
+            },
+            animateModalClose(boxId, backdropId, originRect, closeCallback) {
+                const box = document.getElementById(boxId);
+                const backdrop = document.getElementById(backdropId);
+                
+                if (backdrop) {
+                    backdrop.style.transition = 'opacity 0.3s ease-in';
+                    backdrop.style.opacity = '0';
+                }
+
+                if (box) {
+                    if (originRect) {
+                        const startX = originRect.left + originRect.width / 2 - window.innerWidth / 2;
+                        const startY = originRect.top + originRect.height / 2 - window.innerHeight / 2;
+                        const scaleX = originRect.width / window.innerWidth;
+                        const scaleY = originRect.height / window.innerHeight;
+                        let scale = Math.min(scaleX, scaleY) * 0.8;
+                        if(scale < 0.1) scale = 0.1;
+
+                        box.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in';
+                        box.style.transform = `translate(${startX}px, ${startY}px) scale(${scale})`;
+                        box.style.opacity = '0';
+                    } else {
+                        box.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in';
+                        box.style.transform = 'scale(0.95) translateY(20px)';
+                        box.style.opacity = '0';
+                    }
+                }
+                
+                setTimeout(closeCallback, 300);
             }
         },
         watch: {
-            selectedLog(newVal) {
-                if (!newVal) document.body.style.overflow = 'auto';
-            }
+            searchQuery() { this.displayLimit = 50; },
+            statusFilter() { this.displayLimit = 50; },
+            actionFilter() { this.displayLimit = 50; }
         }
     });
 </script>

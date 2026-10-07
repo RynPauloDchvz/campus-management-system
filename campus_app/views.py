@@ -256,7 +256,7 @@ def forgot_password_view(request):
             request.session['reset_code'] = temp_code
             request.session['reset_user_id'] = user.id
 
-            subject = "Password Reset Request - PUPUni-CAMS"
+            subject = "Password Reset Request - PUP UNISAN CAMS"
             text_content = f"Your password reset code is: {temp_code}"
             html_content = render_to_string('emails/otp_email.html', {
                 'otp': temp_code,
@@ -342,7 +342,7 @@ def send_student_register_otp(request):
         otp_code = ''.join(random.choice(chars) for _ in range(6))
         request.session['register_otp'] = otp_code 
 
-        subject = 'PUPuni-CAMS: Registration Verification Code'
+        subject = 'PUP UNISAN CAMS: Registration Verification Code'
         text_content = f"Your verification code is: {otp_code}"
         html_content = render_to_string('emails/otp_email.html', {'otp': otp_code})
 
@@ -571,7 +571,7 @@ def get_student_notifications(student):
     notifications.append({
         'id': f"welcome_{student.id}",
         'type': 'system',
-        'title': 'Welcome to PUPUni-CAMS!',
+        'title': 'Welcome to PUP UNISAN CAMS!',
         'message': f"Mabuhay {student.full_name}! Your account has been verified. You can now participate in campus events and track your attendance.",
         'sender': 'System Admin',
         'date': student.created_at.strftime('%b %d, %Y') if student.created_at else 'System',
@@ -1353,7 +1353,7 @@ def force_change_send_otp(request):
         otp_code = ''.join(random.choice(chars) for _ in range(6))
         request.session['force_change_otp'] = otp_code
         
-        subject = 'PUPuni-CAMS: Password Change Verification Code'
+        subject = 'PUP UNISAN CAMS: Password Change Verification Code'
         text_content = f"Your verification code is: {otp_code}"
         from django.template.loader import render_to_string
         html_content = render_to_string('emails/otp_email.html', {'otp': otp_code})
@@ -1997,7 +1997,7 @@ def send_student_email(student, email_type, context_data):
     if not student.email_notifications:
         return False
     
-    subject = "PUPUni-CAMS Notification"
+    subject = "PUP UNISAN CAMS Notification"
     template_name = ""
     
     if email_type == 'welcome':
@@ -3603,8 +3603,8 @@ def admin_generate_org_password(request):
             # Store in cache to be used when form is submitted
             cache.set(f'generated_org_pwd_{email}', password, timeout=600) # Valid for 10 minutes
             
-            subject = 'PUPuni-CAMS: Organizer Account Password'
-            text_content = f"Your generated password for PUPuni-CAMS is: {password}\n\nPlease use this to log in and change your password immediately."
+            subject = 'PUP UNISAN CAMS: Organizer Account Password'
+            text_content = f"Your generated password for PUP UNISAN CAMS is: {password}\n\nPlease use this to log in and change your password immediately."
             
             login_url = request.build_absolute_uri('/')
             html_content = render_to_string('emails/generated_org_password.html', {

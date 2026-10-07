@@ -81,8 +81,8 @@
     </div>
     
     <!-- Modal Message UI -->
-    <div id="notifModal" class="hidden fixed inset-0 flex items-center justify-center sm:p-4 bg-black/50 backdrop-blur-sm transition-opacity" style="z-index: 9999;">
-        <div class="bg-white dark:bg-[#151515] sm:rounded-2xl w-full h-full sm:h-auto sm:max-w-lg shadow-2xl sm:border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col">
+    <div id="notif-modal-backdrop" class="hidden fixed inset-0 flex items-center justify-center sm:p-4 bg-black/80 transition-opacity" style="opacity: 0; z-index: 9999;" onclick="closeNotifModal()">
+        <div id="notif-modal-box" class="bg-white dark:bg-[#151515] sm:rounded-2xl w-full h-full sm:h-auto sm:max-w-lg shadow-2xl sm:border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col" style="opacity: 0; transform: scale(0.95) translateY(20px);" onclick="event.stopPropagation()">
             
             <div class="flex justify-between items-center p-5 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-[#1a1a1a]">
                 <h3 class="font-bold text-lg text-gray-900 dark:text-white truncate pr-2" id="modalTitle">Notification Details</h3>
@@ -148,6 +148,87 @@
     let notifications = [];
     let currentFiltered = [];
     let readNotifs = JSON.parse(localStorage.getItem('admin_read_notifs') || '[]');
+    let notifOriginRect = null;
+
+    function animateModalOpen(boxId, backdropId, originRect) {
+        const box = document.getElementById(boxId);
+        const backdrop = document.getElementById(backdropId);
+        
+        backdrop.classList.remove('hidden');
+        backdrop.classList.add('flex');
+        
+        backdrop.style.opacity = '0';
+        backdrop.style.transition = 'none';
+        
+        requestAnimationFrame(() => {
+            void backdrop.offsetWidth;
+            backdrop.style.transition = 'opacity 0.3s ease-out';
+            backdrop.style.opacity = '1';
+        });
+
+        if (box) {
+            if (originRect) {
+                const startX = originRect.left + originRect.width / 2 - window.innerWidth / 2;
+                const startY = originRect.top + originRect.height / 2 - window.innerHeight / 2;
+                const scaleX = originRect.width / window.innerWidth;
+                const scaleY = originRect.height / window.innerHeight;
+                let scale = Math.min(scaleX, scaleY) * 0.8;
+                if(scale < 0.1) scale = 0.1;
+
+                box.style.transform = `translate(${startX}px, ${startY}px) scale(${scale})`;
+                box.style.opacity = '0';
+                box.style.transition = 'none';
+            } else {
+                box.style.transform = 'scale(0.95) translateY(20px)';
+                box.style.opacity = '0';
+                box.style.transition = 'none';
+            }
+            
+            requestAnimationFrame(() => {
+                void box.offsetWidth;
+                box.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.3s ease-out';
+                box.style.transform = 'translate(0, 0) scale(1)';
+                box.style.opacity = '1';
+            });
+        }
+    }
+
+    function animateModalClose(boxId, backdropId, originRect, closeCallback) {
+        const box = document.getElementById(boxId);
+        const backdrop = document.getElementById(backdropId);
+        
+        if (backdrop) {
+            backdrop.style.transition = 'opacity 0.3s ease-in';
+            backdrop.style.opacity = '0';
+        }
+
+        if (box) {
+            if (originRect) {
+                const startX = originRect.left + originRect.width / 2 - window.innerWidth / 2;
+                const startY = originRect.top + originRect.height / 2 - window.innerHeight / 2;
+                const scaleX = originRect.width / window.innerWidth;
+                const scaleY = originRect.height / window.innerHeight;
+                let scale = Math.min(scaleX, scaleY) * 0.8;
+                if(scale < 0.1) scale = 0.1;
+
+                box.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in';
+                box.style.transform = `translate(${startX}px, ${startY}px) scale(${scale})`;
+                box.style.opacity = '0';
+            } else {
+                box.style.transition = 'transform 0.3s ease-in, opacity 0.3s ease-in';
+                box.style.transform = 'scale(0.95) translateY(20px)';
+                box.style.opacity = '0';
+            }
+        }
+        
+        setTimeout(() => {
+            if (backdrop) {
+                backdrop.classList.add('hidden');
+                backdrop.classList.remove('flex');
+            }
+            if (closeCallback) closeCallback();
+        }, 300);
+    }
 
     function renderNotifications(dataList) {
         const container = document.getElementById('notificationsContainer');
@@ -211,7 +292,7 @@
                 : 'bg-transparent dark:bg-transparent border-gray-100 dark:border-gray-800';
 
             htmlString += `
-                <div onclick="handleNotifClick(${index})" 
+                <div onclick="handleNotifClick(${index}, event)" 
                      class="notif-card-transition cursor-pointer border-b border-l-[5px] last:border-b-0 p-4 sm:p-5 sm:py-6 flex flex-row items-center justify-between gap-2 sm:gap-4 ${borderClass} ${readClass} hover:bg-gray-50 dark:hover:bg-[#1a1a1a]">
                     
                     <div class="flex flex-row items-center gap-3 sm:gap-4 flex-1 min-w-0">
@@ -255,8 +336,14 @@
         renderNotifications(currentFiltered);
     }
 
-    function handleNotifClick(index) {
+    function handleNotifClick(index, event) {
         const notif = currentFiltered[index];
+        if (event && event.currentTarget) {
+            notifOriginRect = event.currentTarget.getBoundingClientRect();
+        } else {
+            notifOriginRect = null;
+        }
+
         if (!readNotifs.includes(notif.id)) {
             readNotifs.push(notif.id);
             localStorage.setItem('admin_read_notifs', JSON.stringify(readNotifs));
@@ -286,13 +373,14 @@
             document.getElementById('modalActionBtn').style.display = 'none';
         }
         
-        document.getElementById('notifModal').classList.remove('hidden');
-        document.getElementById('notifModal').classList.add('flex');
+        document.body.style.overflow = 'hidden';
+        animateModalOpen('notif-modal-box', 'notif-modal-backdrop', notifOriginRect);
     }
     
     function closeNotifModal() {
-        document.getElementById('notifModal').classList.add('hidden');
-        document.getElementById('notifModal').classList.remove('flex');
+        animateModalClose('notif-modal-box', 'notif-modal-backdrop', notifOriginRect, () => {
+            document.body.style.overflow = 'auto';
+        });
     }
 
     function markAllAsRead() {

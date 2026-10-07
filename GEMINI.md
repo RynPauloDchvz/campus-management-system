@@ -1,7 +1,7 @@
-# GEMINI.md - PUPuni-CAMS Project Context
+# GEMINI.md - PUP UNISAN CAMS Project Context
 
 ## Project Overview
-**PUPuni-CAMS** (PUP Campus Activity Management System) is a Django-based platform designed to manage student organization activities at PUP. It streamlines the lifecycle of campus events from proposal and multi-stage approval to attendance tracking and analytics.
+**PUP UNISAN CAMS** (PUP Campus Activity Management System) is a Django-based platform designed to manage student organization activities at PUP. It streamlines the lifecycle of campus events from proposal and multi-stage approval to attendance tracking and analytics.
 
 ### Main Technologies
 - **Backend:** Django 6.0.3

@@ -1,7 +1,7 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 
-{% block title %}Manage Organizers | PUPUni-CAMS{% endblock %}
+{% block title %}Manage Organizers | PUP UNISAN CAMS{% endblock %}
 
 {% block page_title %}Manage Student Organizers{% endblock %}
 {% block page_subtitle %}Create and monitor accounts for organization representatives.{% endblock %}
@@ -284,7 +284,7 @@
             </a>
 
             <!-- 🟢 CREATE BUTTON FOR STUDENT ORG 🟢 -->
-            <button class="btn-primary create-btn" onclick="openModal('createOrgModal')" title="Create Org Account">
+            <button class="btn-primary create-btn" onclick="openModal('createOrgModal', event)" title="Create Org Account">
                 <i class="ph-bold ph-user-plus" style="font-size: 1.2rem;"></i> <span class="btn-text-hide">Create Org Account</span>
             </button>
         </div>
@@ -296,7 +296,7 @@
             <h3 style="margin: 0; font-size: 1rem; font-weight: 900; text-transform: uppercase; color: var(--text-main); line-height: 1.1; flex-grow: 1;">Student Org List</h3>
             <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
                 <button class="btn-cancel" id="btnToggleManage" onclick="toggleBulkManage()" style="padding: 5px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-pencil-simple"></i> Manage</button>
-                <button class="btn-primary" id="btnBulkDeactivate" onclick="openBulkDeleteModal()" style="display: none; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; background: var(--danger); border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-trash"></i> Deactivate</button>
+                <button class="btn-primary" id="btnBulkDeactivate" onclick="openBulkDeleteModal(event)" style="display: none; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; background: var(--danger); border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-trash"></i> Deactivate</button>
             </div>
         </div>
 
@@ -603,11 +603,11 @@
         }
     }
     
-    function handleCardClick(id) {
+    function handleCardClick(id, event) {
         if (isBulkManageActive) {
             toggleStudentSelection(id);
         } else {
-            openViewModal(id);
+            openViewModal(id, event);
         }
     }
     
@@ -641,15 +641,15 @@
         }
     }
     
-    function openBulkDeleteModal() {
+    function openBulkDeleteModal(event) {
         if (selectedUserIds.size === 0) {
             document.getElementById('alertModalMessage').innerText = "Select at least one account to deactivate.";
-            openModal('alertModal');
+            openModal('alertModal', event);
             return;
         }
         document.getElementById('d_id').value = Array.from(selectedUserIds).join(',');
         document.getElementById('d_name').innerText = selectedUserIds.size + " selected account(s)";
-        openModal('deleteModal');
+        openModal('deleteModal', event);
     }
 
     function renderTable(data) {
@@ -699,9 +699,9 @@
                                 <i class="ph-bold ph-dots-three-outline-vertical"></i> Manage
                             </button>
                             <div class="actions-menu" style="text-align:left;">
-                                <a class="action-item" onclick="event.stopPropagation(); openViewModal(${user.id})"><i class="ph-bold ph-user-circle"></i> View Profile</a>
+                                <a class="action-item" onclick="event.stopPropagation(); openViewModal(${user.id}, event)"><i class="ph-bold ph-user-circle"></i> View Profile</a>
                                 <hr style="border-color: var(--border); margin:0;">
-                                <a class="action-item danger" onclick="event.stopPropagation(); openDeleteModal(${user.id})"><i class="ph-bold ph-warning-circle"></i> Deactivate Access</a>
+                                <a class="action-item danger" onclick="event.stopPropagation(); openDeleteModal(${user.id}, event)"><i class="ph-bold ph-warning-circle"></i> Deactivate Access</a>
                             </div>
                         </div>
                     </td>
@@ -712,7 +712,7 @@
             // Mobile Card Row
             if (mobileList) {
                 const mobileCard = `
-                    <div class="student-card" id="student-card-${user.id}" onclick="handleCardClick(${user.id})" style="cursor: pointer;">
+                    <div class="student-card" id="student-card-${user.id}" onclick="handleCardClick(${user.id}, event)" style="cursor: pointer;">
                         <input type="checkbox" class="student-checkbox" id="chk-${user.id}" value="${user.id}">
                         <img src="${safeAvatar}" class="user-avatar" style="width: 45px; height: 45px; border-radius: 50%;">
                         <div style="flex-grow: 1;">
@@ -854,7 +854,7 @@
         document.getElementById(inputId + '_dropdown').classList.remove('active');
     }
 
-    function openViewModal(id) {
+    function openViewModal(id, event) {
         const user = usersData.find(u => u.id === id);
         const safeAvatar = user.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff`;
         const safeCover = user.cover_photo ? user.cover_photo : `https://picsum.photos/seed/${user.id}/400/200`;
@@ -866,20 +866,86 @@
         document.getElementById('v_org').innerText = user.org;
         document.getElementById('v_username').innerText = user.username;
         document.getElementById('v_year').innerText = user.year_level || '1st Year';
-        openModal('viewDetailsModal');
+        openModal('viewDetailsModal', event);
     }
 
-    function openModal(modalId) {
+    function openModal(modalId, event) {
         const modal = document.getElementById(modalId);
-        modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
+        if (!modal) return;
+        const modalBox = modal.querySelector('.modal-box');
+        
+        if (window.innerWidth <= 900) {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            return;
+        }
+
+        let originEl = null;
+        if (event) {
+            originEl = event.currentTarget || event.target;
+            if (originEl.nodeType === 3) originEl = originEl.parentNode;
+            modal._originElement = originEl;
+        } else {
+            modal._originElement = null;
+        }
+
+        if (modal._originElement && modalBox) {
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            modalBox.style.transition = 'none';
+            
+            requestAnimationFrame(() => {
+                const originRect = modal._originElement.getBoundingClientRect();
+                const modalRect = modalBox.getBoundingClientRect();
+                
+                const startX = originRect.left + (originRect.width / 2);
+                const startY = originRect.top + (originRect.height / 2);
+                const endX = modalRect.left + (modalRect.width / 2);
+                const endY = modalRect.top + (modalRect.height / 2);
+                
+                const translateX = startX - endX;
+                const translateY = startY - endY;
+                const scaleX = originRect.width / (modalRect.width || 1);
+                const scaleY = originRect.height / (modalRect.height || 1);
+                const scale = Math.max(Math.min(scaleX, scaleY), 0.05);
+                
+                modalBox.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+                modalBox.style.opacity = '0';
+                modalBox.style.transformOrigin = 'center';
+                
+                modal.style.opacity = '1';
+                void modalBox.offsetWidth; // reflow
+                
+                modalBox.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1), opacity 0.3s ease';
+                modalBox.style.transform = 'translate(0, 0) scale(1)';
+                modalBox.style.opacity = '1';
+                
+                modal.classList.add('active');
+            });
+        } else {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            if (modalBox) {
+                modalBox.style.transform = '';
+                modalBox.style.transition = '';
+                modalBox.style.opacity = '';
+            }
+        }
     }
 
     function closeModal(modalId) {
         const modal = document.getElementById(modalId);
-        modal.classList.remove('active');
-        setTimeout(() => {
+        if (!modal) return;
+        const modalBox = modal.querySelector('.modal-box');
+        
+        function finalizeClose() {
             modal.style.display = 'none';
+            if (modalBox) {
+                modalBox.style.transform = '';
+                modalBox.style.transition = '';
+                modalBox.style.opacity = '';
+            }
+            modal._originElement = null;
             if (modalId === 'createOrgModal' || modalId === 'editOrgModal') {
                 let prefix = modalId === 'createOrgModal' ? 'c' : 'e';
                 if(document.getElementById(prefix + '-phase-1')) {
@@ -888,10 +954,44 @@
                     p1.classList.remove('phase-left', 'phase-right');
                     p1.classList.add('active-phase');
                     p2.classList.remove('active-phase', 'phase-left', 'phase-right');
-                    document.getElementById(prefix + '-bar-2').style.background = 'var(--border)';
+                    const bar2 = document.getElementById(prefix + '-bar-2');
+                    if(bar2) bar2.style.background = 'var(--border)';
                 }
             }
-        }, 200);
+        }
+
+        if (window.innerWidth <= 900) {
+            modal.classList.remove('active');
+            setTimeout(finalizeClose, 200);
+            return;
+        }
+
+        if (modal._originElement && modalBox) {
+            const originRect = modal._originElement.getBoundingClientRect();
+            const modalRect = modalBox.getBoundingClientRect();
+            
+            const startX = originRect.left + (originRect.width / 2);
+            const startY = originRect.top + (originRect.height / 2);
+            const endX = modalRect.left + (modalRect.width / 2);
+            const endY = modalRect.top + (modalRect.height / 2);
+            
+            const translateX = startX - endX;
+            const translateY = startY - endY;
+            const scaleX = originRect.width / (modalRect.width || 1);
+            const scaleY = originRect.height / (modalRect.height || 1);
+            const scale = Math.max(Math.min(scaleX, scaleY), 0.05);
+            
+            modalBox.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+            modalBox.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            modalBox.style.opacity = '0';
+            
+            modal.classList.remove('active');
+            
+            setTimeout(finalizeClose, 300);
+        } else {
+            modal.classList.remove('active');
+            setTimeout(finalizeClose, 200);
+        }
     }
 
     function clearForm(prefix) {
@@ -899,11 +999,11 @@
         document.getElementById(`${prefix}_password`).value = '';
     }
 
-    function openDeleteModal(id) {
+    function openDeleteModal(id, event) {
         const user = usersData.find(u => u.id === id);
         document.getElementById('d_id').value = user.id;
         document.getElementById('d_name').innerText = user.name + ' (' + user.org + ')';
-        openModal('deleteModal');
+        openModal('deleteModal', event);
     }
 
     async function generateAndSendPassword(prefix) {
