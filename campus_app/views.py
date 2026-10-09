@@ -265,7 +265,7 @@ def forgot_password_view(request):
                 'otp': temp_code,
             })
 
-            email_msg = EmailMultiAlternatives(subject, text_content, 'pupuqcams2526@gmail.com', [email])
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email])
             email_msg.attach_alternative(html_content, "text/html")
             email_msg.send()
             return JsonResponse({"status": "success", "message": "Verification code sent to your registered email!"})
@@ -350,7 +350,7 @@ def send_student_register_otp(request):
         html_content = render_to_string('emails/otp_email.html', {'otp': otp_code})
 
         try:
-            email_msg = EmailMultiAlternatives(subject, text_content, 'pupuqcams2526@gmail.com', [email])
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email])
             email_msg.attach_alternative(html_content, "text/html")
             email_msg.send()
             return JsonResponse({"status": "success", "message": "OTP sent! Please check your email inbox (and spam folder)."})
@@ -1362,7 +1362,7 @@ def force_change_send_otp(request):
         html_content = render_to_string('emails/otp_email.html', {'otp': otp_code})
         
         try:
-            email_msg = EmailMultiAlternatives(subject, text_content, 'pupuqcams2526@gmail.com', [email])
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email])
             email_msg.attach_alternative(html_content, "text/html")
             email_msg.send()
             return JsonResponse({"status": "success", "message": "OTP sent to your email."})
@@ -3664,7 +3664,7 @@ def admin_generate_org_password(request):
                 'login_url': login_url
             })
             
-            email_msg = EmailMultiAlternatives(subject, text_content, 'pupuqcams2526@gmail.com', [email])
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email])
             email_msg.attach_alternative(html_content, "text/html")
             email_msg.send()
             

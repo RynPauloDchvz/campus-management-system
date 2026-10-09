@@ -158,6 +158,20 @@
 
     /* MOBILE BOTTOM SHEET OVERRIDES */
     @media (max-width: 900px) {
+        .modal.modal-fullscreen .modal-box {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            border: none !important;
+        }
+        
+        .modal.modal-fullscreen .form-fields-scroll {
+            overflow-y: auto !important;
+        }
+        
         .modal.modal-bottom {
             align-items: flex-end !important;
             padding: 0 !important;
@@ -210,6 +224,10 @@
         </div>
         
         <div class="action-buttons-group">
+            <!-- 🟢 CREATE BUTTON 🟢 -->
+            <button onclick="openModal('createStudentModal')" class="btn-primary create-btn" title="Create Student">
+                <i class="ph-bold ph-user-plus" style="font-size: 1.2rem;"></i> <span class="btn-text-hide">Create Student</span>
+            </button>
             <!-- 🟢 HISTORY BUTTON 🟢 -->
             <a href="{% url 'account_history' %}?source=student" class="btn-cancel history-btn" title="Account History">
                 <i class="ph-bold ph-clock-counter-clockwise" style="font-size: 1.2rem;"></i> <span class="btn-text-hide">Account History</span>
@@ -252,6 +270,155 @@
 {% endblock %}
 
 {% block modals %}
+<!-- 🟢 CREATE MODAL 🟢 -->
+<div id="createStudentModal" class="modal modal-fullscreen">
+    <div class="modal-box" style="max-width: 600px; max-height: 90vh; display: flex; flex-direction: column;">
+        <div style="text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; position: relative; flex-shrink: 0;">
+            <h3 class="modal-title" style="margin: 0; font-size: 1.4rem; font-weight: 900; text-transform: uppercase;">Create Student Account</h3>
+            <p class="modal-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">Set up login credentials manually or via file upload.</p>
+            <button onclick="closeModal('createStudentModal')" style="position: absolute; top: -5px; right: 0px; background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; color: var(--text-muted);"><i class="ph-bold ph-x"></i></button>
+        </div>
+        
+        <!-- DROPDOWN SELECTION -->
+        <div class="form-group" style="margin-bottom: 20px; flex-shrink: 0;">
+            <div class="custom-dropdown" id="createMethodDropdown">
+                <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('createMethodDropdown')">
+                    <span id="createMethodLabel">Manual Entry</span> <i class="ph-bold ph-caret-down"></i>
+                </div>
+                <div class="custom-dropdown-menu" id="createMethodMenu">
+                    <div class="dropdown-item active" onclick="switchCreateMethod('manual', event)">Manual Entry</div>
+                    <div class="dropdown-item" onclick="switchCreateMethod('upload', event)">Bulk Upload Accounts (File)</div>
+                </div>
+            </div>
+        </div>
+
+        <form id="createForm" novalidate onsubmit="event.preventDefault(); submitCreateStudent();" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+            <!-- MANUAL FORM -->
+            <div id="manualFormSection" class="phase-container active-phase" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                <div class="form-fields-scroll" style="overflow-y: auto; flex: 1; padding-right: 5px; padding-bottom: 20px;">
+                    <!-- 1st form - Full name -->
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="c_name" required placeholder="e.g. Juan Dela Cruz" class="form-input">
+                    </div>
+                    
+                    <!-- 2nd form - Student ID -->
+                    <div class="form-group">
+                        <label class="form-label">Student ID</label>
+                        <input type="text" id="c_username" required placeholder="e.g. 2023-01234-MN-0" class="form-input">
+                    </div>
+                    
+                    <!-- 3rd form - Birthday -->
+                    <div class="form-group">
+                        <label class="form-label">Birthday</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: start;">
+                            <!-- MONTH -->
+                            <div class="custom-dropdown" id="b_month_dropdown" style="width: 100%; min-width: 0;">
+                                <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('b_month_dropdown')" style="padding: 10px; font-size: 0.9rem;">
+                                    <span id="b_month_label" style="color: var(--text-muted);">MM</span>
+                                    <i class="ph-bold ph-caret-down"></i>
+                                </div>
+                                <div class="custom-dropdown-menu" style="max-height: 0;">
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '01', 'Jan', event)">Jan</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '02', 'Feb', event)">Feb</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '03', 'Mar', event)">Mar</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '04', 'Apr', event)">Apr</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '05', 'May', event)">May</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '06', 'Jun', event)">Jun</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '07', 'Jul', event)">Jul</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '08', 'Aug', event)">Aug</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '09', 'Sep', event)">Sep</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '10', 'Oct', event)">Oct</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '11', 'Nov', event)">Nov</div>
+                                    <div class="dropdown-item" onclick="selectBirthday('month', '12', 'Dec', event)">Dec</div>
+                                </div>
+                                <input type="hidden" id="b_month" required value="">
+                            </div>
+                            <!-- DAY -->
+                            <div class="custom-dropdown" id="b_day_dropdown" style="width: 100%; min-width: 0;">
+                                <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('b_day_dropdown'); populateDays()" style="padding: 10px; font-size: 0.9rem;">
+                                    <span id="b_day_label" style="color: var(--text-muted);">DD</span>
+                                    <i class="ph-bold ph-caret-down"></i>
+                                </div>
+                                <div class="custom-dropdown-menu" id="b_day_menu" style="max-height: 0;"></div>
+                                <input type="hidden" id="b_day" required value="">
+                            </div>
+                            <!-- YEAR -->
+                            <div class="custom-dropdown" id="b_year_dropdown" style="width: 100%; min-width: 0;">
+                                <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('b_year_dropdown'); populateYears()" style="padding: 10px; font-size: 0.9rem;">
+                                    <span id="b_year_label" style="color: var(--text-muted);">YYYY</span>
+                                    <i class="ph-bold ph-caret-down"></i>
+                                </div>
+                                <div class="custom-dropdown-menu" id="b_year_menu" style="max-height: 0;"></div>
+                                <input type="hidden" id="b_year" required value="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4th form - Year Level -->
+                    <div class="form-group">
+                        <label class="form-label">Year Level</label>
+                        <div class="custom-dropdown" id="c_year_dropdown" style="width: 100%;">
+                            <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('c_year_dropdown')" style="padding: 10px;">
+                                <span id="c_year_label">1st Year</span>
+                                <i class="ph-bold ph-caret-down"></i>
+                            </div>
+                            <div class="custom-dropdown-menu" style="max-height: 0;">
+                                <div class="dropdown-item active" onclick="selectYear('1st Year', event)">1st Year</div>
+                                <div class="dropdown-item" onclick="selectYear('2nd Year', event)">2nd Year</div>
+                                <div class="dropdown-item" onclick="selectYear('3rd Year', event)">3rd Year</div>
+                                <div class="dropdown-item" onclick="selectYear('4th Year', event)">4th Year</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="c_year" required value="1st Year">
+                    </div>
+                    
+                    <!-- 4th form - Email and Password Generator -->
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <div style="display: flex; gap: 10px; align-items: stretch;">
+                            <input type="email" id="c_email" required placeholder="Student's Email" class="form-input" style="flex: 1; min-width: 0;">
+                            <button type="button" class="btn-primary" onclick="generateAndSendPassword()" style="white-space: nowrap; padding: 0 15px; flex-shrink: 0;" id="btn-generate-c"><i class="ph-bold ph-key"></i> Generate</button>
+                        </div>
+                    </div>
+                </div> <!-- End form-fields-scroll -->
+
+                <div class="modal-actions" style="justify-content: flex-end; padding-top: 15px; border-top: 1px solid var(--border); flex-shrink: 0;">
+                    <button type="button" class="btn-cancel" onclick="closeModal('createStudentModal')">Cancel</button>
+                    <button type="submit" id="btn-create" class="btn-primary">Create Account</button>
+                </div>
+            </div>
+            
+            <!-- UPLOAD FORM -->
+            <div id="uploadFormSection" style="display: none; flex-direction: column; flex: 1; overflow: hidden; padding-top: 10px;">
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; padding-bottom: 10px;">
+                    
+                    <!-- INITIAL DROPZONE -->
+                    <div id="uploadDropzone" style="border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px; text-align: center; background: var(--input-bg); cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('bulkUploadFile').click()">
+                        <i class="ph-bold ph-file-arrow-up" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 10px;"></i>
+                        <h4 style="margin: 0 0 5px; font-weight: 800; color: var(--text-main);">Bulk Upload Accounts</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Supports DOCX, PDF, CSV, TXT, Excel files.</p>
+                        <input type="file" id="bulkUploadFile" accept=".docx,.doc,.pdf,.csv,.txt,.xls,.xlsx" multiple style="display: none;" onchange="handleFileSelect(this)">
+                        <button type="button" class="btn-cancel" style="margin: 0 auto; display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation(); document.getElementById('bulkUploadFile').click()">
+                            <i class="ph-bold ph-upload-simple"></i> Select Files
+                        </button>
+                    </div>
+
+                    <!-- PREVIEW CONTAINER (Hidden initially) -->
+                    <div id="filePreviewContainer" style="display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-right: 5px;">
+                        <!-- JS populated file items -->
+                    </div>
+                </div>
+                
+                <div class="modal-actions" style="justify-content: flex-end; padding-top: 15px; border-top: 1px solid var(--border); flex-shrink: 0;">
+                    <button type="button" class="btn-cancel" onclick="closeModal('createStudentModal')">Cancel</button>
+                    <button type="button" class="btn-primary" onclick="processBulkUpload()">Process Upload</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- 🟢 VIEW DETAILS MODAL (MOBILE) 🟢 -->
 <div id="viewDetailsModal" class="modal modal-bottom">
     <div class="modal-box" style="max-width: 400px; text-align: left; padding: 0; border-radius: 1.5rem; overflow: hidden; position: relative;">
@@ -322,6 +489,12 @@
             <button type="button" class="btn-primary" style="background: var(--danger);" onclick="submitAction('deactivate')">Yes, Deactivate</button>
         </div>
     </div>
+</div>
+
+<!-- 🟢 CUSTOM TOAST 🟢 -->
+<div id="customToast" style="position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 50px; font-weight: 700; font-size: 0.85rem; color: white; display: flex; align-items: center; gap: 8px; z-index: 10001; transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+    <i id="customToastIcon" class="ph-bold ph-check-circle" style="font-size: 1.1rem;"></i>
+    <span id="customToastMsg"></span>
 </div>
 {% endblock %}
 
@@ -745,6 +918,261 @@
         if (!event.target.matches('.btn-action-small') && !event.target.matches('.ph-dots-three-outline-vertical')) {
             document.querySelectorAll('.actions-dropdown').forEach(d => d.classList.remove('active'));
         }
+    }
+
+    // 🟢 CREATE STUDENT LOGIC 🟢
+    let selectedFiles = [];
+
+    function handleFileSelect(input) {
+        if (!input.files || input.files.length === 0) return;
+        
+        for(let i=0; i<input.files.length; i++) {
+            selectedFiles.push(input.files[i]);
+        }
+        
+        renderFilePreviews();
+    }
+    
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        if (selectedFiles.length === 0) {
+            document.getElementById('filePreviewContainer').style.display = 'none';
+            document.getElementById('uploadDropzone').style.display = 'block';
+            document.getElementById('bulkUploadFile').value = '';
+        } else {
+            renderFilePreviews();
+        }
+    }
+    
+    function renderFilePreviews() {
+        const dropzone = document.getElementById('uploadDropzone');
+        const container = document.getElementById('filePreviewContainer');
+        
+        dropzone.style.display = 'none';
+        container.style.display = 'flex';
+        
+        let html = '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0;"><h4 style="margin:0; font-weight:800; font-size:1.1rem;">Selected Files</h4><button type="button" class="btn-cancel" style="padding: 5px 10px; font-size: 0.8rem;" onclick="document.getElementById(\'bulkUploadFile\').click()"><i class="ph-bold ph-plus"></i> Add More</button></div>';
+        
+        selectedFiles.forEach((file, index) => {
+            let icon = 'ph-file';
+            let color = 'var(--text-muted)';
+            if(file.name.endsWith('.pdf')) { icon = 'ph-file-pdf'; color = '#EF4444'; }
+            else if(file.name.endsWith('.csv') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) { icon = 'ph-file-csv'; color = '#10B981'; }
+            else if(file.name.endsWith('.docx') || file.name.endsWith('.doc')) { icon = 'ph-file-doc'; color = '#3B82F6'; }
+            else if(file.name.endsWith('.txt')) { icon = 'ph-file-text'; }
+            
+            html += `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-card); margin-bottom: 8px; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
+                    <i class="ph-bold ${icon}" style="font-size: 1.8rem; color: ${color}; flex-shrink: 0;"></i>
+                    <div style="display: flex; flex-direction: column; overflow: hidden;">
+                        <span style="font-weight: 700; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">${(file.size / 1024).toFixed(1)} KB</span>
+                    </div>
+                </div>
+                <button type="button" onclick="removeFile(${index})" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 5px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 5px; transition: background 0.2s;">
+                    <i class="ph-bold ph-trash" style="font-size: 1.2rem;"></i>
+                </button>
+            </div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    function toggleCustomDropdown(dropdownId) {
+        // Close other dropdowns first
+        document.querySelectorAll('.custom-dropdown').forEach(d => {
+            if (d.id !== dropdownId) {
+                d.classList.remove('active');
+                let menu = d.querySelector('.custom-dropdown-menu');
+                if (menu) menu.style.maxHeight = '0';
+            }
+        });
+        const dropdown = document.getElementById(dropdownId);
+        dropdown.classList.toggle('active');
+        const menu = dropdown.querySelector('.custom-dropdown-menu');
+        if (dropdown.classList.contains('active')) {
+            menu.style.maxHeight = menu.scrollHeight + 'px';
+        } else {
+            menu.style.maxHeight = '0';
+        }
+    }
+
+    function switchCreateMethod(method, event) {
+        event.stopPropagation();
+        const label = document.getElementById('createMethodLabel');
+        const items = document.querySelectorAll('#createMethodDropdown .dropdown-item');
+        items.forEach(i => i.classList.remove('active'));
+        
+        if (method === 'manual') {
+            label.innerText = 'Manual Entry';
+            event.target.classList.add('active');
+            document.getElementById('manualFormSection').style.display = 'flex';
+            document.getElementById('uploadFormSection').style.display = 'none';
+            
+            // Add required attr
+            document.getElementById('c_name').required = true;
+            document.getElementById('c_username').required = true;
+            document.getElementById('b_month').required = true;
+            document.getElementById('b_day').required = true;
+            document.getElementById('b_year').required = true;
+            document.getElementById('c_email').required = true;
+        } else {
+            label.innerText = 'Bulk Upload Accounts (File)';
+            event.target.classList.add('active');
+            document.getElementById('manualFormSection').style.display = 'none';
+            document.getElementById('uploadFormSection').style.display = 'flex';
+            
+            // Remove required attr
+            document.getElementById('c_name').required = false;
+            document.getElementById('c_username').required = false;
+            document.getElementById('b_month').required = false;
+            document.getElementById('b_day').required = false;
+            document.getElementById('b_year').required = false;
+            document.getElementById('c_email').required = false;
+        }
+        
+        // Close dropdown with animation
+        const dropdown = document.getElementById('createMethodDropdown');
+        dropdown.classList.remove('active');
+        dropdown.querySelector('.custom-dropdown-menu').style.maxHeight = '0';
+    }
+
+    function selectYear(val, event) {
+        event.stopPropagation();
+        document.getElementById('c_year_label').innerText = val;
+        document.getElementById('c_year').value = val;
+        
+        const dropdown = document.getElementById('c_year_dropdown');
+        dropdown.classList.remove('active');
+        dropdown.querySelector('.custom-dropdown-menu').style.maxHeight = '0';
+    }
+    
+    function selectBirthday(type, val, labelText, event) {
+        event.stopPropagation();
+        document.getElementById(`b_${type}_label`).innerText = labelText;
+        document.getElementById(`b_${type}_label`).style.color = 'var(--text-main)';
+        document.getElementById(`b_${type}`).value = val;
+        
+        const dropdown = document.getElementById(`b_${type}_dropdown`);
+        const menu = dropdown.querySelector('.custom-dropdown-menu');
+        menu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        dropdown.classList.remove('active');
+        menu.style.maxHeight = '0';
+    }
+
+    function populateDays() {
+        const menu = document.getElementById('b_day_menu');
+        if(menu.children.length > 0) return;
+        let html = '';
+        for(let i=1; i<=31; i++) {
+            let val = i < 10 ? '0'+i : i;
+            html += `<div class="dropdown-item" onclick="selectBirthday('day', '${val}', '${val}', event)">${val}</div>`;
+        }
+        menu.innerHTML = html;
+    }
+    
+    function populateYears() {
+        const menu = document.getElementById('b_year_menu');
+        if(menu.children.length > 0) return;
+        let currYear = new Date().getFullYear();
+        let html = '';
+        for(let i=currYear; i>=1950; i--) {
+            html += `<div class="dropdown-item" onclick="selectBirthday('year', '${i}', '${i}', event)">${i}</div>`;
+        }
+        menu.innerHTML = html;
+    }
+    let toastTimeout;
+    function showToast(message, type='success') {
+        const toast = document.getElementById('customToast');
+        const icon = document.getElementById('customToastIcon');
+        const msgSpan = document.getElementById('customToastMsg');
+        
+        msgSpan.innerText = message;
+        if (type === 'success') {
+            toast.style.background = '#10B981'; // Green
+            icon.className = 'ph-bold ph-check-circle';
+        } else if (type === 'warning') {
+            toast.style.background = '#F59E0B'; // Orange
+            icon.className = 'ph-bold ph-warning';
+        } else {
+            toast.style.background = '#EF4444'; // Red
+            icon.className = 'ph-bold ph-warning-circle';
+        }
+        
+        toast.style.bottom = '30px';
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.style.bottom = '-100px';
+        }, 4000);
+    }
+
+    async function generateAndSendPassword() {
+        const name = document.getElementById('c_name').value.trim();
+        const username = document.getElementById('c_username').value.trim();
+        const b_month = document.getElementById('b_month').value;
+        const b_day = document.getElementById('b_day').value;
+        const b_year = document.getElementById('b_year').value;
+        const bday = (b_month && b_day && b_year) ? `${b_month}/${b_day}/${b_year}` : "";
+        const email = document.getElementById('c_email').value.trim();
+        
+        if (!name && !username && !bday && !email) {
+            showToast("Form is completely empty. Please fill it out.", "warning");
+            return;
+        }
+        if (!email) {
+            showToast("Please provide an email address.", "error");
+            return;
+        }
+        
+        const btn = document.getElementById('btn-generate-c');
+        btn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Generating...';
+        btn.disabled = true;
+        
+        // Simulating API
+        setTimeout(() => {
+            showToast("OTP Password generated and sent to " + email, "success");
+            btn.innerHTML = '<i class="ph-bold ph-check"></i> Generated';
+            btn.classList.replace('btn-primary', 'btn-cancel');
+            btn.style.color = 'var(--accent)';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="ph-bold ph-key"></i> Generate';
+                btn.classList.replace('btn-cancel', 'btn-primary');
+                btn.style.color = '';
+                btn.disabled = false;
+            }, 3000);
+        }, 1500);
+    }
+    
+    async function submitCreateStudent() {
+        const name = document.getElementById('c_name').value.trim();
+        const username = document.getElementById('c_username').value.trim();
+        const b_month = document.getElementById('b_month').value;
+        const b_day = document.getElementById('b_day').value;
+        const b_year = document.getElementById('b_year').value;
+        const bday = (b_month && b_day && b_year) ? `${b_month}/${b_day}/${b_year}` : "";
+        const email = document.getElementById('c_email').value.trim();
+        
+        if (!name && !username && !bday && !email) {
+            showToast("Please fill out the form before submitting.", "warning");
+            return;
+        }
+        if (!name || !username || !bday || !email) {
+            showToast("Please complete all required fields.", "error");
+            return;
+        }
+        
+        showToast("Form submitted successfully! Wait for backend integration.", "success");
+    }
+    
+    async function processBulkUpload() {
+        if(selectedFiles.length === 0) {
+            showToast("Please select a file first.", "error");
+            return;
+        }
+        showToast("File uploaded! Wait for backend integration.", "success");
     }
 
     // 🟢 SERVER ACTIONS 🟢
