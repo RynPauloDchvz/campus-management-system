@@ -169,12 +169,12 @@
 
                     <form @submit.prevent="submitLogin" class="space-y-5" novalidate>
                         {% csrf_token %}
-                        <!-- Student No Only -->
+                        <!-- Username -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-pup-gold mb-1.5 uppercase tracking-wider">Student Number</label>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-pup-gold mb-1.5 uppercase tracking-wider">Username</label>
                             <div class="relative">
                                 <i class="ph-bold ph-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
-                                <input type="text" v-model="loginData.student_number" required placeholder="202X-XXXXX-UQ-0" class="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm transition-colors">
+                                <input type="text" v-model="loginData.username" required placeholder="Student No. / Employee ID / Admin" class="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-gray-800 focus:outline-none focus:border-pup-maroon dark:focus:border-pup-gold text-gray-800 dark:text-white text-sm transition-colors">
                             </div>
                         </div>
                         
@@ -201,11 +201,7 @@
                         </button>
                     </form>
 
-                    <!-- Switch to Register Link -->
-                    <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-8 font-medium">
-                        Don't have an account? 
-                        <a href="#" @click.prevent="switchView('register')" class="text-pup-maroon dark:text-pup-gold font-bold hover:underline ml-1 transition-colors">Create one</a>
-                    </p>
+
                 </div>
 
                 <!-- ============================================== -->
@@ -620,7 +616,7 @@
                     // LOGIN DATA
                     showPassword: false,
                     isLoggingIn: false,
-                    loginData: { student_number: '', password: '' },
+                    loginData: { username: '', password: '' },
 
                     // REGISTER DATA
                     registerStep: 1,
@@ -720,13 +716,13 @@
                 },
 
                 async submitLogin() {
-                    if (!this.loginData.student_number || !this.loginData.password) {
-                        this.showToast("Please fill in both student number and password.", "warning");
+                    if (!this.loginData.username || !this.loginData.password) {
+                        this.showToast("Please fill in both username and password.", "warning");
                         return;
                     }
                     this.isLoggingIn = true;
                     const formData = new FormData();
-                    formData.append('student_number', this.loginData.student_number);
+                    formData.append('username', this.loginData.username);
                     formData.append('password', this.loginData.password);
                     
                     // Improved CSRF Token Retrieval

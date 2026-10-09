@@ -159,33 +159,36 @@ def portal_login_view(request):
         if is_locked:
             return JsonResponse({"status": "lockout", "message": "Too many attempts.", "remaining": remaining})
 
-        student_number = request.POST.get('student_number')
+        username = request.POST.get('username')
         password = request.POST.get('password')
 
         # Check if user exists BEFORE applying lockout logic
-        if not User.objects.filter(username=student_number).exists():
-            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'reason': 'Account does not exist', 'username': student_number})
+        if not User.objects.filter(username=username).exists():
+            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'reason': 'Account does not exist', 'username': username})
             return JsonResponse({"status": "error", "message": "Account does not exist. Please register first."})
 
         # Check Account Lockout
-        is_acc_locked, acc_remaining = check_account_lockout(student_number)
+        is_acc_locked, acc_remaining = check_account_lockout(username)
         if is_acc_locked:
             return JsonResponse({"status": "lockout", "message": "Account locked.", "remaining": acc_remaining})
 
-        user = authenticate(request, username=student_number, password=password)
+        user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # Check if this is a Staff/Admin trying to login here (RBAC strict separation)
-            if user.is_superuser or (user.is_staff and not OrgProfile.objects.filter(user=user).exists()):
-                log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Staff/Admin attempting Portal Login', 'username': student_number})
-                return JsonResponse({"status": "error", "message": "Admin/Adviser accounts must login through the Staff Portal (/admin/login/)."})
-
             # Success - reset attempts
             request.session['failed_attempts_portal'] = 0
             if 'lockout_until_portal' in request.session: del request.session['lockout_until_portal']
-            reset_account_lockout(student_number)
+            reset_account_lockout(username)
 
-            if OrgProfile.objects.filter(user=user).exists():
+            if user.is_superuser:
+                login(request, user)
+                log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': 'Admin'}, actor=user)
+                return JsonResponse({"status": "success", "redirect_url": "/admin/"})
+            elif user.is_staff and not OrgProfile.objects.filter(user=user).exists():
+                login(request, user)
+                log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': 'Adviser'}, actor=user)
+                return JsonResponse({"status": "success", "redirect_url": "/adviser/dashboard/"})
+            elif OrgProfile.objects.filter(user=user).exists():
                 login(request, user)
                 log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': 'Organizer'}, actor=user)
                 org_profile = OrgProfile.objects.get(user=user)
@@ -195,22 +198,22 @@ def portal_login_view(request):
             elif Student.objects.filter(user=user).exists():
                 student = Student.objects.get(user=user)
                 if not student.is_verified:
-                    log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Unverified Student Account', 'username': student_number}, actor=user)
+                    log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Unverified Student Account', 'username': username}, actor=user)
                     return JsonResponse({"status": "error", "message": "Account is still pending approval. Please wait for your Organizer."})
                 else:
                     login(request, user)
                     log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': 'Student'}, actor=user)
                     return JsonResponse({"status": "success", "redirect_url": "/student/dashboard"})
             else:
-                log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Account role not identified', 'username': student_number})
+                log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Account role not identified', 'username': username})
                 return JsonResponse({"status": "error", "message": "Account is neither a registered Student nor an Organizer."})
         else:
             # Failed attempt logic
-            is_locked_now, lock_time, total_attempts = record_failed_attempt(student_number)
+            is_locked_now, lock_time, total_attempts = record_failed_attempt(username)
             
             # Since we checked existence above, we can attribute this to the user
-            existing_user = User.objects.filter(username=student_number).first()
-            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'username': student_number, 'attempt_count': total_attempts}, actor=existing_user)
+            existing_user = User.objects.filter(username=username).first()
+            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'username': username, 'attempt_count': total_attempts}, actor=existing_user)
 
             if is_locked_now:
                 request.session['lockout_until_portal'] = (timezone.now() + timedelta(seconds=lock_time)).isoformat()
@@ -4357,66 +4360,7 @@ def admin_audit_logs(request):
     })
 
 def staff_login_view(request):
-    if request.method == 'POST':
-        is_locked, remaining = check_lockout(request, type='staff')
-        if is_locked:
-            return JsonResponse({"status": "lockout", "message": "Too many attempts.", "remaining": remaining})
-
-        u = request.POST.get('username')
-        p = request.POST.get('password')
-        
-        # Check if user exists BEFORE applying lockout logic
-        if not User.objects.filter(username=u).exists():
-            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'reason': 'Account does not exist', 'username': u})
-            return JsonResponse({"status": "error", "message": "Account does not exist."})
-
-        # Check Account Lockout
-        is_acc_locked, acc_remaining = check_account_lockout(u)
-        if is_acc_locked:
-            return JsonResponse({"status": "lockout", "message": "Account locked.", "remaining": acc_remaining})
-
-        user = authenticate(request, username=u, password=p)
-        
-        if user is not None:
-            # Check if this is a Student/Organizer trying to login here (RBAC strict separation)
-            if not user.is_staff and not user.is_superuser:
-                log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Student/Organizer attempting Staff Login', 'username': u})
-                return JsonResponse({"status": "error", "message": "Student/Organizer accounts must login through the Student Portal (/)."})
-
-            if user.is_staff or user.is_superuser:
-                request.session['failed_attempts_staff'] = 0
-                if 'lockout_until_staff' in request.session: del request.session['lockout_until_staff']
-                reset_account_lockout(u)
-                
-                login(request, user)
-                
-                role = 'Admin' if user.is_superuser else 'Adviser'
-                log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': role})
-
-                redirect_url = '/admin/' if user.is_superuser else '/adviser/dashboard/'
-                return JsonResponse({"status": "success", "redirect_url": redirect_url})
-            else:
-                log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'No staff privileges', 'username': u})
-                return JsonResponse({"status": "error", "message": "Access Denied. You do not have staff privileges."})
-        else:
-            is_locked_now, lock_time, total_attempts = record_failed_attempt(u)
-            
-            # Since we checked existence above, we can attribute this to the user
-            existing_user = User.objects.filter(username=u).first()
-            log_audit_event(request, 'LOGIN_FAILED', status='Failed', changes={'username': u, 'attempt_count': total_attempts}, actor=existing_user)
-            
-            if is_locked_now:
-                request.session['lockout_until_staff'] = (timezone.now() + timedelta(seconds=lock_time)).isoformat()
-                return JsonResponse({
-                    "status": "lockout", 
-                    "message": f"Too many failed attempts ({total_attempts}). Please wait.", 
-                    "remaining": lock_time
-                })
-                
-            return JsonResponse({"status": "error", "message": f"Invalid credentials. Attempt {total_attempts % 5} of 5."})
-            
-    is_locked, remaining = check_lockout(request, type='staff')
-    return render(request, 'admin_dashboard/login.html', {'is_locked': is_locked, 'remaining': remaining})
+    return redirect('index')
 
 def debug_database_view(request):
     students = Student.objects.all()
