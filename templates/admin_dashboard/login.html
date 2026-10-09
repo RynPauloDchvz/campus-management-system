@@ -66,8 +66,11 @@
         </div>
 
         <!-- 🟢 RIGHT SIDE: Login Form (Username & Password Only) 🟢 -->
-        <div :class="{'blur-3xl opacity-0 scale-95 pointer-events-none': isModalActive}" class="w-full lg:w-[55%] flex flex-col relative bg-white dark:bg-[#0f0f0f] transition-all duration-1000 ease-in-out">
+        <div :class="{'blur-3xl opacity-0 scale-95 pointer-events-none': isModalActive}" class="w-full lg:w-[55%] flex flex-col relative bg-white/90 dark:bg-[#0f0f0f]/90 transition-all duration-1000 ease-in-out">
             
+            <!-- Mobile Background Image -->
+            <div class="absolute inset-0 bg-pup-image mix-blend-multiply dark:mix-blend-screen opacity-20 dark:opacity-[0.15] blur-[1px] lg:hidden z-0 pointer-events-none"></div>
+
             <!-- Theme Toggle -->
             <div class="absolute top-6 right-6 z-50">
                 <button @click="toggleTheme" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center text-xl shadow-sm hover:scale-110 transition-all">
@@ -75,10 +78,11 @@
                 </button>
             </div>
 
-            <div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+            <div class="flex-1 flex items-center justify-center p-6 sm:p-12 relative z-10">
                 <div class="w-full max-w-[400px]">
                     
                     <div class="mb-10 text-center lg:text-left">
+                        <img src="{% static 'images/PUPLogo.png' %}" class="w-20 h-20 mb-6 mx-auto lg:mx-0 object-contain drop-shadow-md block lg:hidden" alt="PUP Logo">
                         <h2 class="text-4xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">Welcome Back</h2>
                         <p class="text-gray-500 dark:text-gray-400 font-medium">Sign in to your staff account.</p>
                     </div>
@@ -94,7 +98,7 @@
                         </div>
                     {% endif %}
 
-                    <form @submit.prevent="submitLogin" class="space-y-5">
+                    <form @submit.prevent="submitLogin" class="space-y-5" novalidate>
                         <!-- Username Field -->
                         <div class="space-y-1.5">
                             <label class="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1">Username</label>
@@ -189,8 +193,10 @@
                     <button @click="showAttemptModal = false" class="w-full py-3.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-sm hover:opacity-90 transition-all shadow-md active:scale-95">Try Again</button>
                 </div>
             </div>
+        <!-- 🟢 CUSTOM TOAST 🟢 -->
+        <div :class="[toast.show ? 'bottom-[30px]' : '-bottom-[100px]', toast.type === 'error' ? 'bg-red-500 text-white' : (toast.type === 'warning' ? 'bg-orange-500 text-white' : 'bg-emerald-500 text-white')]" class="fixed left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-[50px] font-bold text-[0.85rem] shadow-[0_4px_15px_rgba(0,0,0,0.2)] transition-[bottom] duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] z-[10001] flex items-center justify-center gap-2 w-max max-w-[85%] text-center break-words">
+            <i class="ph-bold" :class="toast.type === 'error' ? 'ph-warning-circle' : (toast.type === 'warning' ? 'ph-info' : 'ph-check-circle')" style="font-size: 1.1rem; flex-shrink: 0;"></i> <span>[[ toast.message ]]</span>
         </div>
-
     </div>
 
     <script>
@@ -210,6 +216,7 @@
                     lockoutInterval: null,
                     showAttemptModal: false,
                     attemptCount: 0,
+                    toast: { show: false, message: '', type: 'success' },
                 }
             },
             computed: {
@@ -224,6 +231,12 @@
                 if (this.isLocked) this.startLockoutCountdown();
             },
             methods: {
+                showToast(message, type='success') {
+                    this.toast.message = message;
+                    this.toast.type = type;
+                    this.toast.show = true;
+                    setTimeout(() => { this.toast.show = false; }, 4000);
+                },
                 formatTime(seconds) {
                     const mins = Math.floor(seconds / 60);
                     const secs = seconds % 60;
@@ -247,7 +260,10 @@
                     localStorage.setItem('theme', theme);
                 },
                 async submitLogin() {
-                    if (!this.loginData.username || !this.loginData.password) return;
+                    if (!this.loginData.username || !this.loginData.password) {
+                        this.showToast("Please fill in both username and password.", "warning");
+                        return;
+                    }
                     this.isLoggingIn = true;
                     const formData = new FormData();
                     formData.append('username', this.loginData.username);
@@ -276,10 +292,10 @@
                                 if (match) this.attemptCount = parseInt(match[0]);
                                 this.showAttemptModal = true;
                             } else {
-                                alert(data.message || "Invalid credentials.");
+                                this.showToast(data.message || "Invalid credentials.", "error");
                             }
                         }
-                    } catch (e) { alert("Connection error."); }
+                    } catch (e) { this.showToast("Connection error.", "error"); }
                     finally { this.isLoggingIn = false; }
                 }
             }

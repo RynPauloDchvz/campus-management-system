@@ -145,9 +145,12 @@
         </div>
 
         <!-- 🟢 RIGHT SIDE: FORMS 🟢 -->
-        <div :class="{'opacity-0 pointer-events-none blur-3xl scale-95': isModalActive}" class="w-full lg:w-1/2 h-screen overflow-y-auto form-scroll flex flex-col justify-center items-center p-6 sm:p-12 relative bg-white dark:bg-pup-darkbg z-0 transition-all duration-1000 ease-in-out">
+        <div :class="{'opacity-0 pointer-events-none blur-3xl scale-95': isModalActive}" class="w-full lg:w-1/2 h-screen overflow-y-auto form-scroll flex flex-col justify-center items-center p-6 sm:p-12 relative bg-white/90 dark:bg-pup-darkbg/90 z-0 transition-all duration-1000 ease-in-out">
+            
+            <!-- Mobile Background Image -->
+            <div class="absolute inset-0 bg-cover bg-center mix-blend-multiply dark:mix-blend-screen opacity-20 dark:opacity-[0.15] blur-[1px] lg:hidden z-0 pointer-events-none" style="background-image: var(--img-pup1);"></div>
 
-            <div class="w-full max-w-md my-auto transition-all duration-500">
+            <div class="w-full max-w-md my-auto transition-all duration-500 relative z-10">
                 
                 <!-- PUP LOGO FOR MOBILE ONLY -->
                 <div class="lg:hidden flex flex-col items-center mb-8">
@@ -164,7 +167,7 @@
                         <p class="text-sm text-gray-500 dark:text-gray-400">Sign in to your portal account.</p>
                     </div>
 
-                    <form @submit.prevent="submitLogin" class="space-y-5">
+                    <form @submit.prevent="submitLogin" class="space-y-5" novalidate>
                         {% csrf_token %}
                         <!-- Student No Only -->
                         <div>
@@ -371,7 +374,7 @@
 
                     <!-- STEP 4: FORM DETAILS (Original was Step 2) -->
                     <div v-if="registerStep === 4" class="pb-6">
-                        <form @submit.prevent="verifyAndProceed" class="w-full">
+                        <form @submit.prevent="verifyAndProceed" class="w-full" novalidate>
                             
                             <div class="text-center sm:text-left mb-6">
                                 <h2 class="text-xl font-black dark:text-white uppercase tracking-tight">Account Setup</h2>
@@ -590,8 +593,8 @@
         </div>
         
         <!-- 🟢 CUSTOM TOAST 🟢 -->
-        <div :class="toast.show ? 'bottom-[30px]' : '-bottom-[100px]'" class="fixed left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-[50px] font-bold text-[0.85rem] shadow-[0_4px_15px_rgba(0,0,0,0.2)] transition-[bottom] duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] z-[10001] flex items-center justify-center gap-2 w-max max-w-[85%] text-center break-words" :class="toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'">
-            <i class="ph-bold" :class="toast.type === 'error' ? 'ph-warning-circle' : 'ph-check-circle'" style="font-size: 1.1rem; flex-shrink: 0;"></i> <span>[[ toast.message ]]</span>
+        <div :class="[toast.show ? 'bottom-[30px]' : '-bottom-[100px]', toast.type === 'error' ? 'bg-red-500 text-white' : (toast.type === 'warning' ? 'bg-orange-500 text-white' : 'bg-emerald-500 text-white')]" class="fixed left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-[50px] font-bold text-[0.85rem] shadow-[0_4px_15px_rgba(0,0,0,0.2)] transition-[bottom] duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] z-[10001] flex items-center justify-center gap-2 w-max max-w-[85%] text-center break-words">
+            <i class="ph-bold" :class="toast.type === 'error' ? 'ph-warning-circle' : (toast.type === 'warning' ? 'ph-info' : 'ph-check-circle')" style="font-size: 1.1rem; flex-shrink: 0;"></i> <span>[[ toast.message ]]</span>
         </div>
     </div>
 
@@ -717,7 +720,10 @@
                 },
 
                 async submitLogin() {
-                    if (!this.loginData.student_number || !this.loginData.password) return;
+                    if (!this.loginData.student_number || !this.loginData.password) {
+                        this.showToast("Please fill in both student number and password.", "warning");
+                        return;
+                    }
                     this.isLoggingIn = true;
                     const formData = new FormData();
                     formData.append('student_number', this.loginData.student_number);
@@ -907,7 +913,10 @@
                     }
                 },
                 async sendRegistrationOtp() {
-                    if (!this.formData.email_address) return;
+                    if (!this.formData.email_address) {
+                        this.showToast("Please provide your email address first.", "warning");
+                        return;
+                    }
                     this.isSendingOtp = true;
                     const formData = new FormData();
                     formData.append('email', this.formData.email_address);
@@ -923,8 +932,8 @@
                 },
                 async verifyAndProceed() {
                     const otpCode = this.registerOtp.join('');
-                    if(otpCode.length < 6) { this.showToast("Please enter the complete 6-digit OTP.", "error"); return; }
-                    if(!this.formData.password) { this.showToast("Password required.", "error"); return; }
+                    if(otpCode.length < 6) { this.showToast("Please enter the complete 6-digit OTP.", "warning"); return; }
+                    if(!this.formData.password) { this.showToast("Password required.", "warning"); return; }
                     this.isVerifying = true;
                     const formData = new FormData();
                     formData.append('otp', otpCode);
