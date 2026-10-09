@@ -17,6 +17,7 @@ urlpatterns = [
     
     path('admin/manage-accounts/', views.manage_accounts_view, name='manage_accounts'),
     path('admin/manage-organizers/', views.manage_organizers_view, name='manage_organizers'),
+    path('admin/manage-advisers/', views.manage_advisers_view, name='manage_advisers'),
     path('admin/audit-logs/', views.admin_audit_logs, name='admin_audit_logs'),
     path('admin/notifications/', views.admin_notifications_view, name='admin_notifications'),
     path('admin/api/notifications/', views.get_admin_notifications_api, name='admin_api_notifications'),
@@ -30,6 +31,7 @@ urlpatterns = [
     path('admin/api/student-action/', views.student_api_action, name='student_api_action'),
     path('admin/api/organizer-action/', views.organizer_api_action, name='organizer_api_action'),
     path('admin/api/generate-org-password/', views.admin_generate_org_password, name='admin_generate_org_password'),
+    path('admin/api/generate-adviser-password/', views.admin_generate_adviser_password, name='admin_generate_adviser_password'),
     
     path('admin/event-approvals/', views.event_approvals_view, name='event_approvals'),
     path('admin/event-history/', views.event_history_view, name='event_history'),

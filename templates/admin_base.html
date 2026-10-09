@@ -379,6 +379,10 @@
                     <i class="ph-bold ph-users"></i> 
                     <span class="nav-text">Student Orgs</span>
                 </a>
+                <a href="/admin/manage-advisers/" class="nav-sub-link {% if '/manage-advisers/' in request.path %}active{% endif %}">
+                    <i class="ph-bold ph-briefcase"></i> 
+                    <span class="nav-text">Org Advisers</span>
+                </a>
             </div>
         </div>
 
@@ -540,6 +544,13 @@
                 <div style="display: flex; flex-direction: column;">
                     <span style="font-size: 1rem;">Student Orgs</span>
                     <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">Manage organizer credentials</span>
+                </div>
+            </a>
+            <a href="/admin/manage-advisers/" class="bottom-sheet-btn">
+                <i class="ph-fill ph-briefcase" style="color: var(--info);"></i>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 1rem;">Org Advisers</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">Manage adviser accounts</span>
                 </div>
             </a>
         </div>

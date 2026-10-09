@@ -232,10 +232,10 @@
                 <thead style="position: sticky; top: 0; background: var(--card-bg); z-index: 10;">
                     <tr>
                         <th id="thCheckbox" style="display: none; width: 40px; text-align: center; padding-right: 0;"><i class="ph-bold ph-check-square" style="font-size: 1.1rem; color: var(--text-muted);"></i></th>
-                        <th>Student Details</th>
-                        <th>Student ID</th>
-                        <th>Assigned Org</th>
-                        <th>Status</th>
+                        <th style="text-align: center;">Account Details</th>
+                        <th style="text-align: center;">Student ID</th>
+                        <th style="text-align: center;">Assigned Org</th>
+                        <th style="text-align: center;">Status</th>
                         <th style="text-align: center;">Actions</th>
                     </tr>
                 </thead>
@@ -377,9 +377,9 @@
                             </div>
                         </div>
                     </td>
-                    <td style="font-family: monospace; font-weight: 600;">${user.username}</td>
-                    <td style="font-weight: 800; color: var(--accent);">${user.org}</td>
-                    <td><span class="badge ${badgeClass}">${user.status}</span></td>
+                    <td style="font-family: monospace; font-weight: 600; text-align: center;">${user.username}</td>
+                    <td style="font-weight: 800; color: var(--accent); text-align: center;">${user.org}</td>
+                    <td style="text-align: center;"><span class="badge ${badgeClass}">${user.status}</span></td>
                     <td style="text-align: center;">
                         <button class="btn-action-small desktop-manage-dropdown" onclick="event.stopPropagation(); openViewModal(${user.id}, event)" style="padding: 8px 12px; border-radius: 8px;">
                             <i class="ph-bold ph-eye" style="font-size: 1.1rem; margin:0;"></i>

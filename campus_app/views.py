@@ -3537,6 +3537,23 @@ def manage_organizers_view(request):
             'avatar': avatar_url, 'cover': cover_url
         })
     return render(request, 'admin_dashboard/student_org.html', {'organizers_json': json.dumps(org_data)})
+    
+@user_passes_test(is_admin_strictly, login_url='/admin/login/')
+def manage_advisers_view(request):
+    advisers = User.objects.filter(is_staff=True, is_superuser=False, is_active=True)
+    adviser_data = []
+    for adv in advisers:
+        name = adv.first_name if adv.first_name else "Org Adviser"
+        org_name = adv.last_name if adv.last_name else adv.username.split('_')[0].upper()
+        avatar_url = f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
+        adviser_data.append({
+            'id': adv.id, 'name': name, 'username': adv.username,
+            'email': adv.email,
+            'org': org_name, 'status': 'Active',
+            'department': 'Faculty',
+            'avatar': avatar_url, 'cover': ''
+        })
+    return render(request, 'admin_dashboard/org_adviser.html', {'advisers_json': json.dumps(adviser_data)})
 
 
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
@@ -3563,6 +3580,17 @@ def account_history_view(request):
             'type': 'Student Org', 'status': 'Deactivated',
             'avatar': avatar_url, 'cover': cover_url
         })
+    advisers = User.objects.filter(is_staff=True, is_superuser=False, is_active=False)
+    for adv in advisers:
+        name = adv.first_name if adv.first_name else "Org Adviser"
+        org_name = adv.last_name if adv.last_name else adv.username.split('_')[0].upper()
+        avatar_url = f"https://ui-avatars.com/api/?name={name}&background=800000&color=fff"
+        history_data.append({
+            'id': f"A-{adv.id}", 'name': name, 'username': adv.username,
+            'org': org_name, 'year': 'N/A', 'birthdate': '',
+            'type': 'Adviser', 'status': 'Deactivated',
+            'avatar': avatar_url, 'cover': ''
+        })
     return render(request, 'admin_dashboard/account_history.html', {'history_json': json.dumps(history_data)})
 
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
@@ -3581,6 +3609,27 @@ def student_api_action(request):
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
     return JsonResponse({"status": "error", "message": "Invalid request"})
+    
+@user_passes_test(is_admin_strictly, login_url='/admin/login/')
+def admin_generate_adviser_password(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            if not email: return JsonResponse({"status": "error", "message": "Email is required."})
+            
+            import string, random
+            chars = string.ascii_letters + string.digits + "!@#$%^&*"
+            password = ''.join(random.choice(chars) for _ in range(12))
+            
+            # Use same cache pattern
+            cache.set(f'generated_adviser_pwd_{email}', password, timeout=600)
+            # You can send an email here eventually just like in org
+            return JsonResponse({"status": "success", "message": f"OTP Password generated for Adviser. Check backend logs or email."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+    return JsonResponse({"status": "error", "message": "Invalid request"})
+
 
 @user_passes_test(is_admin_strictly, login_url='/admin/login/')
 def admin_generate_org_password(request):

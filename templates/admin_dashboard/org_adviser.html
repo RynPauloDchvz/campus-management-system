@@ -1,10 +1,10 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 
-{% block title %}Manage Organizers | PUP UNISAN CAMS{% endblock %}
+{% block title %}Manage Org Advisers | PUP UNISAN CAMS{% endblock %}
 
-{% block page_title %}Manage Student Organizers{% endblock %}
-{% block page_subtitle %}Create and monitor accounts for organization representatives.{% endblock %}
+{% block page_title %}Manage Org Advisers{% endblock %}
+{% block page_subtitle %}Create and monitor accounts for organization advisers.{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -40,7 +40,7 @@
     .form-input { padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-family: 'Inter'; font-size: 0.9rem; width: 100%; outline: none; }
     .form-input:focus { border-color: var(--accent); }
 
-    /* 🟢 STUDENT ORG MOBILE RESPONSIVENESS 🟢 */
+    /* 🟢 ORG ADVISER MOBILE RESPONSIVENESS 🟢 */
     .manage-accounts-control { display: flex; gap: 15px; align-items: center; justify-content: flex-start; flex-wrap: wrap; }
     .manage-accounts-control .search-box { flex-grow: 1; min-width: 250px; }
     .action-buttons-group { display: flex; gap: 10px; align-items: center; margin-left: auto; }
@@ -272,20 +272,20 @@
             </div>
         </div>
         
-        <div class="search-box">
+        <div class="search-box" style="flex: 1; min-width: 200px; max-width: 400px;">
             <i class="ph-bold ph-magnifying-glass" style="color: var(--text-muted);"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search Name or Student ID e.g Juan Dela Cruz, 2023..." onkeyup="filterUsers()" style="width: 100%;">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search Name or Employee ID..." onkeyup="filterUsers()" style="width: 100%;">
         </div>
         
         <div class="action-buttons-group">
             <!-- 🟢 HISTORY BUTTON 🟢 -->
-            <a href="{% url 'account_history' %}?source=org" class="btn-cancel history-btn" title="Account History">
+            <a href="{% url 'account_history' %}?source=adviser" class="btn-cancel history-btn" title="Account History">
                 <i class="ph-bold ph-clock-counter-clockwise" style="font-size: 1.2rem;"></i> <span class="btn-text-hide">Account History</span>
             </a>
 
             <!-- 🟢 CREATE BUTTON FOR STUDENT ORG 🟢 -->
-            <button class="btn-primary create-btn" onclick="openModal('createOrgModal', event)" title="Create Org Account">
-                <i class="ph-bold ph-user-plus" style="font-size: 1.2rem;"></i> <span class="btn-text-hide">Create Org Account</span>
+            <button class="btn-primary create-btn" onclick="openModal('createOrgModal', event)" title="Create Adviser Account">
+                <i class="ph-bold ph-user-plus" style="font-size: 1.2rem;"></i> <span class="btn-text-hide">Create Adviser Account</span>
             </button>
         </div>
     </div>
@@ -293,7 +293,7 @@
     <div class="table-section">
         <!-- 🟢 MOBILE BULK ACTION BAR 🟢 -->
         <div class="bulk-manage-bar" id="bulkManageBar">
-            <h3 style="margin: 0; font-size: 1rem; font-weight: 900; text-transform: uppercase; color: var(--text-main); line-height: 1.1; flex-grow: 1;">Student Org List</h3>
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 900; text-transform: uppercase; color: var(--text-main); line-height: 1.1; flex-grow: 1;">Org Adviser List</h3>
             <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
                 <button class="btn-cancel" id="btnToggleManage" onclick="toggleBulkManage()" style="padding: 5px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-pencil-simple"></i> Manage</button>
                 <button class="btn-primary" id="btnBulkDeactivate" onclick="openBulkDeleteModal(event)" style="display: none; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; background: var(--danger); border-radius: 6px; white-space: nowrap;"><i class="ph-bold ph-trash"></i> Deactivate</button>
@@ -306,7 +306,7 @@
                     <tr>
                         <th id="thCheckbox" style="display: none; width: 40px; text-align: center; padding-right: 0;"><i class="ph-bold ph-check-square" style="font-size: 1.1rem; color: var(--text-muted);"></i></th>
                         <th style="text-align: center;">Account Details</th>
-                        <th style="text-align: center;">Student ID</th>
+                        <th style="text-align: center;">Employee ID</th>
                         <th style="text-align: center;">Assigned Org</th>
                         <th style="text-align: center;">Status</th>
                         <th style="text-align: center;">Actions</th>
@@ -346,22 +346,22 @@
                 <img id="v_avatar" src="" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <h3 id="v_name" style="margin: 0 0 5px; font-size: 1.4rem; font-weight: 900; color: var(--text-main); line-height: 1.2; position: relative; z-index: 2;"></h3>
-            <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; position: relative; z-index: 2;">Organizer Representative</span>
+            <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; position: relative; z-index: 2;">Organization Adviser</span>
         </div>
 
         <!-- Info Grid -->
         <div style="padding: 25px 20px; background: var(--input-bg);">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                    <span style="display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px;">Year Level</span>
-                    <span id="v_year" style="display: block; font-size: 1rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
+                    <span style="display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px;">Department</span>
+                    <span id="v_dept" style="display: block; font-size: 1rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
                 <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
                     <span style="display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px;">Organization</span>
                     <span id="v_org" style="display: block; font-size: 1rem; font-weight: 800; color: var(--accent); text-transform: uppercase; word-break: break-all;"></span>
                 </div>
                 <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); grid-column: 1 / -1;">
-                    <span style="display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px;">Student ID</span>
+                    <span style="display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px;">Employee ID</span>
                     <span id="v_username" style="display: block; font-size: 1rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
             </div>
@@ -386,7 +386,7 @@
 <div id="createOrgModal" class="modal modal-fullscreen">
     <div class="modal-box" style="max-width: 600px;">
         <div style="text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; position: relative;">
-            <h3 class="modal-title" style="margin: 0; font-size: 1.4rem; font-weight: 900; text-transform: uppercase;">Create Org Account</h3>
+            <h3 class="modal-title" style="margin: 0; font-size: 1.4rem; font-weight: 900; text-transform: uppercase;">Create Adviser Account</h3>
             <p class="modal-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">Set up login credentials for student organizers.</p>
             <button onclick="closeModal('createOrgModal')" style="position: absolute; top: -5px; right: 0px; background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; color: var(--text-muted);"><i class="ph-bold ph-x"></i></button>
         </div>
@@ -426,33 +426,15 @@
                     <input type="hidden" id="c_org" required>
                 </div>
                 
-                <div style="display: flex; gap: 15px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label class="form-label">Student ID</label>
-                        <input type="text" id="c_username" required placeholder="e.g. 2023-0001" class="form-input">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label class="form-label">Year Level</label>
-                        <div class="select-dropdown-container" id="c_year_dropdown">
-                            <div class="select-dropdown-header" onclick="toggleCustomDropdown('c_year_dropdown')">
-                                <span id="c_year_label">Select Year</span>
-                                <i class="ph-bold ph-caret-down"></i>
-                            </div>
-                            <div class="select-dropdown-list">
-                                <div class="select-dropdown-option" onclick="selectCustomOption('c_year', '1st Year', '1st Year')">1st Year</div>
-                                <div class="select-dropdown-option" onclick="selectCustomOption('c_year', '2nd Year', '2nd Year')">2nd Year</div>
-                                <div class="select-dropdown-option" onclick="selectCustomOption('c_year', '3rd Year', '3rd Year')">3rd Year</div>
-                                <div class="select-dropdown-option" onclick="selectCustomOption('c_year', '4th Year', '4th Year')">4th Year</div>
-                            </div>
-                        </div>
-                        <input type="hidden" id="c_year" required>
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">Employee ID</label>
+                    <input type="text" id="c_username" required placeholder="e.g. 2005-0123" class="form-input">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
                     <div style="display: flex; gap: 10px;">
-                        <input type="email" id="c_email" required placeholder="Organizer's Email" class="form-input" style="flex: 1;">
+                        <input type="email" id="c_email" required placeholder="Adviser's Email" class="form-input" style="flex: 1;">
                         <button type="button" class="btn-primary" onclick="generateAndSendPassword('c')" style="white-space: nowrap;" id="btn-generate-c"><i class="ph-bold ph-key"></i> Generate & Send</button>
                     </div>
                 </div>
@@ -532,7 +514,7 @@
 {% block extra_js %}
 <script>
     // 🟢 KUMUKUHA NG TUNAY NA DATA SA DATABASE 🟢
-    let usersData = JSON.parse('{{ organizers_json|escapejs|default:"[]" }}');
+    let usersData = JSON.parse('{{ advisers_json|escapejs|default:"[]" }}');
     
     let isBulkManageActive = false;
     let selectedUserIds = new Set();
@@ -663,7 +645,7 @@
             const emptyStateHtml = `
                 <div style="text-align: center; padding: 40px; color: var(--text-muted); background: var(--card-bg); border-radius: 12px; border: 1px dashed var(--border);">
                     <i class="ph-bold ph-magnifying-glass" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
-                    <p style="margin: 0; font-size: 0.95rem;">No student org accounts found matching "<b>${searchVal}</b>".</p>
+                    <p style="margin: 0; font-size: 0.95rem;">No org adviser accounts found matching "<b>${searchVal}</b>".</p>
                 </div>
             `;
             tbody.innerHTML = `<tr><td colspan="5" style="padding: 0; border: none;">${emptyStateHtml}</td></tr>`;
@@ -686,7 +668,7 @@
                             <img src="${safeAvatar}" class="user-avatar">
                             <div>
                                 <span class="user-name">${user.name}</span>
-                                <span class="user-username">Organizer Representative</span>
+                                <span class="user-username">Organization Adviser</span>
                             </div>
                         </div>
                     </td>
@@ -805,15 +787,15 @@
 
     function nextPhase(prefix) {
         let username = document.getElementById(prefix + '_username').value.trim();
-        if (!document.getElementById(prefix + '_name').value || !document.getElementById(prefix + '_org').value || !username || !document.getElementById(prefix + '_year').value) {
+        if (!document.getElementById(prefix + '_name').value || !document.getElementById(prefix + '_org').value || !username) {
             showError("Please fill all required fields before proceeding.");
             return;
         }
         
-        // Student ID Strict Validation
-        const idRegex = /^\d{4}-\d+-UQ-\d+$/;
+        // Employee ID Strict Validation
+        const idRegex = /^[A-Za-z0-9-]+$/;
         if (!idRegex.test(username)) {
-            showError("Invalid Student ID format. Must strictly follow the format: YYYY-XXXXX-UQ-X (e.g. 2023-00000-UQ-0) and contain no other letters.");
+            showError("Invalid Employee ID format. Please use correct format (e.g. 2005-0123).");
             return;
         }
         
@@ -865,7 +847,7 @@
         document.getElementById('v_name').innerText = user.name;
         document.getElementById('v_org').innerText = user.org;
         document.getElementById('v_username').innerText = user.username;
-        document.getElementById('v_year').innerText = user.year_level || '1st Year';
+        document.getElementById('v_dept').innerText = user.department || 'CICS';
         openModal('viewDetailsModal', event);
     }
 
@@ -1022,7 +1004,7 @@
         const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
 
         try {
-            const response = await fetch("{% url 'admin_generate_org_password' %}", {
+            const response = await fetch("{% url 'admin_generate_adviser_password' %}", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': tokenValue },
                 body: JSON.stringify({ email: email, prefix: prefix })
@@ -1083,10 +1065,9 @@
         if (action === 'create') {
             payload.name = document.getElementById('c_name').value;
             payload.org = document.getElementById('c_org').value;
-            payload.year_level = document.getElementById('c_year').value;
             payload.username = document.getElementById('c_username').value;
             payload.email = document.getElementById('c_email').value;
-            if(!payload.name || !payload.org || !payload.username || !payload.email || !payload.year_level) return showError("Fill all fields.");
+            if(!payload.name || !payload.org || !payload.username || !payload.email) return showError("Fill all fields.");
             btn = document.getElementById('btn-create');
         } 
         else if (action === 'delete') {
@@ -1102,7 +1083,7 @@
         const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
 
         try {
-            const response = await fetch("{% url 'organizer_api_action' %}", {
+            const response = await fetch("{% url 'adviser_api_action' %}", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': tokenValue },
                 body: JSON.stringify(payload)

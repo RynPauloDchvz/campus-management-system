@@ -26,7 +26,10 @@
     .manage-accounts-control .search-box { flex-grow: 1; min-width: 150px; margin-left: auto; }
     .manage-accounts-control .history-btn { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; height: 42px; border-radius: 8px; padding: 0 15px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
     
-    /* Animated Custom Dropdown */
+    /* Animated Custom Dropdown & Year Hide Animation */
+    #yearFilterContainer { transition: max-width 0.4s ease, min-width 0.4s ease, opacity 0.4s ease, padding 0.4s ease, margin 0.4s ease, border-width 0.4s ease; max-width: 300px; opacity: 1; overflow: hidden; }
+    body.hide-year #yearFilterContainer { max-width: 0 !important; min-width: 0 !important; padding-left: 0 !important; padding-right: 0 !important; margin: 0 !important; border-width: 0 !important; opacity: 0; pointer-events: none; }
+
     .custom-dropdown {
         position: relative;
         background: var(--input-bg);
@@ -78,6 +81,7 @@
         padding: 0 15px; 
         height: 42px; 
         gap: 10px; 
+        transition: flex-grow 0.4s ease;
     }
     .search-input { 
         border: none; 
@@ -114,14 +118,17 @@
     .history-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
 
     @media (max-width: 900px) {
-        .manage-accounts-control { display: grid; grid-template-columns: 42px 1fr 1fr; grid-template-rows: auto auto; gap: 10px; }
+        .manage-accounts-control { display: flex; flex-wrap: wrap; gap: 10px; }
         
-        .manage-accounts-control .history-btn { grid-column: 1; grid-row: 1; width: 42px; padding: 0 !important; margin: 0; }
+        .manage-accounts-control .history-btn { width: 42px; padding: 0 !important; margin: 0; justify-content: center; }
         .manage-accounts-control .history-btn-text { display: none; }
         
-        #orgFilterContainer { grid-column: 2 / 4; grid-row: 1; width: 100%; min-width: 0; }
-        #typeFilterContainer { grid-column: 1 / 3; grid-row: 2; width: 100%; min-width: 0; }
-        #yearFilterContainer { grid-column: 3; grid-row: 2; width: 100%; min-width: 0; }
+        #orgFilterContainer { flex: 1; min-width: 0; }
+        .mobile-break { flex-basis: 100%; height: 0; margin: 0; display: block !important; }
+        #typeFilterContainer { flex: 1; min-width: 0; }
+        #yearFilterContainer { flex: 1; min-width: 0; }
+        
+        body.hide-year #yearFilterContainer { max-width: 0 !important; min-width: 0 !important; margin: 0 !important; border-width: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
         
         .manage-accounts-control .search-box { display: none; }
         .mobile-search-box { display: flex; margin-bottom: 15px; }
@@ -149,6 +156,7 @@
             <i class="ph-bold ph-arrow-left" style="font-size: 1.2rem;"></i> <span id="historyBtnText" class="history-btn-text">Back to Active</span>
         </a>
         
+
         <!-- Type Filter -->
         <div class="custom-dropdown" id="typeFilterContainer">
             <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('typeFilterDropdown')">
@@ -158,9 +166,13 @@
                 <div class="dropdown-item active" onclick="selectFilter('typeFilter', 'all', 'All Accounts')">All Accounts</div>
                 <div class="dropdown-item" onclick="selectFilter('typeFilter', 'Student', 'Students Only')">Students Only</div>
                 <div class="dropdown-item" onclick="selectFilter('typeFilter', 'Student Org', 'Student Orgs Only')">Student Orgs Only</div>
+                <div class="dropdown-item" onclick="selectFilter('typeFilter', 'Adviser', 'Org Advisers Only')">Org Advisers Only</div>
             </div>
             <input type="hidden" id="typeFilter" class="hidden-input" value="all" onchange="filterHistory()">
         </div>
+
+        <!-- Mobile Break -->
+        <div class="mobile-break" style="display: none;"></div>
 
         <!-- Org Filter -->
         <div class="custom-dropdown" id="orgFilterContainer">
@@ -257,15 +269,15 @@
         <!-- Info Grid -->
         <div style="padding: 20px 15px; background: var(--input-bg);">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                <div id="v_username_container" style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
                     <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Username / ID</span>
                     <span id="v_username" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
-                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                <div id="v_org_container" style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
                     <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Organization</span>
                     <span id="v_org" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--accent); text-transform: uppercase; word-break: break-all;"></span>
                 </div>
-                <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                <div id="v_year_container" style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 5px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
                     <span style="display: block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px;">Year Level</span>
                     <span id="v_year" style="display: block; font-size: 0.95rem; font-weight: 800; color: var(--text-main); word-break: break-all;"></span>
                 </div>
@@ -396,11 +408,18 @@
         const org = document.getElementById('orgFilter').value;
         const year = document.getElementById('yearFilter').value;
         
+        // Hide Year Filter if Adviser or Student Org
+        if (type === 'Adviser') {
+            document.body.classList.add('hide-year');
+        } else {
+            document.body.classList.remove('hide-year');
+        }
+        
         const filtered = historyData.filter(user => {
             const matchSearch = user.name.toLowerCase().includes(search) || user.username.toLowerCase().includes(search);
             const matchType = type === 'all' || user.type === type;
             const matchOrg = org === 'all' || user.org === org;
-            const matchYear = year === 'all' || user.year === year || user.year === 'N/A';
+            const matchYear = type === 'Adviser' || year === 'all' || user.year === year || user.year === 'N/A';
             return matchSearch && matchType && matchOrg && matchYear;
         });
         renderTable(filtered);
@@ -541,8 +560,33 @@
         
         if (user.type === 'Student Org') {
             document.getElementById('v_birthdate_container').style.display = 'none';
+            document.getElementById('v_year_container').style.display = 'block';
+            
+            // Layout: Row 1 = Year, Org. Row 2 = Username (full width)
+            document.getElementById('v_year_container').style.order = '1';
+            document.getElementById('v_org_container').style.order = '2';
+            document.getElementById('v_username_container').style.order = '3';
+            document.getElementById('v_username_container').style.gridColumn = '1 / -1';
+        } else if (user.type === 'Adviser') {
+            document.getElementById('v_birthdate_container').style.display = 'none';
+            document.getElementById('v_year_container').style.display = 'none';
+            
+            // Layout: Row 1 = Username, Org
+            document.getElementById('v_username_container').style.order = '1';
+            document.getElementById('v_org_container').style.order = '2';
+            document.getElementById('v_username_container').style.gridColumn = 'auto';
         } else {
+            // Student
             document.getElementById('v_birthdate_container').style.display = 'block';
+            document.getElementById('v_year_container').style.display = 'block';
+            
+            // Default Layout: Row 1 = Username, Org. Row 2 = Year, Birthday
+            document.getElementById('v_username_container').style.order = '1';
+            document.getElementById('v_org_container').style.order = '2';
+            document.getElementById('v_year_container').style.order = '3';
+            document.getElementById('v_birthdate_container').style.order = '4';
+            document.getElementById('v_username_container').style.gridColumn = 'auto';
+            
             if (user.birthdate && user.birthdate !== '') {
                 let dateObj = new Date(user.birthdate);
                 let formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -566,7 +610,11 @@
         const source = urlParams.get('source');
         const referrer = document.referrer;
         
-        if (source === 'org' || referrer.includes('manage_organizers') || referrer.includes('manage-organizers')) {
+        if (source === 'adviser' || referrer.includes('manage_advisers') || referrer.includes('manage-advisers')) {
+            historyBtn.href = "{% url 'manage_advisers' %}";
+            historyBtnText.innerText = "Back to Adviser";
+            selectFilter('typeFilter', 'Adviser', 'Org Advisers Only');
+        } else if (source === 'org' || referrer.includes('manage_organizers') || referrer.includes('manage-organizers')) {
             historyBtn.href = "{% url 'manage_organizers' %}";
             historyBtnText.innerText = "Back to Organizer";
             selectFilter('typeFilter', 'Student Org', 'Student Orgs Only');
