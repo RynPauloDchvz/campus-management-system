@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PUP-UQ-CAMS | Portal</title>
+    <title>PUP UQ Cams</title>
     
     <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}?v=2">
     
@@ -125,6 +125,24 @@
             </div>
         </div>
 
+        <!-- ============================================== -->
+        <!-- 🟢 WAIT FOR CONFIRMATION MODAL 🟢 -->
+        <!-- ============================================== -->
+        <div v-if="showWaitModal" class="fixed inset-0 z-[1000] flex justify-center items-center p-4">
+            <div class="w-full max-w-[320px] bg-white dark:bg-pup-darkcard rounded-[2.5rem] p-6 text-center shadow-[0_0_60px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-gray-800 animate-in slide-in-from-bottom-8 duration-500">
+                <div class="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-blue-100 dark:border-blue-900/30 relative">
+                    <i class="ph-fill ph-hourglass text-4xl text-blue-600 dark:text-blue-500"></i>
+                </div>
+                
+                <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tight">Pending Approval</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 font-medium">Your account is still pending approval. Please wait for your Organizer to verify your account.</p>
+
+                <div class="space-y-2">
+                    <button @click="showWaitModal = false" class="w-full py-3.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-sm hover:opacity-90 transition-all shadow-md active:scale-95">Understood</button>
+                </div>
+            </div>
+        </div>
+
         <!-- THEME TOGGLE (Absolute Top Right) -->
         <button @click="toggleTheme" class="absolute top-4 right-5 sm:top-6 sm:right-6 z-50 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gray-100 dark:bg-pup-darkcard border border-gray-200 dark:border-gray-800 flex items-center justify-center text-lg sm:text-xl hover:text-pup-maroon dark:hover:text-pup-gold transition-all shadow-sm" :class="{'opacity-0 pointer-events-none': isModalActive}">
             <i :class="isDark ? 'ph-fill ph-sun' : 'ph-fill ph-moon'"></i>
@@ -200,7 +218,11 @@
                             <span v-text="isLoggingIn ? 'Signing In...' : 'Sign In'"></span>
                         </button>
                     </form>
-
+                    
+                    <p class="text-center text-[11px] sm:text-sm text-gray-500 dark:text-gray-400 mt-6 font-medium tracking-tighter sm:tracking-normal whitespace-nowrap">
+                        Didn't receive your temporary password? 
+                        <a href="{% url 'request_temporary_password' %}" class="text-pup-maroon dark:text-pup-gold font-bold hover:underline ml-1 transition-colors">Click here</a>
+                    </p>
 
                 </div>
 
@@ -609,6 +631,7 @@
                     lockoutTime: {{ remaining|default:0 }},
                     lockoutInterval: null,
                     showAttemptModal: false,
+                    showWaitModal: false,
                     
                     modelsLoaded: false,
                     attemptCount: 0,
@@ -642,7 +665,7 @@
             },
             computed: {
                 isModalActive() {
-                    return this.isLocked || this.showAttemptModal;
+                    return this.isLocked || this.showAttemptModal || this.showWaitModal;
                 },
                 // 🟢 DYNAMIC YEAR LEVEL LOGIC 🟢
                 availableYears() {
@@ -746,7 +769,9 @@
                             this.startLockoutCountdown();
                         }
                         else {
-                            if (data.message && data.message.includes('Attempt')) {
+                            if (data.status === 'pending_approval' || (data.message && data.message.includes('pending approval'))) {
+                                this.showWaitModal = true;
+                            } else if (data.message && data.message.includes('Attempt')) {
                                 const match = data.message.match(/\d+/);
                                 if (match) this.attemptCount = parseInt(match[0]);
                                 this.showAttemptModal = true;

@@ -2,6 +2,9 @@
 {% load static %}
 
 {% block extra_head %}
+<link href="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
+<script src="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.js"></script>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
@@ -58,9 +61,9 @@
     <!-- Cover Photo Section -->
     <div class="h-32 sm:h-64 w-full bg-gray-200 relative group transition-colors" id="coverPhotoWrapper">
         {% if student.cover_photo %}
-            <img src="{{ student.cover_photo.url }}" class="w-full h-full object-cover opacity-90" id="coverImage" onerror="this.src=window.DEFAULT_LOGO">
+            <img src="{{ student.cover_photo.url }}" class="w-full h-full object-cover opacity-90" id="coverImage" onerror="this.onerror=null; this.src='/static/images/background.jpg'">
         {% else %}
-            <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover opacity-90" id="coverImage" onerror="this.src=window.DEFAULT_LOGO">
+            <img src="{% static 'images/background.jpg' %}" class="w-full h-full object-cover opacity-90" id="coverImage" onerror="this.onerror=null;">
         {% endif %}
         
         <div id="coverEditOverlay" class="absolute inset-0 z-10 bg-black/40 items-center justify-center cursor-pointer transition-colors" style="display: none;" onclick="document.getElementById('coverFileInput').click()">
@@ -81,7 +84,7 @@
                 <div class="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 z-30 mx-auto sm:mx-0" id="avatarWrapper">
                     <div class="w-full h-full rounded-full border-4 sm:border-[6px] border-[#800000] dark:border-[#D4AF37] overflow-hidden bg-white shadow-md relative transition-colors">
                         {% if student.profile_picture %}
-                            <img src="{{ student.profile_picture.url }}" class="w-full h-full object-cover" id="profileImage" alt="Profile" onerror="this.src='https://ui-avatars.com/api/?name={{ student.full_name|urlencode }}&background=800000&color=fff'">
+                            <img src="{{ student.profile_picture.url }}" class="w-full h-full object-cover" id="profileImage" alt="Profile" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ student.full_name|urlencode }}&background=800000&color=fff'">
                         {% else %}
                             <img src="https://ui-avatars.com/api/?name={{ student.full_name|urlencode }}&background=800000&color=fff" class="w-full h-full object-cover" id="profileImage" alt="Profile">
                         {% endif %}
@@ -438,27 +441,23 @@
 
 <!-- Password Modal -->
 <div id="passwordModal" class="hidden fixed inset-0 z-[2010] flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('passwordModal').classList.add('hidden')"></div>
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closePasswordModal()"></div>
     <div class="relative bg-white dark:bg-[#151515] rounded-3xl shadow-xl w-full max-w-sm p-6 sm:p-8 text-center border border-gray-200 dark:border-gray-800 z-10 transition-colors">
-        <button type="button" onclick="document.getElementById('passwordModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+        <button type="button" onclick="closePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
             <i class="ph-bold ph-x text-lg"></i>
         </button>
         <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-[#111] rounded-full flex items-center justify-center mb-4 border border-gray-200 dark:border-gray-800">
-            <i class="ph-fill ph-envelope-simple text-3xl text-[#800000] dark:text-[#D4AF37]"></i>
+            <i class="ph-fill ph-lock-key text-3xl text-[#800000] dark:text-[#D4AF37]"></i>
         </div>
         <h3 class="text-xl font-black text-gray-900 dark:text-white mb-2 uppercase">Change Password</h3>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
-            A verification code will be sent to: <br>
-            <strong id="userEmailSpan">{{ student.email_address }}</strong>
-        </p>
-        <div class="flex flex-col gap-4 mb-6 text-left">
-            <div class="relative">
-                <label class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Verification Code</label>
-                <div class="relative flex items-center mt-1">
-                    <input type="text" id="resetCode" placeholder="Code from email" class="w-full bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl pl-4 pr-24 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] transition-colors">
-                    <button type="button" id="btnGetCodeProfile" onclick="sendPasswordResetCode()" class="absolute right-2 px-3 py-1.5 bg-gray-900 dark:bg-pup-gold text-white dark:text-black font-bold rounded-lg transition-colors text-xs shadow-sm">Get Code</button>
-                </div>
-            </div>
+        
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 mb-6">
+            <div id="pwProgressBar" class="bg-[#800000] dark:bg-[#D4AF37] h-1.5 rounded-full transition-all duration-300" style="width: 50%"></div>
+        </div>
+
+        <!-- PHASE 1 -->
+        <div id="pwPhase1" class="flex flex-col gap-4 mb-6 text-left transition-opacity duration-300">
             <div class="relative">
                 <label class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">New Password</label>
                 <div class="relative flex items-center mt-1">
@@ -468,85 +467,65 @@
                     </button>
                 </div>
             </div>
+            
+            <div class="relative">
+                <label class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Retype New Password</label>
+                <div class="relative flex items-center mt-1">
+                    <input type="password" id="retypePw" placeholder="••••••••" class="w-full bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl pl-4 pr-12 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] transition-colors">
+                    <button type="button" onclick="togglePasswordVisibility('retypePw', 'eyeIconRetypePw')" class="absolute right-4 text-gray-500 dark:text-gray-400 hover:text-[#800000] dark:hover:text-[#D4AF37] transition-colors">
+                        <i id="eyeIconRetypePw" class="ph-bold ph-eye text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-4">
+                <button type="button" onclick="closePasswordModal()" class="flex-1 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
+                <button type="button" onclick="goToPhase2()" class="flex-1 py-3 rounded-xl bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black font-bold hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2">Next <i class="ph-bold ph-arrow-right"></i></button>
+            </div>
         </div>
-        <div class="flex gap-3">
-            <button type="button" onclick="document.getElementById('passwordModal').classList.add('hidden')" class="flex-1 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">Cancel</button>
-            <button type="button" id="btnSubmitPassword" onclick="submitPasswordChange()" class="flex-1 py-3 rounded-xl bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black font-bold hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2">Update</button>
+
+        <!-- PHASE 2 -->
+        <div id="pwPhase2" class="hidden flex-col gap-4 mb-6 text-left transition-opacity duration-300 opacity-0">
+            <div class="relative">
+                
+                <label class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-2 block">Email Address</label>
+                <div class="relative flex items-center mt-1 gap-2">
+                    <input type="text" id="emailDisplay" value="{{ student.email_address }}" readonly class="w-full bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 rounded-xl pl-4 py-3 text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                    <button type="button" id="btnGetCodeProfile" onclick="sendPasswordResetCode()" class="px-4 py-3 bg-gray-900 dark:bg-pup-gold text-white dark:text-black font-bold rounded-xl transition-colors text-[10px] sm:text-xs shadow-sm whitespace-nowrap min-w-[100px] flex justify-center items-center uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="btnGetCodeText">Send OTP</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="relative mt-2">
+                <label class="text-[0.65rem] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide text-center block mb-2">Enter 6-Digit OTP</label>
+                <div class="flex justify-center gap-1 sm:gap-2">
+                    <input type="text" maxlength="1" class="otp-box w-10 h-12 sm:w-12 sm:h-14 text-center font-black text-xl rounded-xl bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] text-gray-900 dark:text-white shadow-inner transition-colors" oninput="moveOtpNext(this, 1)" onkeydown="moveOtpPrev(event, this, 0)" onpaste="handleOtpPaste(event)">
+                    <input type="text" maxlength="1" class="otp-box w-10 h-12 sm:w-12 sm:h-14 text-center font-black text-xl rounded-xl bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] text-gray-900 dark:text-white shadow-inner transition-colors" oninput="moveOtpNext(this, 2)" onkeydown="moveOtpPrev(event, this, 1)">
+                    <input type="text" maxlength="1" class="otp-box w-10 h-12 sm:w-12 sm:h-14 text-center font-black text-xl rounded-xl bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] text-gray-900 dark:text-white shadow-inner transition-colors" oninput="moveOtpNext(this, 3)" onkeydown="moveOtpPrev(event, this, 2)">
+                    <input type="text" maxlength="1" class="otp-box w-10 h-12 sm:w-12 sm:h-14 text-center font-black text-xl rounded-xl bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] text-gray-900 dark:text-white shadow-inner transition-colors" oninput="moveOtpNext(this, 4)" onkeydown="moveOtpPrev(event, this, 3)">
+                    <input type="text" maxlength="1" class="otp-box w-10 h-12 sm:w-12 sm:h-14 text-center font-black text-xl rounded-xl bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] text-gray-900 dark:text-white shadow-inner transition-colors" oninput="moveOtpNext(this, 5)" onkeydown="moveOtpPrev(event, this, 4)">
+                    <input type="text" maxlength="1" class="otp-box w-10 h-12 sm:w-12 sm:h-14 text-center font-black text-xl rounded-xl bg-[#f4f4f4] dark:bg-[#111] border border-gray-200 dark:border-gray-700 focus:outline-none focus:border-[#800000] dark:focus:border-[#D4AF37] text-gray-900 dark:text-white shadow-inner transition-colors" oninput="moveOtpNext(this, 6)" onkeydown="moveOtpPrev(event, this, 5)">
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-4">
+                <button type="button" onclick="goToPhase1()" class="flex-1 py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">Back</button>
+                <button type="button" id="btnSubmitPassword" onclick="submitPasswordChange()" class="flex-1 py-3 rounded-xl bg-[#800000] dark:bg-[#D4AF37] text-white dark:text-black font-bold hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2">Update</button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Face Update Modal -->
-<div id="faceUpdateModal" class="hidden fixed inset-0 z-[2020] flex items-center justify-center p-0 sm:p-4">
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-md" onclick="closeFaceUpdateModal()"></div>
-    <div class="relative bg-white dark:bg-[#111] rounded-none sm:rounded-[3rem] w-full max-w-lg p-6 sm:p-10 border-0 sm:border border-gray-100 dark:border-gray-800 shadow-2xl flex flex-col max-h-screen sm:max-h-[90vh] z-10 overflow-hidden">
-        
-        <button onclick="closeFaceUpdateModal()" class="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:hover:bg-white/20 transition-colors z-50">
-            <i class="ph-bold ph-x text-xl"></i>
-        </button>
 
-        <div class="text-center mb-8 shrink-0">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pup-maroon/10 dark:bg-pup-gold/10 border border-pup-maroon/20 dark:border-pup-gold/20 mb-3">
-                <span class="w-1.5 h-1.5 rounded-full bg-pup-maroon dark:bg-pup-gold animate-pulse"></span>
-                <span class="text-[9px] font-black text-pup-maroon dark:text-pup-gold uppercase tracking-[0.2em]">Biometric Update</span>
-            </div>
-            <h2 class="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tight leading-none mb-2">Update Identity</h2>
-            <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium max-w-[80%] mx-auto leading-relaxed">
-                Scan your face to update your biometric identity for faster and more accurate recognition.
-            </p>
-        </div>
-
-        <!-- Scanner Container -->
-        <div class="relative w-full max-w-sm mx-auto aspect-[3/4] flex flex-col items-center justify-center overflow-hidden rounded-3xl bg-black shadow-inner border border-white/5 group my-4">
-            <video id="faceUpdateVideo" autoplay muted playsinline class="w-full h-full object-cover grayscale-[0.3] brightness-110 contrast-125"></video>
-            
-            <!-- Scanning Overlay -->
-            <div class="absolute inset-0 border-[2px] border-pup-maroon/30 dark:border-pup-gold/30 rounded-3xl pointer-events-none">
-                <div class="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-pup-maroon dark:border-pup-gold rounded-tl-2xl"></div>
-                <div class="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-pup-maroon dark:border-pup-gold rounded-tr-2xl"></div>
-                <div class="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-pup-maroon dark:border-pup-gold rounded-bl-2xl"></div>
-                <div class="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-pup-maroon dark:border-pup-gold rounded-tl-2xl rotate-180"></div>
-            </div>
-
-            <!-- Scanning Line Animation -->
-            <div class="absolute left-4 right-4 h-0.5 bg-pup-maroon/50 dark:bg-pup-gold/50 shadow-[0_0_15px_rgba(128,0,0,0.5)] dark:shadow-[0_0_15px_rgba(212,175,55,0.5)] animate-scan z-10"></div>
-
-            <div id="faceUpdateStatus" class="absolute top-4 left-4 right-4 bg-black/80 backdrop-blur-2xl px-3 py-2 rounded-full text-white text-[8px] font-black uppercase tracking-[0.2em] text-center border border-white/10 shadow-2xl z-20">
-                Initializing AI Core...
-            </div>
-            
-            <!-- Quality Indicator -->
-            <div id="updateQualityMeter" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-xl px-4 py-2 rounded-2xl flex items-center gap-4 border border-white/10 shadow-2xl z-20 transition-all opacity-0">
-                <div class="flex flex-col gap-1">
-                    <span class="text-[7px] font-black text-gray-400 uppercase tracking-widest">Sensor Quality</span>
-                    <div class="flex gap-1 items-end h-2">
-                        <div id="bar1" class="w-1 bg-white/20 rounded-full transition-all"></div>
-                        <div id="bar2" class="w-1 bg-white/20 rounded-full transition-all"></div>
-                        <div id="bar3" class="w-1 bg-white/20 rounded-full transition-all"></div>
-                    </div>
-                </div>
-                <div class="h-6 w-px bg-white/10"></div>
-                <div class="flex flex-col">
-                    <span id="updateQualityLabel" class="text-[8px] font-black text-white uppercase tracking-widest leading-none">Scanning...</span>
-                    <span class="text-[6px] font-bold text-gray-500 uppercase tracking-tighter mt-1">Optimization Active</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-8 flex flex-col gap-3 shrink-0">
-            <button id="btnConfirmUpdateFace" disabled class="w-full bg-pup-maroon dark:bg-pup-gold text-white dark:text-black py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg disabled:opacity-50 disabled:grayscale transition-all active:scale-95 flex items-center justify-center gap-2">
-                <i class="ph-bold ph-fingerprint"></i> Confirm New Identity
-            </button>
-            <p class="text-center text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                Position your face clearly within the frame
-            </p>
-        </div>
-    </div>
-</div>
 {% endblock content %}
 
 {% block extra_js %}
+
 <script>
+    const generatePasswordUrl = "{% url 'generate_student_password' %}";
+const updatePasswordUrl = "{% url 'update_student_password' %}";
+
     // --- FACE UPDATE SCANNER LOGIC ---
     let updateStream = null;
     let updateInterval = null;
@@ -739,9 +718,51 @@
         return '';
     }
 
+let cropper = null;
+    let currentCroppingType = null;
+    let croppedProfileBlob = null;
+    let croppedCoverBlob = null;
+
     function previewImage(event, imgId) {
         const file = event.target.files[0];
-        if (file) document.getElementById(imgId).src = URL.createObjectURL(file);
+        if (!file) return;
+        
+        currentCroppingType = imgId === 'profileImage' ? 'profile' : 'cover';
+        
+        const cropperImage = document.getElementById('cropperImage');
+        cropperImage.src = URL.createObjectURL(file);
+        document.getElementById('cropperModal').classList.remove('hidden');
+        
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(cropperImage, {
+            aspectRatio: currentCroppingType === 'profile' ? 1 : 16/9,
+            viewMode: 1,
+            autoCropArea: 1,
+        });
+        
+        event.target.value = ''; 
+    }
+
+    function confirmCrop() {
+        if (!cropper) return;
+        cropper.getCroppedCanvas({
+            width: currentCroppingType === 'profile' ? 512 : 1280,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        }).toBlob(blob => {
+            const imgEl = document.getElementById(currentCroppingType === 'profile' ? 'profileImage' : 'coverImage');
+            imgEl.src = URL.createObjectURL(blob);
+            
+            if (currentCroppingType === 'profile') croppedProfileBlob = blob;
+            else croppedCoverBlob = blob;
+            
+            closeCropperModal();
+        }, 'image/jpeg', 0.9);
+    }
+
+    function closeCropperModal() {
+        document.getElementById('cropperModal').classList.add('hidden');
+        if (cropper) { cropper.destroy(); cropper = null; }
     }
 
     let isEditMode = false;
@@ -805,8 +826,11 @@
             
             const profileFile = document.getElementById('profileFileInput').files[0];
             const coverFile = document.getElementById('coverFileInput').files[0];
-            if (profileFile) formData.append('profile_picture', profileFile);
-            if (coverFile) formData.append('cover_photo', coverFile);
+            if (croppedProfileBlob) formData.append('profile_picture', croppedProfileBlob, 'profile.jpg');
+            else if (profileFile) formData.append('profile_picture', profileFile);
+            
+            if (croppedCoverBlob) formData.append('cover_photo', croppedCoverBlob, 'cover.jpg');
+            else if (coverFile) formData.append('cover_photo', coverFile);
 
             try {
                 const response = await fetch("{% url 'update_student_profile' %}", {
@@ -826,20 +850,161 @@
 
     function openSettingsModal() { document.getElementById('settingsModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
     function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); document.body.style.overflow = ''; }
-    function openPasswordModal() { document.getElementById('passwordModal').classList.remove('hidden'); }
+    
+    function showPwToast(message, type='success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-5 right-5 z-[9999] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all transform translate-x-full ${type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 'bg-red-100 text-red-800 border-l-4 border-red-500'}`;
+        toast.innerHTML = `
+            <i class="ph-fill ${type === 'success' ? 'ph-check-circle' : 'ph-warning-circle'} text-2xl"></i>
+            <span class="font-bold text-sm">${message}</span>
+        `;
+        document.body.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-x-full');
+        });
+        
+        setTimeout(() => {
+            toast.classList.add('translate-x-full');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function openPasswordModal() { 
+        document.getElementById('passwordModal').classList.remove('hidden'); 
+        goToPhase1();
+    }
+    
+    function closePasswordModal() {
+        document.getElementById('passwordModal').classList.add('hidden');
+    }
+
+    function goToPhase2() {
+        const newPw = document.getElementById('newPw').value;
+        const retypePw = document.getElementById('retypePw').value;
+        
+        if (!newPw || !retypePw) {
+            showPwToast("Please fill in both password fields.", 'error');
+            return;
+        }
+        if (newPw !== retypePw) {
+            showPwToast("Passwords do not match.", 'error');
+            return;
+        }
+        if (newPw.length < 8) {
+            showPwToast("Password must be at least 8 characters long.", 'error');
+            return;
+        }
+
+        const phase1 = document.getElementById('pwPhase1');
+        const phase2 = document.getElementById('pwPhase2');
+        
+        phase1.classList.add('opacity-0');
+        setTimeout(() => {
+            phase1.classList.add('hidden');
+            phase1.classList.remove('flex');
+            
+            phase2.classList.remove('hidden');
+            phase2.classList.add('flex');
+            
+            // Allow display:flex to apply before transitioning opacity
+            requestAnimationFrame(() => {
+                phase2.classList.remove('opacity-0');
+            });
+        }, 300);
+        
+        document.getElementById('pwProgressBar').style.width = '100%';
+    }
+
+    function goToPhase1() {
+        const phase1 = document.getElementById('pwPhase1');
+        const phase2 = document.getElementById('pwPhase2');
+
+        phase2.classList.add('opacity-0');
+        setTimeout(() => {
+            phase2.classList.add('hidden');
+            phase2.classList.remove('flex');
+            
+            phase1.classList.remove('hidden');
+            phase1.classList.add('flex');
+            
+            requestAnimationFrame(() => {
+                phase1.classList.remove('opacity-0');
+            });
+        }, 300);
+        
+        document.getElementById('pwProgressBar').style.width = '50%';
+    }
+
+    function moveOtpNext(input, index) {
+        if (input.value.length === 1 && index < 6) {
+            document.querySelectorAll('.otp-box')[index].focus();
+        }
+    }
+    function moveOtpPrev(event, input, index) {
+        if (event.key === 'Backspace' && input.value === '' && index > 0) {
+            document.querySelectorAll('.otp-box')[index - 1].focus();
+        }
+    }
+    function handleOtpPaste(event) {
+        event.preventDefault();
+        const paste = (event.clipboardData || window.clipboardData).getData('text');
+        const pastedData = paste.replace(/[^0-9]/g, '').slice(0, 6).split('');
+        const inputs = document.querySelectorAll('.otp-box');
+        for (let i = 0; i < 6; i++) {
+            if (pastedData[i]) {
+                inputs[i].value = pastedData[i];
+            }
+        }
+        if (pastedData.length > 0) {
+            inputs[Math.min(pastedData.length, 6) - 1].focus();
+        }
+    }
+
+    let otpCountdown = 0;
+    let otpTimer = null;
 
     async function sendPasswordResetCode() {
+        if (otpCountdown > 0) return;
+        
         const btn = document.getElementById('btnGetCodeProfile');
+        const btnText = document.getElementById('btnGetCodeText');
+        
         btn.disabled = true;
-        btn.innerText = '...';
+        btnText.innerText = 'Sending...';
+        
         const formData = new FormData();
-        formData.append('email_address', "{{ student.email_address }}");
+        const emailVal = document.getElementById('emailDisplay').value;
+        formData.append('email_address', emailVal);
+        
         try {
-            const resp = await fetch("{% url 'generate_student_password' %}", { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: formData });
+            const resp = await fetch(generatePasswordUrl, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: formData });
             const data = await resp.json();
-            alert(data.message);
-        } catch (e) { alert("Error sending code."); }
-        finally { btn.disabled = false; btn.innerText = 'Get Code'; }
+            
+            if (data.status === 'success') {
+                showPwToast("Verification code sent to your email.");
+                otpCountdown = 60;
+                btnText.innerText = `Wait ${otpCountdown}s`;
+                otpTimer = setInterval(() => {
+                    otpCountdown--;
+                    if (otpCountdown <= 0) {
+                        clearInterval(otpTimer);
+                        btn.disabled = false;
+                        btnText.innerText = 'Send OTP';
+                    } else {
+                        btnText.innerText = `Wait ${otpCountdown}s`;
+                    }
+                }, 1000);
+            } else {
+                showPwToast(data.message, 'error');
+                btn.disabled = false;
+                btnText.innerText = 'Send OTP';
+            }
+        } catch (e) {
+            showPwToast("Error sending code.", 'error');
+            btn.disabled = false;
+            btnText.innerText = 'Send OTP';
+        }
     }
 
     function togglePasswordVisibility(inputId, eyeIconId) {
@@ -854,292 +1019,58 @@
         }
     }
 
-    async function toggleEmailNotifications(enabled) {
+    async function submitPasswordChange() {
+        const newPw = document.getElementById('newPw').value;
+        const retypePw = document.getElementById('retypePw').value;
+        
+        if (!newPw || !retypePw) {
+            showPwToast("Please fill in both password fields.", 'error');
+            return;
+        }
+        if (newPw !== retypePw) {
+            showPwToast("Passwords do not match.", 'error');
+            return;
+        }
+        if (newPw.length < 8) {
+            showPwToast("Password must be at least 8 characters long.", 'error');
+            return;
+        }
+        
+        let otpCode = '';
+        document.querySelectorAll('.otp-box').forEach(input => {
+            otpCode += input.value;
+        });
+        
+        if (otpCode.length !== 6) {
+            showPwToast("Please enter the complete 6-digit OTP.", 'error');
+            return;
+        }
+
         const formData = new FormData();
-        formData.append('email_notifications', enabled);
+        formData.append('code', otpCode);
+        formData.append('new_password', newPw);
+        
+        const btn = document.getElementById('btnSubmitPassword');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Updating...';
+        
         try {
-            const resp = await fetch("{% url 'update_notification_preference' %}", {
-                method: 'POST',
-                headers: { 'X-CSRFToken': getCsrfToken() },
-                body: formData
-            });
+            const resp = await fetch(updatePasswordUrl, { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: formData });
             const data = await resp.json();
-            if(data.status !== 'success') {
-                alert("Error updating preference.");
-                document.getElementById('emailNotifToggle').checked = !enabled;
+            if (data.status === 'success') {
+                showPwToast("Password updated successfully!");
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showPwToast(data.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = 'Update';
             }
         } catch (e) {
-            alert("Connection error.");
-            document.getElementById('emailNotifToggle').checked = !enabled;
+            showPwToast("Error updating password.", 'error');
+            btn.disabled = false;
+            btn.innerHTML = 'Update';
         }
     }
-
-    async function submitPasswordChange() {
-        const formData = new FormData();
-        formData.append('code', document.getElementById('resetCode').value);
-        formData.append('new_password', document.getElementById('newPw').value);
-        try {
-            const resp = await fetch("{% url 'update_student_password' %}", { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: formData });
-            const data = await resp.json();
-            if(data.status === 'success') { alert("Updated!"); location.reload(); }
-            else alert(data.message);
-        } catch (e) { alert("Error updating password."); }
-    }
-
-    // --- RECENT ACTIVITY MODAL LOGIC ---
-    function analyzeSentiment(text, vaderResult = null) {
-        let labelStr = '';
-        if (vaderResult && typeof vaderResult === 'object' && vaderResult.label) {
-            labelStr = vaderResult.label;
-        } else if (vaderResult && typeof vaderResult === 'string') {
-            labelStr = vaderResult;
-        }
-
-        if (labelStr) {
-            const label = labelStr.charAt(0).toUpperCase() + labelStr.slice(1);
-            if (label === 'Positive') return { label: 'Positive', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: 'ph-smiley' };
-            if (label === 'Negative') return { label: 'Negative', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: 'ph-smiley-sad' };
-            return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
-        }
-
-        // Fallback for older records without AI sentiment
-        if (!text || text.toLowerCase() === 'no feedback provided.') return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
-        const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'helpful', 'informative', 'learned', 'well', 'organized', 'maganda', 'mahusay', 'sulit', 'maraming natutunan', 'salamat', 'thank', 'nice', 'ayos', 'the best'];
-        const negativeWords = ['bad', 'poor', 'boring', 'waste', 'disorganized', 'late', 'rude', 'confusing', 'pangit', 'sayang', 'mabagal', 'maingay', 'gulo', 'hindi maganda', 'failed'];
-        const lowerText = text.toLowerCase();
-        let score = 0;
-        positiveWords.forEach(word => { if (lowerText.includes(word)) score++; });
-        negativeWords.forEach(word => { if (lowerText.includes(word)) score--; });
-        if (score > 0) return { label: 'Positive', class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: 'ph-smiley' };
-        if (score < 0) return { label: 'Negative', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: 'ph-smiley-sad' };
-        return { label: 'Neutral', class: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: 'ph-meh' };
-    }
-
-    window.openRecentActivityDetail = function(element, jsEvent) {
-        const type = element.dataset.type;
-        const title = element.dataset.title;
-        const date = element.dataset.date;
-        const time = element.dataset.time;
-        const venue = element.dataset.venue;
-        const details = JSON.parse(element.dataset.details);
-
-        const modal = document.getElementById('historyModal');
-        const modalContent = document.getElementById('modalContentBlock');
-
-        if (jsEvent) {
-            const x = jsEvent.clientX;
-            const y = jsEvent.clientY;
-            modalContent.style.setProperty('--click-x', x + 'px');
-            modalContent.style.setProperty('--click-y', y + 'px');
-        } else {
-            modalContent.style.setProperty('--click-x', '50%');
-            modalContent.style.setProperty('--click-y', '50%');
-        }
-
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalType').innerText = type + " Record";
-        document.getElementById('modalDateTime').innerHTML = `<i class="ph-fill ph-calendar text-pup-maroon dark:text-pup-gold text-lg"></i> ${date} • ${time}`;
-        document.getElementById('modalVenue').innerHTML = `<i class="ph-fill ph-map-pin text-pup-maroon dark:text-pup-gold text-lg"></i> ${venue}`;
-
-        if(type === 'Time In' || type === 'Time Out') {
-            document.getElementById('viewAttendanceProof').classList.remove('hidden');
-            document.getElementById('viewEvaluationProof').classList.add('hidden');
-            document.getElementById('proofTime').innerText = details.timestamp;
-            document.getElementById('proofTimeLabel').innerText = `${type} Timestamp Log`;
-            
-            // 🟢 Show Capture Image
-            const faceContainer = document.querySelector('#viewAttendanceProof .aspect-\\[3\\/4\\]');
-            if (details.capture_url) {
-                faceContainer.innerHTML = `<img src="${details.capture_url}" class="w-full h-full object-cover">`;
-            } else {
-                faceContainer.innerHTML = `<i class="ph-fill ph-user text-6xl text-gray-400"></i>`;
-            }
-
-            const locSig = document.getElementById('modalLocSig');
-            const mapOverlay = document.getElementById('modalMapOverlay');
-            
-            const coords = details.coords || "N/A";
-            const colorClass = details.is_valid_location ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
-            let locText = details.is_valid_location ? "Verified inside designated location" : "Outside designated event geofence";
-            
-            locSig.innerHTML = `<span class="text-gray-500 text-xs italic"><i class="ph ph-spinner animate-spin"></i> Fetching address...</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter mt-1 block">GPS: ${coords}</span>`;
-
-            if (coords !== "N/A" && coords.includes(',')) {
-                mapOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                mapOverlay.classList.add('flex');
-
-                const [lat, lng] = coords.split(',').map(s => s.trim());
-                const latNum = parseFloat(lat);
-                const lngNum = parseFloat(lng);
-
-                if (window._recentLeafletMap) {
-                    window._recentLeafletMap.remove();
-                    window._recentLeafletMap = null;
-                }
-
-                let markerRef = null;
-
-                setTimeout(() => {
-                    const mapEl = document.getElementById('modalLeafletMap');
-                    if (!mapEl) return;
-                    const map = L.map(mapEl, { zoomControl: true, scrollWheelZoom: false }).setView([latNum, lngNum], 16);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; OpenStreetMap contributors',
-                        maxZoom: 19
-                    }).addTo(map);
-
-                    const pinColor = details.is_valid_location ? '#22c55e' : '#ef4444';
-                    const markerIcon = L.divIcon({
-                        html: `<div style="background:${pinColor};width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>`,
-                        className: '',
-                        iconSize: [18, 18],
-                        iconAnchor: [9, 9],
-                        popupAnchor: [0, -10]
-                    });
-
-                    markerRef = L.marker([latNum, lngNum], { icon: markerIcon }).addTo(map);
-                    markerRef.bindPopup(`<span style="font-size:10px;font-family:inherit;">Fetching exact address...</span>`).openPopup();
-                    
-                    window._recentLeafletMap = map;
-                    window._recentLeafletMarker = markerRef;
-                    mapOverlay.classList.add('opacity-0', 'pointer-events-none');
-                }, 100);
-
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data && data.display_name) {
-                            const address = data.display_name.split(',').slice(0, 3).join(',');
-                            locSig.innerHTML = `<span class="${colorClass} leading-tight">${address}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
-                            if (window._recentLeafletMarker) {
-                                window._recentLeafletMarker.setPopupContent(`<span style="font-size:10px;font-family:inherit;line-height:1.4;display:block;max-width:180px;">${address}</span>`);
-                            }
-                        } else {
-                            locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">GPS: ${coords}</span>`;
-                            if (window._recentLeafletMarker) {
-                                window._recentLeafletMarker.setPopupContent(`<span style="font-size:10px;font-family:inherit;">${locText}</span>`);
-                            }
-                        }
-                    })
-                    .catch(e => {
-                        locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter mt-1 block">GPS: ${coords}</span>`;
-                    });
-            } else {
-                mapOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                mapOverlay.innerHTML = `<span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Map Unavailable</span>`;
-                if (window._recentLeafletMap) {
-                    window._recentLeafletMap.remove();
-                    window._recentLeafletMap = null;
-                }
-                locSig.innerHTML = `<span class="${colorClass}">${locText}</span><br><span class="text-[10px] text-gray-400 font-mono uppercase tracking-tighter mt-1 block">GPS: ${coords}</span>`;
-            }
-
-            const faceStatus = document.getElementById('modalFaceStatus');
-            if (details.face_matched) {
-                faceStatus.innerText = "MATCHED";
-                faceStatus.className = "text-[10px] font-black px-3 py-1 rounded-md w-full text-center border border-green-200 bg-green-50 text-green-600 uppercase tracking-widest";
-            } else {
-                faceStatus.innerText = "MISMATCH";
-                faceStatus.className = "text-[10px] font-black px-3 py-1 rounded-md w-full text-center border border-red-200 bg-red-50 text-red-600 uppercase tracking-widest";
-            }
-        } else {
-            document.getElementById('viewAttendanceProof').classList.add('hidden');
-            document.getElementById('viewEvaluationProof').classList.remove('hidden');
-            
-            const rawScore = parseInt(details.total_raw_score) || 0;
-            const avgRating = (rawScore > 0) ? (rawScore / 25).toFixed(1) : parseFloat(details.rating).toFixed(1);
-            const percent = (rawScore > 0) ? Math.round((rawScore / 125) * 100) : Math.round((parseFloat(details.rating) / 5) * 100);
-            
-            const starsContainer = document.getElementById('modalEvalStars');
-            let starsHtml = '';
-            const fullStars = Math.floor(avgRating);
-            for(let i=1; i<=5; i++) {
-                if (i <= fullStars) starsHtml += '<i class="ph-fill ph-star"></i>';
-                else if (i === fullStars + 1 && (avgRating % 1) >= 0.5) starsHtml += '<i class="ph-fill ph-star-half"></i>';
-                else starsHtml += '<i class="ph ph-star"></i>';
-            }
-            starsContainer.innerHTML = starsHtml;
-            document.getElementById('modalEvalAvgLabel').innerText = `${avgRating} / 5.0`;
-            document.getElementById('modalEvalPercent').innerText = `${percent}%`;
-            
-            const emojiEl = document.getElementById('modalEvalEmoji');
-            const gradeEl = document.getElementById('modalEvalGrade');
-            if (percent >= 90) { emojiEl.innerText = '😍'; gradeEl.innerText = 'Excellent'; gradeEl.className = 'text-[0.65rem] font-bold text-green-600 dark:text-green-400 mt-1 uppercase tracking-tighter'; }
-            else if (percent >= 75) { emojiEl.innerText = '😊'; gradeEl.innerText = 'Very Good'; gradeEl.className = 'text-[0.65rem] font-bold text-blue-600 dark:text-blue-400 mt-1 uppercase tracking-tighter'; }
-            else if (percent >= 50) { emojiEl.innerText = '😐'; gradeEl.innerText = 'Satisfactory'; gradeEl.className = 'text-[0.65rem] font-bold text-yellow-600 dark:text-yellow-400 mt-1 uppercase tracking-tighter'; }
-            else { emojiEl.innerText = '😡'; gradeEl.innerText = 'Needs Improvement'; gradeEl.className = 'text-[0.65rem] font-bold text-red-600 dark:text-red-400 mt-1 uppercase tracking-tighter'; }
-
-            const feedback = details.feedback || "No feedback provided.";
-            document.getElementById('modalEvalComment').innerText = `"${feedback}"`;
-            
-            const sentiment = analyzeSentiment(feedback, details.sentiment);
-            const badge = document.getElementById('modalSentimentBadge');
-            badge.className = `px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1 ${sentiment.class}`;
-            badge.innerHTML = `<i class="ph-fill ${sentiment.icon}"></i> ${sentiment.label} (AI)`;
-        }
-
-        modalContent.classList.remove('ios-pop-wrapper-close');
-        modalContent.classList.add('ios-pop-wrapper');
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-
-    window.closeHistoryModal = function() {
-        const modal = document.getElementById('historyModal');
-        const modalContent = document.getElementById('modalContentBlock');
-        modalContent.classList.remove('ios-pop-wrapper');
-        modalContent.classList.add('ios-pop-wrapper-close');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }, 350);
-    }
-
-    window.switchEvalTab = function(tab) {
-        const scoreBtn = document.getElementById('tabEvalScore');
-        const fbBtn = document.getElementById('tabEvalFeedback');
-        const scoreBlock = document.getElementById('evalScoreBlock');
-        const fbBlock = document.getElementById('evalFeedbackBlock');
-
-        if (tab === 'score') {
-            scoreBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all";
-            fbBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all";
-            scoreBlock.classList.remove('hidden');
-            scoreBlock.classList.add('flex');
-            fbBlock.classList.add('hidden');
-            fbBlock.classList.remove('flex');
-        } else {
-            fbBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all";
-            scoreBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all";
-            fbBlock.classList.remove('hidden');
-            fbBlock.classList.add('flex');
-            scoreBlock.classList.add('hidden');
-            scoreBlock.classList.remove('flex');
-        }
-    };
-
-    window.switchAttTab = function(tab) {
-        const faceBtn = document.getElementById('tabAttFace');
-        const locBtn = document.getElementById('tabAttLoc');
-        const faceBlock = document.getElementById('attFaceBlock');
-        const locBlock = document.getElementById('attLocBlock');
-
-        if (tab === 'face') {
-            faceBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all";
-            locBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all";
-            faceBlock.classList.remove('hidden');
-            faceBlock.classList.add('flex');
-            locBlock.classList.add('hidden');
-            locBlock.classList.remove('flex');
-        } else {
-            locBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg bg-white dark:bg-[#333] shadow-sm text-pup-maroon dark:text-pup-gold transition-all";
-            faceBtn.className = "flex-1 py-2 text-[10px] uppercase tracking-widest font-black rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all";
-            locBlock.classList.remove('hidden');
-            locBlock.classList.add('flex');
-            faceBlock.classList.add('hidden');
-            faceBlock.classList.remove('flex');
-        }
-    };
 
     document.addEventListener('DOMContentLoaded', () => {
         ['bgOverlayClose', 'btnTopClose'].forEach(id => {
@@ -1149,4 +1080,22 @@
     });
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- CROPPER MODAL -->
+<div id="cropperModal" class="fixed inset-0 z-[6000] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-pup-darkcard rounded-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
+        <div class="p-4 border-b border-gray-100 dark:border-white/10 flex justify-between items-center">
+            <h3 class="font-black text-gray-900 dark:text-white uppercase tracking-wider">Adjust Photo</h3>
+            <button onclick="closeCropperModal()" class="text-gray-400 hover:text-red-500 transition-colors"><i class="ph-bold ph-x text-xl"></i></button>
+        </div>
+        <div class="p-4 flex-1 min-h-[300px] sm:min-h-[400px] bg-black relative">
+            <img id="cropperImage" src="" class="block max-w-full h-full object-contain mx-auto">
+        </div>
+        <div class="p-4 flex justify-end gap-3 border-t border-gray-100 dark:border-white/10">
+            <button onclick="closeCropperModal()" class="px-6 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">Cancel</button>
+            <button onclick="confirmCrop()" class="px-6 py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest bg-pup-maroon hover:bg-red-900 text-white dark:bg-pup-gold dark:hover:bg-yellow-600 dark:text-black transition-all">Crop & Save</button>
+        </div>
+    </div>
+</div>
+
 {% endblock extra_js %}

@@ -18,6 +18,13 @@ class OrgProfile(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.organization}"
 
+class AdviserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    force_password_change = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Adviser - {self.user.username}"
+
 class UserLocation(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
@@ -124,6 +131,7 @@ class Student(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     
     is_verified = models.BooleanField(default=False) 
+    force_password_change = models.BooleanField(default=False)
     face_encoding = models.TextField(null=True, blank=True) 
     email_notifications = models.BooleanField(default=True)
 

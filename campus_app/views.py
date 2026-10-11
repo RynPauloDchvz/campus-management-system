@@ -23,7 +23,7 @@ import io
 import base64
 import zipfile
 from docxtpl import DocxTemplate 
-from .models import OrgProfile, Student, Attendance, Event, LoginLockout, AuditLog
+from .models import OrgProfile, Student, Attendance, Event, LoginLockout, AuditLog, AdviserProfile
 from .utils import log_audit_event
 from .middleware import get_current_request
 from .ai_utils import verify_face, get_sentiment, get_rating_sentiment
@@ -187,6 +187,9 @@ def portal_login_view(request):
             elif user.is_staff and not OrgProfile.objects.filter(user=user).exists():
                 login(request, user)
                 log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': 'Adviser'}, actor=user)
+                adv_profile = AdviserProfile.objects.filter(user=user).first()
+                if adv_profile and getattr(adv_profile, 'force_password_change', False):
+                    return JsonResponse({"status": "success", "redirect_url": "/adviser/force-change-password"})
                 return JsonResponse({"status": "success", "redirect_url": "/adviser/dashboard/"})
             elif OrgProfile.objects.filter(user=user).exists():
                 login(request, user)
@@ -197,9 +200,12 @@ def portal_login_view(request):
                 return JsonResponse({"status": "success", "redirect_url": "/organizer/homepage"})
             elif Student.objects.filter(user=user).exists():
                 student = Student.objects.get(user=user)
-                if not student.is_verified:
+                if getattr(student, 'force_password_change', False):
+                    login(request, user)
+                    return JsonResponse({"status": "success", "redirect_url": "/student/force-change-password"})
+                elif not student.is_verified:
                     log_audit_event(request, 'LOGIN_FAILED', status='Denied', changes={'reason': 'Unverified Student Account', 'username': username}, actor=user)
-                    return JsonResponse({"status": "error", "message": "Account is still pending approval. Please wait for your Organizer."})
+                    return JsonResponse({"status": "pending_approval", "message": "Account is still pending approval. Please wait for your Organizer to verify your account."})
                 else:
                     login(request, user)
                     log_audit_event(request, 'LOGIN_SUCCESS', status='Success', changes={'role': 'Student'}, actor=user)
@@ -232,27 +238,35 @@ def portal_login_view(request):
 # ==========================================
 def forgot_password_view(request):
     if request.method == 'POST':
-        identifier = request.POST.get('identifier') # Student Number or Username
-
+        identifier = request.POST.get('identifier')
         try:
             user = User.objects.get(username=identifier)
-            email = user.email
+            return JsonResponse({"status": "success", "message": "Account found!"})
+        except User.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Account not found in our records."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+    return render(request, 'forgot_password.html')
 
-            if not email:
-                # Try to get from Student profile if not in User
+def forgot_password_send_otp(request):
+    if request.method == 'POST':
+        identifier = request.POST.get('identifier')
+        email_to_verify = request.POST.get('email')
+        
+        try:
+            user = User.objects.get(username=identifier)
+            actual_email = user.email
+            
+            if not actual_email:
                 student = Student.objects.filter(user=user).first()
-                if student: email = student.email_address
-
-            if not email:
-                if OrgProfile.objects.filter(user=user).exists():
-                    log_audit_event(request, 'PASSWORD_RESET_REQUEST', status='Warning', changes={'message': f'Organizer {user.username} requested a password reset.'}, actor=user)
-                    return JsonResponse({"status": "success", "message": "Admin has been notified of your password reset request. Please wait for them to generate a new password."})
-                else:
-                    return JsonResponse({"status": "error", "message": "No email associated with this account. Please contact Admin."})
-
-            # Generate temporary code (6 digits)
+                if student: actual_email = student.email_address
+                
+            if not actual_email or actual_email.lower() != email_to_verify.lower():
+                return JsonResponse({"status": "error", "message": "The email provided does not match the registered email for this account."})
+                
             import string, random
             from django.core.mail import EmailMultiAlternatives
+            from django.template.loader import render_to_string
             
             chars = string.digits
             temp_code = ''.join(random.choice(chars) for i in range(6))
@@ -265,17 +279,16 @@ def forgot_password_view(request):
                 'otp': temp_code,
             })
 
-            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email])
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email_to_verify])
             email_msg.attach_alternative(html_content, "text/html")
             email_msg.send()
-            return JsonResponse({"status": "success", "message": "Verification code sent to your registered email!"})
-
+            return JsonResponse({"status": "success", "message": f"Verification code sent to {email_to_verify}"})
+            
         except User.DoesNotExist:
-            return JsonResponse({"status": "error", "message": "Account not found in our records."})
+            return JsonResponse({"status": "error", "message": "Account not found."})
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
-
-    return render(request, 'forgot_password.html')
+    return JsonResponse({"status": "error", "message": "Invalid request."})
 
 def poll_organizer_password(request):
     if request.method == 'GET':
@@ -306,15 +319,28 @@ def verify_reset_code(request):
 
 def complete_password_reset(request):
     if request.method == 'POST':
+        typed_code = request.POST.get('code')
+        saved_code = request.session.get('reset_code')
+
+        if not saved_code or typed_code != saved_code:
+            return JsonResponse({"status": "error", "message": "Incorrect verification code."})
+            
         new_password = request.POST.get('new_password')
         user_id = request.session.get('reset_user_id')
 
-        if not user_id:
-            return JsonResponse({"status": "error", "message": "Session expired. Please try again."})
+        if not user_id or not new_password:
+            return JsonResponse({"status": "error", "message": "Missing information. Please try again."})
 
         user = User.objects.get(id=user_id)
         user.set_password(new_password)
         user.save()
+        
+        # update student password if applicable
+        student = Student.objects.filter(user=user).first()
+        if student:
+            from django.contrib.auth.hashers import make_password
+            student.password = make_password(new_password)
+            student.save()
 
         # Cleanup
         if 'reset_code' in request.session: del request.session['reset_code']
@@ -1341,7 +1367,7 @@ def organizer_force_change_password_view(request):
     org_profile = OrgProfile.objects.filter(user=request.user).first()
     if not getattr(org_profile, 'force_password_change', False):
         return redirect('/organizer/homepage')
-    return render(request, 'force_change_password.html')
+    return render(request, 'force_change_password.html', {'role': 'organizer'})
 
 @user_passes_test(is_organizer_strictly, login_url='/')
 def force_change_send_otp(request):
@@ -3627,8 +3653,23 @@ def admin_generate_adviser_password(request):
             
             # Use same cache pattern
             cache.set(f'generated_adviser_pwd_{email}', password, timeout=600)
-            # You can send an email here eventually just like in org
-            return JsonResponse({"status": "success", "message": f"OTP Password generated for Adviser. Check backend logs or email."})
+            from django.core.mail import EmailMultiAlternatives
+            from django.template.loader import render_to_string
+            
+            subject = 'PUP UNISAN CAMS: Adviser Account Password'
+            text_content = f"Your generated password for PUP UNISAN CAMS is: {password}\n\nPlease use this to log in and change your password immediately."
+            
+            login_url = request.build_absolute_uri('/')
+            html_content = render_to_string('emails/generated_org_password.html', {
+                'password': password,
+                'login_url': login_url
+            })
+            
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send()
+            return JsonResponse({"status": "success", "message": "Password generated and sent to email successfully."})
+
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
     return JsonResponse({"status": "error", "message": "Invalid request"})
@@ -3725,6 +3766,64 @@ def organizer_api_action(request):
                         user.is_active = False 
                         user.save()
                 return JsonResponse({"status": "success", "message": "Org access deactivated and moved to History."})
+
+        except Exception as e: return JsonResponse({"status": "error", "message": str(e)})
+    return JsonResponse({"status": "error", "message": "Invalid Request"})
+
+@user_passes_test(is_admin_strictly, login_url='/admin/login/')
+def admin_adviser_api_action(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            action = data.get('action')
+
+            if action == 'create':
+                username = data.get('username')
+                email = data.get('email', '')
+                if User.objects.filter(email=email, is_active=True).exists():
+                    return JsonResponse({"status": "error", "message": "This email is already in use by an active account."})
+                
+                password = cache.get(f'generated_adviser_pwd_{email}')
+                if not password:
+                    return JsonResponse({"status": "error", "message": "Please generate and send a password first, or it has expired."})
+                    
+                existing_user = User.objects.filter(username=username).first()
+                if existing_user:
+                    if existing_user.is_active:
+                        return JsonResponse({"status": "error", "message": "Username already exists and is active!"})
+                    
+                    existing_user.is_active = True
+                    existing_user.email = email
+                    existing_user.set_password(password)
+                    existing_user.first_name = data.get('name')
+                    existing_user.last_name = data.get('org')
+                    existing_user.is_staff = True
+                    existing_user.save()
+                    
+                    adv_profile, _ = AdviserProfile.objects.get_or_create(user=existing_user)
+                    adv_profile.force_password_change = True
+                    adv_profile.save()
+                    
+                    cache.delete(f'generated_adviser_pwd_{email}')
+                    return JsonResponse({"status": "success", "message": f"Adviser Account successfully restored and updated!"})
+
+                user = User.objects.create_user(username=username, password=password, email=email)
+                user.first_name = data.get('name') 
+                user.last_name = data.get('org')
+                user.is_staff = True
+                user.save()
+                AdviserProfile.objects.create(user=user, force_password_change=True)
+                cache.delete(f'generated_adviser_pwd_{email}')
+                return JsonResponse({"status": "success", "message": f"Adviser Account successfully created!"})
+
+            elif action == 'delete': 
+                user_ids = str(data.get('id')).split(',')
+                for uid in user_ids:
+                    if uid.strip():
+                        user = User.objects.get(id=uid.strip())
+                        user.is_active = False 
+                        user.save()
+                return JsonResponse({"status": "success", "message": "Adviser access deactivated and moved to History."})
 
         except Exception as e: return JsonResponse({"status": "error", "message": str(e)})
     return JsonResponse({"status": "error", "message": "Invalid Request"})
@@ -4395,4 +4494,517 @@ def update_user_location(request):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'})
 
 
+
+import json
+import pandas as pd
+from django.http import JsonResponse
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
+from .models import Student
+from django.contrib.auth.decorators import user_passes_test
+def send_student_credentials(email, name, student_id, password):
+    subject = "PUP UNISAN CAMS - Your Student Account Credentials"
+    html_content = f'''
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #800000; text-align: center;">Welcome to PUP UNISAN CAMS!</h2>
+        <p>Hello <strong>{name}</strong>,</p>
+        <p>Your student account has been successfully created by the Administrator.</p>
+        <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Student ID:</strong> {student_id}</p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> {email}</p>
+            <p style="margin: 5px 0;"><strong>Temporary Password:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e0e0e0; padding: 2px 6px; border-radius: 4px;">{password}</span></p>
+        </div>
+        <p>Please login using the link below and change your password immediately.</p>
+        <div style="text-align: center; margin-top: 25px;">
+            <a href="http://127.0.0.1:8000/" style="background-color: #800000; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login Now</a>
+        </div>
+        <p style="margin-top: 30px; font-size: 0.85em; color: #777; text-align: center;">This is an automated message. Please do not reply.</p>
+    </div>
+    '''
+    text_content = strip_tags(html_content)
+    msg = EmailMultiAlternatives(subject, text_content, '"PUP UNISAN CAMS Admin" <pupunicams@gmail.com>', [email])
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
+
+@user_passes_test(is_admin_strictly, login_url='/')
+def create_student_manual(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            full_name = data.get('full_name')
+            student_id = data.get('student_id')
+            birthday = data.get('birthday')
+            year_level = data.get('year_level')
+            program = data.get('program', 'Not Assigned')
+            email = data.get('email')
+            
+            org_mapping = { 'BSIT': 'ITO', 'BSENT': 'YEO', 'BPA': 'PAS', 'BEED': 'FTO', 'DOMT': 'ITS', 'DIT': 'ITS' }
+            organization = org_mapping.get(program, 'Not Assigned')
+            
+            if User.objects.filter(username=student_id).exists() or User.objects.filter(email=email).exists():
+                return JsonResponse({'status': 'error', 'message': 'Student ID or Email already exists.'})
+                
+            import secrets
+            import string
+            
+            password = data.get('password')
+            if not password:
+                password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+                
+            user = User.objects.create_user(username=student_id, email=email, password=password)
+            
+            from datetime import datetime
+            try:
+                bday_obj = datetime.strptime(birthday, '%m/%d/%Y').date()
+            except:
+                bday_obj = None
+
+            Student.objects.create(
+                user=user,
+                full_name=full_name,
+                student_number=student_id,
+                email_address=email,
+                password=make_password(password),
+                year_level=year_level,
+                program=program,
+                birthdate=bday_obj,
+                is_verified=False, 
+                force_password_change=True,
+                organization=organization
+            )
+            
+            return JsonResponse({'status': 'success', 'message': 'Student created successfully!'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+@user_passes_test(is_admin_strictly, login_url='/')
+def create_student_bulk(request):
+    if request.method == 'POST' and request.FILES.getlist('files'):
+        files = request.FILES.getlist('files')
+        created_count = 0
+        errors = []
+        
+        for file in files:
+            try:
+                if file.name.endswith('.csv'):
+                    df = pd.read_csv(file)
+                elif file.name.endswith(('.xls', '.xlsx')):
+                    df = pd.read_excel(file)
+                else:
+                    errors.append(f"Skipped {file.name}: Only CSV and Excel files are supported for auto-extraction.")
+                    continue
+                
+                cols = df.columns.astype(str).str.lower()
+                name_col = next((c for c in cols if 'name' in c and 'unnamed' not in c), None)
+                id_col = next((c for c in cols if ('id' in c or 'number' in c or 'no' in c) and 'unnamed' not in c), None)
+                email_col = next((c for c in cols if 'email' in c and 'unnamed' not in c), None)
+                bday_col = next((c for c in cols if ('birth' in c or 'bday' in c) and 'unnamed' not in c), None)
+                year_col = next((c for c in cols if ('year' in c or 'level' in c) and 'unnamed' not in c), None)
+                prog_col = next((c for c in cols if ('program' in c or 'course' in c) and 'unnamed' not in c), None)
+                
+                if not name_col or not id_col or not email_col:
+                    errors.append(f"Skipped {file.name}: Could not detect Name, ID, or Email columns.")
+                    continue
+                
+                for index, row in df.iterrows():
+                    try:
+                        name = str(row[df.columns[cols.get_loc(name_col)]]).strip()
+                        student_id = str(row[df.columns[cols.get_loc(id_col)]]).strip()
+                        email = str(row[df.columns[cols.get_loc(email_col)]]).strip()
+                        
+                        bday = None
+                        if bday_col and not pd.isna(row[df.columns[cols.get_loc(bday_col)]]):
+                            bday_val = str(row[df.columns[cols.get_loc(bday_col)]]).strip()
+                            try:
+                                bday = pd.to_datetime(bday_val).date()
+                            except:
+                                bday = None
+                                
+                        year = "1st Year"
+                        if year_col and not pd.isna(row[df.columns[cols.get_loc(year_col)]]):
+                            year_val = str(row[df.columns[cols.get_loc(year_col)]]).strip()
+                            if '1' in year_val: year = "1st Year"
+                            elif '2' in year_val: year = "2nd Year"
+                            elif '3' in year_val: year = "3rd Year"
+                            elif '4' in year_val: year = "4th Year"
+                            
+                        program = "Not Assigned"
+                        if prog_col and not pd.isna(row[df.columns[cols.get_loc(prog_col)]]):
+                            program = str(row[df.columns[cols.get_loc(prog_col)]]).strip()
+                            
+                        org_mapping = { 'BSIT': 'ITO', 'BSENT': 'YEO', 'BPA': 'PAS', 'BEED': 'FTO', 'DOMT': 'ITS', 'DIT': 'ITS' }
+                        organization = org_mapping.get(program, 'Not Assigned')
+                            
+                        if not name or not student_id or not email or name.lower() == 'nan' or email.lower() == 'nan':
+                            errors.append(f"Skipped Row {index+2}: Missing Name, ID, or Email.")
+                            continue
+                            
+                        if User.objects.filter(username=student_id).exists() or User.objects.filter(email=email).exists():
+                            errors.append(f"Skipped {student_id}: Account or Email already exists in the system.")
+                            continue 
+                            
+                        import secrets
+                        import string
+                        password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+                        user = User.objects.create_user(username=student_id, email=email, password=password)
+                        
+                        Student.objects.create(
+                            user=user,
+                            full_name=name,
+                            student_number=student_id,
+                            email_address=email,
+                            password=make_password(password),
+                            year_level=year,
+                            program=program,
+                            birthdate=bday,
+                            is_verified=False,
+                            force_password_change=True,
+                            organization=organization
+                        )
+                        
+                        send_student_credentials(email, name, student_id, password)
+                        created_count += 1
+                    except Exception as ex:
+                        errors.append(f"Row {index+2} Failed: {str(ex)}")
+                        continue
+                        
+            except Exception as e:
+                errors.append(f"Error reading {file.name}: {str(e)}")
+                
+        if created_count > 0:
+            msg = f"Successfully created {created_count} student accounts and sent credentials via email."
+            if errors: msg += f" Issues: {', '.join(errors)}"
+            return JsonResponse({'status': 'success', 'message': msg})
+        else:
+            msg = 'No valid new accounts found in the file.'
+            if errors: msg += f" Details: {', '.join(errors)}"
+            return JsonResponse({'status': 'error', 'message': msg})
+    return JsonResponse({'status': 'error', 'message': 'No files uploaded.'})
+
+
+# ==========================================
+# 🟢 STUDENT FORCE CHANGE PASSWORD 🟢
+# ==========================================
+@user_passes_test(is_student_strictly, login_url='/')
+def student_force_change_password_view(request):
+    student = Student.objects.filter(user=request.user).first()
+    if not getattr(student, 'force_password_change', False):
+        return redirect('/student/dashboard')
+    return render(request, 'student/force_change_password.html')
+
+@user_passes_test(is_student_strictly, login_url='/')
+def student_force_change_send_otp(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        if not email: return JsonResponse({"status": "error", "message": "Email is required."})
+        
+        import string, random
+        from django.core.mail import EmailMultiAlternatives
+        
+        chars = string.digits
+        otp_code = ''.join(random.choice(chars) for _ in range(6))
+        request.session['student_force_change_otp'] = otp_code
+        
+        subject = 'PUP UNISAN CAMS: Password Change Verification Code'
+        text_content = f"Your verification code is: {otp_code}"
+        from django.template.loader import render_to_string
+        html_content = render_to_string('emails/otp_email.html', {'otp': otp_code})
+        
+        try:
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send()
+            return JsonResponse({"status": "success", "message": "OTP sent to your email."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": "Failed to send email. " + str(e)})
+    return JsonResponse({"status": "error", "message": "Invalid request."})
+
+@user_passes_test(is_student_strictly, login_url='/')
+def student_force_change_finalize(request):
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        otp = request.POST.get('otp')
+        
+        if otp != request.session.get('student_force_change_otp'):
+            return JsonResponse({"status": "error", "message": "Invalid or expired OTP code."})
+            
+        user = request.user
+        user.set_password(password)
+        user.save()
+        
+        from django.contrib.auth import update_session_auth_hash
+        update_session_auth_hash(request, user)
+        
+        student = Student.objects.get(user=user)
+        student.force_password_change = False
+        student.save()
+        
+        if 'student_force_change_otp' in request.session:
+            del request.session['student_force_change_otp']
+            
+        # Check if verified. If not verified, they still shouldn't access dashboard.
+        # But we redirect them to portal login to trigger the wait message, or directly log them out and show message.
+        from django.contrib.auth import logout
+        logout(request)
+        return JsonResponse({
+            "status": "success", 
+            "message": "Password changed successfully! Please log in again.", 
+            "redirect_url": "/"
+        })
+    return JsonResponse({"status": "error", "message": "Invalid request."})
+
+
+import json
+
+import secrets
+
+import string
+
+from django.http import JsonResponse
+
+from django.contrib.auth.decorators import user_passes_test
+
+from campus_app.views import is_admin_strictly, send_student_credentials
+
+
+
+@user_passes_test(is_admin_strictly, login_url='/')
+
+def generate_and_send_password_api(request):
+
+    if request.method == 'POST':
+
+        try:
+
+            data = json.loads(request.body)
+
+            email = data.get('email')
+
+            full_name = data.get('full_name')
+
+            student_id = data.get('student_id')
+
+            
+
+            if not email or not full_name or not student_id:
+
+                return JsonResponse({'status': 'error', 'message': 'Full Name, Student ID, and Email are required to generate and send a password.'})
+
+                
+
+            password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+
+            
+
+            try:
+
+                send_student_credentials(email, full_name, student_id, password)
+
+            except Exception as e:
+
+                return JsonResponse({'status': 'error', 'message': f'Failed to send email: {str(e)}'})
+
+                
+
+            return JsonResponse({'status': 'success', 'password': password})
+
+        except Exception as e:
+
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+
+def request_temporary_password_view(request):
+    return render(request, 'temporary_password.html')
+
+def request_temporary_password_api(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        if not email:
+            return JsonResponse({"status": "error", "message": "Email is required."})
+            
+        student = Student.objects.filter(email_address__iexact=email).first()
+        if student:
+            user = student.user
+            name = student.full_name
+            identifier = student.student_number
+        else:
+            user = User.objects.filter(email__iexact=email).first()
+            if not user:
+                return JsonResponse({"status": "error", "message": "No account found with this email."})
+            name = user.first_name or user.username
+            identifier = user.username
+            
+        if not user:
+            return JsonResponse({"status": "error", "message": "User not linked properly. Please contact admin."})
+
+        import secrets, string
+        temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+
+        user.set_password(temp_password)
+        user.save()
+
+        if student:
+            from django.contrib.auth.hashers import make_password
+            student.password = make_password(temp_password)
+            student.force_password_change = True
+            student.save()
+        else:
+            org = OrgProfile.objects.filter(user=user).first()
+            if org:
+                org.force_password_change = True
+                org.save()
+
+        try:
+            send_student_credentials(email, name, identifier, temp_password)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": f"Failed to send email: {str(e)}"})
+            
+        return JsonResponse({"status": "success", "message": "Temporary password sent to your email."})
+    return JsonResponse({"status": "error", "message": "Invalid request method."})
+
+
+@user_passes_test(is_student_strictly, login_url='/')
+def generate_student_password(request):
+    if request.method == 'POST':
+        email_address = request.POST.get('email_address')
+        if not email_address:
+            return JsonResponse({'status': 'error', 'message': 'Email address required.'})
+            
+        import string, random
+        from django.core.mail import EmailMultiAlternatives
+        from django.template.loader import render_to_string
+        
+        # Generate 6-digit OTP
+        chars = string.digits
+        otp = ''.join(random.choice(chars) for _ in range(6))
+        
+        request.session['generated_password'] = otp
+        
+        subject = 'PUP UNISAN CAMS: Password Reset Code'
+        text_content = f"Your password reset code is: {otp}"
+        
+        try:
+            html_content = render_to_string('emails/otp_email.html', {'otp': otp})
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email_address])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send()
+            return JsonResponse({'status': 'success', 'message': 'Verification code sent to your email.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': 'Failed to send email. Please try again later.'})
+            
+    return JsonResponse({'status': 'error', 'message': 'Invalid request.'})
+
+
+@user_passes_test(is_organizer_strictly, login_url='/')
+def generate_org_password_profile(request):
+    if request.method == 'POST':
+        email_address = request.POST.get('email_address')
+        if not email_address:
+            return JsonResponse({'status': 'error', 'message': 'Email address required.'})
+            
+        import string, random
+        from django.core.mail import EmailMultiAlternatives
+        from django.template.loader import render_to_string
+        
+        chars = string.digits
+        otp = ''.join(random.choice(chars) for _ in range(6))
+        
+        request.session['generated_password'] = otp
+        
+        subject = 'PUP UNISAN CAMS: Password Reset Code'
+        text_content = f"Your password reset code is: {otp}"
+        
+        try:
+            html_content = render_to_string('emails/otp_email.html', {'otp': otp})
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email_address])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send()
+            return JsonResponse({'status': 'success', 'message': 'Verification code sent to your email.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': 'Failed to send email. Please try again later.'})
+            
+    return JsonResponse({'status': 'error', 'message': 'Invalid request.'})
+
+@user_passes_test(is_organizer_strictly, login_url='/')
+def update_org_password_profile(request):
+    if request.method == 'POST':
+        code = request.POST.get('code')
+        new_password = request.POST.get('new_password')
+        saved_code = request.session.get('generated_password')
+
+        if not saved_code or code != saved_code:
+            return JsonResponse({"status": "error", "message": "Invalid Verification Code!"})
+
+        user = request.user
+        user.set_password(new_password)
+        user.save()
+        login(request, user) 
+
+        if 'generated_password' in request.session:
+            del request.session['generated_password']
+
+        return JsonResponse({"status": "success", "message": "Password updated successfully!"})
+    return JsonResponse({"status": "error", "message": "Invalid request."})
+def adviser_force_change_password_view(request):
+    adv_profile = AdviserProfile.objects.filter(user=request.user).first()
+    if not getattr(adv_profile, 'force_password_change', False):
+        return redirect('/adviser/dashboard/')
+    return render(request, 'force_change_password.html', {'role': 'adviser'})
+
+@user_passes_test(is_adviser_strictly, login_url='/')
+def adviser_force_change_send_otp(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        if not email: return JsonResponse({"status": "error", "message": "Email is required."})
+        
+        import string, random
+        from django.core.mail import EmailMultiAlternatives
+        
+        chars = string.digits
+        otp_code = ''.join(random.choice(chars) for _ in range(6))
+        request.session['adviser_force_change_otp'] = otp_code
+        
+        subject = 'PUP UNISAN CAMS: Password Change Verification Code'
+        text_content = f"Your verification code is: {otp_code}"
+        from django.template.loader import render_to_string
+        html_content = render_to_string('emails/otp_email.html', {'otp': otp_code})
+        
+        try:
+            email_msg = EmailMultiAlternatives(subject, text_content, 'PUP UNISAN CAMS <pupuqcams2526@gmail.com>', [email])
+            email_msg.attach_alternative(html_content, "text/html")
+            email_msg.send()
+            return JsonResponse({"status": "success", "message": "OTP sent to your email."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": "Failed to send email. " + str(e)})
+    return JsonResponse({"status": "error", "message": "Invalid request."})
+
+@user_passes_test(is_adviser_strictly, login_url='/')
+def adviser_force_change_finalize(request):
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        otp = request.POST.get('otp')
+        
+        if otp != request.session.get('adviser_force_change_otp'):
+            return JsonResponse({"status": "error", "message": "Invalid or expired OTP code."})
+            
+        user = request.user
+        user.set_password(password)
+        user.save()
+        
+        from django.contrib.auth import update_session_auth_hash
+        update_session_auth_hash(request, user)
+        
+        adv_profile = AdviserProfile.objects.get(user=user)
+        adv_profile.force_password_change = False
+        adv_profile.save()
+        
+        if 'adviser_force_change_otp' in request.session:
+            del request.session['adviser_force_change_otp']
+            
+        return JsonResponse({"status": "success", "message": "Password changed successfully!", "redirect_url": "/adviser/dashboard/"})
+    return JsonResponse({"status": "error", "message": "Invalid request."})
 

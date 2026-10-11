@@ -29,7 +29,11 @@ urlpatterns = [
     
     # 🟢 API PARA SA MANAGE ACCOUNTS (DEACTIVATE/CREATE) 🟢
     path('admin/api/student-action/', views.student_api_action, name='student_api_action'),
+    path('admin/api/create-student-manual/', views.create_student_manual, name='create_student_manual'),
+    path('admin/api/create-student-bulk/', views.create_student_bulk, name='create_student_bulk'),
+    path('admin/api/generate-student-password/', views.generate_and_send_password_api, name='generate_and_send_password_api'),
     path('admin/api/organizer-action/', views.organizer_api_action, name='organizer_api_action'),
+    path('admin/api/adviser-action/', views.admin_adviser_api_action, name='admin_adviser_api_action'),
     path('admin/api/generate-org-password/', views.admin_generate_org_password, name='admin_generate_org_password'),
     path('admin/api/generate-adviser-password/', views.admin_generate_adviser_password, name='admin_generate_adviser_password'),
     
@@ -60,7 +64,10 @@ urlpatterns = [
     path('portal/login/', views.portal_login_view, name='portal_login'),
     path('portal/logout/', views.portal_logout_view, name='portal_logout'),
     path('forgot-password/', views.forgot_password_view, name='forgot_password'),
+    path('request-temporary-password/', views.request_temporary_password_view, name='request_temporary_password'),
+    path('api/request-temporary-password/', views.request_temporary_password_api, name='request_temporary_password_api'),
     path('api/verify-reset-code/', views.verify_reset_code, name='verify_reset_code'),
+    path('api/forgot-password-send-otp/', views.forgot_password_send_otp, name='forgot_password_send_otp'),
     path('api/complete-password-reset/', views.complete_password_reset, name='complete_password_reset'),
     path('api/poll-organizer-password/', views.poll_organizer_password, name='poll_organizer_password'),
 
@@ -71,6 +78,7 @@ urlpatterns = [
     path('student/send-register-otp', views.send_student_register_otp, name='send_student_register_otp'),
     path('student/verify-register-otp', views.verify_student_register_otp, name='verify_student_register_otp'),
     path('student/update-password', views.update_student_password, name='update_student_password'),
+    path('student/generate-password', views.generate_student_password, name='generate_student_password'),
     path('student/update-profile', views.update_student_profile, name='update_student_profile'),
     path('student/update-face', views.update_student_face, name='update_student_face'),
     path('student/update-notif-preference', views.update_notification_preference, name='update_notification_preference'),
@@ -125,12 +133,23 @@ urlpatterns = [
     path('organizer/force-change-password', views.organizer_force_change_password_view, name='organizer_force_change_password'),
     path('organizer/api/force-change-send-otp/', views.force_change_send_otp, name='force_change_send_otp'),
     path('organizer/api/force-change-finalize/', views.force_change_finalize, name='force_change_finalize'),
+    
+    path('student/force-change-password', views.student_force_change_password_view, name='student_force_change_password'),
+    path('student/api/force-change-send-otp/', views.student_force_change_send_otp, name='student_force_change_send_otp'),
+    path('student/api/force-change-finalize/', views.student_force_change_finalize, name='student_force_change_finalize'),
+    
+    path('adviser/force-change-password', views.adviser_force_change_password_view, name='adviser_force_change_password'),
+    path('adviser/api/force-change-send-otp/', views.adviser_force_change_send_otp, name='adviser_force_change_send_otp'),
+    path('adviser/api/force-change-finalize/', views.adviser_force_change_finalize, name='adviser_force_change_finalize'),
 
     # 🟢 DOCUMENT VAULT URLS (PARA SA UPLOADS) 🟢
     path('organizer/event-vault/', views.organizer_event_vault, name='organizer_event_vault'),
     path('organizer/upload-permit/', views.upload_signed_permit, name='upload_signed_permit'),
+    path('organizer/api/profile-generate-password/', views.generate_org_password_profile, name='generate_org_password_profile'),
+    path('organizer/api/profile-update-password/', views.update_org_password_profile, name='update_org_password_profile'),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-# Force reload comment 3
+# Force reload comment 4
+

@@ -1,7 +1,7 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 
-{% block title %}Manage Students | PUP UNISAN CAMS{% endblock %}
+{% block title %}PUP UQ Cams{% endblock %}
 
 {% block page_title %}Manage Students{% endblock %}
 {% block page_subtitle %}Monitor, view profiles, and deactivate student accounts for record history.{% endblock %}
@@ -355,31 +355,53 @@
                         </div>
                     </div>
 
-                    <!-- 4th form - Year Level -->
-                    <div class="form-group">
-                        <label class="form-label">Year Level</label>
-                        <div class="custom-dropdown" id="c_year_dropdown" style="width: 100%;">
-                            <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('c_year_dropdown')" style="padding: 10px;">
-                                <span id="c_year_label">1st Year</span>
-                                <i class="ph-bold ph-caret-down"></i>
+                    <!-- 4th form - Program & Year Level -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label class="form-label">Program</label>
+                            <div class="custom-dropdown" id="c_program_dropdown" style="width: 100%;">
+                                <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('c_program_dropdown')" style="padding: 10px;">
+                                    <span id="c_program_label">Select Program</span>
+                                    <i class="ph-bold ph-caret-down"></i>
+                                </div>
+                                <div class="custom-dropdown-menu" style="max-height: 0;">
+                                    <div class="dropdown-item" onclick="selectProgram('BSIT', event)">BSIT</div>
+                                    <div class="dropdown-item" onclick="selectProgram('BSENT', event)">BSENT</div>
+                                    <div class="dropdown-item" onclick="selectProgram('BPA', event)">BPA</div>
+                                    <div class="dropdown-item" onclick="selectProgram('BEED', event)">BEED</div>
+                                    <div class="dropdown-item" onclick="selectProgram('DOMT', event)">DOMT</div>
+                                    <div class="dropdown-item" onclick="selectProgram('DIT', event)">DIT</div>
+                                </div>
                             </div>
-                            <div class="custom-dropdown-menu" style="max-height: 0;">
-                                <div class="dropdown-item active" onclick="selectYear('1st Year', event)">1st Year</div>
-                                <div class="dropdown-item" onclick="selectYear('2nd Year', event)">2nd Year</div>
-                                <div class="dropdown-item" onclick="selectYear('3rd Year', event)">3rd Year</div>
-                                <div class="dropdown-item" onclick="selectYear('4th Year', event)">4th Year</div>
-                            </div>
+                            <input type="hidden" id="c_program" required value="">
                         </div>
-                        <input type="hidden" id="c_year" required value="1st Year">
+
+                        <div class="form-group">
+                            <label class="form-label">Year Level</label>
+                            <div class="custom-dropdown" id="c_year_dropdown" style="width: 100%;">
+                                <div class="custom-dropdown-summary" onclick="toggleCustomDropdown('c_year_dropdown')" style="padding: 10px;">
+                                    <span id="c_year_label">1st Year</span>
+                                    <i class="ph-bold ph-caret-down"></i>
+                                </div>
+                                <div class="custom-dropdown-menu" style="max-height: 0;">
+                                    <div class="dropdown-item active" onclick="selectYear('1st Year', event)">1st Year</div>
+                                    <div class="dropdown-item" onclick="selectYear('2nd Year', event)">2nd Year</div>
+                                    <div class="dropdown-item" onclick="selectYear('3rd Year', event)">3rd Year</div>
+                                    <div class="dropdown-item" onclick="selectYear('4th Year', event)">4th Year</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="c_year" required value="1st Year">
+                        </div>
                     </div>
                     
                     <!-- 4th form - Email and Password Generator -->
                     <div class="form-group">
-                        <label class="form-label">Email Address</label>
+                        <label class="form-label">Email Address & Temporary Password</label>
                         <div style="display: flex; gap: 10px; align-items: stretch;">
                             <input type="email" id="c_email" required placeholder="Student's Email" class="form-input" style="flex: 1; min-width: 0;">
-                            <button type="button" class="btn-primary" onclick="generateAndSendPassword()" style="white-space: nowrap; padding: 0 15px; flex-shrink: 0;" id="btn-generate-c"><i class="ph-bold ph-key"></i> Generate</button>
+                            <button type="button" class="btn-primary" onclick="generatePassword()" style="white-space: nowrap; padding: 0 15px; flex-shrink: 0;" id="btn-generate-c"><i class="ph-bold ph-key"></i> Generate</button>
                         </div>
+                        <input type="hidden" id="c_generated_password" value="">
                     </div>
                 </div> <!-- End form-fields-scroll -->
 
@@ -397,8 +419,8 @@
                     <div id="uploadDropzone" style="border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px; text-align: center; background: var(--input-bg); cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('bulkUploadFile').click()">
                         <i class="ph-bold ph-file-arrow-up" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 10px;"></i>
                         <h4 style="margin: 0 0 5px; font-weight: 800; color: var(--text-main);">Bulk Upload Accounts</h4>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Supports DOCX, PDF, CSV, TXT, Excel files.</p>
-                        <input type="file" id="bulkUploadFile" accept=".docx,.doc,.pdf,.csv,.txt,.xls,.xlsx" multiple style="display: none;" onchange="handleFileSelect(this)">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Supports CSV and Excel files.</p>
+                        <input type="file" id="bulkUploadFile" accept=".csv,.xls,.xlsx" multiple style="display: none;" onchange="handleFileSelect(this)">
                         <button type="button" class="btn-cancel" style="margin: 0 auto; display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation(); document.getElementById('bulkUploadFile').click()">
                             <i class="ph-bold ph-upload-simple"></i> Select Files
                         </button>
@@ -1030,6 +1052,7 @@
             document.getElementById('b_day').required = false;
             document.getElementById('b_year').required = false;
             document.getElementById('c_email').required = false;
+            document.getElementById('c_program').required = false;
         }
         
         // Close dropdown with animation
@@ -1046,6 +1069,21 @@
         const dropdown = document.getElementById('c_year_dropdown');
         dropdown.classList.remove('active');
         dropdown.querySelector('.custom-dropdown-menu').style.maxHeight = '0';
+    }
+    
+    function selectProgram(val, event) {
+        event.stopPropagation();
+        document.getElementById('c_program_label').innerText = val;
+        document.getElementById('c_program').value = val;
+        
+        const dropdown = document.getElementById('c_program_dropdown');
+        dropdown.classList.remove('active');
+        dropdown.querySelector('.custom-dropdown-menu').style.maxHeight = '0';
+        
+        // Auto select 4th year for DOMT/DIT is optional, but we can do it:
+        if (['DOMT', 'DIT'].includes(val) && document.getElementById('c_year').value === '4th Year') {
+             selectYear('3rd Year', event);
+        }
     }
     
     function selectBirthday(type, val, labelText, event) {
@@ -1109,43 +1147,80 @@
         }, 4000);
     }
 
-    async function generateAndSendPassword() {
-        const name = document.getElementById('c_name').value.trim();
-        const username = document.getElementById('c_username').value.trim();
-        const b_month = document.getElementById('b_month').value;
-        const b_day = document.getElementById('b_day').value;
-        const b_year = document.getElementById('b_year').value;
-        const bday = (b_month && b_day && b_year) ? `${b_month}/${b_day}/${b_year}` : "";
-        const email = document.getElementById('c_email').value.trim();
-        
-        if (!name && !username && !bday && !email) {
-            showToast("Form is completely empty. Please fill it out.", "warning");
-            return;
-        }
-        if (!email) {
-            showToast("Please provide an email address.", "error");
-            return;
-        }
-        
-        const btn = document.getElementById('btn-generate-c');
-        btn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Generating...';
-        btn.disabled = true;
-        
-        // Simulating API
-        setTimeout(() => {
-            showToast("OTP Password generated and sent to " + email, "success");
-            btn.innerHTML = '<i class="ph-bold ph-check"></i> Generated';
-            btn.classList.replace('btn-primary', 'btn-cancel');
-            btn.style.color = 'var(--accent)';
-            setTimeout(() => {
-                btn.innerHTML = '<i class="ph-bold ph-key"></i> Generate';
-                btn.classList.replace('btn-cancel', 'btn-primary');
-                btn.style.color = '';
-                btn.disabled = false;
-            }, 3000);
-        }, 1500);
-    }
+
     
+    let generateCooldownInterval = null;
+
+    async function generatePassword() {
+        const email = document.getElementById('c_email').value.trim();
+        const name = document.getElementById('c_name').value.trim();
+        const student_id = document.getElementById('c_username').value.trim();
+        
+        if (!email || !name || !student_id) {
+            showToast("Please fill in Name, Student No., and Email first.", "warning");
+            return;
+        }
+
+        const btn = document.getElementById('btn-generate-c');
+        btn.innerHTML = '<i class="ph-bold ph-spinner ph-spin" style="animation: spin 1s linear infinite;"></i> Generating...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/admin/api/generate-student-password/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({ email: email, full_name: name, student_id: student_id })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                document.getElementById('c_generated_password').value = data.password;
+                showToast("Password generated and sent to " + email, "success");
+                
+                // Start 60-second cooldown
+                let timeLeft = 60;
+                btn.innerHTML = `<i class="ph-bold ph-check"></i> Sent (${timeLeft}s)`;
+                btn.style.backgroundColor = 'var(--text-muted)';
+                btn.style.cursor = 'not-allowed';
+                
+                if (generateCooldownInterval) clearInterval(generateCooldownInterval);
+                generateCooldownInterval = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft <= 0) {
+                        clearInterval(generateCooldownInterval);
+                        btn.innerHTML = '<i class="ph-bold ph-key"></i> Generate';
+                        btn.disabled = false;
+                        btn.style.backgroundColor = '';
+                        btn.style.cursor = '';
+                    } else {
+                        btn.innerHTML = `<i class="ph-bold ph-check"></i> Sent (${timeLeft}s)`;
+                    }
+                }, 1000);
+            } else {
+                showToast(data.message, "error");
+                btn.innerHTML = '<i class="ph-bold ph-key"></i> Generate';
+                btn.disabled = false;
+            }
+        } catch(e) {
+            showToast("Connection error", "error");
+            btn.innerHTML = '<i class="ph-bold ph-key"></i> Generate';
+            btn.disabled = false;
+        }
+    }
+
+    function getCSRFToken() {
+        let token = null;
+        const cookieValue = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        if (cookieValue) token = cookieValue.split('=')[1];
+        if (!token) {
+            const input = document.querySelector('[name=csrfmiddlewaretoken]');
+            if(input) token = input.value;
+        }
+        return token;
+    }
+
     async function submitCreateStudent() {
         const name = document.getElementById('c_name').value.trim();
         const username = document.getElementById('c_username').value.trim();
@@ -1154,17 +1229,59 @@
         const b_year = document.getElementById('b_year').value;
         const bday = (b_month && b_day && b_year) ? `${b_month}/${b_day}/${b_year}` : "";
         const email = document.getElementById('c_email').value.trim();
+        const year_level = document.getElementById('c_year').value;
+        const program = document.getElementById('c_program').value;
+        const generated_password = document.getElementById('c_generated_password').value;
         
-        if (!name && !username && !bday && !email) {
+        if (!name && !username && !bday && !email && !program) {
             showToast("Please fill out the form before submitting.", "warning");
             return;
         }
-        if (!name || !username || !bday || !email) {
+        if (!name || !username || !bday || !email || !program) {
             showToast("Please complete all required fields.", "error");
             return;
         }
+        if (!generated_password) {
+            showToast("Please generate a password first.", "warning");
+            return;
+        }
         
-        showToast("Form submitted successfully! Wait for backend integration.", "success");
+        const btn = document.getElementById('btn-create');
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Processing...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/admin/api/create-student-manual/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    full_name: name,
+                    student_id: username,
+                    birthday: bday,
+                    year_level: year_level,
+                    program: program,
+                    email: email,
+                    password: generated_password
+                })
+            });
+            const data = await res.json();
+            if(data.status === 'success') {
+                showToast(data.message, "success");
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast(data.message, "error");
+                btn.innerHTML = ogText;
+                btn.disabled = false;
+            }
+        } catch(e) {
+            showToast("An error occurred.", "error");
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+        }
     }
     
     async function processBulkUpload() {
@@ -1172,7 +1289,38 @@
             showToast("Please select a file first.", "error");
             return;
         }
-        showToast("File uploaded! Wait for backend integration.", "success");
+        
+        const formData = new FormData();
+        selectedFiles.forEach(f => formData.append('files', f));
+        
+        showToast("Processing files, this may take a moment...", "warning");
+        const btn = document.querySelector('#uploadFormSection .btn-primary');
+        const ogText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph-bold ph-spinner ph-spin"></i> Uploading...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/admin/api/create-student-bulk/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: formData
+            });
+            const data = await res.json();
+            if(data.status === 'success') {
+                showToast(data.message, "success");
+                setTimeout(() => window.location.reload(), 2500);
+            } else {
+                showToast(data.message, "error");
+                btn.innerHTML = ogText;
+                btn.disabled = false;
+            }
+        } catch(e) {
+            showToast("An error occurred during upload.", "error");
+            btn.innerHTML = ogText;
+            btn.disabled = false;
+        }
     }
 
     // 🟢 SERVER ACTIONS 🟢

@@ -1,7 +1,7 @@
 {% extends 'admin_base.html' %}
 {% load static %}
 
-{% block title %}Manage Org Advisers | PUP UNISAN CAMS{% endblock %}
+{% block title %}PUP UQ Cams{% endblock %}
 
 {% block page_title %}Manage Org Advisers{% endblock %}
 {% block page_subtitle %}Create and monitor accounts for organization advisers.{% endblock %}
@@ -1083,7 +1083,7 @@
         const tokenValue = csrfToken ? csrfToken.split('=')[1] : '';
 
         try {
-            const response = await fetch("{% url 'adviser_api_action' %}", {
+            const response = await fetch("{% url 'admin_adviser_api_action' %}", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': tokenValue },
                 body: JSON.stringify(payload)
